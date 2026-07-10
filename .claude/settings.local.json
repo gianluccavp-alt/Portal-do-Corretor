@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx --version)",
+      "PowerShell(Write-Output \"node:\"; \\(Get-Command node -ErrorAction SilentlyContinue\\).Source; Write-Output \"npx:\"; \\(Get-Command npx -ErrorAction SilentlyContinue\\).Source; Write-Output \"py:\"; \\(Get-Command py -ErrorAction SilentlyContinue\\).Source)",
+      "PowerShell(foreach \\($c in 'php','dotnet','ruby','go','python','pwsh'\\) { $s = \\(Get-Command $c -ErrorAction SilentlyContinue\\).Source; if \\($s\\) { Write-Output \"$c -> $s\" } else { Write-Output \"$c -> \\(none\\)\" } })",
+      "PowerShell(& \"C:\\\\Users\\\\de0187988\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-de0187988-OneDrive---Direcional-Engenharia-S-A--rea-de-Trabalho-sitespi\\\\264a76e9-e8a2-44f6-ae4a-9509cafc4704\\\\scratchpad\\\\serve.ps1\" -Root \"C:\\\\Users\\\\de0187988\\\\OneDrive - Direcional Engenharia S A\\\\�rea de Trabalho\\\\sitespi\" -Port 8000)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/empreendimento.html)",
+      "mcp__ad3a7691-be3b-466b-924e-974556866cfb__search_files",
+      "mcp__ad3a7691-be3b-466b-924e-974556866cfb__get_file_permissions",
+      "Bash(curl -s \"http://localhost:8000/assets/config.js\")",
+      "Bash(node -e \"let s='';process.stdin.on\\('data',d=>s+=d\\).on\\('end',\\(\\)=>{try{new Function\\(s\\);console.log\\('config.js: sintaxe OK'\\)}catch\\(e\\){console.log\\('ERRO:',e.message\\)}}\\)\")",
+      "mcp__claude-in-chrome__navigate",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__Claude_Browser__preview_start",
+      "Bash(find \"C:/Users/de0187988/AppData/Local/Temp/claude\" -type f \\\\\\( -iname \"*.png\" -o -iname \"*.jpg\" -o -iname \"*.jpeg\" \\\\\\) -newermt \"-30 minutes\" 2>/dev/null | head -50 *)",
+      "Bash(pwd -W)",
+      "Bash(cygpath -w /tmp/planta_v2f.jpg)",
+      "Bash(mv planta-garden-meio.jpg planta-garden-meio.png)",
+      "Bash(mv implantacao.jpg implantacao.png)",
+      "Bash(curl -s -o /dev/null -w \"home=%{http_code}\\\\n\" http://localhost:5500/)",
+      "Bash(curl -s -o /dev/null -w \"alta-vista=%{http_code}\\\\n\" \"http://localhost:5500/empreendimento.html?e=alta-vista-mangara\")",
+      "Bash(curl -s -o /dev/null -w \"cores-da-mata=%{http_code}\\\\n\" \"http://localhost:5500/empreendimento.html?e=cores-da-mata-mangara\")",
+      "Bash(cp '__TRACKED_VAR__/2QCS Meio.png' assets/img/alta-vista/plantas/planta-2q-meio.png)",
+      "Bash(cp '__TRACKED_VAR__/2Q CS Ponta.png' assets/img/alta-vista/plantas/planta-2q-ponta.png)",
+      "Bash(cp '__TRACKED_VAR__/Studio 1Q.jpg' assets/img/alta-vista/plantas/planta-studio-1q.jpg)",
+      "Bash(cp '__TRACKED_VAR__/Terreo Meio.png' assets/img/alta-vista/plantas/planta-garden-meio.png)",
+      "Bash(cp '__TRACKED_VAR__/Terreo Ponta.png' assets/img/alta-vista/plantas/planta-garden-ponta.png)",
+      "Bash(echo \"== busca ampla por nome ==\" *)",
+      "Bash(git --version)",
+      "Bash(gh --version)",
+      "Bash(gh auth *)",
+      "Bash(git config *)",
+      "Bash(ls \"/c/Program Files/Git/mingw64/bin/git-credential-manager.exe\")",
+      "Bash(command -v git-credential-manager)",
+      "Bash(git remote *)",
+      "Bash(git init *)",
+      "Bash(git add *)"
+    ]
+  }
+}

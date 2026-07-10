@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grupo Direcional - São Paulo Interior</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+  /* ===== Identidade Grupo Direcional (escopo: home) ===== */
+  :root{
+    --dir-red:#E4032B; --dir-red-dark:#B8001F;
+    --dir-grey:#727A7D; --dir-ink:#3A4043; --dir-line:#E7E9EA;
+  }
+  body{background:#F5F6F7;font-family:'DM Sans',sans-serif}
+
+  /* hero com plano de fundo Direcional (setas) */
+  .home-hero{background:#fff url('assets/img/hero-bg.png') center/cover no-repeat;
+    padding:3.5rem 2rem;min-height:380px;
+    display:flex;flex-direction:column;justify-content:center;
+    border-bottom:1px solid var(--dir-line)}
+  .home-hero::before{display:none}
+  /* logo no canto superior direito */
+  .hero-logo{position:absolute;top:26px;right:34px;height:56px;width:auto;z-index:3}
+  @media(max-width:600px){.hero-logo{height:42px;top:18px;right:18px}}
+  .home-brand{color:var(--dir-red);font-weight:500}
+  .home-title{font-family:'DM Sans',sans-serif;font-weight:700;color:var(--dir-ink);letter-spacing:-.5px}
+  .home-title em{color:var(--dir-red);font-style:normal}
+  .home-sub{color:var(--dir-grey)}
+
+  /* rótulo de passo */
+  .step-label{color:var(--dir-red)}
+  .step-label::before{background:var(--dir-red)}
+
+  /* cards de cidade */
+  .city-card{border-color:var(--dir-line)}
+  .city-card:hover{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(58,64,67,.10)}
+  .city-card.active{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(228,3,43,.16)}
+  .city-card-top{background:linear-gradient(135deg,#565D60,#3A4043)}
+  .city-card.active .city-card-top{background:linear-gradient(135deg,var(--dir-red),var(--dir-red-dark))}
+  .city-name{font-family:'DM Sans',sans-serif;font-weight:700}
+  .city-count{color:var(--dir-grey)}
+  .city-count strong{font-family:'DM Sans',sans-serif;color:var(--dir-ink)}
+  .city-arrow{color:var(--dir-red)}
+
+  /* cards de empreendimento */
+  .emp-card{border-color:var(--dir-line)}
+  .emp-card:hover{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(58,64,67,.10)}
+  .emp-thumb{background-color:#3A4043}
+  .emp-thumb::after{background:linear-gradient(transparent 40%,rgba(58,64,67,.7))}
+  .emp-thumb-ph{background:linear-gradient(135deg,#565D60,#3A4043);color:#fff;font-family:'DM Sans',sans-serif;font-weight:700}
+  .emp-city{color:var(--dir-red)}
+  .emp-name{font-family:'DM Sans',sans-serif;font-weight:700;color:var(--dir-ink)}
+  .emp-desc{color:var(--dir-grey)}
+  .emp-cta{color:var(--dir-red)}
+
+  .home-foot{border-top-color:var(--dir-line);color:var(--dir-grey)}
+</style>
+</head>
+<body>
+
+<header class="home-hero">
+  <img class="hero-logo" src="assets/img/logo-direcional.jpg" alt="Grupo Direcional">
+  <div class="home-hero-inner">
+    <div class="home-brand">Portal do Corretor</div>
+    <h1 class="home-title">Grupo Direcional - <em>São Paulo Interior</em></h1>
+    <p class="home-sub">Selecione a cidade e o empreendimento para consultar unidades, valores, plantas e disponibilidade em tempo real.</p>
+  </div>
+</header>
+
+<main class="home-wrap">
+  <div class="step-label">Passo 1 &middot; Escolha a cidade</div>
+  <div class="city-grid" id="city-grid"></div>
+
+  <div id="emp-section" class="home-hidden">
+    <div class="step-label" id="emp-step">Passo 2 &middot; Escolha o empreendimento</div>
+    <div class="emp-grid" id="emp-grid"></div>
+  </div>
+</main>
+
+<footer class="home-foot">Produtos SPI &middot; Dados carregados diretamente da planilha oficial</footer>
+
+<script src="assets/config.js"></script>
+<script>
+(function () {
+  var cityGrid = document.getElementById('city-grid');
+  var empSection = document.getElementById('emp-section');
+  var empGrid = document.getElementById('emp-grid');
+  var empStep = document.getElementById('emp-step');
+
+  window.CITIES.forEach(function (city, idx) {
+    var btn = document.createElement('button');
+    btn.className = 'city-card';
+    btn.innerHTML =
+      '<div class="city-card-top"><div class="city-name">' + city.name + '</div>' +
+      '<div class="city-uf">' + city.uf + '</div></div>' +
+      '<div class="city-card-bottom"><div class="city-count"><strong>' +
+      city.empreendimentos.length + '</strong> empreendimentos</div>' +
+      '<div class="city-arrow">&rarr;</div></div>';
+    btn.addEventListener('click', function () { selectCity(idx, btn); });
+    cityGrid.appendChild(btn);
+  });
+
+  function selectCity(idx, btn) {
+    document.querySelectorAll('.city-card').forEach(function (c) { c.classList.remove('active'); });
+    btn.classList.add('active');
+    var city = window.CITIES[idx];
+    empStep.innerHTML = 'Passo 2 &middot; Empreendimentos em ' + city.name;
+    empGrid.innerHTML = '';
+    city.empreendimentos.forEach(function (emp) {
+      var a = document.createElement('a');
+      a.className = 'emp-card';
+      a.href = 'empreendimento.html?e=' + encodeURIComponent(emp.id);
+      var thumb = emp.heroImg
+        ? '<div class="emp-thumb" style="background-image:url(\'' + emp.heroImg + '\')"></div>'
+        : '<div class="emp-thumb-ph">' + emp.nome.charAt(0) + '</div>';
+      a.innerHTML = thumb +
+        '<div class="emp-body">' +
+        '<div class="emp-city">' + city.name + ' &middot; ' + city.uf + '</div>' +
+        '<div class="emp-name">' + emp.nome + '</div>' +
+        '<div class="emp-desc">' + (emp.sub || '') + '</div>' +
+        '<div class="emp-cta">Ver unidades ' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>' +
+        '</div></div>';
+      empGrid.appendChild(a);
+    });
+    empSection.classList.remove('home-hidden');
+    empSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+})();
+</script>
+</body>
+</html>

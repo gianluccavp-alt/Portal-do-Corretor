@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Empreendimento · Portal do Corretor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div id="app"><!-- montado por JS --></div>
+
+<script src="assets/config.js"></script>
+<script src="assets/data.js"></script>
+<script>
+(function () {
+  function qs(name) {
+    var m = new RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  var empId = qs('e');
+  var emp = empId ? window.findEmpreendimento(empId) : null;
+  var app = document.getElementById('app');
+
+  if (!emp) {
+    app.innerHTML = '<div style="max-width:600px;margin:6rem auto;text-align:center;padding:2rem">' +
+      '<h1 style="font-family:Playfair Display,serif;font-size:2rem;margin-bottom:1rem">Empreendimento não encontrado</h1>' +
+      '<p style="color:var(--muted);margin-bottom:2rem">O link acessado não corresponde a nenhum empreendimento cadastrado.</p>' +
+      '<a href="index.html" style="color:var(--gold)">&larr; Voltar para a página inicial</a></div>';
+    return;
+  }
+  window.CURRENT_EMP = emp;
+  document.title = emp.nome + ' · Portal do Corretor';
+
+  /* ---------- helpers de HTML ---------- */
+  function heroStyle() {
+    if (!emp.heroImg) return "";
+    var s = "background-image:url('" + emp.heroImg + "')";
+    if (emp.heroBlur) s += ";filter:brightness(0.42) blur(3px);transform:scale(1.05)";
+    return s;
+  }
+  var PROX_ICONS = {
+    shopping: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>',
+    lake: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7s6 5.4 6 10.3a6 6 0 0 1-12 0c0-4.9 6-10.3 6-10.3z"></path></svg>',
+    road: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22 8 2"></path><path d="M20 22 16 2"></path><line x1="12" y1="6" x2="12" y2="8"></line><line x1="12" y1="12" x2="12" y2="14"></line><line x1="12" y1="18" x2="12" y2="20"></line></svg>',
+    school: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5z"></path><path d="M6 12v5c0 1 2.7 3 6 3s6-2 6-3v-5"></path></svg>',
+    hospital: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>'
+  };
+  function proximidadesHtml() {
+    if (!emp.proximidades || !emp.proximidades.length) return '';
+    return '<div class="prox"><span class="prox-lbl">Próximo à:</span><div class="prox-items">' +
+      emp.proximidades.map(function (p) {
+        return '<div class="prox-item"><span class="prox-ic">' + (PROX_ICONS[p.icon] || '') + '</span>' +
+          '<span class="prox-name">' + p.label + '</span></div>';
+      }).join('') + '</div></div>';
+  }
+  function badgesHtml() {
+    if (!emp.badges || !emp.badges.length) return '';
+    return '<div class="hero-loc">' + emp.badges.map(function (b) {
+      return '<div class="loc-badge"><span class="loc-dot"></span>' + b + '</div>';
+    }).join('') + '</div>';
+  }
+  function pillsHtml() {
+    if (!emp.pills || !emp.pills.length) return '';
+    return '<div class="pills">' + emp.pills.map(function (p) {
+      return '<div class="pill"><div class="pill-num">' + p.num + '</div><div class="pill-lbl">' + p.lbl + '</div></div>';
+    }).join('') + '</div>';
+  }
+  function torreFilterHtml() {
+    if ((emp.torres || 1) < 2) return '';
+    return '<button class="fbtn" id="torre-btn-1" onclick="setTorre(\'1\',this)">Torre 1</button>' +
+           '<button class="fbtn" id="torre-btn-2" onclick="setTorre(\'2\',this)">Torre 2</button>';
+  }
+  function placeholder(txt) {
+    return '<div class="ph"><div class="ph-icon">&#128247;</div><div>Imagens em breve</div><small>' + txt + '</small></div>';
+  }
+
+  /* ---------- PLANTAS ---------- */
+  function plantasHtml() {
+    if (emp.plantas && emp.plantas.length) {
+      var cards = emp.plantas.map(function (p) {
+        return '<div class="planta-item"><div class="zoom-box"><img class="zoom-img" src="' + p.img + '" alt="' + p.title + '"><div class="zoom-hint">&#128269; Zoom</div></div>' +
+          '<div class="planta-item-cap"><div class="planta-item-title">' + p.title + '</div><div class="planta-item-sub">' + (p.sub || '') + '</div></div></div>';
+      }).join('');
+      return '<div class="plantas-grid">' + cards + '</div>';
+    }
+    return placeholder('Envie as imagens das plantas deste empreendimento para exibi-las aqui.');
+  }
+  // cards de planta exibidos acima das unidades quando um tipo e filtrado
+  function plantaDestaqueHtml() {
+    if (!emp.plantas || !emp.plantas.length) return '';
+    return emp.plantas.filter(function (p) { return p.tipo; }).map(function (p) {
+      return '<div class="planta-card" data-tipo="' + p.tipo + '">' +
+        '<p class="planta-title">' + p.title + '</p>' +
+        '<p class="planta-sub">' + (p.sub || '') + '</p>' +
+        '<div class="zoom-box"><img class="zoom-img" src="' + p.img + '" alt="' + p.title + '"><div class="zoom-hint">&#128269; Zoom</div></div>' +
+      '</div>';
+    }).join('');
+  }
+
+  /* ---------- IMPLANTACAO ---------- */
+  function implantacaoHtml() {
+    var img = emp.implantacao && emp.implantacao.img
+      ? '<div class="zoom-box" style="border-radius:0"><img class="zoom-img" src="' + emp.implantacao.img + '" alt="Implantacao" style="background:#F5F0E8"><div class="zoom-hint">&#128269; Passe o mouse para zoom</div></div>'
+      : placeholder('Envie a planta de implantação deste empreendimento.');
+    var leg = (emp.implantacao && emp.implantacao.legenda && emp.implantacao.legenda.length)
+      ? '<div style="padding:1.5rem 2rem .5rem"><span class="stag">Legenda</span><h3 style="font-family:Playfair Display,serif;font-size:1.2rem;margin-bottom:1rem">Itens de lazer e comodidade</h3></div>' +
+        '<div class="am-grid">' + emp.implantacao.legenda.map(function (nome, i) {
+          var n = (i + 1 < 10 ? '0' : '') + (i + 1);
+          return '<div class="am-item"><span class="am-num">' + n + '</span><span class="am-name">' + nome + '</span></div>';
+        }).join('') + '</div>'
+      : '';
+    return '<div class="impl-wrap">' + img + leg + '</div>';
+  }
+
+  /* ---------- GALERIA ---------- */
+  function galeriaHtml() {
+    var g = emp.galeria || {};
+    if (g.items && g.items.length) {
+      var hero = g.heroImg
+        ? '<div class="gallery-hero"><img src="' + g.heroImg + '" alt="Fachada"><div class="ghc"><div class="ghc-title">' + (g.heroTitle || '') + '</div><div class="ghc-sub">' + (g.heroSub || '') + '</div></div></div>'
+        : '';
+      var cards = g.items.map(function (it) {
+        return '<div class="g-card"><img src="' + it.img + '" alt="' + it.title + '" class="g-img"><div class="g-cap"><div class="g-cap-title">' + it.title + '</div><div class="g-cap-sub">' + (it.sub || '') + '</div></div></div>';
+      }).join('');
+      return hero + '<div class="g-grid">' + cards + '</div>';
+    }
+    return placeholder('Envie os renders/fotos da galeria deste empreendimento.');
+  }
+
+  /* ---------- VAGAS ---------- */
+  function vagasHtml() {
+    if (emp.vagasPdf) {
+      return '<div class="impl-wrap">' +
+        '<iframe class="vagas-pdf" src="' + emp.vagasPdf + '#view=FitH" title="Mapa de Vagas" loading="lazy"></iframe>' +
+        '<div class="pdf-actions"><a class="pdf-link" href="' + emp.vagasPdf + '" target="_blank" rel="noopener">Abrir em nova aba &rarr;</a></div>' +
+      '</div>';
+    }
+    return emp.vagasImg
+      ? '<div class="impl-wrap"><div class="zoom-box" style="border-radius:0"><img class="zoom-img" src="' + emp.vagasImg + '" alt="Mapa de Vagas" style="background:#F5F0E8"><div class="zoom-hint">&#128269; Passe o mouse para zoom</div></div></div>'
+      : placeholder('Envie o mapa de vagas deste empreendimento.');
+  }
+
+  /* ---------- MONTAGEM ---------- */
+  app.innerHTML =
+  '<div class="hero"><div class="hero-bg" style="' + heroStyle() + '"></div><div class="hero-grad"></div>' +
+    '<a class="hero-back" href="index.html">&larr; Todos os empreendimentos</a>' +
+    '<div class="hero-inner">' +
+      '<div class="hero-eyebrow">' + emp.eyebrow + '</div>' +
+      '<h1 class="hero-title">' + emp.titleHtml + '</h1>' +
+      '<p class="hero-sub">' + (emp.sub || '') + '</p>' +
+      proximidadesHtml() + badgesHtml() + pillsHtml() +
+    '</div></div>' +
+
+  '<nav class="nav"><div class="nav-inner">' +
+    '<button class="nav-tab active" onclick="switchTab(\'unidades\',this)">Unidades</button>' +
+    '<button class="nav-tab" onclick="switchTab(\'plantas\',this)">Plantas</button>' +
+    '<button class="nav-tab" onclick="switchTab(\'implantacao\',this)">Implantacao</button>' +
+    '<button class="nav-tab" onclick="switchTab(\'galeria\',this)">Galeria</button>' +
+    (emp.hideVagas ? '' : '<button class="nav-tab" onclick="switchTab(\'vagas\',this)">Mapa de Vagas</button>') +
+    '<div class="upd">' +
+      '<span class="update-status" id="update-status"></span>' +
+      '<span class="last-update" id="last-update"></span>' +
+      '<button class="btn-update" id="btn-update" onclick="doUpdate()">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path></svg>' +
+        'Atualizar planilha</button>' +
+    '</div>' +
+  '</div></nav>' +
+
+  '<div class="section active" id="tab-unidades">' +
+    '<div class="filter-wrap">' +
+      '<div class="filter-row">' +
+        '<span class="flbl">Tipo:</span>' +
+        '<button class="fbtn on" onclick="setFilter(\'todos\',this)">Todos</button>' +
+        '<button class="fbtn" onclick="setFilter(\'2q-meio\',this)">2Q C/S Meio</button>' +
+        '<button class="fbtn" onclick="setFilter(\'2q-ponta\',this)">2Q C/S Ponta</button>' +
+        '<button class="fbtn" onclick="setFilter(\'terreo-meio\',this)">Terreo Meio</button>' +
+        '<button class="fbtn" onclick="setFilter(\'terreo-ponta\',this)">Terreo Ponta</button>' +
+        '<button class="fbtn" onclick="setFilter(\'1q\',this)">Studio 1Q</button>' +
+      '</div>' +
+      '<div class="filter-row" style="border-top:1px solid var(--border);margin-top:0">' +
+        '<span class="flbl">Sol:</span>' +
+        '<button class="fbtn on" id="sol-btn-todos" onclick="setSol(\'todos\',this)">Todos</button>' +
+        '<button class="fbtn" id="sol-btn-nascente" onclick="setSol(\'nascente\',this)">&#9728; Nascente</button>' +
+        '<button class="fbtn" id="sol-btn-poente" onclick="setSol(\'poente\',this)">&#9790; Poente</button>' +
+      '</div>' +
+      '<div class="filter-row" style="border-top:1px solid var(--border);margin-top:0;border-radius:0 0 12px 12px">' +
+        (emp.torres >= 2 ? '<span class="flbl">Torre:</span><button class="fbtn on" id="torre-btn-todos" onclick="setTorre(\'todos\',this)">Todas</button>' + torreFilterHtml() + '<div class="fsep"></div>' : '') +
+        '<span class="flbl">Ordenar:</span>' +
+        '<select class="fsort" id="sort" onchange="renderUnits()">' +
+          '<option value="num-asc" selected>Numeracao</option>' +
+          '<option value="venda-asc">Menor preco</option>' +
+          '<option value="venda-desc">Maior preco</option>' +
+        '</select>' +
+        '<div class="fcount"><strong id="count-label">0</strong> unidades</div>' +
+      '</div>' +
+    '</div>' +
+    '<div id="planta-destaque">' + plantaDestaqueHtml() + '</div>' +
+    '<div class="units-grid" id="units-grid"></div>' +
+  '</div>' +
+
+  '<div class="section" id="tab-plantas">' +
+    '<span class="stag">Tipologias do projeto</span>' +
+    '<h2 class="stitle">Plantas dos Apartamentos</h2>' +
+    '<p class="ssub">Passe o mouse sobre cada planta para dar zoom.</p>' +
+    plantasHtml() +
+  '</div>' +
+
+  '<div class="section" id="tab-implantacao">' +
+    '<span class="stag">Planta oficial do terreno</span>' +
+    '<h2 class="stitle">Implantacao do Empreendimento</h2>' +
+    '<p class="ssub">Passe o mouse para zoom.</p>' +
+    implantacaoHtml() +
+  '</div>' +
+
+  '<div class="section" id="tab-galeria">' +
+    '<span class="stag">Imagens do projeto</span>' +
+    '<h2 class="stitle">' + emp.nome + '</h2>' +
+    '<p class="ssub">Renders e perspectivas arquitetônicas. Imagens ilustrativas.</p>' +
+    galeriaHtml() +
+  '</div>' +
+
+  (emp.hideVagas ? '' :
+  '<div class="section" id="tab-vagas">' +
+    '<h2 class="stitle">Mapa de Vagas</h2>' +
+    '<p class="ssub">Localização das vagas de garagem por torre e por unidade.</p>' +
+    vagasHtml() +
+  '</div>');
+
+  renderUnits();
+  initZoom();
+  doUpdate();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sitespi",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File", "C:\\Users\\de0187988\\AppData\\Local\\Temp\\claude\\C--Users-de0187988-OneDrive---Direcional-Engenharia-S-A--rea-de-Trabalho-sitespi\\264a76e9-e8a2-44f6-ae4a-9509cafc4704\\scratchpad\\serve.ps1",
+        "-Root", "C:\\Users\\de0187988\\OneDrive - Direcional Engenharia S A\\Área de Trabalho\\sitespi",
+        "-Port", "5500"
+      ],
+      "port": 5500
+    }
+  ]
+}
