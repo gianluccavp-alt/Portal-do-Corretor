@@ -186,6 +186,11 @@
         '<button class="fbtn" id="sol-btn-nascente" onclick="setSol(\'nascente\',this)">&#9728; Nascente</button>' +
         '<button class="fbtn" id="sol-btn-poente" onclick="setSol(\'poente\',this)">&#9790; Poente</button>' +
       '</div>' +
+      '<div class="filter-row" style="border-top:1px solid var(--border);margin-top:0">' +
+        '<span class="flbl">Prêmio:</span>' +
+        '<button class="fbtn on" id="premio-btn-com" onclick="setPremio(\'com\',this)">Com Prêmio</button>' +
+        '<button class="fbtn" id="premio-btn-sem" onclick="setPremio(\'sem\',this)">Sem Prêmio</button>' +
+      '</div>' +
       '<div class="filter-row" style="border-top:1px solid var(--border);margin-top:0;border-radius:0 0 12px 12px">' +
         (emp.torres >= 2 ? '<span class="flbl">Torre:</span><button class="fbtn on" id="torre-btn-todos" onclick="setTorre(\'todos\',this)">Todas</button>' + torreFilterHtml() + '<div class="fsep"></div>' : '') +
         '<span class="flbl">Ordenar:</span>' +

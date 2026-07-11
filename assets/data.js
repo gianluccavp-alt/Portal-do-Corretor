@@ -8,6 +8,7 @@ var units = [];              // unidades do empreendimento atual (apos filtro)
 var activeFilter = 'todos';
 var activeSol = 'todos';
 var activeTorre = 'todos';
+var activePremio = 'com';    // 'com' = Com Premio (padrao) | 'sem' = Sem Premio
 var NASCENTE_FINAIS = [3, 4, 5, 6];
 
 var AREA_MAP = { '1q':48, '2q-meio':48, '2q-ponta':46, 'terreo-meio':55, 'terreo-ponta':66 };
@@ -122,18 +123,24 @@ function rowsToUnits(rows, empSheetName) {
     // vagas de garagem nao entram na listagem de unidades
     if (tipoPlanta.toLowerCase().indexOf('vaga') >= 0) continue;
 
-    var valorFinal = parseBR(findFirst(r, [['valor', 'final', 'com', 'kit'], ['valor', 'final', 'kit'], ['valor', 'final']]));
-    var ba         = parseBR(findFirst(r, [['ba', 'unidade'], ['b', 'a', 'da', 'unidade'], ['ba'], ['b', 'a']]));
-    var venda      = valorFinal - ba;
+    var valorFinal   = parseBR(findFirst(r, [['valor', 'final', 'com', 'kit'], ['valor', 'final', 'kit'], ['valor', 'final']]));
+    var ba           = parseBR(findFirst(r, [['ba', 'unidade'], ['b', 'a', 'da', 'unidade'], ['ba'], ['b', 'a']]));
+    var folgaCampG   = parseBR(findFirst(r, [['folga', 'campanha', 'g'], ['folga', 'campanha']]));
+    var folgaTabela  = parseBR(findFirst(r, [['folga', 'de', 'tabela'], ['folga', 'tabela']]));
+    var folgaVoltaCx = parseBR(findFirst(r, [['folga', 'volta', 'caixa'], ['folga', 'volta']]));
 
-    if (venda <= 0) continue;
+    // Valor Tabela Direta = Valor Final Com Kit - B.A. da Unidade - Folga Campanha "G"
+    var tabelaDireta = valorFinal - ba - folgaCampG;
+    // Valor Associativo/Investidor = Tabela Direta - Folga de Tabela
+    var associativo  = tabelaDireta - folgaTabela;
+
+    if (tabelaDireta <= 0) continue;
 
     var apNum, apStr;
     if (apMatch) { apNum = parseInt(apMatch[1], 10); apStr = apMatch[1]; }
     else { apNum = i; apStr = String(i); }
 
     var tipo = parseTipo(tipoPlanta, final);
-    var folga = parseBR(findFirst(r, [['folga', 'de', 'tabela'], ['folga', 'tabela'], ['folga']]));
     var avaliacao = parseBR(findFirst(r, [
       ['valor', 'de', 'avaliacao', 'bancaria'],
       ['valor', 'avaliacao', 'bancaria'],
@@ -144,7 +151,10 @@ function rowsToUnits(rows, empSheetName) {
     result.push({
       ap: apStr, num: apNum, bl: bl, f: final, andar: andar,
       tipo: tipo, tipoLabel: TIPO_LABEL[tipo] || tipo,
-      area: AREA_MAP[tipo] || 48, venda: venda, folga: folga, avaliacao: avaliacao
+      area: AREA_MAP[tipo] || 48,
+      tabelaDireta: tabelaDireta, associativo: associativo,
+      folgaTabela: folgaTabela, folgaVoltaCx: folgaVoltaCx,
+      avaliacao: avaliacao
     });
   }
   return result;
@@ -176,6 +186,19 @@ function setTorre(torre, btn) {
   btn.classList.add('on');
   renderUnits();
 }
+function setPremio(p, btn) {
+  activePremio = p;
+  ['premio-btn-com','premio-btn-sem'].forEach(function (id) {
+    var el = document.getElementById(id); if (el) el.classList.remove('on');
+  });
+  btn.classList.add('on');
+  renderUnits();
+}
+
+/* "Sem Premio" subtrai a Folga Volta ao Caixa dos valores exibidos */
+function premioAdj(u)      { return activePremio === 'sem' ? (u.folgaVoltaCx || 0) : 0; }
+function tabelaDiretaOf(u) { return u.tabelaDireta - premioAdj(u); }
+function associativoOf(u)  { return u.associativo - premioAdj(u); }
 
 /* ---------- render ---------- */
 function renderUnits() {
@@ -222,8 +245,8 @@ function renderUnits() {
       if (a.andar !== b.andar) return a.andar - b.andar;
       return a.f - b.f;
     }
-    if (sortVal === 'venda-asc')  return a.venda - b.venda;
-    if (sortVal === 'venda-desc') return b.venda - a.venda;
+    if (sortVal === 'venda-asc')  return tabelaDiretaOf(a) - tabelaDiretaOf(b);
+    if (sortVal === 'venda-desc') return tabelaDiretaOf(b) - tabelaDiretaOf(a);
     return 0;
   });
 
@@ -243,7 +266,8 @@ function renderUnits() {
     var solColor = (sol === 'Nascente') ? '#C9771A' : '#5A7FA8';
     var solBg = (sol === 'Nascente') ? '#FFF5E6' : '#EBF2FA';
     var solBorder = (sol === 'Nascente') ? '#F5DFB8' : '#C5D8EE';
-    var folgaPct = u.venda ? ((u.folga / u.venda) * 100).toFixed(1) : '0.0';
+    var vTabela = tabelaDiretaOf(u);
+    var vAssoc  = associativoOf(u);
     html += '<div class="u-card">';
     html += '<div class="u-top"><div class="u-top-info">';
     html += '<div class="u-tipo">' + u.tipoLabel + '</div>';
@@ -251,7 +275,7 @@ function renderUnits() {
     html += '</div><span class="u-badge-disp">Disponivel</span></div>';
     html += '<hr class="u-hr">';
     html += '<div class="u-price-row">';
-    html += '<div><div class="u-price-lbl">Valor de Venda</div><div class="u-price">' + fmt(u.venda) + '</div></div>';
+    html += '<div><div class="u-price-lbl">Valor Tabela Direta</div><div class="u-price">' + fmt(vTabela) + '</div></div>';
     if (u.avaliacao && u.avaliacao > 0)
       html += '<div class="u-avaliacao"><div class="u-price-lbl">Valor de Avaliacao</div><div class="u-price u-price-sm">' + fmt(u.avaliacao) + '</div></div>';
     html += '</div>';
@@ -261,7 +285,7 @@ function renderUnits() {
     html += '<div class="u-meta-k" style="color:' + solColor + '">Sol</div>';
     html += '<div class="u-meta-v" style="color:' + solColor + '">' + solIcon + ' ' + sol + '</div></div>';
     html += '</div>';
-    html += '<div class="u-desc"><span class="u-desc-lbl">Desconto Associativo/Investidor</span><span class="u-desc-val">' + fmt(u.folga) + ' (' + folgaPct + '%)</span></div>';
+    html += '<div class="u-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(vAssoc) + ' (Desconto de ' + fmt(u.folgaTabela) + ')</span></div>';
     html += '</div>';
   }
   grid.innerHTML = html;
