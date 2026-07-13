@@ -178,11 +178,13 @@ function rowsToUnits(rows, empSheetName) {
       ['avaliacao', 'bancaria'],
       ['avaliacao']
     ]));
+    // Area privativa direto da planilha ("Area privativa total"), arredondada para inteiro
+    var areaPriv = Math.round(parseBR(findFirst(r, [['area', 'privativa', 'total'], ['area', 'privativa']])));
 
     result.push({
       ap: apStr, num: apNum, bl: bl, f: final, andar: andar,
       tipo: tipo, tipoLabel: tipoLabelFor(window.CURRENT_EMP, tipo),
-      area: AREA_MAP[tipo] || 48,
+      area: areaPriv > 0 ? areaPriv : (AREA_MAP[tipo] || 48),
       tabelaDireta: tabelaDireta, associativo: associativo,
       folgaTabela: folgaTabela, folgaVoltaCx: folgaVoltaCx,
       avaliacao: avaliacao
