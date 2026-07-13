@@ -34,6 +34,16 @@
   window.CURRENT_EMP = emp;
   document.title = emp.nome + ' · Portal do Corretor';
 
+  /* paleta por empreendimento (escopo: esta pagina). Seleto = vinho + terracota do logo */
+  if (emp.theme === 'seleto') {
+    var _themeEl = document.createElement('style');
+    _themeEl.textContent =
+      ':root{--gold:#BE6A3B;--gold-light:#D08C5E;--dark:#5F2B37;--green:#8A3E4C;--green-light:#F5EAEC;}' +
+      '.stag{background:rgba(190,106,59,.10);border-color:rgba(190,106,59,.30)}' +
+      '.u-desc{border-color:#E3C9CE}';
+    document.head.appendChild(_themeEl);
+  }
+
   /* ---------- helpers de HTML ---------- */
   function heroStyle() {
     if (!emp.heroImg) return "";
@@ -69,9 +79,28 @@
     }).join('') + '</div>';
   }
   function torreFilterHtml() {
-    if ((emp.torres || 1) < 2) return '';
-    return '<button class="fbtn" id="torre-btn-1" onclick="setTorre(\'1\',this)">Torre 1</button>' +
-           '<button class="fbtn" id="torre-btn-2" onclick="setTorre(\'2\',this)">Torre 2</button>';
+    var n = emp.torres || 1;
+    if (n < 2) return '';
+    var h = '';
+    for (var t = 1; t <= n; t++)
+      h += '<button class="fbtn" id="torre-btn-' + t + '" onclick="setTorre(\'' + t + '\',this)">Torre ' + t + '</button>';
+    return h;
+  }
+  // botoes do filtro Tipo: usa emp.tipos quando definido (ex.: Seleto), senao o padrao
+  function tipoFilterHtml() {
+    var b = '<button class="fbtn on" onclick="setFilter(\'todos\',this)">Todos</button>';
+    if (emp.tipos && emp.tipos.length) {
+      emp.tipos.forEach(function (t) {
+        b += '<button class="fbtn" onclick="setFilter(\'' + t.key + '\',this)">' + t.label + '</button>';
+      });
+    } else {
+      b += '<button class="fbtn" onclick="setFilter(\'2q-meio\',this)">2Q C/S Meio</button>' +
+           '<button class="fbtn" onclick="setFilter(\'2q-ponta\',this)">2Q C/S Ponta</button>' +
+           '<button class="fbtn" onclick="setFilter(\'terreo-meio\',this)">Terreo Meio</button>' +
+           '<button class="fbtn" onclick="setFilter(\'terreo-ponta\',this)">Terreo Ponta</button>' +
+           '<button class="fbtn" onclick="setFilter(\'1q\',this)">Studio 1Q</button>';
+    }
+    return b;
   }
   function placeholder(txt) {
     return '<div class="ph"><div class="ph-icon">&#128247;</div><div>Imagens em breve</div><small>' + txt + '</small></div>';
@@ -173,12 +202,7 @@
     '<div class="filter-wrap">' +
       '<div class="filter-row">' +
         '<span class="flbl">Tipo:</span>' +
-        '<button class="fbtn on" onclick="setFilter(\'todos\',this)">Todos</button>' +
-        '<button class="fbtn" onclick="setFilter(\'2q-meio\',this)">2Q C/S Meio</button>' +
-        '<button class="fbtn" onclick="setFilter(\'2q-ponta\',this)">2Q C/S Ponta</button>' +
-        '<button class="fbtn" onclick="setFilter(\'terreo-meio\',this)">Terreo Meio</button>' +
-        '<button class="fbtn" onclick="setFilter(\'terreo-ponta\',this)">Terreo Ponta</button>' +
-        '<button class="fbtn" onclick="setFilter(\'1q\',this)">Studio 1Q</button>' +
+        tipoFilterHtml() +
       '</div>' +
       '<div class="filter-row" style="border-top:1px solid var(--border);margin-top:0">' +
         '<span class="flbl">Sol:</span>' +

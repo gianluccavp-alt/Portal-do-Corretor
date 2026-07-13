@@ -121,10 +121,44 @@ window.CITIES = [
         cidade: 'Campinas, SP',
         eyebrow: 'Seleto Amoreiras · Campinas, SP',
         titleHtml: 'Seleto <em>Amoreiras</em>',
-        sub: 'Empreendimento na região das Amoreiras em Campinas.',
-        heroImg: null, badges: [], pills: [], torres: 2,
-        implantacao: { img: null, legenda: [] }, plantas: [],
-        galeria: { heroImg: null, heroTitle: '', heroSub: '', items: [] }, vagasImg: null
+        sub: 'Na região das Amoreiras, em Campinas, mais um sucesso de Vendas Prix e Direcional. Apartamentos de 2 dormitórios com varanda, grill, lazer completo e vaga de garagem. Um condomínio moderno, seguro e cheio de diversão para toda a família, em uma região que está em constante crescimento.',
+        heroImg: 'assets/img/seleto-amoreiras/galeria/08-portaria.jpg', badges: [], pills: [], torres: 3,
+        hideVagas: true, heroBlur: true, theme: 'seleto',
+        tipoRule: 'seleto',
+        solNascente: { default: [2, 4, 6, 8], 3: [1, 3, 5, 7] },
+        tipos: [
+          { key: '2q-ponta',     label: '2Q Tipo - Ponta' },
+          { key: '2q-meio',      label: '2Q Tipo - Meio' },
+          { key: 'terreo-ponta', label: '2Q Garden - Ponta' },
+          { key: 'terreo-meio',  label: '2Q Garden - Meio' }
+        ],
+        implantacao: { img: 'assets/img/seleto-amoreiras/plantas/implantacao.jpg', legenda: [] },
+        plantas: [
+          { tipo: '2q-ponta',     img: 'assets/img/seleto-amoreiras/plantas/planta-2q-ponta.jpg',     title: '2Q Tipo - Ponta',   sub: 'Torres 1, 2 e 3 · Finais 1, 2, 7 e 8' },
+          { tipo: '2q-meio',      img: 'assets/img/seleto-amoreiras/plantas/planta-2q-meio.jpg',      title: '2Q Tipo - Meio',    sub: 'Torres 1, 2 e 3 · Finais 3, 4, 5 e 6' },
+          { tipo: 'terreo-ponta', img: 'assets/img/seleto-amoreiras/plantas/planta-garden-ponta.jpg', title: '2Q Garden - Ponta', sub: 'Térreo · Finais 1, 2, 7 e 8' },
+          { tipo: 'terreo-meio',  img: 'assets/img/seleto-amoreiras/plantas/planta-garden-meio.jpg',  title: '2Q Garden - Meio',  sub: 'Térreo · Finais 3, 4, 5 e 6' }
+        ],
+        galeria: {
+          heroImg: null, heroTitle: '', heroSub: '',
+          items: [
+            { img: 'assets/img/seleto-amoreiras/galeria/01-piscina.jpg',        title: 'Piscina',          sub: 'Área de lazer' },
+            { img: 'assets/img/seleto-amoreiras/galeria/02-quadra.jpg',         title: 'Quadra',           sub: 'Esporte' },
+            { img: 'assets/img/seleto-amoreiras/galeria/03-salao-festas.jpg',   title: 'Salão de Festas',  sub: 'Espaço para eventos' },
+            { img: 'assets/img/seleto-amoreiras/galeria/04-espaco-gourmet.jpg', title: 'Espaço Gourmet',   sub: 'Convívio' },
+            { img: 'assets/img/seleto-amoreiras/galeria/05-praca-multiuso.jpg', title: 'Praça Multiuso',   sub: 'Área comum' },
+            { img: 'assets/img/seleto-amoreiras/galeria/06-praca-multiuso-2.jpg', title: 'Praça Multiuso', sub: 'Área comum' },
+            { img: 'assets/img/seleto-amoreiras/galeria/07-car-wash.jpg',       title: 'Car Wash',         sub: 'Comodidade' },
+            { img: 'assets/img/seleto-amoreiras/galeria/08-portaria.jpg',       title: 'Portaria',         sub: 'Acesso principal' },
+            { img: 'assets/img/seleto-amoreiras/galeria/09-fachada.jpg',        title: 'Fachada',          sub: 'Perspectiva do empreendimento' },
+            { img: 'assets/img/seleto-amoreiras/galeria/10-fitness.jpg',        title: 'Fitness',          sub: 'Academia' },
+            { img: 'assets/img/seleto-amoreiras/galeria/11-pet-place.jpg',      title: 'Pet Place',        sub: 'Espaço para pets' },
+            { img: 'assets/img/seleto-amoreiras/galeria/12-playground.jpg',     title: 'Playground',       sub: 'Lazer infantil' },
+            { img: 'assets/img/seleto-amoreiras/galeria/13-bicicletario.jpg',   title: 'Bicicletário',     sub: 'Bike sharing' },
+            { img: 'assets/img/seleto-amoreiras/galeria/14-bricolagem.jpg',     title: 'Bricolagem',       sub: 'Espaço maker' },
+            { img: 'assets/img/seleto-amoreiras/galeria/15-insercao.jpg',       title: 'Inserção',         sub: 'Implantação no entorno' }
+          ]
+        }, vagasImg: null
       },
       {
         id: 'casa-prado-residencial-riva',

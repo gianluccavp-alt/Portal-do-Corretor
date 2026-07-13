@@ -18,8 +18,18 @@ var TIPO_LABEL = {
 };
 
 /* ---------- helpers ---------- */
-function getSol(f) { return (NASCENTE_FINAIS.indexOf(f) >= 0) ? 'Nascente' : 'Poente'; }
-function getSolIcon(f) { return (NASCENTE_FINAIS.indexOf(f) >= 0) ? '&#9728;' : '&#9790;'; }
+function blocoNum(bl) { var m = ('' + (bl || '')).match(/\d+/); return m ? parseInt(m[0], 10) : 1; }
+// Nascente pode depender do bloco (via emp.solNascente); senao usa o padrao global
+function unitNascente(u) {
+  var emp = window.CURRENT_EMP;
+  if (emp && emp.solNascente) {
+    var list = emp.solNascente[blocoNum(u.bl)] || emp.solNascente['default'] || [];
+    return list.indexOf(u.f) >= 0;
+  }
+  return NASCENTE_FINAIS.indexOf(u.f) >= 0;
+}
+function getSol(u) { return unitNascente(u) ? 'Nascente' : 'Poente'; }
+function getSolIcon(u) { return unitNascente(u) ? '&#9728;' : '&#9790;'; }
 function fmt(v) { return v.toLocaleString('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits:0 }); }
 
 function parseBR(s) {
@@ -71,6 +81,22 @@ function parseTipo(tipoPlanta, final) {
   if (t.indexOf('terreo') >= 0 || t.indexOf('jardim') >= 0 || t.indexOf('garden') >= 0)
     return isPonta ? 'terreo-ponta' : 'terreo-meio';
   return isPonta ? '2q-ponta' : '2q-meio';
+}
+// classificacao por empreendimento (Seleto usa finais + andar; demais usam parseTipo)
+function classifyTipo(emp, tipoPlanta, final, andar) {
+  if (emp && emp.tipoRule === 'seleto') {
+    var ponta = [1, 2, 7, 8].indexOf(final) >= 0;
+    if (andar === 0) return ponta ? 'terreo-ponta' : 'terreo-meio';
+    return ponta ? '2q-ponta' : '2q-meio';
+  }
+  return parseTipo(tipoPlanta, final);
+}
+function tipoLabelFor(emp, tipo) {
+  if (emp && emp.tipos) {
+    for (var i = 0; i < emp.tipos.length; i++)
+      if (emp.tipos[i].key === tipo) return emp.tipos[i].label;
+  }
+  return TIPO_LABEL[tipo] || tipo;
 }
 
 /* ---------- CSV ---------- */
@@ -140,7 +166,7 @@ function rowsToUnits(rows, empSheetName) {
     if (apMatch) { apNum = parseInt(apMatch[1], 10); apStr = apMatch[1]; }
     else { apNum = i; apStr = String(i); }
 
-    var tipo = parseTipo(tipoPlanta, final);
+    var tipo = classifyTipo(window.CURRENT_EMP, tipoPlanta, final, andar);
     var avaliacao = parseBR(findFirst(r, [
       ['valor', 'de', 'avaliacao', 'bancaria'],
       ['valor', 'avaliacao', 'bancaria'],
@@ -150,7 +176,7 @@ function rowsToUnits(rows, empSheetName) {
 
     result.push({
       ap: apStr, num: apNum, bl: bl, f: final, andar: andar,
-      tipo: tipo, tipoLabel: TIPO_LABEL[tipo] || tipo,
+      tipo: tipo, tipoLabel: tipoLabelFor(window.CURRENT_EMP, tipo),
       area: AREA_MAP[tipo] || 48,
       tabelaDireta: tabelaDireta, associativo: associativo,
       folgaTabela: folgaTabela, folgaVoltaCx: folgaVoltaCx,
@@ -180,9 +206,8 @@ function setSol(sol, btn) {
 }
 function setTorre(torre, btn) {
   activeTorre = torre;
-  ['torre-btn-todos','torre-btn-1','torre-btn-2'].forEach(function (id) {
-    var el = document.getElementById(id); if (el) el.classList.remove('on');
-  });
+  var tbtns = document.querySelectorAll('#tab-unidades [id^="torre-btn-"]');
+  for (var i = 0; i < tbtns.length; i++) tbtns[i].classList.remove('on');
   btn.classList.add('on');
   renderUnits();
 }
@@ -226,14 +251,12 @@ function renderUnits() {
     var u = units[i];
     if (activeFilter !== 'todos' && activeFilter !== u.tipo) continue;
     if (activeSol !== 'todos') {
-      var isNascente = NASCENTE_FINAIS.indexOf(u.f) >= 0;
-      if (activeSol === 'nascente' && !isNascente) continue;
-      if (activeSol === 'poente' && isNascente) continue;
+      var nasc = unitNascente(u);
+      if (activeSol === 'nascente' && !nasc) continue;
+      if (activeSol === 'poente' && nasc) continue;
     }
     if (activeTorre !== 'todos') {
-      var blStr = (u.bl || '').toString();
-      var torreNum = blStr.match(/2/) ? '2' : '1';
-      if (activeTorre !== torreNum) continue;
+      if (activeTorre !== String(blocoNum(u.bl))) continue;
     }
     list.push(u);
   }
@@ -262,7 +285,7 @@ function renderUnits() {
   for (var j = 0; j < list.length; j++) {
     var u = list[j];
     var andarLabel = u.andar === 0 ? 'Terreo' : u.andar + '<sup>o</sup> andar';
-    var sol = getSol(u.f), solIcon = getSolIcon(u.f);
+    var sol = getSol(u), solIcon = getSolIcon(u);
     var solColor = (sol === 'Nascente') ? '#C9771A' : '#5A7FA8';
     var solBg = (sol === 'Nascente') ? '#FFF5E6' : '#EBF2FA';
     var solBorder = (sol === 'Nascente') ? '#F5DFB8' : '#C5D8EE';
