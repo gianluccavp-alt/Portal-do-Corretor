@@ -89,6 +89,11 @@ function classifyTipo(emp, tipoPlanta, final, andar) {
     if (andar === 0) return ponta ? 'terreo-ponta' : 'terreo-meio';
     return ponta ? '2q-ponta' : '2q-meio';
   }
+  if (emp && emp.tipoRule === 'casa-prado') {
+    if (andar === 0) return 'garden-ponta';           // andar 0 (qualquer final)
+    if (andar >= 17) return 'cobertura';              // andar 17 (qualquer final)
+    return ([1, 4].indexOf(final) >= 0) ? 'tipo-meio' : 'tipo-ponta'; // andar 1-16
+  }
   return parseTipo(tipoPlanta, final);
 }
 function tipoLabelFor(emp, tipo) {

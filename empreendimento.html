@@ -167,6 +167,11 @@
         '<div class="pdf-actions"><a class="pdf-link" href="' + emp.vagasPdf + '" target="_blank" rel="noopener">Abrir em nova aba &rarr;</a></div>' +
       '</div>';
     }
+    if (emp.vagasImgs && emp.vagasImgs.length) {
+      return '<div class="impl-wrap">' + emp.vagasImgs.map(function (src, i) {
+        return '<div class="zoom-box" style="border-radius:0' + (i ? ';margin-top:1rem' : '') + '"><img class="zoom-img" src="' + src + '" alt="Mapa de Vagas ' + (i + 1) + '" style="background:#F5F0E8"><div class="zoom-hint">&#128269; Passe o mouse para zoom</div></div>';
+      }).join('') + '</div>';
+    }
     return emp.vagasImg
       ? '<div class="impl-wrap"><div class="zoom-box" style="border-radius:0"><img class="zoom-img" src="' + emp.vagasImg + '" alt="Mapa de Vagas" style="background:#F5F0E8"><div class="zoom-hint">&#128269; Passe o mouse para zoom</div></div></div>'
       : placeholder('Envie o mapa de vagas deste empreendimento.');

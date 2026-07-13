@@ -168,9 +168,22 @@ window.CITIES = [
         eyebrow: 'Casa Prado Residencial Riva · Campinas, SP',
         titleHtml: 'Casa Prado <em>Residencial Riva</em>',
         sub: 'Empreendimento Casa Prado em Campinas.',
-        heroImg: null, badges: [], pills: [], torres: 2,
+        heroImg: null, badges: [], pills: [], torres: 1,
+        tipoRule: 'casa-prado',
+        solNascente: { default: [1, 2, 6] },
+        tipos: [
+          { key: 'garden-ponta', label: '3Q C/S Garden - Ponta' },
+          { key: 'tipo-meio',    label: '2Q C/S Tipo - Meio' },
+          { key: 'tipo-ponta',   label: '3Q C/S Tipo - Ponta' },
+          { key: 'cobertura',    label: '3Q C/S Cobertura' }
+        ],
         implantacao: { img: null, legenda: [] }, plantas: [],
-        galeria: { heroImg: null, heroTitle: '', heroSub: '', items: [] }, vagasImg: null
+        galeria: { heroImg: null, heroTitle: '', heroSub: '', items: [] },
+        vagasImgs: [
+          'assets/img/casa-prado/vagas/mapa-vagas-1.jpg',
+          'assets/img/casa-prado/vagas/mapa-vagas-2.jpg',
+          'assets/img/casa-prado/vagas/mapa-vagas-3.jpg'
+        ], vagasImg: null
       }
     ]
   },
