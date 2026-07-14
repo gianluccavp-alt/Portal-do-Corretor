@@ -39,7 +39,9 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(echo \"exit=$?\")",
-      "Bash(git ls-remote *)"
+      "Bash(git ls-remote *)",
+      "PowerShell(& \"C:\\\\Users\\\\de0187988\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-de0187988-OneDrive---Direcional-Engenharia-S-A--rea-de-Trabalho-sitespi\\\\264a76e9-e8a2-44f6-ae4a-9509cafc4704\\\\scratchpad\\\\resize-casa-galeria.ps1\")",
+      "PowerShell(& \"C:\\\\Users\\\\de0187988\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-de0187988-OneDrive---Direcional-Engenharia-S-A--rea-de-Trabalho-sitespi\\\\264a76e9-e8a2-44f6-ae4a-9509cafc4704\\\\scratchpad\\\\resize-casa-galeria2.ps1\")"
     ]
   }
 }

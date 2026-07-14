@@ -34,13 +34,22 @@
   window.CURRENT_EMP = emp;
   document.title = emp.nome + ' · Portal do Corretor';
 
-  /* paleta por empreendimento (escopo: esta pagina). Seleto = vinho + terracota do logo */
-  if (emp.theme === 'seleto') {
-    var _themeEl = document.createElement('style');
-    _themeEl.textContent =
+  /* paleta por empreendimento (escopo: esta pagina) */
+  var THEMES = {
+    // Seleto = vinho + terracota do logo
+    'seleto':
       ':root{--gold:#BE6A3B;--gold-light:#D08C5E;--dark:#5F2B37;--green:#8A3E4C;--green-light:#F5EAEC;}' +
       '.stag{background:rgba(190,106,59,.10);border-color:rgba(190,106,59,.30)}' +
-      '.u-desc{border-color:#E3C9CE}';
+      '.u-desc{border-color:#E3C9CE}',
+    // Casa Prado = verde oliva + dourado do mapa de vagas
+    'casa-prado':
+      ':root{--gold:#B4923F;--gold-light:#CDA85C;--dark:#3E4736;--green:#4F5A45;--green-light:#EBEEE4;}' +
+      '.stag{background:rgba(180,146,63,.12);border-color:rgba(180,146,63,.30)}' +
+      '.u-desc{border-color:#D7DCC9}'
+  };
+  if (emp.theme && THEMES[emp.theme]) {
+    var _themeEl = document.createElement('style');
+    _themeEl.textContent = THEMES[emp.theme];
     document.head.appendChild(_themeEl);
   }
 

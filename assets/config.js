@@ -115,6 +115,65 @@ window.CITIES = [
         }, vagasImg: null
       },
       {
+        id: 'casa-prado-residencial-riva',
+        sheetName: 'Casa Prado Residencial Riva',
+        nome: 'Casa Prado Residencial Riva',
+        cidade: 'Campinas, SP',
+        eyebrow: 'Casa Prado Residencial Riva · Campinas, SP',
+        titleHtml: 'Casa Prado <em>Residencial Riva</em>',
+        sub: 'Mais do que um novo endereço, o Casa Prado nasce como um projeto que traduz o verdadeiro significado de morar em Campinas, SP com qualidade. Localizado em um dos bairros mais valorizados da cidade, o empreendimento reúne natureza, tradição e conveniência em um mesmo cenário. Com apartamentos amplos, conforto elevado e design atemporal, o Casa Prado entrega uma experiência marcada por sofisticação, privacidade e bem-estar no lugar e no momento certo.',
+        heroImg: 'assets/img/casa-prado/portaria.jpg', badges: [], pills: [], torres: 1,
+        heroBlur: true, theme: 'casa-prado',
+        tipoRule: 'casa-prado',
+        solNascente: { default: [1, 2, 6] },
+        tipos: [
+          { key: 'garden-ponta', label: '3Q C/S Garden - Ponta' },
+          { key: 'tipo-meio',    label: '2Q C/S Tipo - Meio' },
+          { key: 'tipo-ponta',   label: '3Q C/S Tipo - Ponta' },
+          { key: 'cobertura',    label: '3Q C/S Cobertura' }
+        ],
+        implantacao: { img: 'assets/img/casa-prado/plantas/implantacao.jpg', legenda: [] },
+        plantas: [
+          { tipo: 'garden-ponta', img: 'assets/img/casa-prado/plantas/planta-garden-ponta.jpg', title: '3Q C/S Garden - Ponta', sub: '3 dorms · 123,52 a 123,77 m² · Térreo' },
+          { tipo: 'tipo-meio',    img: 'assets/img/casa-prado/plantas/planta-tipo-meio.jpg',    title: '2Q C/S Tipo - Meio',   sub: '2 dorms · 69,23 m² · Finais 1 e 4 · Andar 1 a 16' },
+          { tipo: 'tipo-ponta',   img: 'assets/img/casa-prado/plantas/planta-tipo-ponta.jpg',   title: '3Q C/S Tipo - Ponta',  sub: '3 dorms · 95,99 a 96,04 m² · Finais 2, 3, 5 e 6 · Andar 1 a 16' },
+          { tipo: 'cobertura',    img: 'assets/img/casa-prado/plantas/planta-cobertura.jpg',    title: '3Q C/S Cobertura',     sub: '3 dorms · 127,62 a 132,86 m² · Cobertura' }
+        ],
+        galeria: {
+          heroImg: null, heroTitle: '', heroSub: '',
+          items: [
+            { img: 'assets/img/casa-prado/galeria/01-foto-empreendimento.jpg', title: 'Empreendimento',        sub: 'Perspectiva geral' },
+            { img: 'assets/img/casa-prado/galeria/02-piscina.jpg',             title: 'Piscina',               sub: 'Área de lazer' },
+            { img: 'assets/img/casa-prado/galeria/03-piscina-2.jpg',           title: 'Piscina',               sub: 'Área de lazer' },
+            { img: 'assets/img/casa-prado/galeria/04-academia.jpg',            title: 'Academia',              sub: 'Bem-estar' },
+            { img: 'assets/img/casa-prado/galeria/05-espaco-yoga.jpg',         title: 'Espaço Yoga',           sub: 'Bem-estar' },
+            { img: 'assets/img/casa-prado/galeria/06-mini-quadra-areia.jpg',   title: 'Mini Quadra de Areia',  sub: 'Esporte' },
+            { img: 'assets/img/casa-prado/galeria/07-guarita.jpg',             title: 'Guarita',               sub: 'Acesso e segurança' },
+            { img: 'assets/img/casa-prado/galeria/08-hall.jpg',                title: 'Hall',                  sub: 'Ambientes comuns' },
+            { img: 'assets/img/casa-prado/galeria/09-praca-chegada.jpg',       title: 'Praça de Chegada',      sub: 'Ambientes comuns' },
+            { img: 'assets/img/casa-prado/galeria/10-salao-festas.jpg',        title: 'Salão de Festas',       sub: 'Convívio' },
+            { img: 'assets/img/casa-prado/galeria/11-espaco-gourmet.jpg',      title: 'Espaço Gourmet',        sub: 'Convívio' },
+            { img: 'assets/img/casa-prado/galeria/12-sala-estudos.jpg',        title: 'Sala de Estudos',       sub: 'Trabalho e estudo' },
+            { img: 'assets/img/casa-prado/galeria/13-coworking.jpg',           title: 'Coworking',             sub: 'Trabalho e estudo' },
+            { img: 'assets/img/casa-prado/galeria/14-espaco-influencer.jpg',   title: 'Espaço Influencer',     sub: 'Diferenciais' },
+            { img: 'assets/img/casa-prado/galeria/15-mini-mercado.jpg',        title: 'Mini Mercado',          sub: 'Comodidade' },
+            { img: 'assets/img/casa-prado/galeria/16-espaco-delivery.jpg',     title: 'Espaço Delivery',       sub: 'Comodidade' },
+            { img: 'assets/img/casa-prado/galeria/17-fachada.jpg',             title: 'Fachada',               sub: 'Perspectiva do empreendimento' },
+            { img: 'assets/img/casa-prado/galeria/18-vaga-eletrica.jpg',       title: 'Vaga Elétrica',         sub: 'Garagem' },
+            { img: 'assets/img/casa-prado/galeria/19-vaga-deposito.jpg',       title: 'Vaga com Depósito',     sub: 'Garagem' },
+            { img: 'assets/img/casa-prado/galeria/20-pub-cinema.jpg',          title: 'Pub e Cinema',          sub: 'Lazer' },
+            { img: 'assets/img/casa-prado/galeria/21-sala-jogos.jpg',          title: 'Sala de Jogos',         sub: 'Lazer' },
+            { img: 'assets/img/casa-prado/galeria/22-pet-place.jpg',           title: 'Pet Place',             sub: 'Espaço para pets' },
+            { img: 'assets/img/casa-prado/galeria/23-playground.jpg',          title: 'Playground',            sub: 'Lazer infantil' }
+          ]
+        },
+        vagasImgs: [
+          'assets/img/casa-prado/vagas/mapa-vagas-1.jpg',
+          'assets/img/casa-prado/vagas/mapa-vagas-2.jpg',
+          'assets/img/casa-prado/vagas/mapa-vagas-3.jpg'
+        ], vagasImg: null
+      },
+      {
         id: 'seleto-amoreiras',
         sheetName: 'Seleto Amoreiras',
         nome: 'Seleto Amoreiras',
@@ -161,29 +220,17 @@ window.CITIES = [
         }, vagasImg: null
       },
       {
-        id: 'casa-prado-residencial-riva',
-        sheetName: 'Casa Prado Residencial Riva',
-        nome: 'Casa Prado Residencial Riva',
+        id: 'universo-parque-alphaville',
+        sheetName: 'Universo - Parque Alphaville',
+        nome: 'Universo - Parque Alphaville',
         cidade: 'Campinas, SP',
-        eyebrow: 'Casa Prado Residencial Riva · Campinas, SP',
-        titleHtml: 'Casa Prado <em>Residencial Riva</em>',
-        sub: 'Empreendimento Casa Prado em Campinas.',
+        eyebrow: 'Universo - Parque Alphaville · Campinas, SP',
+        titleHtml: 'Universo - <em>Parque Alphaville</em>',
+        sub: 'Em Breve',
+        comingSoon: true,
         heroImg: null, badges: [], pills: [], torres: 1,
-        tipoRule: 'casa-prado',
-        solNascente: { default: [1, 2, 6] },
-        tipos: [
-          { key: 'garden-ponta', label: '3Q C/S Garden - Ponta' },
-          { key: 'tipo-meio',    label: '2Q C/S Tipo - Meio' },
-          { key: 'tipo-ponta',   label: '3Q C/S Tipo - Ponta' },
-          { key: 'cobertura',    label: '3Q C/S Cobertura' }
-        ],
         implantacao: { img: null, legenda: [] }, plantas: [],
-        galeria: { heroImg: null, heroTitle: '', heroSub: '', items: [] },
-        vagasImgs: [
-          'assets/img/casa-prado/vagas/mapa-vagas-1.jpg',
-          'assets/img/casa-prado/vagas/mapa-vagas-2.jpg',
-          'assets/img/casa-prado/vagas/mapa-vagas-3.jpg'
-        ], vagasImg: null
+        galeria: { heroImg: null, heroTitle: '', heroSub: '', items: [] }, vagasImg: null
       }
     ]
   },
@@ -236,6 +283,25 @@ window.CITIES = [
         eyebrow: 'Village Park · Ribeirão Preto, SP',
         titleHtml: 'Village <em>Park</em>',
         sub: 'Empreendimento Village Park em Ribeirão Preto.',
+        heroImg: null, badges: [], pills: [], torres: 2,
+        implantacao: { img: null, legenda: [] }, plantas: [],
+        galeria: { heroImg: null, heroTitle: '', heroSub: '', items: [] }, vagasImg: null
+      }
+    ]
+  },
+  {
+    id: 'sorocaba',
+    name: 'Sorocaba',
+    uf: 'SP',
+    empreendimentos: [
+      {
+        id: 'conquista-vila-da-mata',
+        sheetName: 'Conquista Vila da Mata',
+        nome: 'Conquista Vila da Mata',
+        cidade: 'Sorocaba, SP',
+        eyebrow: 'Conquista Vila da Mata · Sorocaba, SP',
+        titleHtml: 'Conquista <em>Vila da Mata</em>',
+        sub: 'Empreendimento Conquista Vila da Mata em Sorocaba.',
         heroImg: null, badges: [], pills: [], torres: 2,
         implantacao: { img: null, legenda: [] }, plantas: [],
         galeria: { heroImg: null, heroTitle: '', heroSub: '', items: [] }, vagasImg: null

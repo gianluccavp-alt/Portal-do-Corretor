@@ -55,6 +55,14 @@
   .emp-desc{color:var(--dir-grey)}
   .emp-cta{color:var(--dir-red)}
 
+  /* card "Em Breve" (nao clicavel) */
+  .emp-card-soon{cursor:default}
+  .emp-card-soon:hover{border-color:var(--dir-line);box-shadow:none}
+  .emp-card-soon .emp-thumb-ph{background:linear-gradient(135deg,#8A9196,#5A6266)}
+  .emp-soon-tag{display:inline-block;margin-top:.35rem;padding:.15rem .6rem;
+    border:1px solid var(--dir-line);border-radius:999px;
+    font-size:.72rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--dir-grey)}
+
   .home-foot{border-top-color:var(--dir-line);color:var(--dir-grey)}
 </style>
 </head>
@@ -109,12 +117,27 @@
     empStep.innerHTML = 'Passo 2 &middot; Empreendimentos em ' + city.name;
     empGrid.innerHTML = '';
     city.empreendimentos.forEach(function (emp) {
-      var a = document.createElement('a');
-      a.className = 'emp-card';
-      a.href = 'empreendimento.html?e=' + encodeURIComponent(emp.id);
       var thumb = emp.heroImg
         ? '<div class="emp-thumb" style="background-image:url(\'' + emp.heroImg + '\')"></div>'
         : '<div class="emp-thumb-ph">' + emp.nome.charAt(0) + '</div>';
+
+      // card "Em Breve": apenas visual, sem link
+      if (emp.comingSoon) {
+        var d = document.createElement('div');
+        d.className = 'emp-card emp-card-soon';
+        d.innerHTML = thumb +
+          '<div class="emp-body">' +
+          '<div class="emp-city">' + city.name + ' &middot; ' + city.uf + '</div>' +
+          '<div class="emp-name">' + emp.nome + '</div>' +
+          '<div class="emp-desc"><span class="emp-soon-tag">' + (emp.sub || 'Em Breve') + '</span></div>' +
+          '</div>';
+        empGrid.appendChild(d);
+        return;
+      }
+
+      var a = document.createElement('a');
+      a.className = 'emp-card';
+      a.href = 'empreendimento.html?e=' + encodeURIComponent(emp.id);
       a.innerHTML = thumb +
         '<div class="emp-body">' +
         '<div class="emp-city">' + city.name + ' &middot; ' + city.uf + '</div>' +
