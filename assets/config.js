@@ -243,13 +243,48 @@ window.CITIES = [
         id: 'direcional-conquista-clube-ipiranga',
         sheetName: 'Direcional Conquista Clube Ipiranga',
         nome: 'Direcional Conquista Clube Ipiranga',
+        cardNome: 'Conquista Clube Ipiranga',
         cidade: 'Ribeirão Preto, SP',
         eyebrow: 'Direcional Conquista Clube Ipiranga · Ribeirão Preto, SP',
         titleHtml: 'Direcional Conquista <em>Clube Ipiranga</em>',
-        sub: 'Empreendimento no bairro Ipiranga em Ribeirão Preto.',
-        heroImg: null, badges: [], pills: [], torres: 2,
-        implantacao: { img: null, legenda: [] }, plantas: [],
-        galeria: { heroImg: null, heroTitle: '', heroSub: '', items: [] }, vagasImg: null
+        sub: 'O Conquista Clube Ipiranga reúne tudo o que você precisa para viver com mais conforto e praticidade. Com apartamentos de 2 dormitórios, elevador, lazer completo e uma localização estratégica no coração do Ipiranga, oferece fácil acesso às principais vias, comércios e serviços da cidade. Um empreendimento pensado para quem deseja conquistar o primeiro imóvel com qualidade de vida e excelente potencial de valorização.',
+        heroImg: 'assets/img/ipiranga/galeria/01-guarita.jpg',
+        heroBlur: true, theme: 'ipiranga',
+        badges: [], pills: [], torres: 4,
+        hideVagas: true, hideSol: true,
+        tipoRule: 'ipiranga',
+        tipos: [
+          { key: 'tipo-meio',            label: '2Q Tipo - Meio' },
+          { key: 'tipo-ponta',           label: '2Q Tipo - Ponta' },
+          { key: 'garden-ponta',         label: '2Q Garden - Ponta' },
+          { key: 'garden-meio',          label: '2Q Garden - Meio' },
+          { key: 'garden-meio-adaptado', label: '2Q Garden - Meio Adaptado' }
+        ],
+        implantacao: { img: 'assets/img/ipiranga/plantas/implantacao.jpg', legenda: [] },
+        plantas: [
+          { tipo: 'tipo-meio',            img: 'assets/img/ipiranga/plantas/planta-tipo-meio.jpg',            title: '2Q Tipo - Meio',            sub: 'Finais 1, 2, 5, 6, 7, 8, 11 e 12 · Andar 1+' },
+          { tipo: 'tipo-ponta',           img: 'assets/img/ipiranga/plantas/planta-tipo-ponta.jpg',           title: '2Q Tipo - Ponta',           sub: 'Finais 3, 4, 9 e 10 · Andar 1+' },
+          { tipo: 'garden-ponta',         img: 'assets/img/ipiranga/plantas/planta-garden-ponta.jpg',         title: '2Q Garden - Ponta',         sub: 'Finais 3, 4, 9 e 10 · Térreo' },
+          { tipo: 'garden-meio',          img: 'assets/img/ipiranga/plantas/planta-garden-meio.jpg',          title: '2Q Garden - Meio',          sub: 'Térreo · Finais de meio' },
+          { tipo: 'garden-meio-adaptado', img: 'assets/img/ipiranga/plantas/planta-garden-meio-adaptado.jpg', title: '2Q Garden - Meio Adaptado', sub: 'Térreo · Unidade adaptada (PcD)' }
+        ],
+        galeria: {
+          heroImg: null, heroTitle: '', heroSub: '',
+          items: [
+            { img: 'assets/img/ipiranga/galeria/01-guarita.jpg',           title: 'Guarita',           sub: 'Acesso e segurança' },
+            { img: 'assets/img/ipiranga/galeria/02-piscina.jpg',           title: 'Piscina',           sub: 'Área de lazer' },
+            { img: 'assets/img/ipiranga/galeria/03-fitness.jpg',           title: 'Fitness',           sub: 'Bem-estar' },
+            { img: 'assets/img/ipiranga/galeria/04-playground.jpg',        title: 'Playground',        sub: 'Lazer infantil' },
+            { img: 'assets/img/ipiranga/galeria/05-brinquedoteca.jpg',     title: 'Brinquedoteca',     sub: 'Lazer infantil' },
+            { img: 'assets/img/ipiranga/galeria/06-area-gourmet.jpg',      title: 'Área Gourmet',      sub: 'Convívio' },
+            { img: 'assets/img/ipiranga/galeria/07-espaco-happy-hour.jpg', title: 'Espaço Happy Hour', sub: 'Convívio' },
+            { img: 'assets/img/ipiranga/galeria/08-mini-mercado.jpg',      title: 'Mini Mercado',      sub: 'Comodidade' },
+            { img: 'assets/img/ipiranga/galeria/09-coworking.jpg',         title: 'Coworking',         sub: 'Trabalho e estudo' },
+            { img: 'assets/img/ipiranga/galeria/10-pet-place.jpg',         title: 'Pet Place',         sub: 'Espaço para pets' },
+            { img: 'assets/img/ipiranga/galeria/11-bicicletario.jpg',      title: 'Bicicletário',      sub: 'Mobilidade' },
+            { img: 'assets/img/ipiranga/galeria/12-vista-aerea.jpg',       title: 'Vista Aérea',       sub: 'Perspectiva do empreendimento' }
+          ]
+        }, vagasImg: null
       },
       {
         id: 'reserva-direcional-jardim-botanico',

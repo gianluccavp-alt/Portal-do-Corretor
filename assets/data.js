@@ -83,7 +83,7 @@ function parseTipo(tipoPlanta, final) {
   return isPonta ? '2q-ponta' : '2q-meio';
 }
 // classificacao por empreendimento (Seleto usa finais + andar; demais usam parseTipo)
-function classifyTipo(emp, tipoPlanta, final, andar) {
+function classifyTipo(emp, tipoPlanta, final, andar, bl) {
   if (emp && emp.tipoRule === 'seleto') {
     var ponta = [1, 2, 7, 8].indexOf(final) >= 0;
     if (andar === 0) return ponta ? 'terreo-ponta' : 'terreo-meio';
@@ -93,6 +93,18 @@ function classifyTipo(emp, tipoPlanta, final, andar) {
     if (andar === 0) return 'garden-ponta';           // andar 0 (qualquer final)
     if (andar >= 17) return 'cobertura';              // andar 17 (qualquer final)
     return ([1, 4].indexOf(final) >= 0) ? 'tipo-meio' : 'tipo-ponta'; // andar 1-16
+  }
+  if (emp && emp.tipoRule === 'ipiranga') {
+    var pontaF = [3, 4, 9, 10];
+    if (andar >= 1) {                                 // Tipo (andar 1+)
+      return pontaF.indexOf(final) >= 0 ? 'tipo-ponta' : 'tipo-meio';
+    }
+    // andar 0 = Garden
+    if (pontaF.indexOf(final) >= 0) return 'garden-ponta';
+    // Garden Meio x Adaptado depende da torre (bloco)
+    var torre = blocoNum(bl);
+    var adaptado = (torre === 4) ? [1] : [1, 6, 7];
+    return adaptado.indexOf(final) >= 0 ? 'garden-meio-adaptado' : 'garden-meio';
   }
   return parseTipo(tipoPlanta, final);
 }
@@ -171,7 +183,7 @@ function rowsToUnits(rows, empSheetName) {
     if (apMatch) { apNum = parseInt(apMatch[1], 10); apStr = apMatch[1]; }
     else { apNum = i; apStr = String(i); }
 
-    var tipo = classifyTipo(window.CURRENT_EMP, tipoPlanta, final, andar);
+    var tipo = classifyTipo(window.CURRENT_EMP, tipoPlanta, final, andar, bl);
     var avaliacao = parseBR(findFirst(r, [
       ['valor', 'de', 'avaliacao', 'bancaria'],
       ['valor', 'avaliacao', 'bancaria'],
@@ -291,6 +303,7 @@ function renderUnits() {
   var html = '';
   for (var j = 0; j < list.length; j++) {
     var u = list[j];
+    var hideSol = window.CURRENT_EMP && window.CURRENT_EMP.hideSol;
     var andarLabel = u.andar === 0 ? 'Terreo' : u.andar + '<sup>o</sup> andar';
     var sol = getSol(u), solIcon = getSolIcon(u);
     var solColor = (sol === 'Nascente') ? '#C9771A' : '#5A7FA8';
@@ -310,10 +323,12 @@ function renderUnits() {
       html += '<div class="u-avaliacao"><div class="u-price-lbl">Valor de Avaliacao</div><div class="u-price u-price-sm">' + fmt(u.avaliacao) + '</div></div>';
     html += '</div>';
     html += '<div class="u-meta">';
-    html += '<div class="u-meta-box"><div class="u-meta-k">Area privativa</div><div class="u-meta-v">' + u.area + ' m&sup2;</div></div>';
-    html += '<div class="u-meta-box" style="background:' + solBg + ';border:1px solid ' + solBorder + '">';
-    html += '<div class="u-meta-k" style="color:' + solColor + '">Sol</div>';
-    html += '<div class="u-meta-v" style="color:' + solColor + '">' + solIcon + ' ' + sol + '</div></div>';
+    html += '<div class="u-meta-box"' + (hideSol ? ' style="grid-column:1/-1"' : '') + '><div class="u-meta-k">Area privativa</div><div class="u-meta-v">' + u.area + ' m&sup2;</div></div>';
+    if (!hideSol) {
+      html += '<div class="u-meta-box" style="background:' + solBg + ';border:1px solid ' + solBorder + '">';
+      html += '<div class="u-meta-k" style="color:' + solColor + '">Sol</div>';
+      html += '<div class="u-meta-v" style="color:' + solColor + '">' + solIcon + ' ' + sol + '</div></div>';
+    }
     html += '</div>';
     html += '<div class="u-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(vAssoc) + ' (Desconto de ' + fmt(u.folgaTabela) + ')</span></div>';
     html += '</div>';

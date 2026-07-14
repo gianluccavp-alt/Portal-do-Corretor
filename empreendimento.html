@@ -45,7 +45,13 @@
     'casa-prado':
       ':root{--gold:#B4923F;--gold-light:#CDA85C;--dark:#3E4736;--green:#4F5A45;--green-light:#EBEEE4;}' +
       '.stag{background:rgba(180,146,63,.12);border-color:rgba(180,146,63,.30)}' +
-      '.u-desc{border-color:#D7DCC9}'
+      '.u-desc{border-color:#D7DCC9}',
+    // Ipiranga = azul + dourado + vermelho do logo Conquista
+    'ipiranga':
+      ':root{--gold:#1E86C4;--gold-light:#55AFE4;--dark:#0F4C6B;--green:#B4890A;--green-light:#FBF3D2;}' +
+      '.hero-eyebrow::before{background:#CB0935}' +
+      '.stag{background:rgba(30,134,196,.10);border-color:rgba(30,134,196,.30)}' +
+      '.u-desc{border-color:#CFE6F5}'
   };
   if (emp.theme && THEMES[emp.theme]) {
     var _themeEl = document.createElement('style');
@@ -218,12 +224,13 @@
         '<span class="flbl">Tipo:</span>' +
         tipoFilterHtml() +
       '</div>' +
+      (emp.hideSol ? '' :
       '<div class="filter-row" style="border-top:1px solid var(--border);margin-top:0">' +
         '<span class="flbl">Sol:</span>' +
         '<button class="fbtn on" id="sol-btn-todos" onclick="setSol(\'todos\',this)">Todos</button>' +
         '<button class="fbtn" id="sol-btn-nascente" onclick="setSol(\'nascente\',this)">&#9728; Nascente</button>' +
         '<button class="fbtn" id="sol-btn-poente" onclick="setSol(\'poente\',this)">&#9790; Poente</button>' +
-      '</div>' +
+      '</div>') +
       '<div class="filter-row" style="border-top:1px solid var(--border);margin-top:0">' +
         '<span class="flbl">Prêmio:</span>' +
         '<button class="fbtn on" id="premio-btn-com" onclick="setPremio(\'com\',this)">Com Prêmio</button>' +

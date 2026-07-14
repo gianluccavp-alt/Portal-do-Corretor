@@ -117,9 +117,10 @@
     empStep.innerHTML = 'Passo 2 &middot; Empreendimentos em ' + city.name;
     empGrid.innerHTML = '';
     city.empreendimentos.forEach(function (emp) {
+      var cardName = emp.cardNome || emp.nome;
       var thumb = emp.heroImg
         ? '<div class="emp-thumb" style="background-image:url(\'' + emp.heroImg + '\')"></div>'
-        : '<div class="emp-thumb-ph">' + emp.nome.charAt(0) + '</div>';
+        : '<div class="emp-thumb-ph">' + cardName.charAt(0) + '</div>';
 
       // card "Em Breve": apenas visual, sem link
       if (emp.comingSoon) {
@@ -128,7 +129,7 @@
         d.innerHTML = thumb +
           '<div class="emp-body">' +
           '<div class="emp-city">' + city.name + ' &middot; ' + city.uf + '</div>' +
-          '<div class="emp-name">' + emp.nome + '</div>' +
+          '<div class="emp-name">' + cardName + '</div>' +
           '<div class="emp-desc"><span class="emp-soon-tag">' + (emp.sub || 'Em Breve') + '</span></div>' +
           '</div>';
         empGrid.appendChild(d);
@@ -141,7 +142,7 @@
       a.innerHTML = thumb +
         '<div class="emp-body">' +
         '<div class="emp-city">' + city.name + ' &middot; ' + city.uf + '</div>' +
-        '<div class="emp-name">' + emp.nome + '</div>' +
+        '<div class="emp-name">' + cardName + '</div>' +
         '<div class="emp-desc">' + (emp.sub || '') + '</div>' +
         '<div class="emp-cta">Ver unidades ' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>' +
