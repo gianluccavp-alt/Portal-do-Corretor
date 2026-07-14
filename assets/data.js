@@ -106,6 +106,19 @@ function classifyTipo(emp, tipoPlanta, final, andar, bl) {
     var adaptado = (torre === 4) ? [1] : [1, 6, 7];
     return adaptado.indexOf(final) >= 0 ? 'garden-meio-adaptado' : 'garden-meio';
   }
+  if (emp && emp.tipoRule === 'village-park') {
+    // PCD e marcado na planilha (coluna Tipo Planta/Area); sao todos Final 7
+    if (/pcd/i.test(tipoPlanta || '')) return 'tipo-ponta-pcd';
+    if (andar >= 1) {                                 // Tipo (andar 1+)
+      if ([2, 3, 6, 7].indexOf(final) >= 0) return 'tipo-ponta';   // 3QCS Tipo Ponta
+      if (final === 8) return 'office-tipo-meio';                  // 2QCS Office Tipo Meio
+      return 'tipo-meio';                                          // finais 1,4,5
+    }
+    // andar 0 = Garden
+    if (final === 8) return 'office-garden-meio';                  // 1Q Office Garden Meio
+    if ([4, 5].indexOf(final) >= 0) return 'garden-meio';          // 2QCS Garden Meio
+    return 'garden-ponta';                                         // finais 2,3,6
+  }
   return parseTipo(tipoPlanta, final);
 }
 function tipoLabelFor(emp, tipo) {

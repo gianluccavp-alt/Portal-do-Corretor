@@ -317,10 +317,63 @@ window.CITIES = [
         cidade: 'Ribeirão Preto, SP',
         eyebrow: 'Village Park · Ribeirão Preto, SP',
         titleHtml: 'Village <em>Park</em>',
-        sub: 'Empreendimento Village Park em Ribeirão Preto.',
-        heroImg: null, badges: [], pills: [], torres: 2,
-        implantacao: { img: null, legenda: [] }, plantas: [],
-        galeria: { heroImg: null, heroTitle: '', heroSub: '', items: [] }, vagasImg: null
+        sub: 'O Guaporé ganha ainda mais destaque com o Village Park no Complexo Residencial Veredas de Ribeirão. Apartamentos de 2 e 3 dormitórios, com suíte, varanda gourmet, lazer completo e 1 ou 2 vagas de garagem. Um condomínio clube moderno, repleto de lazer e comodidade, em uma região em constante crescimento, ideal para quem busca qualidade de vida e valorização.',
+        heroImg: 'assets/img/village-park/galeria/01-fachada.jpg',
+        heroBlur: true, theme: 'village-park',
+        badges: [], pills: [], torres: 3,
+        hideVagas: true,
+        tipoRule: 'village-park',
+        solNascente: { 1: [2, 7, 8], 2: [3, 4, 5, 6], 3: [2, 7, 8] },
+        tipos: [
+          { key: 'tipo-ponta',         label: '3Q C/S Tipo - Ponta' },
+          { key: 'tipo-ponta-pcd',     label: '2Q C/S Tipo - Ponta PCD' },
+          { key: 'tipo-meio',          label: '2Q C/S Tipo - Meio' },
+          { key: 'office-tipo-meio',   label: '2Q C/S Office Tipo - Meio' },
+          { key: 'office-garden-meio', label: '1Q Office Garden - Meio' },
+          { key: 'garden-meio',        label: '2Q C/S Garden - Meio' },
+          { key: 'garden-ponta',       label: '3Q C/S Garden - Ponta' }
+        ],
+        implantacao: { img: 'assets/img/village-park/plantas/implantacao.jpg', legenda: [] },
+        plantas: [
+          { tipo: 'tipo-ponta',         img: 'assets/img/village-park/plantas/planta-tipo-ponta.jpg',         title: '3Q C/S Tipo - Ponta',        sub: 'Finais 2, 3, 6 e 7 · Andar 1+' },
+          { tipo: 'tipo-ponta-pcd',     img: 'assets/img/village-park/plantas/planta-tipo-ponta-pcd.jpg',     title: '2Q C/S Tipo - Ponta PCD',    sub: 'Final 7 · Unidade adaptada (PcD)' },
+          { tipo: 'tipo-meio',          img: 'assets/img/village-park/plantas/planta-tipo-meio.jpg',          title: '2Q C/S Tipo - Meio',         sub: 'Finais 1, 4 e 5 · Andar 1+' },
+          { tipo: 'office-tipo-meio',   img: 'assets/img/village-park/plantas/planta-office-tipo-meio.jpg',   title: '2Q C/S Office Tipo - Meio',  sub: 'Final 8 · Andar 1+' },
+          { tipo: 'office-garden-meio', img: 'assets/img/village-park/plantas/planta-office-garden-meio.jpg', title: '1Q Office Garden - Meio',    sub: 'Final 8 · Térreo' },
+          { tipo: 'garden-meio',        img: 'assets/img/village-park/plantas/planta-garden-meio.jpg',        title: '2Q C/S Garden - Meio',       sub: 'Finais 4 e 5 · Térreo' },
+          { tipo: 'garden-ponta',       img: 'assets/img/village-park/plantas/planta-garden-ponta.jpg',       title: '3Q C/S Garden - Ponta',      sub: 'Finais 2, 3 e 6 · Térreo' }
+        ],
+        galeria: {
+          heroImg: null, heroTitle: '', heroSub: '',
+          items: [
+            { img: 'assets/img/village-park/galeria/01-fachada.jpg',        title: 'Fachada',          sub: 'Perspectiva do empreendimento' },
+            { img: 'assets/img/village-park/galeria/02-vista-aerea.jpg',    title: 'Vista Aérea',      sub: 'Implantação geral' },
+            { img: 'assets/img/village-park/galeria/03-portaria.jpg',       title: 'Portaria',         sub: 'Acesso e segurança' },
+            { img: 'assets/img/village-park/galeria/04-praca.jpg',          title: 'Praça',            sub: 'Área comum' },
+            { img: 'assets/img/village-park/galeria/05-piscina.jpg',        title: 'Piscina',          sub: 'Área de lazer' },
+            { img: 'assets/img/village-park/galeria/06-beauty.jpg',         title: 'Espaço Beauty',    sub: 'Bem-estar' },
+            { img: 'assets/img/village-park/galeria/07-bikeshare.jpg',      title: 'Bike Share',       sub: 'Mobilidade' },
+            { img: 'assets/img/village-park/galeria/08-carshare.jpg',       title: 'Car Share',        sub: 'Mobilidade' },
+            { img: 'assets/img/village-park/galeria/09-churrasqueira.jpg',  title: 'Churrasqueira',    sub: 'Convívio' },
+            { img: 'assets/img/village-park/galeria/10-cowork.jpg',         title: 'Coworking',        sub: 'Trabalho e estudo' },
+            { img: 'assets/img/village-park/galeria/11-crossfit.jpg',       title: 'Crossfit',         sub: 'Bem-estar' },
+            { img: 'assets/img/village-park/galeria/12-delivery.jpg',       title: 'Espaço Delivery',  sub: 'Comodidade' },
+            { img: 'assets/img/village-park/galeria/13-salao-festas.jpg',   title: 'Salão de Festas',  sub: 'Convívio' },
+            { img: 'assets/img/village-park/galeria/14-academia.jpg',       title: 'Academia',         sub: 'Bem-estar' },
+            { img: 'assets/img/village-park/galeria/15-village-club-1.jpg', title: 'Village Club',     sub: 'Clube' },
+            { img: 'assets/img/village-park/galeria/16-village-club-2.jpg', title: 'Village Club',     sub: 'Clube' },
+            { img: 'assets/img/village-park/galeria/17-village-club-3.jpg', title: 'Village Club',     sub: 'Clube' },
+            { img: 'assets/img/village-park/galeria/18-pub-jogos.jpg',      title: 'Pub e Jogos',      sub: 'Lazer' },
+            { img: 'assets/img/village-park/galeria/19-brinquedoteca.jpg',  title: 'Brinquedoteca',    sub: 'Lazer infantil' },
+            { img: 'assets/img/village-park/galeria/20-lounge-festas.jpg',  title: 'Lounge de Festas', sub: 'Convívio' },
+            { img: 'assets/img/village-park/galeria/21-minimarket.jpg',     title: 'Minimarket',       sub: 'Comodidade' },
+            { img: 'assets/img/village-park/galeria/22-petplace.jpg',       title: 'Pet Place',        sub: 'Espaço para pets' },
+            { img: 'assets/img/village-park/galeria/23-piquenique.jpg',     title: 'Área de Piquenique', sub: 'Convívio' },
+            { img: 'assets/img/village-park/galeria/24-playground.jpg',     title: 'Playground',       sub: 'Lazer infantil' },
+            { img: 'assets/img/village-park/galeria/25-beach-tennis.jpg',   title: 'Beach Tennis',     sub: 'Esporte' },
+            { img: 'assets/img/village-park/galeria/26-quadra.jpg',         title: 'Quadra',           sub: 'Esporte' }
+          ]
+        }, vagasImg: null
       }
     ]
   },

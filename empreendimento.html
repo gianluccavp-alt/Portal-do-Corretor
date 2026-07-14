@@ -51,7 +51,12 @@
       ':root{--gold:#1E86C4;--gold-light:#55AFE4;--dark:#0F4C6B;--green:#B4890A;--green-light:#FBF3D2;}' +
       '.hero-eyebrow::before{background:#CB0935}' +
       '.stag{background:rgba(30,134,196,.10);border-color:rgba(30,134,196,.30)}' +
-      '.u-desc{border-color:#CFE6F5}'
+      '.u-desc{border-color:#CFE6F5}',
+    // Village Park = verde pistache + verde novus + ocre novus
+    'village-park':
+      ':root{--gold:#B79332;--gold-light:#8FA658;--dark:#394A20;--green:#4F6B2E;--green-light:#EAF1DD;}' +
+      '.stag{background:rgba(124,147,69,.12);border-color:rgba(124,147,69,.30)}' +
+      '.u-desc{border-color:#D8E2C6}'
   };
   if (emp.theme && THEMES[emp.theme]) {
     var _themeEl = document.createElement('style');
