@@ -56,7 +56,12 @@
     'village-park':
       ':root{--gold:#B79332;--gold-light:#8FA658;--dark:#394A20;--green:#4F6B2E;--green-light:#EAF1DD;}' +
       '.stag{background:rgba(124,147,69,.12);border-color:rgba(124,147,69,.30)}' +
-      '.u-desc{border-color:#D8E2C6}'
+      '.u-desc{border-color:#D8E2C6}',
+    // Village Gaia = coral + teal escuro do logo
+    'village-gaia':
+      ':root{--gold:#D8695D;--gold-light:#F28B82;--dark:#2C4444;--green:#3A5A56;--green-light:#E5EFEC;}' +
+      '.stag{background:rgba(242,139,130,.14);border-color:rgba(242,139,130,.35)}' +
+      '.u-desc{border-color:#F3D4CF}'
   };
   if (emp.theme && THEMES[emp.theme]) {
     var _themeEl = document.createElement('style');
@@ -236,7 +241,7 @@
         '<button class="fbtn" id="sol-btn-nascente" onclick="setSol(\'nascente\',this)">&#9728; Nascente</button>' +
         '<button class="fbtn" id="sol-btn-poente" onclick="setSol(\'poente\',this)">&#9790; Poente</button>' +
       '</div>') +
-      '<div class="filter-row" style="border-top:1px solid var(--border);margin-top:0">' +
+      '<div class="filter-row" id="premio-row" style="border-top:1px solid var(--border);margin-top:0">' +
         '<span class="flbl">Prêmio:</span>' +
         '<button class="fbtn on" id="premio-btn-com" onclick="setPremio(\'com\',this)">Com Prêmio</button>' +
         '<button class="fbtn" id="premio-btn-sem" onclick="setPremio(\'sem\',this)">Sem Prêmio</button>' +

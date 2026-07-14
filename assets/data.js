@@ -119,6 +119,16 @@ function classifyTipo(emp, tipoPlanta, final, andar, bl) {
     if ([4, 5].indexOf(final) >= 0) return 'garden-meio';          // 2QCS Garden Meio
     return 'garden-ponta';                                         // finais 2,3,6
   }
+  if (emp && emp.tipoRule === 'village-gaia') {
+    var pontaG = [2, 3, 6, 7];
+    if (andar === 0) {                                // Garden
+      return pontaG.indexOf(final) >= 0 ? 'garden-ponta' : 'garden-meio';
+    }
+    // andar >= 1 (Tipo)
+    if (pontaG.indexOf(final) >= 0) return 'tipo-ponta';           // 2QCS Tipo Ponta
+    if (final === 8) return (andar <= 5) ? 'office-tipo-meio' : 'tipo-meio'; // Office 1-5, Tipo Meio 6+
+    return 'tipo-meio';                                            // finais 1,4,5
+  }
   return parseTipo(tipoPlanta, final);
 }
 function tipoLabelFor(emp, tipo) {
@@ -250,6 +260,25 @@ function setPremio(p, btn) {
   });
   btn.classList.add('on');
   renderUnits();
+}
+
+/* Mostra a linha do filtro de Premio apenas se ao menos uma unidade tiver
+   "Folga Volta ao Caixa" > 0. Reavaliado a cada atualizacao da planilha. */
+function updatePremioVisibility() {
+  var row = document.getElementById('premio-row');
+  if (!row) return;
+  var hasPremio = false;
+  for (var i = 0; i < units.length; i++) {
+    if ((units[i].folgaVoltaCx || 0) > 0) { hasPremio = true; break; }
+  }
+  row.style.display = hasPremio ? '' : 'none';
+  if (!hasPremio) {                    // filtro oculto: garante o padrao "Com Premio"
+    activePremio = 'com';
+    var com = document.getElementById('premio-btn-com');
+    var sem = document.getElementById('premio-btn-sem');
+    if (com) com.classList.add('on');
+    if (sem) sem.classList.remove('on');
+  }
 }
 
 /* "Sem Premio" subtrai a Folga Volta ao Caixa dos valores exibidos */
@@ -403,6 +432,7 @@ function doUpdate() {
       return;
     }
     units = newUnits;
+    updatePremioVisibility();
     renderUnits();
     var now = new Date();
     var hm = now.getHours() + ':' + (now.getMinutes() < 10 ? '0' : '') + now.getMinutes();

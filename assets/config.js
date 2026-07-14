@@ -305,10 +305,59 @@ window.CITIES = [
         cidade: 'Ribeirão Preto, SP',
         eyebrow: 'Village Gaia · Ribeirão Preto, SP',
         titleHtml: 'Village <em>Gaia</em>',
-        sub: 'Empreendimento Village Gaia em Ribeirão Preto.',
-        heroImg: null, badges: [], pills: [], torres: 2,
-        implantacao: { img: null, legenda: [] }, plantas: [],
-        galeria: { heroImg: null, heroTitle: '', heroSub: '', items: [] }, vagasImg: null
+        sub: 'Mais um sucesso na região do Guaporé, no Complexo Residencial Veredas de Ribeirão. Apartamentos de 2 dormitórios com suíte, varanda grill, lazer completo e vaga de garagem. Um condomínio clube moderno, com opções de lazer para toda a família, em uma localização privilegiada no coração da Zona Sul. Conheça o Veredas de Ribeirão e venha viver essa experiência!',
+        heroImg: 'assets/img/village-gaia/galeria/01-fachada.jpg',
+        heroBlur: true, theme: 'village-gaia',
+        badges: [], pills: [], torres: 3,
+        hideVagas: true,
+        tipoRule: 'village-gaia',
+        solNascente: { default: [1, 2, 7, 8] },
+        tipos: [
+          { key: 'tipo-ponta',       label: '2Q C/S Tipo - Ponta' },
+          { key: 'office-tipo-meio', label: '1Q Office Tipo - Meio' },
+          { key: 'tipo-meio',        label: '2Q C/S Tipo - Meio' },
+          { key: 'garden-meio',      label: '2Q C/S Garden - Meio' },
+          { key: 'garden-ponta',     label: '2Q C/S Garden - Ponta' }
+        ],
+        implantacao: { img: 'assets/img/village-gaia/plantas/implantacao.jpg', legenda: [] },
+        plantas: [
+          { tipo: 'tipo-ponta',       img: 'assets/img/village-gaia/plantas/planta-tipo-ponta.jpg',       title: '2Q C/S Tipo - Ponta',   sub: 'Finais 2, 3, 6 e 7 · Andar 1+' },
+          { tipo: 'office-tipo-meio', img: 'assets/img/village-gaia/plantas/planta-office-tipo-meio.jpg', title: '1Q Office Tipo - Meio', sub: 'Final 8 · Andar 1 a 5' },
+          { tipo: 'tipo-meio',        img: 'assets/img/village-gaia/plantas/planta-tipo-meio.jpg',        title: '2Q C/S Tipo - Meio',    sub: 'Finais 1, 4 e 5 (andar 1+) e Final 8 (andar 6+)' },
+          { tipo: 'garden-meio',      img: 'assets/img/village-gaia/plantas/planta-garden-meio.jpg',      title: '2Q C/S Garden - Meio',  sub: 'Finais 1, 4, 5 e 8 · Térreo' },
+          { tipo: 'garden-ponta',     img: 'assets/img/village-gaia/plantas/planta-garden-ponta.jpg',     title: '2Q C/S Garden - Ponta', sub: 'Finais 2, 3, 6 e 7 · Térreo' }
+        ],
+        galeria: {
+          heroImg: null, heroTitle: '', heroSub: '',
+          items: [
+            { img: 'assets/img/village-gaia/galeria/01-fachada.jpg',         title: 'Fachada',            sub: 'Perspectiva do empreendimento' },
+            { img: 'assets/img/village-gaia/galeria/02-torre.jpg',           title: 'Torre',              sub: 'Perspectiva' },
+            { img: 'assets/img/village-gaia/galeria/03-vista-aerea.jpg',     title: 'Vista Aérea',        sub: 'Implantação geral' },
+            { img: 'assets/img/village-gaia/galeria/04-piscina.jpg',         title: 'Piscina',            sub: 'Área de lazer' },
+            { img: 'assets/img/village-gaia/galeria/05-foodtruck.jpg',       title: 'Food Truck',         sub: 'Convívio' },
+            { img: 'assets/img/village-gaia/galeria/06-gourmet.jpg',         title: 'Espaço Gourmet',     sub: 'Convívio' },
+            { img: 'assets/img/village-gaia/galeria/07-crossfit.jpg',        title: 'Crossfit',           sub: 'Bem-estar' },
+            { img: 'assets/img/village-gaia/galeria/08-quadra.jpg',          title: 'Quadra',             sub: 'Esporte' },
+            { img: 'assets/img/village-gaia/galeria/09-playground.jpg',      title: 'Playground',         sub: 'Lazer infantil' },
+            { img: 'assets/img/village-gaia/galeria/10-piquenique.jpg',      title: 'Área de Piquenique', sub: 'Convívio' },
+            { img: 'assets/img/village-gaia/galeria/11-carshare.jpg',        title: 'Car Share',          sub: 'Mobilidade' },
+            { img: 'assets/img/village-gaia/galeria/12-bikeshare.jpg',       title: 'Bike Share',         sub: 'Mobilidade' },
+            { img: 'assets/img/village-gaia/galeria/13-petplace.jpg',        title: 'Pet Place',          sub: 'Espaço para pets' },
+            { img: 'assets/img/village-gaia/galeria/14-academia.jpg',        title: 'Academia',           sub: 'Bem-estar' },
+            { img: 'assets/img/village-gaia/galeria/15-churrasqueira.jpg',   title: 'Churrasqueira',      sub: 'Convívio' },
+            { img: 'assets/img/village-gaia/galeria/16-salao-de-festas.jpg', title: 'Salão de Festas',    sub: 'Convívio' },
+            { img: 'assets/img/village-gaia/galeria/17-spa-massagem.jpg',    title: 'Spa & Massagem',     sub: 'Bem-estar' },
+            { img: 'assets/img/village-gaia/galeria/18-brinquedoteca.jpg',   title: 'Brinquedoteca',      sub: 'Lazer infantil' },
+            { img: 'assets/img/village-gaia/galeria/19-minimarket.jpg',      title: 'Minimarket',         sub: 'Comodidade' },
+            { img: 'assets/img/village-gaia/galeria/20-cinema.jpg',          title: 'Cinema',             sub: 'Lazer' },
+            { img: 'assets/img/village-gaia/galeria/21-pub-de-jogos.jpg',    title: 'Pub de Jogos',       sub: 'Lazer' },
+            { img: 'assets/img/village-gaia/galeria/22-cowork.jpg',          title: 'Coworking',          sub: 'Trabalho e estudo' },
+            { img: 'assets/img/village-gaia/galeria/23-beauty.jpg',          title: 'Espaço Beauty',      sub: 'Bem-estar' },
+            { img: 'assets/img/village-gaia/galeria/24-lavanderia.jpg',      title: 'Lavanderia',         sub: 'Comodidade' },
+            { img: 'assets/img/village-gaia/galeria/25-delivery.jpg',        title: 'Espaço Delivery',    sub: 'Comodidade' },
+            { img: 'assets/img/village-gaia/galeria/26-lazer.jpg',           title: 'Lazer',              sub: 'Área de lazer' }
+          ]
+        }, vagasImg: null
       },
       {
         id: 'village-park',
