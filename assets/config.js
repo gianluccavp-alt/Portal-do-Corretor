@@ -228,7 +228,7 @@ window.CITIES = [
         titleHtml: 'Universo - <em>Parque Alphaville</em>',
         sub: 'Em Breve',
         comingSoon: true,
-        heroImg: null, badges: [], pills: [], torres: 1,
+        heroImg: 'assets/img/universo/logo-universo.jpg', badges: [], pills: [], torres: 1,
         implantacao: { img: null, legenda: [] }, plantas: [],
         galeria: { heroImg: null, heroTitle: '', heroSub: '', items: [] }, vagasImg: null
       }
@@ -331,6 +331,7 @@ window.CITIES = [
             { img: 'assets/img/jardim-botanico/galeria/07-quadra.jpg',          title: 'Quadra',          sub: 'Esporte' },
             { img: 'assets/img/jardim-botanico/galeria/08-crossfit.jpg',        title: 'Crossfit',        sub: 'Bem-estar' },
             { img: 'assets/img/jardim-botanico/galeria/09-playground.jpg',      title: 'Playground',      sub: 'Lazer infantil' },
+            { img: 'assets/img/jardim-botanico/galeria/10-piscina.jpg',         title: 'Piscina e Solarium', sub: 'Área de lazer' },
             { img: 'assets/img/jardim-botanico/galeria/11-salao-de-festas.jpg', title: 'Salão de Festas', sub: 'Convívio' },
             { img: 'assets/img/jardim-botanico/galeria/12-academia.jpg',        title: 'Academia',        sub: 'Bem-estar' },
             { img: 'assets/img/jardim-botanico/galeria/13-bikeshare.jpg',       title: 'Bike Share',      sub: 'Mobilidade' },

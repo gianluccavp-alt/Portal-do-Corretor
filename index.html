@@ -59,6 +59,9 @@
   .emp-card-soon{cursor:default}
   .emp-card-soon:hover{border-color:var(--dir-line);box-shadow:none}
   .emp-card-soon .emp-thumb-ph{background:linear-gradient(135deg,#8A9196,#5A6266)}
+  /* thumb do "Em Breve" e um logo (nao um render): mostra inteiro, sem escurecer */
+  .emp-card-soon .emp-thumb{background-size:contain;background-repeat:no-repeat;background-color:#fff}
+  .emp-card-soon .emp-thumb::after{display:none}
   .emp-soon-tag{display:inline-block;margin-top:.35rem;padding:.15rem .6rem;
     border:1px solid var(--dir-line);border-radius:999px;
     font-size:.72rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--dir-grey)}
