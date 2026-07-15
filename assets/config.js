@@ -293,10 +293,52 @@ window.CITIES = [
         cidade: 'Ribeirão Preto, SP',
         eyebrow: 'Reserva Direcional Jardim Botânico · Ribeirão Preto, SP',
         titleHtml: 'Reserva Direcional <em>Jardim Botânico</em>',
-        sub: 'Empreendimento no Jardim Botânico em Ribeirão Preto.',
-        heroImg: null, badges: [], pills: [], torres: 2,
-        implantacao: { img: null, legenda: [] }, plantas: [],
-        galeria: { heroImg: null, heroTitle: '', heroSub: '', items: [] }, vagasImg: null
+        sub: 'O seu Direcional no coração da Zona Sul, com o Reserva Jardim Botânico você tem o privilégio de morar em um dos bairros mais bem localizados de Ribeirão Preto. Um condomínio único, idealizado para pessoas que valorizam a exclusividade. Mais do que a localização diferenciada, destaque a segurança de viver em um condomínio fechado e a comodidade de estar próximo a tudo o que mais importa é a possibilidade de descobrir coisas novas, que aumentam a qualidade de vida no dia a dia.',
+        heroImg: 'assets/img/jardim-botanico/galeria/01-fachada.jpg',
+        heroBlur: true, theme: 'jardim-botanico',
+        badges: [], pills: [], torres: 3,
+        hideVagas: true,
+        tipoRule: 'jardim-botanico',
+        solNascente: { default: [3, 4, 5, 6] },
+        tipos: [
+          { key: 'tipo-ponta',         label: '2Q C/S Tipo - Ponta' },
+          { key: 'garden-ponta',       label: '2Q C/S Garden - Ponta' },
+          { key: 'office-garden-meio', label: '1Q Office Garden - Meio' },
+          { key: 'tipo-meio-pcd',      label: '2Q Tipo - Meio PCD' },
+          { key: 'tipo-meio',          label: '2Q C/S Tipo - Meio' },
+          { key: 'garden-meio',        label: '2Q C/S Garden - Meio' },
+          { key: 'office-tipo-meio',   label: '2Q C/S Office Tipo - Meio' }
+        ],
+        implantacao: { img: 'assets/img/jardim-botanico/plantas/implantacao.jpg', legenda: [] },
+        plantas: [
+          { tipo: 'tipo-ponta',         img: 'assets/img/jardim-botanico/plantas/planta-tipo-ponta.jpg',         title: '2Q C/S Tipo - Ponta',        sub: 'Finais 2, 3, 6 e 7 · Andar 1+' },
+          { tipo: 'garden-ponta',       img: 'assets/img/jardim-botanico/plantas/planta-garden-ponta.jpg',       title: '2Q C/S Garden - Ponta',      sub: 'Finais 2, 3, 6 e 7 · Térreo' },
+          { tipo: 'office-garden-meio', img: 'assets/img/jardim-botanico/plantas/planta-office-garden-meio.jpg', title: '1Q Office Garden - Meio',    sub: 'Final 8 · Térreo' },
+          { tipo: 'tipo-meio-pcd',      img: 'assets/img/jardim-botanico/plantas/planta-tipo-meio-pcd.jpg',      title: '2Q Tipo - Meio PCD',         sub: 'Unidade adaptada (PcD)' },
+          { tipo: 'tipo-meio',          img: 'assets/img/jardim-botanico/plantas/planta-tipo-meio.jpg',          title: '2Q C/S Tipo - Meio',         sub: 'Torres 1 e 2: finais 1 e 5 · Torre 3: finais 1, 4 e 5 · Andar 1+' },
+          { tipo: 'garden-meio',        img: 'assets/img/jardim-botanico/plantas/planta-garden-meio.jpg',        title: '2Q C/S Garden - Meio',       sub: 'Torres 1 e 2: final 5 · Torre 3: finais 4 e 5 · Térreo' },
+          { tipo: 'office-tipo-meio',   img: 'assets/img/jardim-botanico/plantas/planta-office-tipo-meio.jpg',   title: '2Q C/S Office Tipo - Meio',  sub: 'Torres 1 e 2: finais 4 e 8 · Torre 3: final 8 · Andar 1+' }
+        ],
+        galeria: {
+          heroImg: null, heroTitle: '', heroSub: '',
+          items: [
+            { img: 'assets/img/jardim-botanico/galeria/01-fachada.jpg',         title: 'Fachada',         sub: 'Perspectiva do empreendimento' },
+            { img: 'assets/img/jardim-botanico/galeria/02-torre.jpg',           title: 'Torre',           sub: 'Perspectiva' },
+            { img: 'assets/img/jardim-botanico/galeria/03-vista-aerea.jpg',     title: 'Vista Aérea',     sub: 'Implantação geral' },
+            { img: 'assets/img/jardim-botanico/galeria/04-praca.jpg',           title: 'Praça',           sub: 'Área comum' },
+            { img: 'assets/img/jardim-botanico/galeria/05-bech-tennis.jpg',     title: 'Beach Tennis',    sub: 'Esporte' },
+            { img: 'assets/img/jardim-botanico/galeria/06-churrasqueira.jpg',   title: 'Churrasqueira',   sub: 'Convívio' },
+            { img: 'assets/img/jardim-botanico/galeria/07-quadra.jpg',          title: 'Quadra',          sub: 'Esporte' },
+            { img: 'assets/img/jardim-botanico/galeria/08-crossfit.jpg',        title: 'Crossfit',        sub: 'Bem-estar' },
+            { img: 'assets/img/jardim-botanico/galeria/09-playground.jpg',      title: 'Playground',      sub: 'Lazer infantil' },
+            { img: 'assets/img/jardim-botanico/galeria/11-salao-de-festas.jpg', title: 'Salão de Festas', sub: 'Convívio' },
+            { img: 'assets/img/jardim-botanico/galeria/12-academia.jpg',        title: 'Academia',        sub: 'Bem-estar' },
+            { img: 'assets/img/jardim-botanico/galeria/13-bikeshare.jpg',       title: 'Bike Share',      sub: 'Mobilidade' },
+            { img: 'assets/img/jardim-botanico/galeria/14-petplace.jpg',        title: 'Pet Place',       sub: 'Espaço para pets' },
+            { img: 'assets/img/jardim-botanico/galeria/15-lazer.jpg',           title: 'Lazer',           sub: 'Área de lazer' },
+            { img: 'assets/img/jardim-botanico/galeria/16-happy-hour.jpg',      title: 'Happy Hour',      sub: 'Convívio' }
+          ]
+        }, vagasImg: null
       },
       {
         id: 'village-gaia',
