@@ -172,10 +172,10 @@
   }
 
   function sortDropdownHtml() {
-    var opts = ddOpt('Numeracao', true, "setSortOpt('num-asc',this)").replace('class="fdd-opt', 'id="sort-opt-num-asc" class="fdd-opt') +
-      ddOpt('Menor preco', false, "setSortOpt('venda-asc',this)").replace('class="fdd-opt', 'id="sort-opt-venda-asc" class="fdd-opt') +
-      ddOpt('Maior preco', false, "setSortOpt('venda-desc',this)").replace('class="fdd-opt', 'id="sort-opt-venda-desc" class="fdd-opt');
-    return dropdown('Ordenar', 'sort-val', opts).replace('id="sort-val">Todos', 'id="sort-val">Numeracao') +
+    var opts = ddOpt('Numeração', true, "setSortOpt('num-asc',this)").replace('class="fdd-opt', 'id="sort-opt-num-asc" class="fdd-opt') +
+      ddOpt('Menor preço', false, "setSortOpt('venda-asc',this)").replace('class="fdd-opt', 'id="sort-opt-venda-asc" class="fdd-opt') +
+      ddOpt('Maior preço', false, "setSortOpt('venda-desc',this)").replace('class="fdd-opt', 'id="sort-opt-venda-desc" class="fdd-opt');
+    return dropdown('Ordenar', 'sort-val', opts).replace('id="sort-val">Todos', 'id="sort-val">Numeração') +
       '<input type="hidden" id="sort" value="num-asc">';
   }
   function placeholder(txt) {
@@ -323,6 +323,28 @@
   renderUnits();
   initZoom();
   doUpdate();
+
+  // mede a altura real do menu de abas para o filtro grudar logo abaixo dele
+  function syncNavHeight() {
+    var nav = document.querySelector('.nav');
+    if (nav) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px');
+  }
+  syncNavHeight();
+  window.addEventListener('resize', syncNavHeight);
+
+  // abre/fecha os dropdowns de filtro no toque (o :hover sozinho nao e confiavel em telas touch)
+  document.querySelectorAll('.fdd-btn').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var fdd = btn.parentElement;
+      var wasOpen = fdd.classList.contains('open');
+      document.querySelectorAll('.fdd.open').forEach(function (f) { f.classList.remove('open'); });
+      if (!wasOpen) fdd.classList.add('open');
+    });
+  });
+  document.addEventListener('click', function () {
+    document.querySelectorAll('.fdd.open').forEach(function (f) { f.classList.remove('open'); });
+  });
 })();
 </script>
 </body>

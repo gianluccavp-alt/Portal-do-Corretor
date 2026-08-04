@@ -255,6 +255,8 @@ function ddSelect(groupSelector, valId, btn) {
   btn.classList.add('on');
   var val = document.getElementById(valId);
   if (val) val.textContent = btn.querySelector('span').textContent;
+  var fdd = btn.closest('.fdd');
+  if (fdd) fdd.classList.remove('open');
 }
 function setFilter(f, btn) {
   activeFilter = f;

@@ -57,16 +57,17 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
 /* ---------- SECTIONS ---------- */
 .section{display:none;max-width:1100px;margin:0 auto;padding:2.5rem 2rem}
 .section.active{display:block}
-.filter-bar{position:relative;z-index:10;display:flex;flex-wrap:wrap;align-items:center;margin-bottom:1.5rem;background:var(--white);border:1px solid var(--border);border-radius:100px;padding:4px 8px}
+.filter-bar{position:sticky;top:var(--nav-h,56px);z-index:150;display:flex;flex-wrap:wrap;align-items:center;margin-bottom:1.5rem;background:var(--white);border:1px solid var(--border);border-radius:100px;padding:4px 8px;box-shadow:var(--shadow)}
 .fdd{position:relative;border-right:1px solid var(--border)}
 .fdd:last-of-type{border-right:none}
 .fdd-btn{display:flex;align-items:center;gap:7px;padding:10px 16px;border:none;background:none;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap}
 .fdd-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
 .fdd-val{font-size:12px;font-weight:600;color:var(--text)}
 .fdd-chev{width:12px;height:12px;stroke:var(--muted);transition:transform .15s}
-.fdd:hover .fdd-chev{transform:rotate(180deg)}
-.fdd-panel{position:absolute;top:calc(100% + 10px);left:0;min-width:220px;background:var(--white);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:6px;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .15s,transform .15s,visibility .15s}
-.fdd:hover .fdd-panel{opacity:1;visibility:visible;transform:translateY(0)}
+.fdd:hover .fdd-chev,.fdd.open .fdd-chev{transform:rotate(180deg)}
+.fdd-panel{position:absolute;top:calc(100% + 10px);left:0;min-width:220px;max-width:calc(100vw - 2rem);background:var(--white);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:6px;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .15s,transform .15s,visibility .15s}
+.fdd:hover .fdd-panel,.fdd.open .fdd-panel{opacity:1;visibility:visible;transform:translateY(0)}
+.fdd:nth-last-of-type(-n+2) .fdd-panel{left:auto;right:0}
 .fdd-opt{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:9px 10px;border:none;background:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);cursor:pointer;text-align:left}
 .fdd-opt:hover{background:var(--cream)}
 .fdd-opt.on{color:var(--gold);font-weight:600}
