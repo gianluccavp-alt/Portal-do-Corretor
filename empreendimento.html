@@ -108,29 +108,75 @@
       return '<div class="pill"><div class="pill-num">' + p.num + '</div><div class="pill-lbl">' + p.lbl + '</div></div>';
     }).join('') + '</div>';
   }
-  function torreFilterHtml() {
+  var CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+  var CHEV_SVG = '<svg class="fdd-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+  var TRASH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>';
+
+  function ddOpt(label, active, onclick) {
+    return '<button class="fdd-opt' + (active ? ' on' : '') + '" onclick="' + onclick + '"><span>' + label + '</span>' + CHECK_SVG + '</button>';
+  }
+
+  function dropdown(lbl, valId, panelHtml) {
+    return '<div class="fdd">' +
+      '<button class="fdd-btn" type="button"><span class="fdd-lbl">' + lbl + '</span>' +
+      '<span class="fdd-val" id="' + valId + '">Todos</span>' + CHEV_SVG + '</button>' +
+      '<div class="fdd-panel">' + panelHtml + '</div>' +
+    '</div>';
+  }
+
+  function torreOptsHtml() {
     var n = emp.torres || 1;
-    if (n < 2) return '';
     var h = '';
     for (var t = 1; t <= n; t++)
-      h += '<button class="fbtn" id="torre-btn-' + t + '" onclick="setTorre(\'' + t + '\',this)">Torre ' + t + '</button>';
+      h += ddOpt('Torre ' + t, false, "setTorre('" + t + "',this)").replace('class="fdd-opt', 'id="torre-opt-' + t + '" class="fdd-opt');
     return h;
   }
-  // botoes do filtro Tipo: usa emp.tipos quando definido (ex.: Seleto), senao o padrao
-  function tipoFilterHtml() {
-    var b = '<button class="fbtn on" onclick="setFilter(\'todos\',this)">Todos</button>';
-    if (emp.tipos && emp.tipos.length) {
-      emp.tipos.forEach(function (t) {
-        b += '<button class="fbtn" onclick="setFilter(\'' + t.key + '\',this)">' + t.label + '</button>';
-      });
-    } else {
-      b += '<button class="fbtn" onclick="setFilter(\'2q-meio\',this)">2Q C/S Meio</button>' +
-           '<button class="fbtn" onclick="setFilter(\'2q-ponta\',this)">2Q C/S Ponta</button>' +
-           '<button class="fbtn" onclick="setFilter(\'terreo-meio\',this)">Terreo Meio</button>' +
-           '<button class="fbtn" onclick="setFilter(\'terreo-ponta\',this)">Terreo Ponta</button>' +
-           '<button class="fbtn" onclick="setFilter(\'1q\',this)">Studio 1Q</button>';
-    }
-    return b;
+  function torreDropdownHtml() {
+    if ((emp.torres || 1) < 2) return '';
+    var opts = ddOpt('Todas', true, "setTorre('todos',this)").replace('class="fdd-opt', 'id="torre-opt-todos" class="fdd-opt') +
+      torreOptsHtml() +
+      '<button class="fdd-clear" onclick="clearTorre()"><span>Limpar filtros</span>' + TRASH_SVG + '</button>';
+    return dropdown('Torre', 'torre-val', opts).replace('id="torre-val">Todos', 'id="torre-val">Todas');
+  }
+
+  // opcoes do filtro Tipo: usa emp.tipos quando definido (ex.: Seleto), senao o padrao
+  function tipoDropdownHtml() {
+    var opts = ddOpt('Todos', true, "setFilter('todos',this)").replace('class="fdd-opt', 'id="tipo-opt-todos" class="fdd-opt');
+    var list = (emp.tipos && emp.tipos.length) ? emp.tipos : [
+      { key: '2q-meio', label: '2Q C/S Meio' },
+      { key: '2q-ponta', label: '2Q C/S Ponta' },
+      { key: 'terreo-meio', label: 'Terreo Meio' },
+      { key: 'terreo-ponta', label: 'Terreo Ponta' },
+      { key: '1q', label: 'Studio 1Q' }
+    ];
+    list.forEach(function (t) {
+      opts += ddOpt(t.label, false, "setFilter('" + t.key + "',this)").replace('class="fdd-opt', 'id="tipo-opt-' + t.key + '" class="fdd-opt');
+    });
+    opts += '<button class="fdd-clear" onclick="clearTipo()"><span>Limpar filtros</span>' + TRASH_SVG + '</button>';
+    return dropdown('Tipo', 'tipo-val', opts);
+  }
+
+  function solDropdownHtml() {
+    var opts = ddOpt('Todos', true, "setSol('todos',this)").replace('class="fdd-opt', 'id="sol-opt-todos" class="fdd-opt') +
+      ddOpt('&#9728; Nascente', false, "setSol('nascente',this)").replace('class="fdd-opt', 'id="sol-opt-nascente" class="fdd-opt') +
+      ddOpt('&#9790; Poente', false, "setSol('poente',this)").replace('class="fdd-opt', 'id="sol-opt-poente" class="fdd-opt') +
+      '<button class="fdd-clear" onclick="clearSol()"><span>Limpar filtros</span>' + TRASH_SVG + '</button>';
+    return dropdown('Sol', 'sol-val', opts);
+  }
+
+  function premioDropdownHtml() {
+    var opts = ddOpt('Com Prêmio', true, "setPremio('com',this)").replace('class="fdd-opt', 'id="premio-opt-com" class="fdd-opt') +
+      ddOpt('Sem Prêmio', false, "setPremio('sem',this)").replace('class="fdd-opt', 'id="premio-opt-sem" class="fdd-opt') +
+      '<button class="fdd-clear" onclick="clearPremio()"><span>Limpar filtros</span>' + TRASH_SVG + '</button>';
+    return dropdown('Prêmio', 'premio-val', opts).replace('id="premio-val">Todos', 'id="premio-val">Com Prêmio').replace('<div class="fdd">', '<div class="fdd" id="premio-row">');
+  }
+
+  function sortDropdownHtml() {
+    var opts = ddOpt('Numeracao', true, "setSortOpt('num-asc',this)").replace('class="fdd-opt', 'id="sort-opt-num-asc" class="fdd-opt') +
+      ddOpt('Menor preco', false, "setSortOpt('venda-asc',this)").replace('class="fdd-opt', 'id="sort-opt-venda-asc" class="fdd-opt') +
+      ddOpt('Maior preco', false, "setSortOpt('venda-desc',this)").replace('class="fdd-opt', 'id="sort-opt-venda-desc" class="fdd-opt');
+    return dropdown('Ordenar', 'sort-val', opts).replace('id="sort-val">Todos', 'id="sort-val">Numeracao') +
+      '<input type="hidden" id="sort" value="num-asc">';
   }
   function placeholder(txt) {
     return '<div class="ph"><div class="ph-icon">&#128247;</div><div>Imagens em breve</div><small>' + txt + '</small></div>';
@@ -234,33 +280,13 @@
   '</div></nav>' +
 
   '<div class="section active" id="tab-unidades">' +
-    '<div class="filter-wrap">' +
-      '<div class="filter-row">' +
-        '<span class="flbl">Tipo:</span>' +
-        tipoFilterHtml() +
-      '</div>' +
-      (emp.hideSol ? '' :
-      '<div class="filter-row" style="border-top:1px solid var(--border);margin-top:0">' +
-        '<span class="flbl">Sol:</span>' +
-        '<button class="fbtn on" id="sol-btn-todos" onclick="setSol(\'todos\',this)">Todos</button>' +
-        '<button class="fbtn" id="sol-btn-nascente" onclick="setSol(\'nascente\',this)">&#9728; Nascente</button>' +
-        '<button class="fbtn" id="sol-btn-poente" onclick="setSol(\'poente\',this)">&#9790; Poente</button>' +
-      '</div>') +
-      '<div class="filter-row" id="premio-row" style="border-top:1px solid var(--border);margin-top:0">' +
-        '<span class="flbl">Prêmio:</span>' +
-        '<button class="fbtn on" id="premio-btn-com" onclick="setPremio(\'com\',this)">Com Prêmio</button>' +
-        '<button class="fbtn" id="premio-btn-sem" onclick="setPremio(\'sem\',this)">Sem Prêmio</button>' +
-      '</div>' +
-      '<div class="filter-row" style="border-top:1px solid var(--border);margin-top:0;border-radius:0 0 12px 12px">' +
-        (emp.torres >= 2 ? '<span class="flbl">Torre:</span><button class="fbtn on" id="torre-btn-todos" onclick="setTorre(\'todos\',this)">Todas</button>' + torreFilterHtml() + '<div class="fsep"></div>' : '') +
-        '<span class="flbl">Ordenar:</span>' +
-        '<select class="fsort" id="sort" onchange="renderUnits()">' +
-          '<option value="num-asc" selected>Numeracao</option>' +
-          '<option value="venda-asc">Menor preco</option>' +
-          '<option value="venda-desc">Maior preco</option>' +
-        '</select>' +
-        '<div class="fcount"><strong id="count-label">0</strong> unidades</div>' +
-      '</div>' +
+    '<div class="filter-bar">' +
+      tipoDropdownHtml() +
+      (emp.hideSol ? '' : solDropdownHtml()) +
+      premioDropdownHtml() +
+      torreDropdownHtml() +
+      sortDropdownHtml() +
+      '<div class="fcount"><strong id="count-label">0</strong> unidades</div>' +
     '</div>' +
     '<div id="planta-destaque">' + plantaDestaqueHtml() + '</div>' +
     '<div class="units-grid" id="units-grid"></div>' +

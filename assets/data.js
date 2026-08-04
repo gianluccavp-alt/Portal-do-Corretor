@@ -248,41 +248,58 @@ function rowsToUnits(rows, empSheetName) {
   return result;
 }
 
-/* ---------- filtros de UI ---------- */
+/* ---------- filtros de UI (dropdowns em linha) ---------- */
+function ddSelect(groupSelector, valId, btn) {
+  var opts = document.querySelectorAll(groupSelector);
+  for (var i = 0; i < opts.length; i++) opts[i].classList.remove('on');
+  btn.classList.add('on');
+  var val = document.getElementById(valId);
+  if (val) val.textContent = btn.querySelector('span').textContent;
+}
 function setFilter(f, btn) {
   activeFilter = f;
-  var excludeIds = ['sol-btn-todos','sol-btn-nascente','sol-btn-poente','torre-btn-todos','torre-btn-1','torre-btn-2'];
-  var btns = document.querySelectorAll('#tab-unidades .filter-row:first-child .fbtn');
-  for (var i = 0; i < btns.length; i++)
-    if (excludeIds.indexOf(btns[i].id) === -1) btns[i].classList.remove('on');
-  btn.classList.add('on');
+  ddSelect('[id^="tipo-opt-"]', 'tipo-val', btn);
   renderUnits();
 }
 function setSol(sol, btn) {
   activeSol = sol;
-  ['sol-btn-todos','sol-btn-nascente','sol-btn-poente'].forEach(function (id) {
-    var el = document.getElementById(id); if (el) el.classList.remove('on');
-  });
-  btn.classList.add('on');
+  ddSelect('[id^="sol-opt-"]', 'sol-val', btn);
   renderUnits();
 }
 function setTorre(torre, btn) {
   activeTorre = torre;
-  var tbtns = document.querySelectorAll('#tab-unidades [id^="torre-btn-"]');
-  for (var i = 0; i < tbtns.length; i++) tbtns[i].classList.remove('on');
-  btn.classList.add('on');
+  ddSelect('[id^="torre-opt-"]', 'torre-val', btn);
   renderUnits();
 }
 function setPremio(p, btn) {
   activePremio = p;
-  ['premio-btn-com','premio-btn-sem'].forEach(function (id) {
-    var el = document.getElementById(id); if (el) el.classList.remove('on');
-  });
-  btn.classList.add('on');
+  ddSelect('[id^="premio-opt-"]', 'premio-val', btn);
   renderUnits();
 }
+function setSortOpt(v, btn) {
+  var sortEl = document.getElementById('sort');
+  if (sortEl) sortEl.value = v;
+  ddSelect('[id^="sort-opt-"]', 'sort-val', btn);
+  renderUnits();
+}
+function clearTipo() {
+  var opt = document.getElementById('tipo-opt-todos');
+  if (opt) setFilter('todos', opt);
+}
+function clearSol() {
+  var opt = document.getElementById('sol-opt-todos');
+  if (opt) setSol('todos', opt);
+}
+function clearPremio() {
+  var opt = document.getElementById('premio-opt-com');
+  if (opt) setPremio('com', opt);
+}
+function clearTorre() {
+  var opt = document.getElementById('torre-opt-todos');
+  if (opt) setTorre('todos', opt);
+}
 
-/* Mostra a linha do filtro de Premio apenas se ao menos uma unidade tiver
+/* Mostra o dropdown de Premio apenas se ao menos uma unidade tiver
    "Folga Volta ao Caixa" > 0. Reavaliado a cada atualizacao da planilha. */
 function updatePremioVisibility() {
   var row = document.getElementById('premio-row');
@@ -292,13 +309,7 @@ function updatePremioVisibility() {
     if ((units[i].folgaVoltaCx || 0) > 0) { hasPremio = true; break; }
   }
   row.style.display = hasPremio ? '' : 'none';
-  if (!hasPremio) {                    // filtro oculto: garante o padrao "Com Premio"
-    activePremio = 'com';
-    var com = document.getElementById('premio-btn-com');
-    var sem = document.getElementById('premio-btn-sem');
-    if (com) com.classList.add('on');
-    if (sem) sem.classList.remove('on');
-  }
+  if (!hasPremio) clearPremio();       // filtro oculto: garante o padrao "Com Premio"
 }
 
 /* "Sem Premio" subtrai a Folga Volta ao Caixa dos valores exibidos */
