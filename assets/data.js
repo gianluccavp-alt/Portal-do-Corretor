@@ -9,6 +9,7 @@ var activeFilter = 'todos';
 var activeSol = 'todos';
 var activeTorre = 'todos';
 var activePremio = 'com';    // 'com' = Com Premio (padrao) | 'sem' = Sem Premio
+var viewMode = 'cards';      // 'cards' (padrao) | 'list'
 var NASCENTE_FINAIS = [3, 4, 5, 6];
 
 var AREA_MAP = { '1q':48, '2q-meio':48, '2q-ponta':46, 'terreo-meio':55, 'terreo-ponta':66 };
@@ -375,40 +376,80 @@ function renderUnits() {
     return;
   }
 
+  grid.classList.toggle('list-view', viewMode === 'list');
+  var buildUnit = viewMode === 'list' ? unitRowHtml : unitCardHtml;
   var html = '';
-  for (var j = 0; j < list.length; j++) {
-    var u = list[j];
-    var hideSol = window.CURRENT_EMP && window.CURRENT_EMP.hideSol;
-    var andarLabel = u.andar === 0 ? 'Terreo' : u.andar + '<sup>o</sup> andar';
-    var sol = getSol(u), solIcon = getSolIcon(u);
-    var solColor = (sol === 'Nascente') ? '#C9771A' : '#5A7FA8';
-    var solBg = (sol === 'Nascente') ? '#FFF5E6' : '#EBF2FA';
-    var solBorder = (sol === 'Nascente') ? '#F5DFB8' : '#C5D8EE';
-    var vTabela = tabelaDiretaOf(u);
-    var vAssoc  = associativoOf(u);
-    html += '<div class="u-card">';
-    html += '<div class="u-top"><div class="u-top-info">';
-    html += '<div class="u-tipo">' + u.tipoLabel + '</div>';
-    html += '<div class="u-ap">' + u.bl + ' &middot; ' + andarLabel + ' &middot; Final ' + u.f + '</div>';
-    html += '</div><span class="u-badge-disp">Disponivel</span></div>';
-    html += '<hr class="u-hr">';
-    html += '<div class="u-price-row">';
-    html += '<div><div class="u-price-lbl">Valor Tabela Direta</div><div class="u-price">' + fmt(vTabela) + '</div></div>';
-    if (u.avaliacao && u.avaliacao > 0)
-      html += '<div class="u-avaliacao"><div class="u-price-lbl">Valor de Avaliacao</div><div class="u-price u-price-sm">' + fmt(u.avaliacao) + '</div></div>';
-    html += '</div>';
-    html += '<div class="u-meta">';
-    html += '<div class="u-meta-box"' + (hideSol ? ' style="grid-column:1/-1"' : '') + '><div class="u-meta-k">Area privativa</div><div class="u-meta-v">' + u.area + ' m&sup2;</div></div>';
-    if (!hideSol) {
-      html += '<div class="u-meta-box" style="background:' + solBg + ';border:1px solid ' + solBorder + '">';
-      html += '<div class="u-meta-k" style="color:' + solColor + '">Sol</div>';
-      html += '<div class="u-meta-v" style="color:' + solColor + '">' + solIcon + ' ' + sol + '</div></div>';
-    }
-    html += '</div>';
-    html += '<div class="u-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(vAssoc) + ' (Desconto de ' + fmt(u.folgaTabela) + ')</span></div>';
-    html += '</div>';
-  }
+  for (var j = 0; j < list.length; j++) html += buildUnit(list[j]);
   grid.innerHTML = html;
+}
+
+/* dados comuns exibidos tanto no card quanto na linha da lista */
+function unitDisplayData(u) {
+  var hideSol = window.CURRENT_EMP && window.CURRENT_EMP.hideSol;
+  var andarLabel = u.andar === 0 ? 'Terreo' : u.andar + '<sup>o</sup> andar';
+  var sol = getSol(u), solIcon = getSolIcon(u);
+  var solColor = (sol === 'Nascente') ? '#C9771A' : '#5A7FA8';
+  var solBg = (sol === 'Nascente') ? '#FFF5E6' : '#EBF2FA';
+  var solBorder = (sol === 'Nascente') ? '#F5DFB8' : '#C5D8EE';
+  return {
+    hideSol: hideSol, andarLabel: andarLabel, sol: sol, solIcon: solIcon,
+    solColor: solColor, solBg: solBg, solBorder: solBorder,
+    vTabela: tabelaDiretaOf(u), vAssoc: associativoOf(u)
+  };
+}
+
+function unitCardHtml(u) {
+  var d = unitDisplayData(u);
+  var html = '<div class="u-card">';
+  html += '<div class="u-top"><div class="u-top-info">';
+  html += '<div class="u-tipo">' + u.tipoLabel + '</div>';
+  html += '<div class="u-ap">' + u.bl + ' &middot; ' + d.andarLabel + ' &middot; Final ' + u.f + '</div>';
+  html += '</div><span class="u-badge-disp">Disponivel</span></div>';
+  html += '<hr class="u-hr">';
+  html += '<div class="u-price-row">';
+  html += '<div><div class="u-price-lbl">Valor Tabela Direta</div><div class="u-price">' + fmt(d.vTabela) + '</div></div>';
+  if (u.avaliacao && u.avaliacao > 0)
+    html += '<div class="u-avaliacao"><div class="u-price-lbl">Valor de Avaliacao</div><div class="u-price u-price-sm">' + fmt(u.avaliacao) + '</div></div>';
+  html += '</div>';
+  html += '<div class="u-meta">';
+  html += '<div class="u-meta-box"' + (d.hideSol ? ' style="grid-column:1/-1"' : '') + '><div class="u-meta-k">Area privativa</div><div class="u-meta-v">' + u.area + ' m&sup2;</div></div>';
+  if (!d.hideSol) {
+    html += '<div class="u-meta-box" style="background:' + d.solBg + ';border:1px solid ' + d.solBorder + '">';
+    html += '<div class="u-meta-k" style="color:' + d.solColor + '">Sol</div>';
+    html += '<div class="u-meta-v" style="color:' + d.solColor + '">' + d.solIcon + ' ' + d.sol + '</div></div>';
+  }
+  html += '</div>';
+  html += '<div class="u-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(d.vAssoc) + ' (Desconto de ' + fmt(u.folgaTabela) + ')</span></div>';
+  html += '</div>';
+  return html;
+}
+
+function unitRowHtml(u) {
+  var d = unitDisplayData(u);
+  var html = '<div class="u-row">';
+  html += '<div class="u-row-id">';
+  html += '<div class="u-tipo">' + u.tipoLabel + '</div>';
+  html += '<div class="u-row-ap-line"><span class="u-ap">' + u.bl + ' &middot; ' + d.andarLabel + ' &middot; Final ' + u.f + '</span><span class="u-badge-disp">Disponivel</span></div>';
+  html += '</div>';
+  html += '<div class="u-row-stats">';
+  html += '<div class="u-row-stat"><div class="u-price-lbl">Valor Tabela Direta</div><div class="u-price">' + fmt(d.vTabela) + '</div></div>';
+  if (u.avaliacao && u.avaliacao > 0)
+    html += '<div class="u-row-stat"><div class="u-price-lbl">Valor de Avaliacao</div><div class="u-price u-price-sm">' + fmt(u.avaliacao) + '</div></div>';
+  html += '<div class="u-row-stat"><div class="u-meta-k">Area privativa</div><div class="u-meta-v">' + u.area + ' m&sup2;</div></div>';
+  if (!d.hideSol) {
+    html += '<div class="u-row-stat"><div class="u-meta-k" style="color:' + d.solColor + '">Sol</div><div class="u-meta-v" style="color:' + d.solColor + '">' + d.solIcon + ' ' + d.sol + '</div></div>';
+  }
+  html += '</div>';
+  html += '<div class="u-row-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(d.vAssoc) + ' (Desconto de ' + fmt(u.folgaTabela) + ')</span></div>';
+  html += '</div>';
+  return html;
+}
+
+function setView(mode, btn) {
+  viewMode = mode;
+  document.querySelectorAll('.view-btn').forEach(function (b) { b.classList.remove('on'); });
+  btn.classList.add('on');
+  renderUnits();
 }
 
 /* ---------- tabs + zoom ---------- */
