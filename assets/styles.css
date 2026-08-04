@@ -74,15 +74,15 @@ select.fsort{padding:6px 12px;border-radius:100px;border:1px solid var(--border)
 .u-card:hover{border-color:var(--gold-light);box-shadow:var(--shadow)}
 .u-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:10px}
 .u-top-info{flex:1;min-width:0;overflow:hidden}
-.u-ap{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u-ap{font-family:'DM Sans',sans-serif;font-size:1.05rem;font-weight:600;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .u-ap sup{font-size:0.6em;vertical-align:super;line-height:0}
 .u-badge-disp{background:var(--green-light);color:var(--green);font-size:10px;font-weight:500;padding:3px 10px;border-radius:100px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
 .u-tipo{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:2px}
 .u-sub{font-size:11px;color:#B0A494}
 .u-hr{border:none;border-top:1px solid var(--border);margin:12px 0}
 .u-price-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:3px}
-.u-price{font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--dark)}
-.u-price-row{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.u-price{font-family:'DM Sans',sans-serif;font-weight:800;font-size:1.25rem;color:var(--dark)}
+.u-price-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
 .u-avaliacao{text-align:right}
 .u-price-sm{font-size:1.05rem;color:var(--muted)}
 .u-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
