@@ -210,6 +210,10 @@ function rowsToUnits(rows, empSheetName) {
     // vagas de garagem nao entram na listagem de unidades
     if (tipoPlanta.toLowerCase().indexOf('vaga') >= 0) continue;
 
+    // empreendimentos com venda restrita a algumas torres (ex.: Ipiranga vendendo so T1/T3)
+    if (window.CURRENT_EMP && window.CURRENT_EMP.torresVisiveis &&
+        window.CURRENT_EMP.torresVisiveis.indexOf(blocoNum(bl)) === -1) continue;
+
     var valorFinal   = parseBR(findFirst(r, [['valor', 'final', 'com', 'kit'], ['valor', 'final', 'kit'], ['valor', 'final']]));
     var ba           = parseBR(findFirst(r, [['ba', 'unidade'], ['b', 'a', 'da', 'unidade'], ['ba'], ['b', 'a']]));
     var folgaCampG   = parseBR(findFirst(r, [['folga', 'campanha', 'g'], ['folga', 'campanha']]));

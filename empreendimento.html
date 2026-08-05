@@ -125,15 +125,22 @@
     '</div>';
   }
 
+  function torresList() {
+    if (emp.torresVisiveis && emp.torresVisiveis.length) return emp.torresVisiveis;
+    var n = emp.torres || 1, list = [];
+    for (var t = 1; t <= n; t++) list.push(t);
+    return list;
+  }
   function torreOptsHtml() {
-    var n = emp.torres || 1;
-    var h = '';
-    for (var t = 1; t <= n; t++)
+    var list = torresList(), h = '';
+    for (var i = 0; i < list.length; i++) {
+      var t = list[i];
       h += ddOpt('Torre ' + t, false, "setTorre('" + t + "',this)").replace('class="fdd-opt', 'id="torre-opt-' + t + '" class="fdd-opt');
+    }
     return h;
   }
   function torreDropdownHtml() {
-    if ((emp.torres || 1) < 2) return '';
+    if (torresList().length < 2) return '';
     var opts = ddOpt('Todas', true, "setTorre('todos',this)").replace('class="fdd-opt', 'id="torre-opt-todos" class="fdd-opt') +
       torreOptsHtml() +
       '<button class="fdd-clear" onclick="clearTorre()"><span>Limpar filtros</span>' + TRASH_SVG + '</button>';

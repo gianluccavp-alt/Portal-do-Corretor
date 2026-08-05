@@ -251,6 +251,7 @@ window.CITIES = [
         heroImg: 'assets/img/ipiranga/galeria/01-guarita.jpg',
         heroBlur: true, theme: 'ipiranga',
         badges: [], pills: [], torres: 4,
+        torresVisiveis: [1, 3], // vendendo apenas Torres 1 e 3 no momento; Torres 2 e 4 ocultas
         hideVagas: true, hideSol: true,
         tipoRule: 'ipiranga',
         tipos: [
