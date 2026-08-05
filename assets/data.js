@@ -440,7 +440,8 @@ function unitRowHtml(u) {
     html += '<div class="u-row-stat"><div class="u-meta-k" style="color:' + d.solColor + '">Sol</div><div class="u-meta-v" style="color:' + d.solColor + '">' + d.solIcon + ' ' + d.sol + '</div></div>';
   }
   html += '</div>';
-  html += '<div class="u-row-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(d.vAssoc) + ' (Desconto de ' + fmt(u.folgaTabela) + ')</span></div>';
+  html += '<div class="u-row-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(d.vAssoc) + '</span><span class="u-desc-off">(Desconto de ' + fmt(u.folgaTabela) + ')</span></div>';
+  html += '<div class="u-row-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>';
   html += '</div>';
   return html;
 }
