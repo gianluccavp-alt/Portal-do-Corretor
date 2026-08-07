@@ -375,8 +375,8 @@ function renderUnits() {
 
   list.sort(function (a, b) {
     if (sortVal === 'num-asc') {
-      var blA = (a.bl || '').toString(), blB = (b.bl || '').toString();
-      if (blA !== blB) return blA < blB ? -1 : 1;
+      var tA = blocoNum(a.bl), tB = blocoNum(b.bl);   // ordena pela torre (numerico), nao pelo texto do bloco
+      if (tA !== tB) return tA - tB;
       if (a.andar !== b.andar) return a.andar - b.andar;
       return a.f - b.f;
     }
