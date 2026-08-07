@@ -190,14 +190,20 @@ function parseCSV(text) {
 /* Converte linhas -> unidades, filtrando pelo empreendimento */
 function rowsToUnits(rows, empSheetName) {
   var result = [];
-  var wantNorm = normKey(empSheetName);
+  // nomes aceitos: o do empreendimento + eventuais nomes agregados (sheetNamesExtra)
+  var wantNorms = [normKey(empSheetName)];
+  var cur = window.CURRENT_EMP;
+  if (cur && cur.sheetNamesExtra && normKey(cur.sheetName) === normKey(empSheetName)) {
+    for (var e = 0; e < cur.sheetNamesExtra.length; e++) wantNorms.push(normKey(cur.sheetNamesExtra[e]));
+  }
   for (var i = 0; i < rows.length; i++) {
     var r = rows[i];
 
-    // filtro por empreendimento
+    // filtro por empreendimento (aceita nomes agregados)
     var empVal = findCol(r, wordsOf(window.EMP_COLUMN));
     if (!empVal) empVal = findCol(r, ['nome', 'empreendimento']);
-    if (normKey(empVal) !== wantNorm) continue;
+    if (wantNorms.indexOf(normKey(empVal)) < 0) continue;
+    var isExtra = normKey(empVal) !== normKey(empSheetName); // veio de um nome agregado
 
     var produto = findFirst(r, [['produto'], ['direcional']]);
     var apMatch = produto ? produto.match(/BL\d+-(\d+)/) : null;
@@ -205,6 +211,13 @@ function rowsToUnits(rows, empSheetName) {
     var final = parseInt(findFirst(r, [['final'], ['unidade']]) || '0', 10);
     var andar = parseInt(findFirst(r, [['andar']]) || '0', 10);
     var bl    = findFirst(r, [['bloco'], ['etapa'], ['torre']]) || 'BL-01';
+    // sobrescreve o bloco das unidades agregadas (informado manualmente no config, por final+andar)
+    if (isExtra && cur && cur.blocoOverrides) {
+      for (var bo = 0; bo < cur.blocoOverrides.length; bo++) {
+        var ov = cur.blocoOverrides[bo];
+        if (ov.final === final && ov.andar === andar) { bl = ov.bl; break; }
+      }
+    }
     var tipoPlanta = findFirst(r, [['tipo', 'planta'], ['tipo'], ['planta']]) || '';
 
     // vagas de garagem nao entram na listagem de unidades

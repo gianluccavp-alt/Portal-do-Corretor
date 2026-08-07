@@ -77,6 +77,13 @@ window.CITIES = [
       {
         id: 'cores-da-mata-mangara',
         sheetName: 'Cores da Mata Mangará',
+        sheetNamesExtra: ['Compra e Venda de Bens Imóveis III - SP'],
+        // blocos informados manualmente para as unidades agregadas (por final+andar)
+        blocoOverrides: [
+          { final: 5, andar: 1,  bl: 'BL01-0015' },
+          { final: 8, andar: 3,  bl: 'BL02-0038' },
+          { final: 2, andar: 10, bl: 'BL02-0102' }
+        ],
         nome: 'Cores da Mata Mangará',
         cidade: 'Campinas, SP',
         eyebrow: 'Cores da Mata Mangará · Campinas, SP',
