@@ -506,6 +506,7 @@ window.findEmpreendimento = function (empId) {
       if (list[e].id === empId) {
         var obj = list[e];
         obj._city = window.CITIES[c].name;
+        obj._cityId = window.CITIES[c].id;
         obj._uf = window.CITIES[c].uf;
         return obj;
       }

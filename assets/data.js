@@ -8,6 +8,7 @@ var units = [];              // unidades do empreendimento atual (apos filtro)
 var activeFilter = 'todos';
 var activeSol = 'todos';
 var activeTorre = 'todos';
+var activeVaga = 'todos';    // 'todos' | 'com' (vagas > 0) | 'sem' (vagas = 0)
 var activePremio = 'com';    // 'com' = Com Premio (padrao) | 'sem' = Sem Premio
 var viewMode = 'cards';      // 'cards' (padrao) | 'list'
 var NASCENTE_FINAIS = [3, 4, 5, 6];
@@ -30,6 +31,20 @@ function unitNascente(u) {
   return NASCENTE_FINAIS.indexOf(u.f) >= 0;
 }
 function getSol(u) { return unitNascente(u) ? 'Nascente' : 'Poente'; }
+// Quantidade de vagas (coluna da planilha) so e exibida/filtrada nos produtos de Ribeirao Preto
+function showVagasQtd() {
+  var emp = window.CURRENT_EMP;
+  return !!(emp && emp._cityId === 'ribeirao-preto');
+}
+var VAGA_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+  '<path d="M5 11l1.6-4.4A2 2 0 0 1 8.5 5h7a2 2 0 0 1 1.9 1.6L19 11"></path>' +
+  '<rect x="3" y="11" width="18" height="6" rx="2"></rect>' +
+  '<circle cx="7.5" cy="17.5" r="1.4"></circle><circle cx="16.5" cy="17.5" r="1.4"></circle></svg>';
+function vagasBadgeHtml(u) {
+  if (!showVagasQtd() || u.vagas == null) return '';
+  var lbl = u.vagas === 1 ? '1 vaga' : u.vagas + ' vagas';
+  return '<span class="u-vagas' + (u.vagas > 0 ? '' : ' none') + '" title="Vagas de garagem">' + VAGA_SVG + lbl + '</span>';
+}
 function getSolIcon(u) { return unitNascente(u) ? '&#9728;' : '&#9790;'; }
 function fmt(v) { return v.toLocaleString('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits:0 }); }
 
@@ -253,6 +268,9 @@ function rowsToUnits(rows, empSheetName) {
     ]));
     // Area privativa direto da planilha ("Area privativa total"), arredondada para inteiro
     var areaPriv = Math.round(parseBR(findFirst(r, [['area', 'privativa', 'total'], ['area', 'privativa']])));
+    // Quantidade de vagas: null quando a coluna nao existe na planilha (nao exibe nem filtra)
+    var vagasRaw = findFirst(r, [['quantidade', 'de', 'vagas'], ['quantidade', 'vagas'], ['qtd', 'vagas'], ['numero', 'vagas']]);
+    var vagas = (vagasRaw === '' || vagasRaw == null) ? null : Math.round(parseBR(vagasRaw));
 
     result.push({
       ap: apStr, num: apNum, bl: bl, f: final, andar: andar,
@@ -260,7 +278,7 @@ function rowsToUnits(rows, empSheetName) {
       area: areaPriv > 0 ? areaPriv : (AREA_MAP[tipo] || 48),
       tabelaDireta: tabelaDireta, associativo: associativo,
       folgaTabela: folgaTabela, folgaVoltaCx: folgaVoltaCx,
-      avaliacao: avaliacao
+      avaliacao: avaliacao, vagas: vagas
     });
   }
   return result;
@@ -291,6 +309,11 @@ function setTorre(torre, btn) {
   ddSelect('[id^="torre-opt-"]', 'torre-val', btn);
   renderUnits();
 }
+function setVaga(v, btn) {
+  activeVaga = v;
+  ddSelect('[id^="vaga-opt-"]', 'vaga-val', btn);
+  renderUnits();
+}
 function setPremio(p, btn) {
   activePremio = p;
   ddSelect('[id^="premio-opt-"]', 'premio-val', btn);
@@ -318,6 +341,10 @@ function clearTorre() {
   var opt = document.getElementById('torre-opt-todos');
   if (opt) setTorre('todos', opt);
 }
+function clearVaga() {
+  var opt = document.getElementById('vaga-opt-todos');
+  if (opt) setVaga('todos', opt);
+}
 
 /* Mostra o dropdown de Premio apenas se ao menos uma unidade tiver
    "Folga Volta ao Caixa" > 0. Reavaliado a cada atualizacao da planilha. */
@@ -330,6 +357,19 @@ function updatePremioVisibility() {
   }
   row.style.display = hasPremio ? '' : 'none';
   if (!hasPremio) clearPremio();       // filtro oculto: garante o padrao "Com Premio"
+}
+
+/* Mostra o dropdown de Vaga apenas se a planilha trouxe a coluna
+   "Quantidade de vagas" para as unidades carregadas. */
+function updateVagaVisibility() {
+  var row = document.getElementById('vaga-row');
+  if (!row) return;
+  var hasVagas = false;
+  for (var i = 0; i < units.length; i++) {
+    if (units[i].vagas != null) { hasVagas = true; break; }
+  }
+  row.style.display = hasVagas ? '' : 'none';
+  if (!hasVagas) clearVaga();          // filtro oculto: garante o padrao "Todas"
 }
 
 /* "Sem Premio" subtrai a Folga Volta ao Caixa dos valores exibidos */
@@ -369,6 +409,11 @@ function renderUnits() {
     }
     if (activeTorre !== 'todos') {
       if (activeTorre !== String(blocoNum(u.bl))) continue;
+    }
+    if (activeVaga !== 'todos') {
+      if (u.vagas == null) continue;                       // sem dado na planilha
+      if (activeVaga === 'com' && u.vagas <= 0) continue;
+      if (activeVaga === 'sem' && u.vagas > 0) continue;
     }
     list.push(u);
   }
@@ -411,6 +456,7 @@ function unitDisplayData(u) {
   return {
     hideSol: hideSol, andarLabel: andarLabel, sol: sol, solIcon: solIcon,
     solColor: solColor, solBg: solBg, solBorder: solBorder,
+    vagasBadge: vagasBadgeHtml(u),
     vTabela: tabelaDiretaOf(u), vAssoc: associativoOf(u)
   };
 }
@@ -421,7 +467,7 @@ function unitCardHtml(u) {
   html += '<div class="u-top"><div class="u-top-info">';
   html += '<div class="u-tipo">' + u.tipoLabel + '</div>';
   html += '<div class="u-ap">' + u.bl + ' &middot; ' + d.andarLabel + ' &middot; Final ' + u.f + '</div>';
-  html += '</div><span class="u-badge-disp">Disponivel</span></div>';
+  html += '</div><div class="u-top-tags"><span class="u-badge-disp">Disponivel</span>' + d.vagasBadge + '</div></div>';
   html += '<hr class="u-hr">';
   html += '<div class="u-price-row">';
   html += '<div><div class="u-price-lbl">Valor Tabela Direta</div><div class="u-price">' + fmt(d.vTabela) + '</div></div>';
@@ -445,8 +491,9 @@ function unitRowHtml(u) {
   var d = unitDisplayData(u);
   var html = '<div class="u-row">';
   html += '<div class="u-row-id">';
-  html += '<div class="u-tipo">' + u.tipoLabel + '</div>';
-  html += '<div class="u-row-ap-line"><span class="u-ap">' + u.bl + ' &middot; ' + d.andarLabel + ' &middot; Final ' + u.f + '</span><span class="u-badge-disp">Disponivel</span></div>';
+  html += '<span class="u-badge-disp">Disponivel</span>';
+  html += '<div class="u-row-tipo-line"><div class="u-tipo">' + u.tipoLabel + '</div>' + d.vagasBadge + '</div>';
+  html += '<div class="u-ap">' + u.bl + ' &middot; ' + d.andarLabel + ' &middot; Final ' + u.f + '</div>';
   html += '</div>';
   html += '<div class="u-row-stats">';
   html += '<div class="u-row-stat"><div class="u-price-lbl">Valor Tabela Direta</div><div class="u-price">' + fmt(d.vTabela) + '</div></div>';
@@ -525,6 +572,7 @@ function doUpdate() {
     }
     units = newUnits;
     updatePremioVisibility();
+    updateVagaVisibility();
     renderUnits();
     var now = new Date();
     var hm = now.getHours() + ':' + (now.getMinutes() < 10 ? '0' : '') + now.getMinutes();

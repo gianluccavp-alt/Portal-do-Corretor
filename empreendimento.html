@@ -147,6 +147,18 @@
     return dropdown('Torre', 'torre-val', opts).replace('id="torre-val">Todos', 'id="torre-val">Todas');
   }
 
+  // filtro Com vaga / Sem vaga (apenas produtos de Ribeirao Preto)
+  function vagaDropdownHtml() {
+    if (!showVagasQtd()) return '';
+    var opts = ddOpt('Todas', true, "setVaga('todos',this)").replace('class="fdd-opt', 'id="vaga-opt-todos" class="fdd-opt') +
+      ddOpt('Com vaga', false, "setVaga('com',this)").replace('class="fdd-opt', 'id="vaga-opt-com" class="fdd-opt') +
+      ddOpt('Sem vaga', false, "setVaga('sem',this)").replace('class="fdd-opt', 'id="vaga-opt-sem" class="fdd-opt') +
+      '<button class="fdd-clear" onclick="clearVaga()"><span>Limpar filtros</span>' + TRASH_SVG + '</button>';
+    return dropdown('Vaga', 'vaga-val', opts)
+      .replace('id="vaga-val">Todos', 'id="vaga-val">Todas')
+      .replace('<div class="fdd">', '<div class="fdd" id="vaga-row">');
+  }
+
   // opcoes do filtro Tipo: usa emp.tipos quando definido (ex.: Seleto), senao o padrao
   function tipoDropdownHtml() {
     var opts = ddOpt('Todos', true, "setFilter('todos',this)").replace('class="fdd-opt', 'id="tipo-opt-todos" class="fdd-opt');
@@ -293,6 +305,7 @@
       (emp.hideSol ? '' : solDropdownHtml()) +
       premioDropdownHtml() +
       torreDropdownHtml() +
+      vagaDropdownHtml() +
       sortDropdownHtml() +
       '<div class="fcount"><strong id="count-label">0</strong> unidades</div>' +
     '</div>' +
