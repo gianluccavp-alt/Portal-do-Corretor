@@ -247,21 +247,19 @@ function rowsToUnits(rows, empSheetName) {
     var folgaCampG   = parseBR(findFirst(r, [['folga', 'campanha', 'g'], ['folga', 'campanha']]));
     var folgaTabela  = parseBR(findFirst(r, [['folga', 'de', 'tabela'], ['folga', 'tabela']]));
     var folgaVoltaCx = parseBR(findFirst(r, [['folga', 'volta', 'caixa'], ['folga', 'volta']]));
-    // Folga Promocional e Bonus Adimplencia: exclusivos dos empreendimentos de Ribeirao Preto.
-    // Bonus Adimplencia = B.A. da Unidade + Folga Promocional, e substitui o "ba" no calculo abaixo.
+    // Bonus Adimplencia (= B.A. da Unidade + Folga Promocional): exclusivo dos
+    // empreendimentos de Ribeirao Preto, substitui o "ba" no calculo abaixo
+    // (a Folga Promocional ja esta embutida nesse valor, nao e subtraida de novo).
     var isRibeiraoPreto = !!(window.CURRENT_EMP && window.CURRENT_EMP._cityId === 'ribeirao-preto');
     if (isRibeiraoPreto) {
       var bonusAdimplencia = parseBR(findFirst(r, [['bonus', 'adimplencia']]));
       if (bonusAdimplencia > 0) ba = bonusAdimplencia;
     }
-    var folgaPromocional = isRibeiraoPreto
-      ? parseBR(findFirst(r, [['folga', 'promocional']]))
-      : 0;
 
-    // Valor Tabela Direta = Valor Final Com Kit - B.A. da Unidade (Bonus Adimplencia em RP) - Folga Campanha "G" - Folga Promocional
-    var tabelaDireta = valorFinal - ba - folgaCampG - folgaPromocional;
-    // Valor Associativo/Investidor = Tabela Direta - Folga de Tabela - Folga Promocional
-    var associativo  = tabelaDireta - folgaTabela - folgaPromocional;
+    // Valor Tabela Direta = Valor Final Com Kit - B.A. da Unidade (Bonus Adimplencia em RP) - Folga Campanha "G"
+    var tabelaDireta = valorFinal - ba - folgaCampG;
+    // Valor Associativo/Investidor = Tabela Direta - Folga de Tabela
+    var associativo  = tabelaDireta - folgaTabela;
 
     if (tabelaDireta <= 0) continue;
 
