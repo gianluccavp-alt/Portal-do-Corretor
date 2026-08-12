@@ -247,11 +247,16 @@ function rowsToUnits(rows, empSheetName) {
     var folgaCampG   = parseBR(findFirst(r, [['folga', 'campanha', 'g'], ['folga', 'campanha']]));
     var folgaTabela  = parseBR(findFirst(r, [['folga', 'de', 'tabela'], ['folga', 'tabela']]));
     var folgaVoltaCx = parseBR(findFirst(r, [['folga', 'volta', 'caixa'], ['folga', 'volta']]));
+    // Folga Promocional: complemento do B.A. da unidade, exclusivo dos empreendimentos de Ribeirao Preto
+    var isRibeiraoPreto = !!(window.CURRENT_EMP && window.CURRENT_EMP._cityId === 'ribeirao-preto');
+    var folgaPromocional = isRibeiraoPreto
+      ? parseBR(findFirst(r, [['folga', 'promocional']]))
+      : 0;
 
-    // Valor Tabela Direta = Valor Final Com Kit - B.A. da Unidade - Folga Campanha "G"
-    var tabelaDireta = valorFinal - ba - folgaCampG;
-    // Valor Associativo/Investidor = Tabela Direta - Folga de Tabela
-    var associativo  = tabelaDireta - folgaTabela;
+    // Valor Tabela Direta = Valor Final Com Kit - B.A. da Unidade - Folga Campanha "G" - Folga Promocional
+    var tabelaDireta = valorFinal - ba - folgaCampG - folgaPromocional;
+    // Valor Associativo/Investidor = Tabela Direta - Folga de Tabela - Folga Promocional
+    var associativo  = tabelaDireta - folgaTabela - folgaPromocional;
 
     if (tabelaDireta <= 0) continue;
 
