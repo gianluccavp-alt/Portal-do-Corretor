@@ -10,7 +10,7 @@ var activeSol = 'todos';
 var activeTorre = 'todos';
 var activeVaga = 'todos';    // 'todos' | 'com' (vagas > 0) | 'sem' (vagas = 0)
 var activePremio = 'com';    // 'com' = Com Premio (padrao) | 'sem' = Sem Premio
-var viewMode = 'cards';      // 'cards' (padrao) | 'list'
+var viewMode = 'list';       // 'list' (padrao) | 'cards'
 var NASCENTE_FINAIS = [3, 4, 5, 6];
 
 var AREA_MAP = { '1q':48, '2q-meio':48, '2q-ponta':46, 'terreo-meio':55, 'terreo-ponta':66 };
@@ -44,6 +44,16 @@ function vagasBadgeHtml(u) {
   if (!showVagasQtd() || u.vagas == null) return '';
   var lbl = u.vagas === 1 ? '1 vaga' : u.vagas + ' vagas';
   return '<span class="u-vagas' + (u.vagas > 0 ? '' : ' none') + '" title="Vagas de garagem">' + VAGA_SVG + lbl + '</span>';
+}
+var INFO_SVG = '<svg class="u-badge-promo-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+  '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+// Badge "Promocional": unidades com Folga Promocional > 0 em empreendimentos de
+// Ribeirao Preto que tem Premio (Botanico e Park). So aparece com o filtro "Sem Premio",
+// pois essas unidades nao podem ser vendidas com Premio.
+function promoBadgeHtml(u) {
+  if (activePremio !== 'sem' || !(u.folgaPromocional > 0)) return '';
+  return '<span class="u-badge-promo">Promocional' + INFO_SVG +
+    '<span class="u-tooltip">Unidades promocionais n&atilde;o podem ser vendidas com Pr&ecirc;mio.</span></span>';
 }
 function getSolIcon(u) { return unitNascente(u) ? '&#9728;' : '&#9790;'; }
 function fmt(v) { return v.toLocaleString('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits:0 }); }
@@ -251,9 +261,12 @@ function rowsToUnits(rows, empSheetName) {
     // empreendimentos de Ribeirao Preto, substitui o "ba" no calculo abaixo
     // (a Folga Promocional ja esta embutida nesse valor, nao e subtraida de novo).
     var isRibeiraoPreto = !!(window.CURRENT_EMP && window.CURRENT_EMP._cityId === 'ribeirao-preto');
+    var folgaPromocional = 0, identificador = '';
     if (isRibeiraoPreto) {
       var bonusAdimplencia = parseBR(findFirst(r, [['bonus', 'adimplencia']]));
       if (bonusAdimplencia > 0) ba = bonusAdimplencia;
+      folgaPromocional = parseBR(findFirst(r, [['folga', 'promocional']]));
+      identificador = findFirst(r, [['identificador']]);
     }
 
     // Valor Tabela Direta = Valor Final Com Kit - B.A. da Unidade (Bonus Adimplencia em RP) - Folga Campanha "G"
@@ -286,6 +299,7 @@ function rowsToUnits(rows, empSheetName) {
       area: areaPriv > 0 ? areaPriv : (AREA_MAP[tipo] || 48),
       tabelaDireta: tabelaDireta, associativo: associativo,
       folgaTabela: folgaTabela, folgaVoltaCx: folgaVoltaCx,
+      folgaPromocional: folgaPromocional, identificador: identificador,
       avaliacao: avaliacao, vagas: vagas
     });
   }
@@ -464,7 +478,8 @@ function unitDisplayData(u) {
   return {
     hideSol: hideSol, andarLabel: andarLabel, sol: sol, solIcon: solIcon,
     solColor: solColor, solBg: solBg, solBorder: solBorder,
-    vagasBadge: vagasBadgeHtml(u),
+    vagasBadge: vagasBadgeHtml(u), promoBadge: promoBadgeHtml(u),
+    apLabel: (u.identificador || u.bl) + ' &middot; ' + andarLabel + ' &middot; Final ' + u.f,
     vTabela: tabelaDiretaOf(u), vAssoc: associativoOf(u)
   };
 }
@@ -474,8 +489,8 @@ function unitCardHtml(u) {
   var html = '<div class="u-card">';
   html += '<div class="u-top"><div class="u-top-info">';
   html += '<div class="u-tipo">' + u.tipoLabel + '</div>';
-  html += '<div class="u-ap">' + u.bl + ' &middot; ' + d.andarLabel + ' &middot; Final ' + u.f + '</div>';
-  html += '</div><div class="u-top-tags"><span class="u-badge-disp">Disponivel</span>' + d.vagasBadge + '</div></div>';
+  html += '<div class="u-ap">' + d.apLabel + '</div>';
+  html += '</div><div class="u-top-tags"><span class="u-badge-disp">Disponivel</span>' + d.promoBadge + d.vagasBadge + '</div></div>';
   html += '<hr class="u-hr">';
   html += '<div class="u-price-row">';
   html += '<div><div class="u-price-lbl">Valor Tabela Direta</div><div class="u-price">' + fmt(d.vTabela) + '</div></div>';
@@ -499,9 +514,9 @@ function unitRowHtml(u) {
   var d = unitDisplayData(u);
   var html = '<div class="u-row">';
   html += '<div class="u-row-id">';
-  html += '<span class="u-badge-disp">Disponivel</span>';
+  html += '<span class="u-badge-disp">Disponivel</span>' + d.promoBadge;
   html += '<div class="u-row-tipo-line"><div class="u-tipo">' + u.tipoLabel + '</div>' + d.vagasBadge + '</div>';
-  html += '<div class="u-ap">' + u.bl + ' &middot; ' + d.andarLabel + ' &middot; Final ' + u.f + '</div>';
+  html += '<div class="u-ap">' + d.apLabel + '</div>';
   html += '</div>';
   html += '<div class="u-row-stats">';
   html += '<div class="u-row-stat"><div class="u-price-lbl">Valor Tabela Direta</div><div class="u-price">' + fmt(d.vTabela) + '</div></div>';

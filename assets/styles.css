@@ -96,6 +96,12 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
 .u-ap{font-family:'DM Sans',sans-serif;font-size:1.05rem;font-weight:600;color:var(--dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .u-ap sup{font-size:0.6em;vertical-align:super;line-height:0}
 .u-badge-disp{background:var(--green-light);color:var(--green);font-size:10px;font-weight:500;padding:3px 10px;border-radius:100px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.u-badge-promo{position:relative;display:inline-flex;align-items:center;gap:4px;background:#FFF0DE;color:#C9601A;border:1px solid #F3C89A;font-size:10px;font-weight:600;padding:3px 9px;border-radius:100px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;cursor:default}
+.u-badge-promo-ic{width:12px;height:12px;flex-shrink:0;stroke:currentColor}
+.u-row-id .u-badge-disp+.u-badge-promo{margin-left:6px}
+.u-badge-promo .u-tooltip{visibility:hidden;opacity:0;pointer-events:none;position:absolute;z-index:30;bottom:calc(100% + 9px);left:50%;transform:translateX(-50%);width:210px;background:var(--dark);color:#fff;font-size:11.5px;font-weight:500;text-transform:none;letter-spacing:0;line-height:1.45;white-space:normal;padding:9px 12px;border-radius:8px;box-shadow:var(--shadow);transition:opacity .15s}
+.u-badge-promo .u-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--dark)}
+.u-badge-promo:hover .u-tooltip,.u-badge-promo:focus-within .u-tooltip{visibility:visible;opacity:1}
 .u-top-tags{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
 .u-vagas{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:500;letter-spacing:.3px;color:var(--muted);white-space:nowrap;line-height:1}
 .u-vagas svg{width:12px;height:12px;flex-shrink:0;stroke:currentColor}
