@@ -265,22 +265,21 @@ function rowsToUnits(rows, empSheetName) {
     var folgaCampG   = parseBR(findFirst(r, [['folga', 'campanha', 'g'], ['folga', 'campanha']]));
     var folgaTabela  = parseBR(findFirst(r, [['folga', 'de', 'tabela'], ['folga', 'tabela']]));
     var folgaVoltaCx = parseBR(findFirst(r, [['folga', 'volta', 'caixa'], ['folga', 'volta']]));
-    // Bonus Adimplencia (= B.A. da Unidade + Folga Promocional): exclusivo dos
-    // empreendimentos de Ribeirao Preto, substitui o "ba" no calculo abaixo
-    // (a Folga Promocional ja esta embutida nesse valor, nao e subtraida de novo).
+    // Folga Comercial, Folga Promocional e Identificador: exclusivos dos empreendimentos de Ribeirao Preto.
     var isRibeiraoPreto = !!(window.CURRENT_EMP && window.CURRENT_EMP._cityId === 'ribeirao-preto');
-    var folgaPromocional = 0, identificador = '';
+    var folgaComercial = 0, folgaPromocional = 0, identificador = '';
     if (isRibeiraoPreto) {
-      var bonusAdimplencia = parseBR(findFirst(r, [['bonus', 'adimplencia']]));
-      if (bonusAdimplencia > 0) ba = bonusAdimplencia;
+      folgaComercial   = parseBR(findFirst(r, [['folga', 'comercial']]));
       folgaPromocional = parseBR(findFirst(r, [['folga', 'promocional']]));
-      identificador = findFirst(r, [['identificador']]);
+      identificador    = findFirst(r, [['identificador']]);
     }
 
-    // Valor Tabela Direta = Valor Final Com Kit - B.A. da Unidade (Bonus Adimplencia em RP) - Folga Campanha "G"
+    // Valor Tabela Direta = Valor Final Com Kit - B.A. da Unidade - Folga Campanha "G"
     var tabelaDireta = valorFinal - ba - folgaCampG;
     // Valor Associativo/Investidor = Tabela Direta - Folga de Tabela
     var associativo  = tabelaDireta - folgaTabela;
+    // Unidade promocional (Folga Promocional > 0): Associativo - Folga Comercial - Folga Promocional
+    var unidadePromocional = associativo - folgaComercial - folgaPromocional;
 
     if (tabelaDireta <= 0) continue;
 
@@ -305,7 +304,7 @@ function rowsToUnits(rows, empSheetName) {
       ap: apStr, num: apNum, bl: bl, f: final, andar: andar,
       tipo: tipo, tipoLabel: tipoLabelFor(window.CURRENT_EMP, tipo),
       area: areaPriv > 0 ? areaPriv : (AREA_MAP[tipo] || 48),
-      tabelaDireta: tabelaDireta, associativo: associativo,
+      tabelaDireta: tabelaDireta, associativo: associativo, unidadePromocional: unidadePromocional,
       folgaTabela: folgaTabela, folgaVoltaCx: folgaVoltaCx,
       folgaPromocional: folgaPromocional, identificador: identificador,
       avaliacao: avaliacao, vagas: vagas
@@ -405,7 +404,8 @@ function updateVagaVisibility() {
 /* "Sem Premio" subtrai a Folga Volta ao Caixa dos valores exibidos */
 function premioAdj(u)      { return activePremio === 'sem' ? (u.folgaVoltaCx || 0) : 0; }
 function tabelaDiretaOf(u) { return u.tabelaDireta - premioAdj(u); }
-function associativoOf(u)  { return u.associativo - premioAdj(u); }
+// Unidade promocional (Folga Promocional > 0) exibe o Valor Promocional no lugar do Associativo
+function associativoOf(u)  { return (u.folgaPromocional > 0) ? u.unidadePromocional : (u.associativo - premioAdj(u)); }
 
 /* ---------- render ---------- */
 function renderUnits() {
@@ -483,12 +483,14 @@ function unitDisplayData(u) {
   var solColor = (sol === 'Nascente') ? '#C9771A' : '#5A7FA8';
   var solBg = (sol === 'Nascente') ? '#FFF5E6' : '#EBF2FA';
   var solBorder = (sol === 'Nascente') ? '#F5DFB8' : '#C5D8EE';
+  var vTabela = tabelaDiretaOf(u), vAssoc = associativoOf(u);
   return {
     hideSol: hideSol, andarLabel: andarLabel, sol: sol, solIcon: solIcon,
     solColor: solColor, solBg: solBg, solBorder: solBorder,
     vagasBadge: vagasBadgeHtml(u), promoBadge: promoBadgeHtml(u),
     apLabel: (u.identificador || u.bl) + ' &middot; ' + andarLabel + ' &middot; Final ' + u.f,
-    vTabela: tabelaDiretaOf(u), vAssoc: associativoOf(u)
+    // desconto real entre o exibido em Tabela Direta e Associativo/Promocional
+    vTabela: vTabela, vAssoc: vAssoc, desconto: vTabela - vAssoc
   };
 }
 
@@ -513,7 +515,7 @@ function unitCardHtml(u) {
     html += '<div class="u-meta-v" style="color:' + d.solColor + '">' + d.solIcon + ' ' + d.sol + '</div></div>';
   }
   html += '</div>';
-  html += '<div class="u-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(d.vAssoc) + ' (Desconto de ' + fmt(u.folgaTabela) + ')</span></div>';
+  html += '<div class="u-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(d.vAssoc) + ' (Desconto de ' + fmt(d.desconto) + ')</span></div>';
   html += '</div>';
   return html;
 }
@@ -535,7 +537,7 @@ function unitRowHtml(u) {
     html += '<div class="u-row-stat"><div class="u-meta-k" style="color:' + d.solColor + '">Sol</div><div class="u-meta-v" style="color:' + d.solColor + '">' + d.solIcon + ' ' + d.sol + '</div></div>';
   }
   html += '</div>';
-  html += '<div class="u-row-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(d.vAssoc) + '</span><span class="u-desc-off">(Desconto de ' + fmt(u.folgaTabela) + ')</span></div>';
+  html += '<div class="u-row-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(d.vAssoc) + '</span><span class="u-desc-off">(Desconto de ' + fmt(d.desconto) + ')</span></div>';
   html += '<div class="u-row-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>';
   html += '</div>';
   return html;
