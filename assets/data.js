@@ -10,6 +10,7 @@ var activeSol = 'todos';
 var activeTorre = 'todos';
 var activeVaga = 'todos';    // 'todos' | 'com' (vagas > 0) | 'sem' (vagas = 0)
 var activePremio = 'com';    // 'com' = Com Premio (padrao) | 'sem' = Sem Premio
+var activePromo = 'todos';   // 'todos' | 'promo' (so unidades com Folga Promocional > 0)
 var viewMode = 'list';       // 'list' (padrao) | 'cards'
 var NASCENTE_FINAIS = [3, 4, 5, 6];
 
@@ -33,6 +34,11 @@ function unitNascente(u) {
 function getSol(u) { return unitNascente(u) ? 'Nascente' : 'Poente'; }
 // Quantidade de vagas (coluna da planilha) so e exibida/filtrada nos produtos de Ribeirao Preto
 function showVagasQtd() {
+  var emp = window.CURRENT_EMP;
+  return !!(emp && emp._cityId === 'ribeirao-preto');
+}
+// Filtro Promocional (unidades com Folga Promocional > 0) so nos produtos de Ribeirao Preto
+function showPromoFilter() {
   var emp = window.CURRENT_EMP;
   return !!(emp && emp._cityId === 'ribeirao-preto');
 }
@@ -354,6 +360,17 @@ function setSortOpt(v, btn) {
   ddSelect('[id^="sort-opt-"]', 'sort-val', btn);
   renderUnits();
 }
+// Filtro Promocional: em empreendimentos com Premio, forca o filtro Premio para
+// "Sem Premio" (as promocionais so aparecem nesse estado), depois filtra a lista.
+function setPromo(p, btn) {
+  activePromo = p;
+  ddSelect('[id^="promo-opt-"]', 'promo-val', btn);
+  if (p === 'promo' && empHasPremio() && activePremio !== 'sem') {
+    var semBtn = document.getElementById('premio-opt-sem');
+    if (semBtn) { setPremio('sem', semBtn); return; }  // setPremio ja chama renderUnits()
+  }
+  renderUnits();
+}
 function clearTipo() {
   var opt = document.getElementById('tipo-opt-todos');
   if (opt) setFilter('todos', opt);
@@ -373,6 +390,10 @@ function clearTorre() {
 function clearVaga() {
   var opt = document.getElementById('vaga-opt-todos');
   if (opt) setVaga('todos', opt);
+}
+function clearPromo() {
+  var opt = document.getElementById('promo-opt-todos');
+  if (opt) setPromo('todos', opt);
 }
 
 /* Mostra o dropdown de Premio apenas se ao menos uma unidade tiver
@@ -445,6 +466,7 @@ function renderUnits() {
       if (activeVaga === 'com' && u.vagas <= 0) continue;
       if (activeVaga === 'sem' && u.vagas > 0) continue;
     }
+    if (activePromo === 'promo' && !(u.folgaPromocional > 0)) continue;
     list.push(u);
   }
 
