@@ -47,11 +47,19 @@ function vagasBadgeHtml(u) {
 }
 var INFO_SVG = '<svg class="u-badge-promo-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
   '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
-// Badge "Promocional": unidades com Folga Promocional > 0 em empreendimentos de
-// Ribeirao Preto que tem Premio (Botanico e Park). So aparece com o filtro "Sem Premio",
-// pois essas unidades nao podem ser vendidas com Premio.
+// Empreendimento tem opcao de Premio quando alguma unidade carregada tem Folga Volta ao Caixa > 0
+// (mesmo criterio de updatePremioVisibility). Ex.: Botanico e Park tem; Ipiranga nao tem.
+function empHasPremio() {
+  for (var i = 0; i < units.length; i++) if ((units[i].folgaVoltaCx || 0) > 0) return true;
+  return false;
+}
+// Badge "Promocional": unidades com Folga Promocional > 0 nos empreendimentos de Ribeirao Preto.
+// Nos empreendimentos com Premio (Botanico e Park), so aparece com o filtro "Sem Premio", pois
+// essas unidades nao podem ser vendidas com Premio. Nos empreendimentos sem Premio (ex.: Ipiranga),
+// nao ha esse filtro para alternar, entao a badge aparece sempre que houver Folga Promocional.
 function promoBadgeHtml(u) {
-  if (activePremio !== 'sem' || !(u.folgaPromocional > 0)) return '';
+  if (!(u.folgaPromocional > 0)) return '';
+  if (empHasPremio() && activePremio !== 'sem') return '';
   return '<span class="u-badge-promo">Promocional' + INFO_SVG +
     '<span class="u-tooltip">Unidades promocionais n&atilde;o podem ser vendidas com Pr&ecirc;mio.</span></span>';
 }
