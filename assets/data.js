@@ -286,6 +286,8 @@ function rowsToUnits(rows, empSheetName) {
     var associativo  = tabelaDireta - folgaTabela;
     // Unidade promocional (Folga Promocional > 0): Associativo - Folga Comercial - Folga Promocional
     var unidadePromocional = associativo - folgaComercial - folgaPromocional;
+    // Tabela Direta da unidade promocional: Unidade Promocional + Folga de Tabela
+    var unidadePromocionalTabelaDireta = unidadePromocional + folgaTabela;
 
     if (tabelaDireta <= 0) continue;
 
@@ -311,6 +313,7 @@ function rowsToUnits(rows, empSheetName) {
       tipo: tipo, tipoLabel: tipoLabelFor(window.CURRENT_EMP, tipo),
       area: areaPriv > 0 ? areaPriv : (AREA_MAP[tipo] || 48),
       tabelaDireta: tabelaDireta, associativo: associativo, unidadePromocional: unidadePromocional,
+      unidadePromocionalTabelaDireta: unidadePromocionalTabelaDireta,
       folgaTabela: folgaTabela, folgaVoltaCx: folgaVoltaCx,
       folgaPromocional: folgaPromocional, identificador: identificador,
       avaliacao: avaliacao, vagas: vagas
@@ -424,7 +427,8 @@ function updateVagaVisibility() {
 
 /* "Sem Premio" subtrai a Folga Volta ao Caixa dos valores exibidos */
 function premioAdj(u)      { return activePremio === 'sem' ? (u.folgaVoltaCx || 0) : 0; }
-function tabelaDiretaOf(u) { return u.tabelaDireta - premioAdj(u); }
+// Unidade promocional (Folga Promocional > 0) exibe a Tabela Direta calculada a partir do Valor Promocional
+function tabelaDiretaOf(u) { return (u.folgaPromocional > 0) ? u.unidadePromocionalTabelaDireta : (u.tabelaDireta - premioAdj(u)); }
 // Unidade promocional (Folga Promocional > 0) exibe o Valor Promocional no lugar do Associativo
 function associativoOf(u)  { return (u.folgaPromocional > 0) ? u.unidadePromocional : (u.associativo - premioAdj(u)); }
 
