@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de Tabela Direta - Grupo Direcional</title>
+<link rel="icon" type="image/webp" href="assets/img/favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+/* ===== Identidade Grupo Direcional ===== */
+:root{
+  --dir-red:#E4032B; --dir-red-dark:#B8001F;
+  --dir-grey:#727A7D; --dir-ink:#3A4043; --dir-line:#E7E9EA;
+  --dir-bg:#F5F6F7;
+  --ok:#1E8E4A; --warn:#B57200; --warn-bg:#FFF7E6; --err:#C4001C; --err-bg:#FDEEF0;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--dir-bg);font-family:'DM Sans',system-ui,sans-serif;color:var(--dir-ink);
+     font-size:15px;line-height:1.5}
+
+/* ---------- header ---------- */
+.hero{position:relative;background:#fff url('assets/img/hero-bg.png') center/cover no-repeat;
+      padding:2.75rem 2rem 2.25rem;border-bottom:1px solid var(--dir-line)}
+.hero-inner{max-width:1120px;margin:0 auto}
+.hero-logo{position:absolute;top:24px;right:32px;height:52px;width:auto}
+.hero-brand{color:var(--dir-red);font-weight:500;font-size:.86rem;letter-spacing:.06em;text-transform:uppercase}
+.hero h1{margin:.35rem 0 .4rem;font-size:2.15rem;font-weight:700;letter-spacing:-.6px;line-height:1.15}
+.hero h1 em{color:var(--dir-red);font-style:normal}
+.hero p{margin:0;color:var(--dir-grey);max-width:56ch}
+@media(max-width:700px){
+  .hero{padding:1.75rem 1.1rem 1.5rem}
+  .hero-logo{height:34px;top:16px;right:16px}
+  .hero h1{font-size:1.5rem;max-width:70%}
+}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1120px;margin:0 auto;padding:1.75rem 2rem 4rem}
+@media(max-width:700px){.wrap{padding:1.25rem 1.1rem 3rem}}
+.step{margin-bottom:1.5rem}
+.step-label{display:flex;align-items:center;gap:.55rem;color:var(--dir-red);font-weight:500;
+            font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.7rem}
+.step-label::before{content:'';width:22px;height:2px;background:var(--dir-red);border-radius:2px}
+.card{background:#fff;border:1px solid var(--dir-line);border-radius:14px;padding:1.35rem}
+@media(max-width:700px){.card{padding:1rem}}
+
+/* ---------- cards empreendimento ---------- */
+.emps{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem}
+@media(max-width:900px){.emps{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.emps{grid-template-columns:1fr}}
+.emp{text-align:left;background:#fff;border:1px solid var(--dir-line);border-radius:12px;
+     padding:.95rem 1rem;cursor:pointer;transition:.15s;font:inherit;color:inherit}
+.emp:hover{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(58,64,67,.10)}
+.emp.active{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(228,3,43,.16);background:#FFF9FA}
+.emp-nome{font-weight:700;line-height:1.25;margin-bottom:.4rem}
+.emp-meta{font-size:.78rem;color:var(--dir-grey);display:flex;flex-direction:column;gap:.1rem}
+.emp-meta b{color:var(--dir-ink);font-weight:500}
+
+/* ---------- forms ---------- */
+.grid{display:grid;gap:.9rem}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:820px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.g2,.g3,.g4{grid-template-columns:1fr}}
+label{display:block;font-size:.76rem;font-weight:500;color:var(--dir-grey);
+      letter-spacing:.04em;text-transform:uppercase;margin-bottom:.32rem}
+input,select,textarea{width:100%;font:inherit;color:var(--dir-ink);background:#fff;
+      border:1px solid var(--dir-line);border-radius:9px;padding:.6rem .7rem;transition:.15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--dir-red);
+      box-shadow:0 0 0 3px rgba(228,3,43,.10)}
+input.bad{border-color:var(--err);background:var(--err-bg)}
+input.warn{border-color:var(--warn);background:var(--warn-bg)}
+textarea{resize:vertical;min-height:70px}
+.pair{display:flex;gap:.4rem}
+.pair .money{flex:1 1 auto;min-width:0}
+.pair .pct{flex:0 0 84px;text-align:right}
+.hint{font-size:.74rem;color:var(--dir-grey);margin-top:.3rem}
+.hint.err{color:var(--err);font-weight:500}
+.hint.warn{color:var(--warn);font-weight:500}
+fieldset{border:0;padding:0;margin:0}
+.sub{font-weight:700;font-size:.95rem;margin:1.35rem 0 .7rem;padding-top:1.1rem;
+     border-top:1px dashed var(--dir-line)}
+.sub:first-of-type{margin-top:0;padding-top:0;border-top:0}
+
+/* ---------- split obra/pos ---------- */
+.split{display:flex;align-items:flex-end;gap:.7rem;flex-wrap:wrap}
+.split .fld{flex:0 0 150px}
+.presets{display:flex;gap:.35rem;flex-wrap:wrap;padding-bottom:.15rem}
+.chip{font:inherit;font-size:.78rem;padding:.42rem .7rem;border-radius:999px;cursor:pointer;
+      background:#fff;border:1px solid var(--dir-line);color:var(--dir-grey);transition:.15s}
+.chip:hover{border-color:var(--dir-red);color:var(--dir-red)}
+.chip.on{background:var(--dir-red);border-color:var(--dir-red);color:#fff}
+
+/* ---------- intermediárias ---------- */
+.int-row{display:grid;grid-template-columns:1fr 1fr 1fr 40px;gap:.5rem;align-items:center;margin-bottom:.5rem}
+@media(max-width:560px){.int-row{grid-template-columns:1fr 1fr 40px}.int-row .pctcol{grid-column:1/3}}
+.icon-btn{width:38px;height:38px;border-radius:9px;border:1px solid var(--dir-line);background:#fff;
+      color:var(--dir-grey);cursor:pointer;font-size:1.1rem;line-height:1;transition:.15s}
+.icon-btn:hover{border-color:var(--dir-red);color:var(--dir-red)}
+.btn{font:inherit;font-weight:500;padding:.62rem 1.05rem;border-radius:9px;cursor:pointer;transition:.15s;border:1px solid}
+.btn-ghost{background:#fff;border-color:var(--dir-line);color:var(--dir-ink)}
+.btn-ghost:hover{border-color:var(--dir-red);color:var(--dir-red)}
+.btn-primary{background:var(--dir-red);border-color:var(--dir-red);color:#fff}
+.btn-primary:hover{background:var(--dir-red-dark);border-color:var(--dir-red-dark)}
+.btn-row{display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.75rem}
+
+/* ---------- resultado ---------- */
+.summary{display:grid;grid-template-columns:repeat(5,1fr);gap:.7rem;margin-bottom:1.1rem}
+@media(max-width:980px){.summary{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.summary{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:#fff;border:1px solid var(--dir-line);border-radius:12px;padding:.85rem .9rem}
+.kpi.hero-kpi{background:linear-gradient(135deg,var(--dir-red),var(--dir-red-dark));
+      border-color:var(--dir-red);color:#fff}
+.kpi.hero-kpi .kpi-lab,.kpi.hero-kpi .kpi-sub{color:rgba(255,255,255,.82)}
+.kpi-lab{font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--dir-grey);font-weight:500}
+.kpi-val{font-size:1.22rem;font-weight:700;letter-spacing:-.4px;margin-top:.18rem;line-height:1.2}
+.kpi-sub{font-size:.74rem;color:var(--dir-grey);margin-top:.1rem}
+
+.alerts{display:flex;flex-direction:column;gap:.45rem;margin-bottom:1.1rem}
+.alert{display:flex;gap:.6rem;align-items:flex-start;padding:.65rem .85rem;border-radius:10px;
+       font-size:.86rem;border:1px solid}
+.alert.err{background:var(--err-bg);border-color:#F3C6CE;color:var(--err)}
+.alert.warn{background:var(--warn-bg);border-color:#F0DCB0;color:var(--warn)}
+.alert.ok{background:#EFF9F2;border-color:#C7E7D3;color:var(--ok)}
+.alert b{font-weight:700}
+.alert-ico{flex:0 0 auto;font-weight:700}
+
+.banner{display:none;align-items:center;gap:.6rem;background:var(--err);color:#fff;font-weight:700;
+        letter-spacing:.05em;text-transform:uppercase;font-size:.8rem;padding:.6rem 1rem;
+        border-radius:10px;margin-bottom:1rem}
+.banner.on{display:flex}
+
+.tbl-wrap{overflow-x:auto;border:1px solid var(--dir-line);border-radius:12px;background:#fff}
+table{width:100%;border-collapse:collapse;font-size:.87rem;min-width:520px}
+thead th{background:var(--dir-ink);color:#fff;font-weight:500;font-size:.72rem;letter-spacing:.07em;
+      text-transform:uppercase;text-align:left;padding:.6rem .8rem;white-space:nowrap}
+tbody td{padding:.55rem .8rem;border-top:1px solid var(--dir-line);white-space:nowrap}
+tbody tr.grp td{background:#FAFBFB;font-weight:700;font-size:.74rem;letter-spacing:.07em;
+      text-transform:uppercase;color:var(--dir-grey)}
+tbody tr.tot td{background:#FFF9FA;font-weight:700;border-top:2px solid var(--dir-red)}
+td.num,th.num{text-align:right}
+.empty{padding:2.5rem 1rem;text-align:center;color:var(--dir-grey)}
+
+.note{font-size:.78rem;color:var(--dir-grey);margin-top:.8rem;line-height:1.55}
+.foot{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--dir-line);
+      color:var(--dir-grey);font-size:.8rem}
+.foot a{color:var(--dir-red);text-decoration:none}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <img class="hero-logo" src="assets/img/logo-direcional.jpg" alt="Grupo Direcional">
+  <div class="hero-inner">
+    <div class="hero-brand">Portal do Corretor</div>
+    <h1>Simulador de <em>Tabela Direta</em></h1>
+    <p>Monte o fluxo de pagamento da unidade em segundos, confira as regras da política na hora e baixe a simulação pronta em PDF. Empreendimentos de Ribeirão Preto.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- PASSO 1 -->
+  <section class="step">
+    <div class="step-label">Passo 1 &middot; Empreendimento</div>
+    <div class="emps" id="emps"></div>
+  </section>
+
+  <!-- PASSO 2 -->
+  <section class="step">
+    <div class="step-label">Passo 2 &middot; Unidade e proposta</div>
+    <div class="card">
+      <div class="grid g4">
+        <div>
+          <label for="f-valor">Valor da venda</label>
+          <input id="f-valor" type="text" inputmode="decimal" placeholder="R$ 0,00">
+        </div>
+        <div>
+          <label for="f-metragem">Metragem (m&sup2;)</label>
+          <input id="f-metragem" type="text" inputmode="decimal" placeholder="0">
+          <div class="hint" id="h-m2"></div>
+        </div>
+        <div>
+          <label for="f-unidade">Unidade</label>
+          <input id="f-unidade" type="text" placeholder="BL02-0507">
+        </div>
+        <div>
+          <label for="f-data">Data da venda</label>
+          <input id="f-data" type="date">
+        </div>
+        <div>
+          <label for="f-cliente">Cliente</label>
+          <input id="f-cliente" type="text" placeholder="Nome do cliente">
+        </div>
+        <div>
+          <label for="f-corretor">Corretor</label>
+          <input id="f-corretor" type="text" placeholder="Seu nome">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PASSO 3 -->
+  <section class="step">
+    <div class="step-label">Passo 3 &middot; Fluxo de pagamento</div>
+    <div class="card">
+
+      <div class="sub">Divisão do fluxo</div>
+      <div class="split">
+        <div class="fld">
+          <label for="f-obra">Período de obra (%)</label>
+          <input id="f-obra" type="text" inputmode="decimal">
+        </div>
+        <div class="fld">
+          <label for="f-pos">Pós-obra (%)</label>
+          <input id="f-pos" type="text" inputmode="decimal">
+        </div>
+        <div class="presets" id="presets"></div>
+      </div>
+      <div class="hint" id="h-obra"></div>
+
+      <div class="sub">Entrada &mdash; Ato e Sinais</div>
+      <div class="grid g4">
+        <div>
+          <label for="f-ato">Ato <span style="text-transform:none">(min. 3%)</span></label>
+          <div class="pair">
+            <input class="money" id="f-ato" type="text" inputmode="decimal" placeholder="R$ 0,00">
+            <input class="pct" id="f-ato-p" type="text" inputmode="decimal" placeholder="%">
+          </div>
+        </div>
+        <div>
+          <label for="f-s1">Sinal 1</label>
+          <div class="pair">
+            <input class="money" id="f-s1" type="text" inputmode="decimal" placeholder="R$ 0,00">
+            <input class="pct" id="f-s1-p" type="text" inputmode="decimal" placeholder="%">
+          </div>
+        </div>
+        <div>
+          <label for="f-s2">Sinal 2</label>
+          <div class="pair">
+            <input class="money" id="f-s2" type="text" inputmode="decimal" placeholder="R$ 0,00">
+            <input class="pct" id="f-s2-p" type="text" inputmode="decimal" placeholder="%">
+          </div>
+        </div>
+        <div>
+          <label for="f-s3">Sinal 3</label>
+          <div class="pair">
+            <input class="money" id="f-s3" type="text" inputmode="decimal" placeholder="R$ 0,00">
+            <input class="pct" id="f-s3-p" type="text" inputmode="decimal" placeholder="%">
+          </div>
+        </div>
+      </div>
+      <div class="hint" id="h-entrada"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="b-entrada10" type="button">Preencher 10% (3% + 7%)</button>
+        <button class="btn btn-ghost" id="b-atoonly" type="button">Somente Ato (10%)</button>
+      </div>
+
+      <div class="sub">Intermediárias <span style="font-weight:400;color:var(--dir-grey);font-size:.82rem">&mdash; máximo 12% do valor da venda, última até 3 meses antes da entrega</span></div>
+      <div id="int-list"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="b-int-add" type="button">+ Adicionar intermediária</button>
+        <button class="btn btn-ghost" id="b-int-sem" type="button">Gerar semestrais</button>
+        <button class="btn btn-ghost" id="b-int-anu" type="button">Gerar anuais</button>
+        <button class="btn btn-ghost" id="b-int-clr" type="button">Limpar</button>
+      </div>
+      <div class="hint" id="h-int"></div>
+
+      <div class="sub">Mensais</div>
+      <div class="grid g3">
+        <div>
+          <label for="f-qtd">Quantidade de mensais</label>
+          <input id="f-qtd" type="number" min="0" step="1">
+          <div class="hint" id="h-qtd"></div>
+        </div>
+        <div>
+          <label>Valor de cada mensal</label>
+          <input id="f-mensal" type="text" readonly style="background:#FAFBFB;font-weight:700">
+          <div class="hint">Calculado: saldo do período de obra dividido pela quantidade.</div>
+        </div>
+        <div>
+          <label for="f-obs">Observações</label>
+          <textarea id="f-obs" placeholder="Opcional - sai no rodapé do PDF"></textarea>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- RESULTADO -->
+  <section class="step">
+    <div class="step-label">Simulação</div>
+    <div class="banner" id="banner"><span>&#9888;</span> Fluxo fora da política &mdash; revise os pontos em vermelho</div>
+    <div class="summary" id="summary"></div>
+    <div class="alerts" id="alerts"></div>
+    <div class="tbl-wrap"><table id="tbl"><thead><tr>
+      <th>#</th><th>Vencimento</th><th>Parcela</th><th class="num">Valor</th><th class="num">%</th>
+    </tr></thead><tbody id="tbody"></tbody></table></div>
+    <div class="note" id="note"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="b-pdf" type="button">Baixar PDF</button>
+      <button class="btn btn-ghost" id="b-reset" type="button">Limpar simulação</button>
+    </div>
+  </section>
+
+  <div class="foot">
+    Simulação sem juros e sem correção monetária, para fins de apresentação. Valores sujeitos a
+    confirmação e aprovação da Direcional. &middot; <a href="index.html">Voltar ao portal</a>
+  </div>
+
+</main>
+
+<script>
+/* =========================================================
+   DADOS DOS EMPREENDIMENTOS - Ribeirão Preto
+   entrega: mês de entrega (YYYY-MM) | pctObra: fluxo padrão
+   ========================================================= */
+var EMPS = [
+  { id:'gaia',     nome:'Village Gaia',                       entrega:'2029-08', pctObra:30 },
+  { id:'park',     nome:'Village Park',                       entrega:'2028-01', pctObra:35 },
+  { id:'botanico', nome:'Reserva Direcional Jardim Botânico',  entrega:'2026-12', pctObra:40 },
+  { id:'ipiranga', nome:'Conquista Club Ipiranga',            entrega:'2029-08', pctObra:40 }
+];
+
+/* Regras da política (valem para todos os produtos) */
+var POL = { atoMin:3, entradaTotal:10, intermMax:12, mesesAntesEntrega:3, prazoPosObra:120 };
+
+var MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+
+/* =========================================================
+   ESTADO
+   ========================================================= */
+var S = {
+  empId:null, valor:0, metragem:0, unidade:'', cliente:'', corretor:'', obs:'',
+  dataVenda:hoje(), pctObra:null,
+  ato:0, s1:0, s2:0, s3:0,
+  interm:[],          // [{mes:<idx>, valor:<num>}]
+  qtd:null            // null = calcula automático
+};
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+function $(id){ return document.getElementById(id); }
+function hoje(){ var d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function pad(n){ return (n<10?'0':'')+n; }
+function brl(n){
+  if(!isFinite(n)) n=0;
+  return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function pct(n){
+  if(!isFinite(n)) n=0;
+  return n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
+}
+/* Aceita "300.000,00", "300000", "R$ 1.234,56" e tambem "1234.56" */
+function num(str){
+  if(typeof str==='number') return str;
+  var s=(str||'').toString().replace(/[^\d.,-]/g,'');
+  if(!s) return 0;
+  var temVirg=s.indexOf(',')>=0, temPonto=s.indexOf('.')>=0;
+  if(temVirg){ s=s.replace(/\./g,'').replace(',','.'); }
+  else if(temPonto){
+    // ponto como milhar quando ha grupos de 3 (ex.: 300.000) ou mais de um ponto
+    var partes=s.split('.');
+    if(partes.length>2 || (partes.length===2 && partes[1].length===3)) s=partes.join('');
+  }
+  var v=parseFloat(s);
+  return isFinite(v)?v:0;
+}
+function emp(){ for(var i=0;i<EMPS.length;i++) if(EMPS[i].id===S.empId) return EMPS[i]; return null; }
+function parseData(str){ var p=(str||'').split('-'); return new Date(+p[0], (+p[1])-1, +p[2]||1); }
+
+/* indice 0 = data da venda (Ato); indice k = dia 1 do mes, k meses depois */
+function dataDoIndice(k){
+  var d=parseData(S.dataVenda);
+  if(k===0) return d;
+  return new Date(d.getFullYear(), d.getMonth()+k, 1);
+}
+function fmtData(d){ return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear(); }
+function rotuloMes(k){
+  var d=dataDoIndice(k);
+  return MESES[d.getMonth()]+'/'+d.getFullYear();
+}
+/* meses entre o mes da venda e o mes de entrega */
+function totalMeses(){
+  var e=emp(); if(!e) return 0;
+  var v=parseData(S.dataVenda), p=e.entrega.split('-');
+  var n=((+p[0])-v.getFullYear())*12 + ((+p[1])-1-v.getMonth());
+  return Math.max(0,n);
+}
+function nSinais(){ return (S.s3>0?3:(S.s2>0?2:(S.s1>0?1:0))); }
+function inicioMensais(){ return nSinais()+1; }
+function qtdAuto(){ return Math.max(0, totalMeses()-inicioMensais()+1); }
+function qtdMensais(){ return S.qtd===null ? qtdAuto() : Math.max(0,S.qtd); }
+
+/* =========================================================
+   MOTOR DE CALCULO  (espelha a planilha)
+   ========================================================= */
+function calc(){
+  var e=emp();
+  var valor=S.valor;
+  var pObra = S.pctObra===null ? (e?e.pctObra:0) : S.pctObra;
+  var totalObra   = valor*pObra/100;
+  var entrada     = S.ato+S.s1+S.s2+S.s3;
+  var somaInterm  = S.interm.reduce(function(a,r){ return a+(r.valor||0); },0);
+  var qtd         = qtdMensais();
+  var saldoObra   = totalObra-entrada-somaInterm;              // resto a diluir nas mensais
+  var mensal      = qtd>0 ? saldoObra/qtd : 0;                 // = J25 da planilha
+  var saldoPos    = valor-totalObra;
+  var parcelaPos  = POL.prazoPosObra>0 ? saldoPos/POL.prazoPosObra : 0;
+  var faltante    = (entrada+somaInterm+mensal*qtd+saldoPos)-valor;
+  return {
+    e:e, valor:valor, pObra:pObra, pPos:100-pObra, totalObra:totalObra,
+    entrada:entrada, somaInterm:somaInterm, qtd:qtd, saldoObra:saldoObra,
+    mensal:mensal, saldoPos:saldoPos, parcelaPos:parcelaPos, faltante:faltante,
+    m2: S.metragem>0 ? valor/S.metragem : 0
+  };
+}
+
+/* =========================================================
+   VALIDACOES DA POLÍTICA
+   ========================================================= */
+function validar(c){
+  var out=[], T=totalMeses();
+  if(!c.e) return [{n:'warn',t:'Selecione um empreendimento para começar.'}];
+  if(c.valor<=0) return [{n:'warn',t:'Informe o valor de venda da unidade para calcular o fluxo.'}];
+
+  // 1 - Ato mínimo
+  var atoP = c.valor>0 ? S.ato/c.valor*100 : 0;
+  if(S.ato<=0){
+    out.push({n:'err',c:'ato',t:'<b>Ato não preenchido.</b> A política exige no mínimo '+POL.atoMin+'% = '+brl(c.valor*POL.atoMin/100)+'.'});
+  } else if(atoP < POL.atoMin-0.001){
+    out.push({n:'err',c:'ato',t:'<b>Ato abaixo da política.</b> Mínimo '+POL.atoMin+'% = '+brl(c.valor*POL.atoMin/100)+' &mdash; você preencheu '+pct(atoP)+' ('+brl(S.ato)+').'});
+  }
+
+  // 2 - Entrada total = 10%
+  var entP = c.valor>0 ? c.entrada/c.valor*100 : 0;
+  var alvo = c.valor*POL.entradaTotal/100;
+  if(Math.abs(c.entrada-alvo) > 0.01){
+    var falta = alvo-c.entrada;
+    out.push({n:'err',c:'entrada',t:'<b>Entrada fora da política.</b> Ato + Sinais deve somar '+POL.entradaTotal+'% = '+brl(alvo)+
+      ' &mdash; hoje soma '+pct(entP)+' ('+brl(c.entrada)+'). '+(falta>0?'Faltam '+brl(falta)+'.':'Excedeu '+brl(-falta)+'.')});
+  }
+
+  // 3 - Intermediárias <= 12%
+  var intP = c.valor>0 ? c.somaInterm/c.valor*100 : 0;
+  if(intP > POL.intermMax+0.001){
+    out.push({n:'err',c:'int',t:'<b>Intermediárias acima do limite.</b> Máximo '+POL.intermMax+'% = '+brl(c.valor*POL.intermMax/100)+
+      ' &mdash; a soma está em '+pct(intP)+' ('+brl(c.somaInterm)+').'});
+  }
+
+  // 4 - Última intermediária >= 3 meses antes da entrega
+  if(S.interm.length){
+    var limite = T-POL.mesesAntesEntrega;
+    var fora = S.interm.filter(function(r){ return r.mes>limite; });
+    if(fora.length){
+      out.push({n:'err',c:'int',t:'<b>Intermediária muito próxima da entrega.</b> A última precisa cair até '+
+        POL.mesesAntesEntrega+' meses antes da entrega &mdash; no máximo <b>'+rotuloMes(Math.max(0,limite))+'</b>.'});
+    }
+    // 7 - espaçamento semestral / anual
+    var idx=S.interm.map(function(r){return r.mes;}).sort(function(a,b){return a-b;});
+    if(idx.length>1){
+      var gaps=[], irregular=false;
+      for(var i=1;i<idx.length;i++){ var g=idx[i]-idx[i-1]; gaps.push(g); if(g!==6 && g!==12) irregular=true; }
+      if(irregular) out.push({n:'warn',c:'int',t:'<b>Espaçamento irregular.</b> As intermediárias devem ser semestrais (a cada 6 meses) ou anuais (a cada 12 meses).'});
+      else if(gaps.some(function(g){return g!==gaps[0];})) out.push({n:'warn',c:'int',t:'Ha intermediárias com espacamentos diferentes entre si (6 e 12 meses misturados).'});
+    }
+  }
+
+  // 5 - mensal invalida
+  if(c.qtd<=0 && c.saldoObra>0.01){
+    out.push({n:'err',c:'qtd',t:'<b>Sem parcelas mensais.</b> Sobram '+brl(c.saldoObra)+' do período de obra sem onde alocar. Aumente a quantidade de mensais ou as intermediárias.'});
+  } else if(c.qtd>0 && c.mensal<=0){
+    out.push({n:'err',c:'qtd',t:'<b>Mensal negativa ou zerada.</b> Entrada + intermediárias ('+brl(c.entrada+c.somaInterm)+') já superam o período de obra ('+brl(c.totalObra)+'). Reduza os valores ou aumente o % de obra.'});
+  }
+
+  // 6 - % de obra fora do padrão
+  if(c.e && Math.abs(c.pObra-c.e.pctObra)>0.001){
+    out.push({n:'warn',c:'obra',t:'<b>Fluxo fora do padrão do produto.</b> O padrão do '+c.e.nome+' é '+
+      c.e.pctObra+'% / '+(100-c.e.pctObra)+'% &mdash; você montou '+pct(c.pObra)+' / '+pct(100-c.pObra)+'. Precisa de aprovação.'});
+  }
+
+  // 8 - faltante
+  if(Math.abs(c.faltante)>0.01){
+    out.push({n:'err',t:'<b>Fluxo não fecha.</b> Diferença de '+brl(c.faltante)+' em relação ao valor da venda.'});
+  }
+
+  if(!out.length) out.push({n:'ok',t:'<b>Fluxo dentro da política.</b> Entrada de '+pct(entP)+', '+pct(c.pObra)+' no período de obra e '+pct(c.pPos)+' no pós-obra.'});
+  return out;
+}
+
+/* =========================================================
+   MONTAGEM DA TABELA DO FLUXO
+   ========================================================= */
+function linhas(c){
+  var out=[], T=totalMeses();
+  if(!c.e || c.valor<=0) return out;
+  if(S.ato>0) out.push({k:0, tipo:'Ato', valor:S.ato});
+  if(S.s1>0)  out.push({k:1, tipo:'Sinal 1', valor:S.s1});
+  if(S.s2>0)  out.push({k:2, tipo:'Sinal 2', valor:S.s2});
+  if(S.s3>0)  out.push({k:3, tipo:'Sinal 3', valor:S.s3});
+
+  var ini=inicioMensais();
+  for(var i=0;i<c.qtd;i++){
+    out.push({k:ini+i, tipo:'Mensal '+(i+1)+'/'+c.qtd, valor:c.mensal});
+  }
+  S.interm.slice().sort(function(a,b){return a.mes-b.mes;}).forEach(function(r,i){
+    if(r.valor>0) out.push({k:r.mes, tipo:'Intermediária '+(i+1), valor:r.valor, int:true});
+  });
+  out.sort(function(a,b){
+    if(a.k!==b.k) return a.k-b.k;
+    return (a.int?1:0)-(b.int?1:0);   // intermediária depois da mensal do mesmo mes
+  });
+  return out;
+}
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+function renderEmps(){
+  $('emps').innerHTML = EMPS.map(function(e){
+    var p=e.entrega.split('-');
+    return '<button type="button" class="emp'+(e.id===S.empId?' active':'')+'" data-emp="'+e.id+'">'+
+      '<div class="emp-nome">'+e.nome+'</div>'+
+      '<div class="emp-meta">'+
+        '<span>Entrega <b>'+MESES[(+p[1])-1]+'/'+p[0]+'</b></span>'+
+        '<span>Fluxo padrão <b>'+e.pctObra+'% / '+(100-e.pctObra)+'%</b></span>'+
+      '</div></button>';
+  }).join('');
+}
+
+function renderPresets(){
+  var e=emp(), atual = S.pctObra===null ? (e?e.pctObra:null) : S.pctObra;
+  var opts=[30,35,40,45,50];
+  if(e && opts.indexOf(e.pctObra)<0) opts.push(e.pctObra);
+  opts.sort(function(a,b){return a-b;});
+  $('presets').innerHTML = opts.map(function(p){
+    return '<button type="button" class="chip'+(p===atual?' on':'')+'" data-obra="'+p+'">'+p+'/'+(100-p)+'</button>';
+  }).join('');
+}
+
+function renderInterm(){
+  var T=totalMeses(), c=calc();
+  var limite=T-POL.mesesAntesEntrega;
+  if(!S.interm.length){
+    $('int-list').innerHTML='<div class="hint">Nenhuma intermediária. O fluxo segue com Ato, Sinais e mensais.</div>';
+    return;
+  }
+  var opcoes='';
+  for(var k=1;k<=T;k++){
+    opcoes+='<option value="'+k+'">'+rotuloMes(k)+(k>limite?' (fora do prazo)':'')+'</option>';
+  }
+  $('int-list').innerHTML = S.interm.map(function(r,i){
+    var p = c.valor>0 ? r.valor/c.valor*100 : 0;
+    return '<div class="int-row">'+
+      '<select data-int-mes="'+i+'">'+opcoes+'</select>'+
+      '<input type="text" inputmode="decimal" data-int-val="'+i+'" value="'+(r.valor?brl(r.valor):'')+'" placeholder="R$ 0,00"'+(r.mes>limite?' class="bad"':'')+'>'+
+      '<input type="text" inputmode="decimal" class="pctcol" data-int-pct="'+i+'" value="'+(r.valor?p.toFixed(2).replace('.',','):'')+'" placeholder="%">'+
+      '<button type="button" class="icon-btn" data-int-del="'+i+'" title="Remover">&times;</button>'+
+    '</div>';
+  }).join('');
+  S.interm.forEach(function(r,i){
+    var sel=document.querySelector('[data-int-mes="'+i+'"]');
+    if(sel) sel.value=String(r.mes);
+  });
+}
+
+function renderResultado(){
+  var c=calc(), av=validar(c), T=totalMeses();
+
+  /* KPIs */
+  var entP = c.valor>0 ? c.entrada/c.valor*100 : 0;
+  $('summary').innerHTML =
+    kpi('Entrada (Ato + Sinais)', brl(c.entrada), pct(entP)+' do valor') +
+    kpi('Período de obra', brl(c.totalObra), pct(c.pObra)+' &middot; '+(c.qtd)+' mensais') +
+    kpi('Valor da mensal', brl(c.mensal), c.qtd>0?('de '+rotuloMes(inicioMensais())+' a '+rotuloMes(inicioMensais()+c.qtd-1)):'sem mensais', true) +
+    kpi('Saldo pós-obra', brl(c.saldoPos), pct(c.pPos)+' &middot; '+brl(c.parcelaPos)+'/mês em '+POL.prazoPosObra+'x') +
+    kpi('Valor do m&sup2;', c.m2>0?brl(c.m2):'&mdash;', S.metragem>0?(S.metragem+' m&sup2;'):'informe a metragem');
+
+  /* Alertas */
+  $('alerts').innerHTML = av.map(function(a){
+    var ico = a.n==='err'?'&#10007;':(a.n==='warn'?'&#9888;':'&#10003;');
+    return '<div class="alert '+a.n+'"><span class="alert-ico">'+ico+'</span><span>'+a.t+'</span></div>';
+  }).join('');
+  $('banner').className = 'banner'+(av.some(function(a){return a.n==='err';})?' on':'');
+
+  /* Destaque nos campos */
+  var cods = av.filter(function(a){return a.n==='err';}).map(function(a){return a.c;});
+  var wcods= av.filter(function(a){return a.n==='warn';}).map(function(a){return a.c;});
+  mark('f-ato', cods.indexOf('ato')>=0 || cods.indexOf('entrada')>=0, false);
+  ['f-s1','f-s2','f-s3'].forEach(function(id){ mark(id, cods.indexOf('entrada')>=0, false); });
+  mark('f-obra', false, wcods.indexOf('obra')>=0);
+  mark('f-pos',  false, wcods.indexOf('obra')>=0);
+  mark('f-qtd',  cods.indexOf('qtd')>=0, false);
+
+  /* Hints inline */
+  msg('h-entrada', av, ['ato','entrada']);
+  msg('h-int',     av, ['int']);
+  msg('h-obra',    av, ['obra']);
+  msg('h-qtd',     av, ['qtd'], 'Sugestão automática: '+qtdAuto()+' mensais (de '+(T>0?rotuloMes(inicioMensais()):'-')+' até '+(T>0?rotuloMes(T):'-')+').');
+  $('h-m2').innerHTML = c.m2>0 ? ('Valor do m&sup2;: <b>'+brl(c.m2)+'</b>') : '';
+  $('f-mensal').value = brl(c.mensal);
+
+  /* Tabela */
+  var L=linhas(c), tb=$('tbody');
+  if(!L.length){
+    tb.innerHTML='<tr><td colspan="5"><div class="empty">Selecione o empreendimento e informe o valor da venda para montar o fluxo.</div></td></tr>';
+  } else {
+    var html='<tr class="grp"><td colspan="5">Período de obra &mdash; '+pct(c.pObra)+' &middot; '+brl(c.totalObra)+'</td></tr>';
+    var somaObra=0;
+    L.forEach(function(r,i){
+      somaObra+=r.valor;
+      html+='<tr><td>'+(i+1)+'</td><td>'+fmtData(dataDoIndice(r.k))+'</td><td>'+r.tipo+'</td>'+
+            '<td class="num">'+brl(r.valor)+'</td><td class="num">'+(c.valor>0?pct(r.valor/c.valor*100):'-')+'</td></tr>';
+    });
+    html+='<tr class="tot"><td></td><td></td><td>Subtotal período de obra</td><td class="num">'+brl(somaObra)+
+          '</td><td class="num">'+(c.valor>0?pct(somaObra/c.valor*100):'-')+'</td></tr>';
+    html+='<tr class="grp"><td colspan="5">Pós-obra &mdash; saldo para financiamento / repasse</td></tr>';
+    html+='<tr><td>'+(L.length+1)+'</td><td>a partir de '+(T>0?rotuloMes(T+1):'-')+'</td>'+
+          '<td>Saldo pós-obra ('+POL.prazoPosObra+'x de '+brl(c.parcelaPos)+')</td>'+
+          '<td class="num">'+brl(c.saldoPos)+'</td><td class="num">'+(c.valor>0?pct(c.saldoPos/c.valor*100):'-')+'</td></tr>';
+    html+='<tr class="tot"><td></td><td></td><td>Total da unidade</td><td class="num">'+brl(somaObra+c.saldoPos)+
+          '</td><td class="num">'+(c.valor>0?pct((somaObra+c.saldoPos)/c.valor*100):'-')+'</td></tr>';
+    tb.innerHTML=html;
+  }
+
+  $('note').innerHTML = c.e
+    ? 'Entrega do '+c.e.nome+' prevista para <b>'+rotuloMes(T)+'</b> &middot; '+T+' meses de fluxo de obra a partir da data da venda. '+
+      'O saldo pós-obra é apresentado em '+POL.prazoPosObra+'x apenas como referência, sem juros e sem correção monetária.'
+    : '';
+}
+
+function kpi(lab,val,sub,hero){
+  return '<div class="kpi'+(hero?' hero-kpi':'')+'"><div class="kpi-lab">'+lab+'</div>'+
+         '<div class="kpi-val">'+val+'</div><div class="kpi-sub">'+(sub||'')+'</div></div>';
+}
+function mark(id,bad,warn){
+  var el=$(id); if(!el) return;
+  el.classList.toggle('bad',!!bad); el.classList.toggle('warn',!bad && !!warn);
+}
+function msg(id,av,cods,fallback){
+  var el=$(id); if(!el) return;
+  var hit=av.filter(function(a){ return cods.indexOf(a.c)>=0; });
+  if(hit.length){
+    var pior = hit.filter(function(a){return a.n==='err';})[0] || hit[0];
+    el.className='hint '+(pior.n==='err'?'err':'warn');
+    el.innerHTML=pior.t;
+  } else {
+    el.className='hint'; el.innerHTML=fallback||'';
+  }
+}
+
+function render(){
+  renderEmps(); renderPresets(); renderInterm(); renderResultado();
+}
+
+/* =========================================================
+   SINCRONIA DOS CAMPOS
+   ========================================================= */
+function sincronizaCampos(){
+  var e=emp();
+  $('f-valor').value    = S.valor?brl(S.valor):'';
+  $('f-metragem').value = S.metragem?String(S.metragem).replace('.',','):'';
+  $('f-unidade').value  = S.unidade;
+  $('f-cliente').value  = S.cliente;
+  $('f-corretor').value = S.corretor;
+  $('f-data').value     = S.dataVenda;
+  $('f-obs').value      = S.obs;
+  var p = S.pctObra===null ? (e?e.pctObra:'') : S.pctObra;
+  $('f-obra').value = p===''?'':String(p).replace('.',',');
+  $('f-pos').value  = p===''?'':String(100-p).replace('.',',');
+  [['ato','f-ato'],['s1','f-s1'],['s2','f-s2'],['s3','f-s3']].forEach(function(par){
+    $(par[1]).value = S[par[0]] ? brl(S[par[0]]) : '';
+    var pc = S.valor>0 ? S[par[0]]/S.valor*100 : 0;
+    $(par[1]+'-p').value = S[par[0]] ? pc.toFixed(2).replace('.',',') : '';
+  });
+  $('f-qtd').value = qtdMensais();
+}
+
+/* par valor <-> % */
+function ligaPar(campo, idMoney){
+  var m=$(idMoney), p=$(idMoney+'-p');
+  m.addEventListener('input', function(){ S[campo]=num(m.value); atualizaPct(); });
+  m.addEventListener('blur',  function(){ m.value = S[campo]?brl(S[campo]):''; });
+  p.addEventListener('input', function(){
+    var v=num(p.value); S[campo]= S.valor>0 ? S.valor*v/100 : 0;
+    m.value = S[campo]?brl(S[campo]):''; sincQtdAuto(); render();
+  });
+  p.addEventListener('blur', function(){
+    var pc = S.valor>0 ? S[campo]/S.valor*100 : 0;
+    p.value = S[campo] ? pc.toFixed(2).replace('.',',') : '';
+  });
+  function atualizaPct(){
+    var pc = S.valor>0 ? S[campo]/S.valor*100 : 0;
+    p.value = S[campo] ? pc.toFixed(2).replace('.',',') : '';
+    sincQtdAuto(); render();
+  }
+}
+/* enquanto o corretor não mexer manualmente na qtd, ela acompanha o automático */
+function sincQtdAuto(){ if(S.qtd!==null && S.qtd===qtdAutoAnterior) S.qtd=null; qtdAutoAnterior=qtdAuto(); }
+var qtdAutoAnterior=0;
+
+/* =========================================================
+   EVENTOS
+   ========================================================= */
+$('emps').addEventListener('click', function(ev){
+  var b=ev.target.closest('[data-emp]'); if(!b) return;
+  S.empId=b.getAttribute('data-emp');
+  S.pctObra=null; S.qtd=null; S.interm=[];
+  sincronizaCampos(); render();
+});
+
+$('presets').addEventListener('click', function(ev){
+  var b=ev.target.closest('[data-obra]'); if(!b) return;
+  S.pctObra=parseFloat(b.getAttribute('data-obra'));
+  $('f-obra').value=S.pctObra; $('f-pos').value=100-S.pctObra;
+  render();
+});
+
+$('f-valor').addEventListener('input', function(){ S.valor=num(this.value); sincQtdAuto(); render(); });
+$('f-valor').addEventListener('blur',  function(){ this.value=S.valor?brl(S.valor):''; sincronizaCampos(); render(); });
+$('f-metragem').addEventListener('input', function(){ S.metragem=num(this.value); render(); });
+$('f-unidade').addEventListener('input', function(){ S.unidade=this.value; });
+$('f-cliente').addEventListener('input', function(){ S.cliente=this.value; });
+$('f-corretor').addEventListener('input',function(){ S.corretor=this.value; });
+$('f-obs').addEventListener('input',     function(){ S.obs=this.value; });
+$('f-data').addEventListener('change',   function(){ S.dataVenda=this.value||hoje(); S.qtd=null; render(); });
+
+$('f-obra').addEventListener('input', function(){
+  var v=num(this.value); S.pctObra=Math.min(100,Math.max(0,v));
+  $('f-pos').value=String(100-S.pctObra).replace('.',','); render();
+});
+$('f-pos').addEventListener('input', function(){
+  var v=num(this.value); S.pctObra=Math.min(100,Math.max(0,100-v));
+  $('f-obra').value=String(S.pctObra).replace('.',','); render();
+});
+
+ligaPar('ato','f-ato'); ligaPar('s1','f-s1'); ligaPar('s2','f-s2'); ligaPar('s3','f-s3');
+
+$('f-qtd').addEventListener('input', function(){
+  var v=parseInt(this.value,10); S.qtd=isFinite(v)?Math.max(0,v):0; render();
+});
+
+$('b-entrada10').addEventListener('click', function(){
+  if(S.valor<=0) return;
+  S.ato = S.valor*POL.atoMin/100;
+  var resto = S.valor*(POL.entradaTotal-POL.atoMin)/100;
+  S.s1 = Math.round(resto/3*100)/100;
+  S.s2 = S.s1;
+  S.s3 = Math.round((resto-S.s1-S.s2)*100)/100;
+  S.qtd=null; sincronizaCampos(); render();
+});
+$('b-atoonly').addEventListener('click', function(){
+  if(S.valor<=0) return;
+  S.ato=S.valor*POL.entradaTotal/100; S.s1=S.s2=S.s3=0;
+  S.qtd=null; sincronizaCampos(); render();
+});
+
+/* --- intermediárias --- */
+$('int-list').addEventListener('input', function(ev){
+  var t=ev.target, i;
+  if((i=t.getAttribute('data-int-val'))!==null){
+    S.interm[+i].valor=num(t.value); renderResultado();
+  } else if((i=t.getAttribute('data-int-pct'))!==null){
+    S.interm[+i].valor = S.valor>0 ? S.valor*num(t.value)/100 : 0;
+    var mv=document.querySelector('[data-int-val="'+i+'"]');
+    if(mv) mv.value = S.interm[+i].valor?brl(S.interm[+i].valor):'';
+    renderResultado();
+  }
+});
+$('int-list').addEventListener('change', function(ev){
+  var i=ev.target.getAttribute('data-int-mes');
+  if(i!==null){ S.interm[+i].mes=parseInt(ev.target.value,10); render(); }
+});
+$('int-list').addEventListener('click', function(ev){
+  var b=ev.target.closest('[data-int-del]'); if(!b) return;
+  S.interm.splice(+b.getAttribute('data-int-del'),1); render();
+});
+$('b-int-add').addEventListener('click', function(){
+  var T=totalMeses(); if(T<=0) return;
+  var limite=Math.max(1,T-POL.mesesAntesEntrega);
+  var usados=S.interm.map(function(r){return r.mes;});
+  var m=limite;
+  while(usados.indexOf(m)>=0 && m>1) m--;
+  S.interm.push({mes:m, valor:0});
+  render();
+});
+function gerar(passo){
+  var T=totalMeses(); if(T<=0 || S.valor<=0) return;
+  var limite=T-POL.mesesAntesEntrega;
+  var lista=[];
+  for(var m=limite; m>=1; m-=passo) lista.push(m);
+  if(!lista.length) return;
+  var vTotal=S.valor*POL.intermMax/100;
+  var v=Math.round(vTotal/lista.length*100)/100;
+  S.interm = lista.sort(function(a,b){return a-b;}).map(function(m){ return {mes:m, valor:v}; });
+  render();
+}
+$('b-int-sem').addEventListener('click', function(){ gerar(6); });
+$('b-int-anu').addEventListener('click', function(){ gerar(12); });
+$('b-int-clr').addEventListener('click', function(){ S.interm=[]; render(); });
+
+$('b-reset').addEventListener('click', function(){
+  S={ empId:null, valor:0, metragem:0, unidade:'', cliente:'', corretor:'', obs:'',
+      dataVenda:hoje(), pctObra:null, ato:0, s1:0, s2:0, s3:0, interm:[], qtd:null };
+  sincronizaCampos(); render();
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+/* =========================================================
+   PDF
+   ========================================================= */
+var logoData=null;
+(function carregaLogo(){
+  var img=new Image();
+  img.onload=function(){
+    var cv=document.createElement('canvas');
+    cv.width=img.naturalWidth; cv.height=img.naturalHeight;
+    cv.getContext('2d').drawImage(img,0,0);
+    try{ logoData={data:cv.toDataURL('image/jpeg',0.92), w:img.naturalWidth, h:img.naturalHeight}; }
+    catch(e){ logoData=null; }
+  };
+  img.src='assets/img/logo-direcional.jpg';
+})();
+
+$('b-pdf').addEventListener('click', function(){
+  var c=calc();
+  if(!c.e || c.valor<=0){ alert('Selecione o empreendimento e informe o valor da venda antes de gerar o PDF.'); return; }
+  if(!window.jspdf || !window.jspdf.jsPDF){ alert('A biblioteca de PDF ainda está carregando. Tente de novo em alguns segundos.'); return; }
+
+  var doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'});
+  var W=doc.internal.pageSize.getWidth(), M=14, y=12;
+
+  /* logo centralizada */
+  if(logoData){
+    var lw=38, lh=lw*logoData.h/logoData.w;
+    doc.addImage(logoData.data,'JPEG',(W-lw)/2, y, lw, lh);
+    y+=lh+6;
+  } else { y+=4; }
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(58,64,67);
+  doc.text('Simulação de Tabela Direta', W/2, y, {align:'center'}); y+=5;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(114,122,125);
+  doc.text(c.e.nome, W/2, y, {align:'center'}); y+=7;
+
+  /* cabecalho de identificacao */
+  var T=totalMeses();
+  var info=[
+    ['Empreendimento', c.e.nome, 'Entrega', rotuloMes(T)],
+    ['Unidade', S.unidade||'-', 'Metragem', S.metragem>0?(S.metragem+' m²'):'-'],
+    ['Valor da venda', brl(c.valor), 'Valor do m²', c.m2>0?brl(c.m2):'-'],
+    ['Cliente', S.cliente||'-', 'Corretor', S.corretor||'-'],
+    ['Data da venda', fmtData(parseData(S.dataVenda)), 'Fluxo', pct(c.pObra)+' obra / '+pct(c.pPos)+' pós-obra']
+  ];
+  doc.autoTable({
+    startY:y, body:info, theme:'plain', margin:{left:M,right:M},
+    styles:{fontSize:8.5, cellPadding:1.4, textColor:[58,64,67]},
+    columnStyles:{0:{fontStyle:'bold',cellWidth:32,textColor:[114,122,125]},1:{cellWidth:56},
+                  2:{fontStyle:'bold',cellWidth:30,textColor:[114,122,125]},3:{cellWidth:'auto'}}
+  });
+  y=doc.lastAutoTable.finalY+5;
+
+  /* resumo de percentuais */
+  var entP = c.valor>0 ? c.entrada/c.valor*100 : 0;
+  doc.autoTable({
+    startY:y, margin:{left:M,right:M},
+    head:[['Entrada (Ato + Sinais)','Período de obra','Intermediárias','Pós-obra']],
+    body:[[ brl(c.entrada)+'  ('+pct(entP)+')',
+            brl(c.totalObra)+'  ('+pct(c.pObra)+')',
+            brl(c.somaInterm)+'  ('+pct(c.valor>0?c.somaInterm/c.valor*100:0)+')',
+            brl(c.saldoPos)+'  ('+pct(c.pPos)+')' ]],
+    theme:'grid',
+    headStyles:{fillColor:[228,3,43],textColor:255,fontSize:7.5,fontStyle:'bold'},
+    styles:{fontSize:8.5,cellPadding:2,textColor:[58,64,67]}
+  });
+  y=doc.lastAutoTable.finalY+6;
+
+  /* tabela do fluxo */
+  var L=linhas(c), body=[], somaObra=0;
+  L.forEach(function(r,i){
+    somaObra+=r.valor;
+    body.push([String(i+1), fmtData(dataDoIndice(r.k)), r.tipo, brl(r.valor), pct(r.valor/c.valor*100)]);
+  });
+  body.push([{content:'Subtotal período de obra',colSpan:3,styles:{fontStyle:'bold'}},
+             {content:brl(somaObra),styles:{fontStyle:'bold',halign:'right'}},
+             {content:pct(somaObra/c.valor*100),styles:{fontStyle:'bold',halign:'right'}}]);
+  body.push([String(L.length+1), 'a partir de '+rotuloMes(T+1),
+             'Saldo pós-obra ('+POL.prazoPosObra+'x de '+brl(c.parcelaPos)+')',
+             brl(c.saldoPos), pct(c.saldoPos/c.valor*100)]);
+  body.push([{content:'Total da unidade',colSpan:3,styles:{fontStyle:'bold'}},
+             {content:brl(somaObra+c.saldoPos),styles:{fontStyle:'bold',halign:'right'}},
+             {content:pct((somaObra+c.saldoPos)/c.valor*100),styles:{fontStyle:'bold',halign:'right'}}]);
+
+  doc.autoTable({
+    startY:y, margin:{left:M,right:M},
+    head:[['#','Vencimento','Parcela','Valor','%']], body:body, theme:'grid',
+    headStyles:{fillColor:[228,3,43],textColor:255,fontSize:8,fontStyle:'bold'},
+    styles:{fontSize:8,cellPadding:1.8,textColor:[58,64,67],lineColor:[231,233,234]},
+    alternateRowStyles:{fillColor:[250,251,251]},
+    columnStyles:{0:{cellWidth:10},1:{cellWidth:26},3:{halign:'right',cellWidth:32},4:{halign:'right',cellWidth:18}}
+  });
+  y=doc.lastAutoTable.finalY+6;
+
+  /* observações */
+  if(S.obs.trim()){
+    if(y>250){ doc.addPage(); y=18; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(58,64,67);
+    doc.text('Observações', M, y); y+=4.5;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(114,122,125);
+    doc.splitTextToSize(S.obs, W-M*2).forEach(function(l){
+      if(y>282){ doc.addPage(); y=18; }
+      doc.text(l, M, y); y+=4;
+    });
+    y+=2;
+  }
+
+  /* rodapé em todas as paginas */
+  var total=doc.internal.getNumberOfPages();
+  for(var p=1;p<=total;p++){
+    doc.setPage(p);
+    var H=doc.internal.pageSize.getHeight();
+    doc.setDrawColor(231,233,234); doc.line(M,H-14,W-M,H-14);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(114,122,125);
+    doc.text('Simulação sem juros e sem correção monetária, para fins de apresentação. Valores sujeitos a confirmação e aprovação da Direcional.', M, H-10);
+    doc.text('Gerado em '+fmtData(new Date())+'  -  Página '+p+' de '+total, M, H-6.5);
+  }
+
+  var slug=(c.e.nome+' '+(S.unidade||'')).trim().replace(/[^\w\s-]/g,'').replace(/\s+/g,'-').toLowerCase();
+  doc.save('tabela-direta-'+slug+'.pdf');
+});
+
+/* =========================================================
+   INIT
+   ========================================================= */
+sincronizaCampos();
+render();
+</script>
+</body>
+</html>
