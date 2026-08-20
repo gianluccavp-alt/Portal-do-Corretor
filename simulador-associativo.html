@@ -181,7 +181,7 @@ textarea{resize:vertical;min-height:70px}
 .banner.on{display:flex}
 
 .tbl-wrap{overflow-x:auto;border:1px solid var(--dir-line);border-radius:12px;background:#fff}
-table{width:100%;border-collapse:collapse;font-size:.87rem;min-width:760px}
+table{width:100%;border-collapse:collapse;font-size:.87rem;min-width:520px}
 thead th{background:var(--dir-ink);color:#fff;font-weight:500;font-size:.72rem;letter-spacing:.07em;
       text-transform:uppercase;text-align:left;padding:.6rem .8rem;white-space:nowrap}
 tbody td{padding:.5rem .8rem;border-top:1px solid var(--dir-line);white-space:nowrap}
@@ -460,9 +460,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     </div>
     <div class="tbl-wrap"><table id="tbl"><thead><tr>
       <th>#</th><th>Vencimento</th><th>Parcela</th><th>Fase</th>
-      <th class="num">Juros obra / financ.</th>
-      <th class="num">P.S. Linear</th><th class="num">C.R. Linear</th>
-      <th class="num">P.S. Escalonado</th><th class="num">C.R. Escal.</th>
+      <th class="num">P.S. Linear</th>
+      <th class="num">P.S. Escalonado</th>
     </tr></thead><tbody id="tbody"></tbody></table></div>
     <div class="note" id="note"></div>
     <div class="btn-row">
@@ -1183,7 +1182,7 @@ function renderResultado(){
 function renderTabela(c){
   var tb=$('tbody');
   if(!c.pronto || !c.fluxo.length){
-    tb.innerHTML='<tr><td colspan="9"><div class="empty">Selecione o empreendimento e preencha os dados da operação para montar o fluxo.</div></td></tr>';
+    tb.innerHTML='<tr><td colspan="6"><div class="empty">Selecione o empreendimento e preencha os dados da operação para montar o fluxo.</div></td></tr>';
     $('b-toggle-tbl').style.display='none';
     return;
   }
@@ -1205,22 +1204,18 @@ function renderTabela(c){
       '<td>'+fmtData(r.data)+'</td>'+
       '<td>'+r.tipo+'</td>'+
       '<td>'+r.fase+'</td>'+
-      '<td class="num">'+(r.juros?brl(r.juros):'&mdash;')+'</td>'+
       '<td class="num">'+(r.psLin?brl(r.psLin):(r.extra?brl(r.extra):'&mdash;'))+'</td>'+
-      '<td class="num">'+(r.crLin!==null&&S.renda>0?pctf(r.crLin):'&mdash;')+'</td>'+
       '<td class="num">'+(r.psEsc?brl(r.psEsc):(r.extra?brl(r.extra):'&mdash;'))+'</td>'+
-      '<td class="num">'+(r.crEsc!==null&&S.renda>0?pctf(r.crEsc):'&mdash;')+'</td>'+
     '</tr>';
   }
   var html = lista.map(tr).join('');
   if(corte){
-    html += '<tr class="grp"><td colspan="9">&hellip; '+corte.ocultas+' parcelas ocultas &mdash; use "Mostrar todas as parcelas"</td></tr>';
+    html += '<tr class="grp"><td colspan="6">&hellip; '+corte.ocultas+' parcelas ocultas &mdash; use "Mostrar todas as parcelas"</td></tr>';
     html += corte.fim.map(tr).join('');
   }
   html += '<tr class="tot"><td></td><td></td><td colspan="2">Total do carnê Pro Soluto</td>'+
-          '<td class="num">&mdash;</td>'+
-          '<td class="num">'+brl(c.linear.total)+'</td><td class="num">'+(S.renda>0?pctf(c.crLinear):'&mdash;')+'</td>'+
-          '<td class="num">'+brl(c.escalonado.total)+'</td><td class="num">'+(S.renda>0?pctf(c.crEscal):'&mdash;')+'</td></tr>';
+          '<td class="num">'+brl(c.linear.total)+'</td>'+
+          '<td class="num">'+brl(c.escalonado.total)+'</td></tr>';
   tb.innerHTML=html;
 }
 
@@ -1491,27 +1486,21 @@ $('b-pdf').addEventListener('click', function(){
   /* fluxo completo */
   var body=c.fluxo.map(function(r){
     return [ r.n?String(r.n):'-', fmtData(r.data), r.tipo, r.fase,
-             r.juros?brl(r.juros):'-',
              r.psLin?brl(r.psLin):(r.extra?brl(r.extra):'-'),
-             (r.crLin!==null&&S.renda>0)?pctf(r.crLin):'-',
-             r.psEsc?brl(r.psEsc):(r.extra?brl(r.extra):'-'),
-             (r.crEsc!==null&&S.renda>0)?pctf(r.crEsc):'-' ];
+             r.psEsc?brl(r.psEsc):(r.extra?brl(r.extra):'-') ];
   });
-  body.push([{content:'Total do carnê Pro Soluto',colSpan:5,styles:{fontStyle:'bold'}},
+  body.push([{content:'Total do carnê Pro Soluto',colSpan:4,styles:{fontStyle:'bold'}},
              {content:brl(c.linear.total),styles:{fontStyle:'bold',halign:'right'}},
-             {content:S.renda>0?pctf(c.crLinear):'-',styles:{fontStyle:'bold',halign:'right'}},
-             {content:brl(c.escalonado.total),styles:{fontStyle:'bold',halign:'right'}},
-             {content:S.renda>0?pctf(c.crEscal):'-',styles:{fontStyle:'bold',halign:'right'}}]);
+             {content:brl(c.escalonado.total),styles:{fontStyle:'bold',halign:'right'}}]);
   doc.autoTable({
     startY:y, margin:{left:M,right:M},
-    head:[['#','Vencimento','Parcela','Fase','Juros obra/fin.','P.S. Linear','C.R. Lin.','P.S. Escal.','C.R. Esc.']],
+    head:[['#','Vencimento','Parcela','Fase','P.S. Linear','P.S. Escalonado']],
     body:body, theme:'grid',
     headStyles:{fillColor:[228,3,43],textColor:255,fontSize:7,fontStyle:'bold'},
     styles:{fontSize:7,cellPadding:1.3,textColor:[58,64,67],lineColor:[231,233,234]},
     alternateRowStyles:{fillColor:[250,251,251]},
-    columnStyles:{0:{cellWidth:8},1:{cellWidth:20},3:{cellWidth:11},
-                  4:{halign:'right',cellWidth:23},5:{halign:'right',cellWidth:22},6:{halign:'right',cellWidth:16},
-                  7:{halign:'right',cellWidth:22},8:{halign:'right',cellWidth:16}}
+    columnStyles:{0:{cellWidth:10},1:{cellWidth:24},3:{cellWidth:14},
+                  4:{halign:'right',cellWidth:28},5:{halign:'right',cellWidth:28}}
   });
   y=doc.lastAutoTable.finalY+6;
 
