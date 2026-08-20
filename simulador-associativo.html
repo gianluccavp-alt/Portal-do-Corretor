@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de Fluxo Associativo - Grupo Direcional</title>
+<link rel="icon" type="image/webp" href="assets/img/favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+/* ===== Identidade Grupo Direcional ===== */
+:root{
+  --dir-red:#E4032B; --dir-red-dark:#B8001F;
+  --dir-grey:#727A7D; --dir-ink:#3A4043; --dir-line:#E7E9EA;
+  --dir-bg:#F5F6F7;
+  --ok:#1E8E4A; --warn:#B57200; --warn-bg:#FFF7E6; --err:#C4001C; --err-bg:#FDEEF0;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--dir-bg);font-family:'DM Sans',system-ui,sans-serif;color:var(--dir-ink);
+     font-size:15px;line-height:1.5}
+
+/* ---------- header ---------- */
+.hero{position:relative;background:#fff url('assets/img/hero-bg.png') center/cover no-repeat;
+      padding:2.75rem 2rem 2.25rem;border-bottom:1px solid var(--dir-line)}
+.hero-inner{max-width:1120px;margin:0 auto}
+.hero-logo{position:absolute;top:24px;right:32px;height:52px;width:auto}
+.hero-brand{color:var(--dir-red);font-weight:500;font-size:.86rem;letter-spacing:.06em;text-transform:uppercase}
+.hero h1{margin:.35rem 0 .4rem;font-size:2.15rem;font-weight:700;letter-spacing:-.6px;line-height:1.15}
+.hero h1 em{color:var(--dir-red);font-style:normal}
+.hero p{margin:0;color:var(--dir-grey);max-width:60ch}
+@media(max-width:700px){
+  .hero{padding:1.75rem 1.1rem 1.5rem}
+  .hero-logo{height:34px;top:16px;right:16px}
+  .hero h1{font-size:1.5rem;max-width:70%}
+}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1120px;margin:0 auto;padding:1.75rem 2rem 4rem}
+@media(max-width:700px){.wrap{padding:1.25rem 1.1rem 3rem}}
+.step{margin-bottom:1.5rem}
+.step-label{display:flex;align-items:center;gap:.55rem;color:var(--dir-red);font-weight:500;
+            font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.7rem}
+.step-label::before{content:'';width:22px;height:2px;background:var(--dir-red);border-radius:2px}
+.card{background:#fff;border:1px solid var(--dir-line);border-radius:14px;padding:1.35rem}
+@media(max-width:700px){.card{padding:1rem}}
+
+/* ---------- cards empreendimento ---------- */
+.emps{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem}
+@media(max-width:900px){.emps{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.emps{grid-template-columns:1fr}}
+.emp{text-align:left;background:#fff;border:1px solid var(--dir-line);border-radius:12px;
+     padding:.95rem 1rem;cursor:pointer;transition:.15s;font:inherit;color:inherit}
+.emp:hover{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(58,64,67,.10)}
+.emp.active{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(228,3,43,.16);background:#FFF9FA}
+.emp-nome{font-weight:700;line-height:1.25;margin-bottom:.4rem}
+.emp-meta{font-size:.78rem;color:var(--dir-grey);display:flex;flex-direction:column;gap:.1rem}
+.emp-meta b{color:var(--dir-ink);font-weight:500}
+
+/* ---------- forms ---------- */
+.grid{display:grid;gap:.9rem}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:820px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.g2,.g3,.g4{grid-template-columns:1fr}}
+label{display:block;font-size:.76rem;font-weight:500;color:var(--dir-grey);
+      letter-spacing:.04em;text-transform:uppercase;margin-bottom:.32rem}
+input,select,textarea{width:100%;font:inherit;color:var(--dir-ink);background:#fff;
+      border:1px solid var(--dir-line);border-radius:9px;padding:.6rem .7rem;transition:.15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--dir-red);
+      box-shadow:0 0 0 3px rgba(228,3,43,.10)}
+input.bad{border-color:var(--err);background:var(--err-bg)}
+input.warn{border-color:var(--warn);background:var(--warn-bg)}
+input[readonly]{background:#FAFBFB;font-weight:700}
+textarea{resize:vertical;min-height:70px}
+.pair{display:flex;gap:.4rem}
+.pair .money{flex:1 1 auto;min-width:0}
+.pair .pct{flex:0 0 84px;text-align:right}
+.hint{font-size:.74rem;color:var(--dir-grey);margin-top:.3rem}
+.hint.err{color:var(--err);font-weight:500}
+.hint.warn{color:var(--warn);font-weight:500}
+.sub{font-weight:700;font-size:.95rem;margin:1.35rem 0 .7rem;padding-top:1.1rem;
+     border-top:1px dashed var(--dir-line)}
+.sub:first-of-type{margin-top:0;padding-top:0;border-top:0}
+.sub .lt{font-weight:400;color:var(--dir-grey);font-size:.82rem}
+
+/* ---------- chips / politicas ---------- */
+.chip{font:inherit;font-size:.78rem;padding:.42rem .7rem;border-radius:999px;cursor:pointer;
+      background:#fff;border:1px solid var(--dir-line);color:var(--dir-grey);transition:.15s}
+.chip:hover{border-color:var(--dir-red);color:var(--dir-red)}
+.chip.on{background:var(--dir-red);border-color:var(--dir-red);color:#fff}
+.pols{display:grid;grid-template-columns:repeat(5,1fr);gap:.7rem}
+@media(max-width:820px){.pols{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:480px){.pols{grid-template-columns:repeat(2,1fr)}}
+.pol{text-align:left;background:#fff;border:1px solid var(--dir-line);border-radius:12px;
+     padding:.8rem .85rem;cursor:pointer;transition:.15s;font:inherit;color:inherit}
+.pol:hover{border-color:var(--dir-red)}
+.pol.active{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(228,3,43,.16);background:#FFF9FA}
+.pol-nome{font-weight:700;margin-bottom:.3rem}
+.pol-meta{font-size:.74rem;color:var(--dir-grey);display:flex;flex-direction:column;gap:.05rem}
+.pol-meta b{color:var(--dir-ink);font-weight:500}
+
+.btn{font:inherit;font-weight:500;padding:.62rem 1.05rem;border-radius:9px;cursor:pointer;transition:.15s;border:1px solid}
+.btn-ghost{background:#fff;border-color:var(--dir-line);color:var(--dir-ink)}
+.btn-ghost:hover{border-color:var(--dir-red);color:var(--dir-red)}
+.btn-primary{background:var(--dir-red);border-color:var(--dir-red);color:#fff}
+.btn-primary:hover{background:var(--dir-red-dark);border-color:var(--dir-red-dark)}
+.btn-row{display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.75rem}
+
+/* ---------- resultado ---------- */
+.summary{display:grid;grid-template-columns:repeat(5,1fr);gap:.7rem;margin-bottom:1.1rem}
+@media(max-width:980px){.summary{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.summary{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:#fff;border:1px solid var(--dir-line);border-radius:12px;padding:.85rem .9rem}
+.kpi.hero-kpi{background:linear-gradient(135deg,var(--dir-red),var(--dir-red-dark));
+      border-color:var(--dir-red);color:#fff}
+.kpi.hero-kpi .kpi-lab,.kpi.hero-kpi .kpi-sub{color:rgba(255,255,255,.82)}
+.kpi-lab{font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--dir-grey);font-weight:500}
+.kpi-val{font-size:1.22rem;font-weight:700;letter-spacing:-.4px;margin-top:.18rem;line-height:1.2}
+.kpi-sub{font-size:.74rem;color:var(--dir-grey);margin-top:.1rem}
+
+/* comparativo linear x escalonado */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:1.1rem}
+@media(max-width:700px){.cmp{grid-template-columns:1fr}}
+.cmp-card{background:#fff;border:1px solid var(--dir-line);border-radius:12px;padding:1rem 1.05rem}
+.cmp-tit{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dir-red);
+      font-weight:500;margin-bottom:.55rem}
+.cmp-parc{font-size:1.35rem;font-weight:700;letter-spacing:-.5px;line-height:1.25}
+.cmp-faixas{display:flex;flex-direction:column;gap:.18rem;margin:.15rem 0 .5rem}
+.cmp-faixa{display:flex;justify-content:space-between;gap:.7rem;font-size:.86rem}
+.cmp-faixa span:first-child{color:var(--dir-grey);font-size:.78rem}
+.cmp-faixa b{font-weight:700}
+.cmp-rows{margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--dir-line);
+      display:flex;flex-direction:column;gap:.25rem}
+.cmp-row{display:flex;justify-content:space-between;gap:.7rem;font-size:.83rem}
+.cmp-row span{color:var(--dir-grey)}
+.cmp-row b{font-weight:700}
+
+/* veredito */
+.vd{background:#fff;border:1px solid var(--dir-line);border-radius:12px;overflow:hidden;margin-bottom:1.1rem}
+.vd-head{padding:.9rem 1.05rem;font-weight:700;color:#fff;display:flex;align-items:center;
+      justify-content:space-between;gap:.7rem;flex-wrap:wrap}
+.vd-head .vh-sub{font-weight:400;font-size:.8rem;opacity:.9}
+.vd-head.aprovado{background:linear-gradient(135deg,var(--ok),#166B39)}
+.vd-head.comite{background:linear-gradient(135deg,var(--warn),#8A5700)}
+.vd-head.reprovado{background:linear-gradient(135deg,var(--err),#8f0016)}
+.vd-item{display:grid;grid-template-columns:1fr auto auto 92px;gap:.7rem;align-items:center;
+      padding:.6rem 1.05rem;border-top:1px solid var(--dir-line);font-size:.86rem}
+.vd-item .vi-lab{font-weight:500}
+.vd-item .vi-val,.vd-item .vi-lim{font-variant-numeric:tabular-nums;white-space:nowrap}
+.vd-item .vi-lim{color:var(--dir-grey);font-size:.8rem}
+@media(max-width:640px){
+  .vd-item{grid-template-columns:1fr 92px;row-gap:.15rem}
+  .vd-item .vi-lab{grid-column:1/2}
+  .vd-item .vi-val{grid-column:1/2;color:var(--dir-grey);font-size:.8rem}
+  .vd-item .vi-lim{grid-column:1/2}
+  .vd-item .st{grid-column:2/3;grid-row:1/4;align-self:center}
+}
+.st{display:inline-block;text-align:center;font-size:.7rem;font-weight:700;letter-spacing:.05em;
+      text-transform:uppercase;padding:.24rem .5rem;border-radius:999px;border:1px solid}
+.st.ok{background:#EFF9F2;border-color:#C7E7D3;color:var(--ok)}
+.st.comite{background:var(--warn-bg);border-color:#F0DCB0;color:var(--warn)}
+.st.rep{background:var(--err-bg);border-color:#F3C6CE;color:var(--err)}
+
+.alerts{display:flex;flex-direction:column;gap:.45rem;margin-bottom:1.1rem}
+.alert{display:flex;gap:.6rem;align-items:flex-start;padding:.65rem .85rem;border-radius:10px;
+       font-size:.86rem;border:1px solid}
+.alert.err{background:var(--err-bg);border-color:#F3C6CE;color:var(--err)}
+.alert.warn{background:var(--warn-bg);border-color:#F0DCB0;color:var(--warn)}
+.alert.ok{background:#EFF9F2;border-color:#C7E7D3;color:var(--ok)}
+.alert b{font-weight:700}
+.alert-ico{flex:0 0 auto;font-weight:700}
+
+.banner{display:none;align-items:center;gap:.6rem;background:var(--err);color:#fff;font-weight:700;
+        letter-spacing:.05em;text-transform:uppercase;font-size:.8rem;padding:.6rem 1rem;
+        border-radius:10px;margin-bottom:1rem}
+.banner.on{display:flex}
+
+.tbl-wrap{overflow-x:auto;border:1px solid var(--dir-line);border-radius:12px;background:#fff}
+table{width:100%;border-collapse:collapse;font-size:.87rem;min-width:520px}
+thead th{background:var(--dir-ink);color:#fff;font-weight:500;font-size:.72rem;letter-spacing:.07em;
+      text-transform:uppercase;text-align:left;padding:.6rem .8rem;white-space:nowrap}
+tbody td{padding:.5rem .8rem;border-top:1px solid var(--dir-line);white-space:nowrap}
+tbody tr.grp td{background:#FAFBFB;font-weight:700;font-size:.74rem;letter-spacing:.07em;
+      text-transform:uppercase;color:var(--dir-grey)}
+tbody tr.tot td{background:#FFF9FA;font-weight:700;border-top:2px solid var(--dir-red)}
+tbody tr.hi td{color:var(--err);font-weight:500}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.empty{padding:2.5rem 1rem;text-align:center;color:var(--dir-grey)}
+.tbl-tools{display:flex;justify-content:flex-end;margin-bottom:.5rem}
+
+.note{font-size:.78rem;color:var(--dir-grey);margin-top:.8rem;line-height:1.55}
+.foot{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--dir-line);
+      color:var(--dir-grey);font-size:.8rem}
+.foot a{color:var(--dir-red);text-decoration:none}
+
+/* ---------- botao verificar simulacao ---------- */
+.btn-check{background:var(--ok);border-color:var(--ok);color:#fff;
+      display:inline-flex;align-items:center;gap:.45rem}
+.btn-check:hover{background:#166B39;border-color:#166B39}
+.btn-check svg{flex:0 0 auto}
+
+/* ---------- modal de verificacao ---------- */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(58,64,67,.55);
+      z-index:1000;align-items:flex-start;justify-content:center;padding:5vh 1rem;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;max-width:600px;width:100%;
+      box-shadow:0 24px 60px rgba(0,0,0,.25);position:relative;overflow:hidden}
+.modal-close{position:absolute;top:.7rem;right:.8rem;width:34px;height:34px;border-radius:9px;
+      border:0;background:rgba(255,255,255,.18);color:#fff;font-size:1.4rem;line-height:1;
+      cursor:pointer;z-index:2}
+.modal-close:hover{background:rgba(255,255,255,.3)}
+.modal-banner{padding:1.6rem 1.4rem 1.3rem;text-align:center;font-weight:700;font-size:1.3rem;color:#fff}
+.modal-banner.aprovado{background:linear-gradient(135deg,var(--ok),#166B39)}
+.modal-banner.comite{background:linear-gradient(135deg,var(--warn),#8A5700)}
+.modal-banner.reprovado{background:linear-gradient(135deg,var(--err),#8f0016)}
+.modal-banner .sub{display:block;font-weight:400;font-size:.82rem;margin-top:.3rem;opacity:.9}
+.modal-body{padding:1.2rem 1.4rem 1.4rem;max-height:64vh;overflow-y:auto}
+.modal-checklist{display:flex;flex-direction:column}
+.modal-item{display:flex;gap:.65rem;align-items:flex-start;padding:.65rem 0;border-bottom:1px solid var(--dir-line)}
+.modal-item:last-child{border-bottom:0}
+.modal-item .ico{flex:0 0 auto;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;
+      justify-content:center;font-size:.78rem;font-weight:700;color:#fff;margin-top:.1rem}
+.modal-item.ok .ico{background:var(--ok)}
+.modal-item.fail .ico{background:var(--err)}
+.modal-item.leve.fail .ico{background:var(--warn)}
+.modal-item .txt{flex:1 1 auto;display:flex;flex-direction:column}
+.modal-item .lab{font-weight:500;font-size:.88rem}
+.modal-item.leve .lab::after{content:'opcional';margin-left:.5rem;font-size:.66rem;font-weight:500;
+      letter-spacing:.04em;text-transform:uppercase;color:var(--dir-grey);
+      border:1px solid var(--dir-line);border-radius:999px;padding:.05rem .45rem}
+.modal-item .det{font-size:.8rem;color:var(--dir-grey);margin-top:.15rem}
+.modal-renda{margin-top:.4rem;padding:.9rem 1rem;border-radius:12px;background:#FAFBFB;
+      border:1px solid var(--dir-line);display:grid;grid-template-columns:1fr 1fr;gap:.6rem .9rem}
+.modal-renda .r-lab{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--dir-grey);font-weight:500}
+.modal-renda .r-val{font-weight:700;font-size:1rem;margin-top:.1rem}
+.modal-note{font-size:.72rem;color:var(--dir-grey);margin-top:1rem;line-height:1.5}
+@media(max-width:520px){.modal-renda{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <img class="hero-logo" src="assets/img/logo-direcional.jpg" alt="Grupo Direcional">
+  <div class="hero-inner">
+    <div class="hero-brand">Portal do Corretor</div>
+    <h1>Simulador de <em>Fluxo Associativo</em></h1>
+    <p>Calcule o Pro Soluto do cliente que financia pelo MCMV, veja o carnê nos fluxos linear e escalonado, confira o comprometimento de renda mês a mês e saiba na hora se a proposta aprova na política. Empreendimentos de Ribeirão Preto.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- PASSO 1 -->
+  <section class="step">
+    <div class="step-label">Passo 1 &middot; Empreendimento</div>
+    <div class="emps" id="emps"></div>
+  </section>
+
+  <!-- PASSO 2 -->
+  <section class="step">
+    <div class="step-label">Passo 2 &middot; Cliente</div>
+    <div class="card">
+      <div class="grid g4">
+        <div>
+          <label for="f-renda">Renda do cliente</label>
+          <input id="f-renda" type="text" inputmode="decimal" placeholder="R$ 0,00">
+          <div class="hint" id="h-renda"></div>
+        </div>
+        <div>
+          <label for="f-idade">Idade (anos)</label>
+          <input id="f-idade" type="number" min="18" max="100" step="1" placeholder="30">
+        </div>
+        <div>
+          <label for="f-cliente">Nome do cliente</label>
+          <input id="f-cliente" type="text" placeholder="Nome do cliente">
+        </div>
+        <div>
+          <label for="f-corretor">Corretor</label>
+          <input id="f-corretor" type="text" placeholder="Seu nome">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PASSO 3 -->
+  <section class="step">
+    <div class="step-label">Passo 3 &middot; Dados da operação</div>
+    <div class="card">
+
+      <div class="sub">Unidade e recursos</div>
+      <div class="grid g4">
+        <div>
+          <label for="f-unidade">Unidade</label>
+          <input id="f-unidade" type="text" placeholder="BL02-0507">
+        </div>
+        <div>
+          <label for="f-valor">Valor do imóvel (venda)</label>
+          <input id="f-valor" type="text" inputmode="decimal" placeholder="R$ 0,00">
+        </div>
+        <div>
+          <label for="f-fin">Financiado pelo banco</label>
+          <div class="pair">
+            <input class="money" id="f-fin" type="text" inputmode="decimal" placeholder="R$ 0,00">
+            <input class="pct" id="f-fin-p" type="text" inputmode="decimal" placeholder="%">
+          </div>
+        </div>
+        <div>
+          <label for="f-sub">Subsídio</label>
+          <div class="pair">
+            <input class="money" id="f-sub" type="text" inputmode="decimal" placeholder="R$ 0,00">
+            <input class="pct" id="f-sub-p" type="text" inputmode="decimal" placeholder="%">
+          </div>
+        </div>
+        <div>
+          <label for="f-fgts">FGTS</label>
+          <div class="pair">
+            <input class="money" id="f-fgts" type="text" inputmode="decimal" placeholder="R$ 0,00">
+            <input class="pct" id="f-fgts-p" type="text" inputmode="decimal" placeholder="%">
+          </div>
+        </div>
+        <div>
+          <label for="f-badim">Bônus Adimplência</label>
+          <div class="pair">
+            <input class="money" id="f-badim" type="text" inputmode="decimal" placeholder="R$ 0,00">
+            <input class="pct" id="f-badim-p" type="text" inputmode="decimal" placeholder="%">
+          </div>
+        </div>
+        <div>
+          <label for="f-bcamp">Bônus Campanha</label>
+          <div class="pair">
+            <input class="money" id="f-bcamp" type="text" inputmode="decimal" placeholder="R$ 0,00">
+            <input class="pct" id="f-bcamp-p" type="text" inputmode="decimal" placeholder="%">
+          </div>
+        </div>
+        <div>
+          <label>Pré-saldo da operação</label>
+          <input id="f-presaldo" type="text" readonly>
+          <div class="hint">Imóvel &minus; banco &minus; subsídio &minus; FGTS &minus; bônus &minus; ato.</div>
+        </div>
+      </div>
+
+      <div class="sub">Datas e prazo</div>
+      <div class="grid g4">
+        <div>
+          <label for="f-data">Data da proposta / venda</label>
+          <input id="f-data" type="date">
+        </div>
+        <div>
+          <label for="f-venc1">1º vencimento do Pro Soluto</label>
+          <input id="f-venc1" type="date">
+          <div class="hint" id="h-venc1"></div>
+        </div>
+        <div>
+          <label for="f-prazo">Prazo do Pro Soluto (meses)</label>
+          <input id="f-prazo" type="number" min="1" max="180" step="1">
+          <div class="hint" id="h-prazo"></div>
+        </div>
+        <div>
+          <label>Pré / pós-chaves</label>
+          <input id="f-prepos" type="text" readonly>
+          <div class="hint">Parcelas antes e depois da entrega da obra.</div>
+        </div>
+      </div>
+
+      <div class="sub">Ato e sinais <span class="lt">&mdash; ato em até 7 dias da venda; sinais em até 30, 60 e 90 dias</span></div>
+      <div class="grid g4">
+        <div>
+          <label for="f-ato">Ato (CC / boleto)</label>
+          <div class="pair">
+            <input class="money" id="f-ato" type="text" inputmode="decimal" placeholder="R$ 0,00">
+            <input class="pct" id="f-ato-p" type="text" inputmode="decimal" placeholder="%">
+          </div>
+        </div>
+        <div><label for="f-dato">Vencimento do ato</label><input id="f-dato" type="date"></div>
+        <div>
+          <label for="f-s1">Sinal 1</label>
+          <div class="pair">
+            <input class="money" id="f-s1" type="text" inputmode="decimal" placeholder="R$ 0,00">
+            <input class="pct" id="f-s1-p" type="text" inputmode="decimal" placeholder="%">
+          </div>
+        </div>
+        <div><label for="f-ds1">Vencimento do sinal 1</label><input id="f-ds1" type="date"></div>
+        <div>
+          <label for="f-s2">Sinal 2</label>
+          <div class="pair">
+            <input class="money" id="f-s2" type="text" inputmode="decimal" placeholder="R$ 0,00">
+            <input class="pct" id="f-s2-p" type="text" inputmode="decimal" placeholder="%">
+          </div>
+        </div>
+        <div><label for="f-ds2">Vencimento do sinal 2</label><input id="f-ds2" type="date"></div>
+        <div>
+          <label for="f-s3">Sinal 3</label>
+          <div class="pair">
+            <input class="money" id="f-s3" type="text" inputmode="decimal" placeholder="R$ 0,00">
+            <input class="pct" id="f-s3-p" type="text" inputmode="decimal" placeholder="%">
+          </div>
+        </div>
+        <div><label for="f-ds3">Vencimento do sinal 3</label><input id="f-ds3" type="date"></div>
+      </div>
+      <div class="hint" id="h-entrada"></div>
+
+      <div class="sub">Anuais <span class="lt">&mdash; somente em dezembro e dentro do período de obra</span></div>
+      <div class="grid g4">
+        <div><label for="f-a1">Anual 1</label><input id="f-a1" type="text" inputmode="decimal" placeholder="R$ 0,00"></div>
+        <div><label for="f-da1">Vencimento da anual 1</label><input id="f-da1" type="date"></div>
+        <div><label for="f-a2">Anual 2</label><input id="f-a2" type="text" inputmode="decimal" placeholder="R$ 0,00"></div>
+        <div><label for="f-da2">Vencimento da anual 2</label><input id="f-da2" type="date"></div>
+        <div><label for="f-a3">Anual 3</label><input id="f-a3" type="text" inputmode="decimal" placeholder="R$ 0,00"></div>
+        <div><label for="f-da3">Vencimento da anual 3</label><input id="f-da3" type="date"></div>
+      </div>
+      <div class="hint" id="h-anual"></div>
+
+    </div>
+  </section>
+
+  <!-- PASSO 4 -->
+  <section class="step">
+    <div class="step-label">Passo 4 &middot; Financiamento bancário</div>
+    <div class="card">
+      <div class="grid g3">
+        <div>
+          <label for="f-parcfin">Parcela do financiamento</label>
+          <input id="f-parcfin" type="text" inputmode="decimal" placeholder="R$ 0,00">
+          <div class="hint" id="h-parcfin">Valor da 1ª parcela na simulação da CAIXA.</div>
+        </div>
+        <div>
+          <label for="f-taxa">Taxa de juros do banco (a.a.)</label>
+          <input id="f-taxa" type="text" inputmode="decimal" placeholder="6,16">
+          <div class="hint">Informativo &mdash; sai no PDF.</div>
+        </div>
+        <div>
+          <label for="f-obs">Observações</label>
+          <textarea id="f-obs" placeholder="Opcional - sai no rodapé do PDF"></textarea>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PASSO 5 -->
+  <section class="step">
+    <div class="step-label">Passo 5 &middot; Política da operação</div>
+    <div class="pols" id="pols"></div>
+  </section>
+
+  <!-- RESULTADO -->
+  <section class="step">
+    <div class="step-label">Simulação</div>
+    <div class="banner" id="banner"><span>&#9888;</span> Proposta fora da política &mdash; revise os pontos em vermelho</div>
+    <div class="summary" id="summary"></div>
+    <div class="cmp" id="cmp"></div>
+    <div class="vd" id="vd" style="display:none"></div>
+    <div class="alerts" id="alerts"></div>
+    <div class="tbl-tools">
+      <button class="chip" id="b-toggle-tbl" type="button">Mostrar todas as parcelas</button>
+    </div>
+    <div class="tbl-wrap"><table id="tbl"><thead><tr>
+      <th>#</th><th>Vencimento</th><th>Parcela</th><th>Fase</th>
+      <th class="num">P.S. Linear</th>
+      <th class="num">P.S. Escalonado</th>
+    </tr></thead><tbody id="tbody"></tbody></table></div>
+    <div class="note" id="note"></div>
+    <div class="btn-row">
+      <button class="btn btn-check" id="b-verificar" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        Verificar Simulação
+      </button>
+      <button class="btn btn-primary" id="b-pdf" type="button">Baixar PDF</button>
+      <button class="btn btn-ghost" id="b-reset" type="button">Limpar simulação</button>
+    </div>
+  </section>
+
+  <div class="foot">
+    O Pro Soluto é corrigido a 0,5% a.m. antes das chaves e 1,5% a.m. após as chaves, e sofre correção
+    de carência entre a data da venda e o 1º vencimento. O comprometimento de renda soma a parcela do
+    carnê à evolução dos juros de obra (e à parcela cheia do financiamento após a entrega). Valores
+    sujeitos a confirmação e aprovação da Direcional. &middot;
+    <a href="index.html">Voltar ao portal</a>
+  </div>
+
+</main>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" id="modal-close" type="button" aria-label="Fechar">&times;</button>
+    <div class="modal-banner" id="modal-banner"></div>
+    <div class="modal-body">
+      <div class="modal-checklist" id="modal-checklist"></div>
+      <div class="modal-renda" id="modal-renda"></div>
+      <div class="modal-note">Reprodução do Simulador Pro Soluto Comercial SP (planilha oficial). Serve para conferência prévia da política e não substitui a aprovação formal da Direcional nem a simulação bancária oficial.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   BASE DOS EMPREENDIMENTOS - Ribeirão Preto
+   Extraída da aba "BD Política" da planilha
+   Simulador Pro Soluto - Comercial SP 11.xlsm (linhas 188/213/202/216).
+   inicioObra / entrega no formato AAAA-MM-DD (a entrega é sempre fim de mês)
+   pctPS / prazoPadrao = política padrão do produto | parcMin = parcela mínima
+   ========================================================= */
+var EMPS = [
+  { id:'gaia',     cod:'414V', nome:'Village Gaia',
+    inicioObra:'2026-05-01', entrega:'2029-09-30', pctPS:0.18, prazoPadrao:52, parcMin:150 },
+  { id:'park',     cod:'743V', nome:'Village Park',
+    inicioObra:'2025-04-01', entrega:'2028-01-31', pctPS:0.15, prazoPadrao:52, parcMin:150 },
+  { id:'botanico', cod:'574V', nome:'Reserva Direcional Jardim Botânico',
+    inicioObra:'2024-04-01', entrega:'2026-12-31', pctPS:0.18, prazoPadrao:52, parcMin:150 },
+  { id:'ipiranga', cod:'785V', nome:'Conquista Clube Ipiranga',
+    inicioObra:'2026-06-01', entrega:'2028-08-31', pctPS:0.15, prazoPadrao:36, parcMin:150 }
+];
+
+/* Escada de políticas - Formulário N34:W40 e Dados I23 da planilha.
+   cr = teto de comprometimento de renda total | crPS = teto só da parcela do Pro Soluto */
+var POLITICAS = [
+  { id:'diamante', nome:'Diamante', pctPS:0.25, prazo:84, cr:0.50, crPS:0.20 },
+  { id:'ouro',     nome:'Ouro',     pctPS:0.20, prazo:84, cr:0.50, crPS:0.20 },
+  { id:'prata',    nome:'Prata',    pctPS:0.18, prazo:84, cr:0.48, crPS:0.18 },
+  { id:'bronze',   nome:'Bronze',   pctPS:0.15, prazo:84, cr:0.45, crPS:0.15 },
+  { id:'aco',      nome:'Aço',      pctPS:0.12, prazo:84, cr:0.40, crPS:0.10 }
+];
+
+/* Constantes da planilha (aba Dados) */
+var TX = {
+  jurosPre:0.005, jurosPos:0.015,          /* Dados AW16 / AW18 */
+  jurosPreAntigo:0.003, jurosPosAntigo:0.013,
+  dataTaxaNova:'2021-03-08',               /* antes disso valem as taxas antigas */
+  dataCarencia:'2020-04-23',               /* Dados D9 - a partir daqui há correção de carência */
+  maxDiasVenc1:120,                        /* Dados D12 */
+  maxDiasAto:7,                            /* Dados D14 */
+  diasSinal:[30,60,90],                    /* Dados D16 / D18 / D20 */
+  diasVenc:[5,10,15],                      /* dias de vencimento válidos */
+  faixas:[0.40,0.30,0.20,0.10],            /* Dados I30 / I32 / I34 / I36 */
+  tolPS:0.10,                              /* Formulário AF144 - comitê até limite + 10% */
+  tolPrazo:12, prazoMinComite:72,          /* Formulário AH144 */
+  tolCR:0.05                               /* Formulário AJ144 / AL144 */
+};
+
+var MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+
+/* =========================================================
+   CASO DE REGRESSÃO (valores conferidos contra a planilha)
+   Village Gaia | renda 7.500 | idade 30 | imóvel 333.190,20
+   financiado 304.800 | ato 2.500 | prazo 84 | venda 25/07/2026
+   1º venc. 10/08/2026 | parcela do financiamento 2.192,35 | política Aço
+     pré-saldo 25.890,20      P.S. corrigido 26.019,65     %P.S. 7,8092%
+     pré/pós 37/47            linear 422,39 (total 35.480,76)
+     escalonado 523,3242 / 438,7495 / 376,6601 / 257,4581 (total 33.520,03)
+     C.R. linear 34,86% | C.R. só P.S. 5,63% | C.R. escalonado 35,08%
+   ========================================================= */
+
+/* =========================================================
+   ESTADO
+   ========================================================= */
+function estadoInicial(){
+  return {
+    empId:null, politicaId:'aco',
+    renda:0, idade:30, cliente:'', corretor:'', unidade:'', obs:'',
+    valor:0, financiado:0, subsidio:0, fgts:0, bonusAdim:0, bonusCamp:0,
+    dataVenda:hoje(), dataVenc1:'', prazo:84,
+    ato:0, dataAto:'',
+    s1:0, s2:0, s3:0, dataS1:'', dataS2:'', dataS3:'',
+    a1:0, a2:0, a3:0, dataA1:'', dataA2:'', dataA3:'',
+    parcFin:0, taxaBanco:0,
+    verTudo:false
+  };
+}
+var S = estadoInicial();
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+function $(id){ return document.getElementById(id); }
+function pad(n){ return (n<10?'0':'')+n; }
+function hoje(){ var d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function brl(n){
+  if(!isFinite(n)) n=0;
+  return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function pct(n,casas){
+  if(!isFinite(n)) n=0;
+  var c = casas===undefined?2:casas;
+  return n.toLocaleString('pt-BR',{minimumFractionDigits:c,maximumFractionDigits:c})+'%';
+}
+/* fração 0..1 -> "12,34%" */
+function pctf(f,casas){ return pct((f||0)*100, casas); }
+/* Aceita "300.000,00", "300000", "R$ 1.234,56" e tambem "1234.56" */
+function num(str){
+  if(typeof str==='number') return str;
+  var s=(str||'').toString().replace(/[^\d.,-]/g,'');
+  if(!s) return 0;
+  var temVirg=s.indexOf(',')>=0, temPonto=s.indexOf('.')>=0;
+  if(temVirg){ s=s.replace(/\./g,'').replace(',','.'); }
+  else if(temPonto){
+    var partes=s.split('.');
+    if(partes.length>2 || (partes.length===2 && partes[1].length===3)) s=partes.join('');
+  }
+  var v=parseFloat(s);
+  return isFinite(v)?v:0;
+}
+function emp(){ for(var i=0;i<EMPS.length;i++) if(EMPS[i].id===S.empId) return EMPS[i]; return null; }
+function politica(){ for(var i=0;i<POLITICAS.length;i++) if(POLITICAS[i].id===S.politicaId) return POLITICAS[i]; return POLITICAS[4]; }
+
+/* datas -------------------------------------------------- */
+function parseData(str){
+  if(!str) return null;
+  var p=str.split('-'); if(p.length!==3) return null;
+  var d=new Date(+p[0], (+p[1])-1, +p[2]);
+  return isFinite(d.getTime())?d:null;
+}
+function fmtData(d){ return d?(pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()):'-'; }
+function isoData(d){ return d?(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())):''; }
+/* EOMONTH do Excel */
+function eom(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
+/* índice absoluto do mês - permite comparar "fins de mês" como inteiros */
+function mi(d){ return d.getFullYear()*12 + d.getMonth(); }
+/* soma k meses preservando o dia (limitado ao último dia do mês destino) */
+function addMeses(d,k){
+  var alvo=new Date(d.getFullYear(), d.getMonth()+k, 1);
+  var ult=new Date(alvo.getFullYear(), alvo.getMonth()+1, 0).getDate();
+  return new Date(alvo.getFullYear(), alvo.getMonth(), Math.min(d.getDate(), ult));
+}
+function addDias(d,k){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()+k); }
+function dias(a,b){ return Math.round((b-a)/86400000); }
+function rotuloMes(d){ return d?(MESES[d.getMonth()]+'/'+d.getFullYear()):'-'; }
+
+/* financeiros -------------------------------------------- */
+function pmt(i,n,pv){
+  if(!n || !pv) return 0;
+  if(!i) return pv/n;
+  return pv*i/(1-Math.pow(1+i,-n));
+}
+/* fator de anuidade (parcela por unidade de capital) */
+function anuidade(i,n){
+  if(!n) return 0;
+  return (Math.pow(1+i,n)*i)/(Math.pow(1+i,n)-1);
+}
+function r2(v){ return Math.round(v*100)/100; }
+function r4(v){ return Math.round(v*10000)/10000; }
+
+/* =========================================================
+   MOTOR DE CÁLCULO - espelha a planilha
+   Formulário L74/L106/L132 · Dados E14:E23, I11:I19, AH10:AI34,
+   BB12:BQ47 · Fluxo Pagamento I/J/R/AA/AU/AV/AW
+   ========================================================= */
+function calc(){
+  var e=emp(), pol=politica();
+  var venda=parseData(S.dataVenda), venc1=parseData(S.dataVenc1);
+  var prazo=Math.max(0, Math.round(S.prazo)||0);
+
+  var c = {
+    e:e, pol:pol, venda:venda, venc1:venc1, prazo:prazo, pronto:false,
+    preSaldo:0, saldoMensais:0, carencia:0, psCorrigido:0, pctPS:0,
+    nPre:0, nPos:0, i1:TX.jurosPre, i2:TX.jurosPos,
+    linear:null, escalonado:null, fluxo:[],
+    crLinear:0, crPS:0, crEscal:0, veredito:null,
+    somaSinais:S.s1+S.s2+S.s3, somaAnuais:S.a1+S.a2+S.a3
+  };
+  if(!e || !venda || !venc1 || prazo<=0 || S.valor<=0) return c;
+
+  /* taxas vigentes na data da proposta - Dados AW16 / AW18 */
+  c.i1 = venda < parseData(TX.dataTaxaNova) ? TX.jurosPreAntigo : TX.jurosPre;
+  c.i2 = venda < parseData(TX.dataTaxaNova) ? TX.jurosPosAntigo : TX.jurosPos;
+
+  var entrega=parseData(e.entrega), inicioObra=parseData(e.inicioObra);
+
+  /* --- saldos ------------------------------------------- */
+  c.preSaldo     = S.valor - (S.financiado + S.subsidio + S.fgts + S.bonusAdim + S.bonusCamp + S.ato);
+  c.saldoMensais = c.preSaldo - c.somaSinais - c.somaAnuais;
+
+  /* --- pré / pós-chaves (Dados I17 / AH12) --------------- */
+  c.nPre = Math.max(0, Math.min(prazo, mi(entrega) - mi(venc1)));
+  c.nPos = prazo - c.nPre;
+
+  /* --- carência e correção (Dados E14 / E22 / E23) ------- */
+  var taxaCar = c.nPre !== 0 ? c.i1 : c.i2;
+  c.carencia = venda >= parseData(TX.dataCarencia)
+    ? Math.round(dias(eom(venda), eom(venc1))/30) : 0;
+  if(c.carencia<0) c.carencia=0;
+  var fatorCar = Math.pow(1+taxaCar, c.carencia);
+  c.correcaoCarencia = c.saldoMensais*fatorCar - c.saldoMensais;
+  c.psCorrigido = c.saldoMensais*fatorCar + c.somaAnuais*fatorCar;
+
+  var baseP = S.valor - S.bonusAdim - S.bonusCamp;
+  c.pctPS = baseP>0 ? r4(c.psCorrigido)/baseP : 0;
+  c.pronto = true;
+
+  /* --- fluxo linear (Dados AH24:AI34) ------------------- */
+  var fPre = c.nPre ? anuidade(c.i1, c.nPre) : 0;
+  var fPos = c.nPos ? Math.pow(1+c.i1, c.nPre)*anuidade(c.i2, c.nPos) : 0;
+  var pctPre = (fPre+fPos)>0 ? 1 - fPre/(fPre+fPos) : 0;
+  var saldoPre = c.psCorrigido*pctPre;
+  var saldoPos = (c.psCorrigido - saldoPre)*Math.pow(1+c.i1, c.nPre);
+  var parcPre = r2(pmt(c.i1, c.nPre, saldoPre));
+  var parcPos = r2(pmt(c.i2, c.nPos, saldoPos));
+  c.linear = {
+    parcPre:parcPre, parcPos:parcPos, saldoPre:saldoPre, saldoPos:saldoPos,
+    parcela: parcPre || parcPos,
+    total: parcPre*c.nPre + parcPos*c.nPos
+  };
+
+  /* --- fluxo escalonado (Dados BB12:BQ47) ---------------
+     4 faixas de 40/30/20/10% do P.S., cada uma com ceil(prazo/4) meses
+     (a 4ª leva o resto). Cada faixa é dividida na parte pré e pós-chaves,
+     o valor é trazido a valor futuro e vira uma PMT. */
+  var pFaixa = Math.ceil(prazo/4);
+  var prazos = [pFaixa, pFaixa, pFaixa, Math.max(0, prazo-3*pFaixa)];
+  var accPre=0, accPos=0, faixas=[], totalEsc=0;
+  for(var k=0;k<4;k++){
+    var P=prazos[k], V=c.psCorrigido*TX.faixas[k];
+    var bPre = Math.max(0, Math.min(P, c.nPre-accPre));
+    var bPos = P - bPre;
+    var hPre;
+    if(bPre && bPos){
+      var fa=anuidade(c.i1,bPre), fb=Math.pow(1+c.i1,bPre)*anuidade(c.i2,bPos);
+      hPre = 1 - fa/(fa+fb);
+    } else { hPre = bPre ? 1 : 0; }
+    var vPre=hPre*V, vPos=V-vPre;
+    var flPre = vPre*Math.pow(1+c.i1,accPre)*Math.pow(1+c.i2,accPos);
+    var flPos = vPos*Math.pow(1+c.i1,accPre+bPre)*Math.pow(1+c.i2,accPos);
+    var parcela = Math.max(bPre?pmt(c.i1,bPre,flPre):0, bPos?pmt(c.i2,bPos,flPos):0);
+    faixas.push({ n:k+1, prazo:P, valor:V, pct:TX.faixas[k], mesesPre:bPre, mesesPos:bPos, parcela:parcela });
+    totalEsc += parcela*P;
+    accPre+=bPre; accPos+=bPos;
+  }
+  c.escalonado = { faixas:faixas, total:totalEsc };
+
+  /* --- fluxo mês a mês + comprometimento de renda -------
+     Fluxo Pagamento colunas C/D/H/I/J/R/AA/AU/AV/AW.
+     A evolução dos juros de obra começa no % já decorrido da obra e
+     avança um passo por parcela até as chaves; depois vira a parcela
+     cheia do financiamento. */
+  var nTotObra = Math.max(0, Math.min(mi(entrega), mi(venc1)+prazo) - mi(inicioObra));
+  var nDecorr  = Math.max(0, Math.min(mi(venc1), mi(entrega)) - mi(inicioObra));
+  var evBase   = nTotObra>0 ? nDecorr/nTotObra : 1;
+  var evStep   = (nTotObra>0 && c.nPre>0) ? ((nTotObra-nDecorr)/nTotObra)/c.nPre : 0;
+
+  var sinais=[
+    {v:S.s1, d:parseData(S.dataS1), lab:'Sinal 1'},
+    {v:S.s2, d:parseData(S.dataS2), lab:'Sinal 2'},
+    {v:S.s3, d:parseData(S.dataS3), lab:'Sinal 3'}
+  ].filter(function(x){ return x.v>0 && x.d; });
+  var anuais=[
+    {v:S.a1, d:parseData(S.dataA1), lab:'Anual 1'},
+    {v:S.a2, d:parseData(S.dataA2), lab:'Anual 2'},
+    {v:S.a3, d:parseData(S.dataA3), lab:'Anual 3'}
+  ].filter(function(x){ return x.v>0 && x.d; });
+  function achaNoMes(lista, d){
+    for(var i=0;i<lista.length;i++)
+      if(mi(lista[i].d)===mi(d)) return lista[i];
+    return null;
+  }
+  function parcelaFaixa(nPS){
+    var cum=0;
+    for(var i=0;i<faixas.length;i++){ cum+=faixas[i].prazo; if(nPS<=cum) return faixas[i].parcela; }
+    return faixas[faixas.length-1].parcela;
+  }
+
+  /* linha 0 - o ato, que não consome parcela do Pro Soluto */
+  if(S.ato>0){
+    c.fluxo.push({ n:0, data:parseData(S.dataAto)||venda, tipo:'Ato Sinal CC/Boleto',
+                   fase:'-', juros:0, extra:S.ato, psLin:0, psEsc:0,
+                   crLin:null, crEsc:null, crPSm:null });
+  }
+
+  var ev=evBase, nPS=0, mes=0, tipoAnt='Ato Sinal CC/Boleto', guarda=0;
+  while(nPS<prazo && guarda<400){
+    guarda++;
+    var d=addMeses(venc1, mes); mes++;
+    var pre = mi(d) < mi(entrega);
+    var sin = achaNoMes(sinais, d);
+    var anu = achaNoMes(anuais, d);
+    var tipo = sin ? sin.lab : 'Mensal P.S';
+
+    if(sin){
+      /* mês de sinal: não há parcela do carnê (Fluxo Pagamento D=0) */
+      c.fluxo.push({ n:0, data:d, tipo:sin.lab, fase:pre?'Pré':'Pós',
+                     juros:0, extra:sin.v, psLin:0, psEsc:0,
+                     crLin:null, crEsc:null, crPSm:null });
+      tipoAnt=tipo;
+      continue;
+    }
+
+    nPS++;
+    /* juros de obra / parcela do financiamento - Fluxo Pagamento I e J */
+    var juros;
+    if(pre){
+      if(tipo!==tipoAnt) ev=evBase; else ev+=evStep;
+      juros = S.parcFin*ev;
+    } else {
+      juros = S.parcFin;
+    }
+    tipoAnt=tipo;
+
+    var psLin = pre ? parcPre : parcPos;
+    var psEsc = parcelaFaixa(nPS);
+    var extra = anu ? anu.v : 0;
+    /* AU / AW: quando há anual no mês, a planilha avalia o C.R. sem ela */
+    var crLin = S.renda>0 ? r4((juros + psLin + (anu?0:extra))/S.renda) : 0;
+    var crEsc = S.renda>0 ? r4((juros + psEsc + (anu?0:extra))/S.renda) : 0;
+    var crPSm = S.renda>0 ? r4(psLin/S.renda) : 0;
+
+    c.fluxo.push({ n:nPS, data:d, tipo: anu ? ('Mensal P.S + '+anu.lab) : 'Mensal P.S',
+                   fase:pre?'Pré':'Pós', juros:juros, extra:extra,
+                   psLin:psLin, psEsc:psEsc, crLin:crLin, crEsc:crEsc, crPSm:crPSm });
+
+    if(crLin>c.crLinear) c.crLinear=crLin;
+    if(crEsc>c.crEscal)  c.crEscal =crEsc;
+    if(crPSm>c.crPS)     c.crPS    =crPSm;
+  }
+
+  c.veredito = avaliarPolitica(c);
+  return c;
+}
+
+/* =========================================================
+   VEREDITO DA POLÍTICA - Formulário Z132:AL144
+   Aprovado se dentro do limite, Comitê na faixa de tolerância,
+   Reprovado acima dela.
+   ========================================================= */
+function status(valor, limite, limiteComite){
+  if(valor<=limite+1e-9) return 'Aprovado';
+  if(valor<=limiteComite+1e-9) return 'Comitê';
+  return 'Reprovado';
+}
+function avaliarPolitica(c){
+  var pol=c.pol;
+  var limPS   = pol.pctPS,  comitePS   = Math.round((limPS+limPS*TX.tolPS)*100)/100;
+  var limPz   = pol.prazo,  comitePz   = Math.max(TX.prazoMinComite, limPz+TX.tolPrazo);
+  var limCR   = pol.cr,     comiteCR   = limCR+TX.tolCR;
+  var limCRPS = pol.crPS;
+
+  var stPS = status(c.pctPS, limPS, comitePS);
+  var stPz = status(c.prazo, limPz, comitePz);
+
+  /* C.R. linear: só aprova se a parcela do P.S. também couber no teto dela */
+  var stCR;
+  if(c.crLinear<=limCR+1e-9 && c.crPS<=limCRPS+1e-9) stCR='Aprovado';
+  else if(c.crLinear<=comiteCR+1e-9 && c.crPS<=limCRPS+1e-9) stCR='Comitê';
+  else stCR='Reprovado';
+
+  var stEsc = status(c.crEscal, limCR, comiteCR);
+
+  var itens=[
+    { id:'ps',   lab:'% Pro Soluto',              valor:pctf(c.pctPS),   limite:'máx. '+pctf(limPS,0),
+      st:stPS,  excedeu:c.pctPS-limPS },
+    { id:'pz',   lab:'Prazo do Pro Soluto',       valor:c.prazo+' meses', limite:'máx. '+limPz+' meses',
+      st:stPz,  excedeu:c.prazo-limPz },
+    { id:'cr',   lab:'Comprom. de renda (linear)', valor:pctf(c.crLinear), limite:'máx. '+pctf(limCR,0)+' · P.S. '+pctf(c.crPS)+' de '+pctf(limCRPS,0),
+      st:stCR,  excedeu:c.crLinear-limCR },
+    { id:'cres', lab:'Comprom. de renda (escalonado)', valor:pctf(c.crEscal), limite:'máx. '+pctf(limCR,0),
+      st:stEsc, excedeu:c.crEscal-limCR }
+  ];
+
+  /* Formulário Z144: o veredito final olha %P.S., prazo e C.R. linear */
+  var chave=[stPS,stPz,stCR];
+  var final = chave.every(function(s){return s==='Aprovado';}) ? 'Aprovado'
+            : (chave.some(function(s){return s==='Reprovado';}) ? 'Reprovado' : 'Comitê');
+
+  /* Formulário AJ160 - quanto o cliente precisa acrescentar na entrada
+     para o %P.S. voltar para dentro da política */
+  var acrescimo = Math.max(0, c.psCorrigido - limPS*S.valor);
+
+  return { itens:itens, final:final, acrescimo:acrescimo,
+           limPS:limPS, limPz:limPz, limCR:limCR, limCRPS:limCRPS };
+}
+
+/* =========================================================
+   VALIDAÇÕES DA POLÍTICA E DOS PRAZOS
+   ========================================================= */
+function validar(c){
+  var out=[];
+  if(!c.e) return [{n:'warn',t:'Selecione um empreendimento para começar.'}];
+  if(S.valor<=0) return [{n:'warn',t:'Informe o valor do imóvel para calcular o Pro Soluto.'}];
+  if(!c.venda || !c.venc1) return [{n:'warn',c:'venc1',t:'Informe a data da proposta e o 1º vencimento do Pro Soluto.'}];
+
+  var entrega=parseData(c.e.entrega);
+
+  /* 1 - dia de vencimento válido */
+  if(TX.diasVenc.indexOf(c.venc1.getDate())<0){
+    out.push({n:'err',c:'venc1',t:'<b>Dia de vencimento inválido.</b> Os dias permitidos são <b>5</b>, <b>10</b> ou <b>15</b> &mdash; você escolheu dia '+c.venc1.getDate()+'.'});
+  }
+  /* 2 - 1º vencimento em até 120 dias da venda */
+  var dv=dias(c.venda, c.venc1);
+  if(dv<0){
+    out.push({n:'err',c:'venc1',t:'<b>1º vencimento antes da venda.</b> A data precisa ser posterior à data da proposta.'});
+  } else if(dv>TX.maxDiasVenc1){
+    out.push({n:'err',c:'venc1',t:'<b>1º vencimento fora do prazo.</b> Máximo '+TX.maxDiasVenc1+' dias corridos da venda &mdash; hoje são '+dv+' dias. Data máxima: <b>'+fmtData(addDias(c.venda,TX.maxDiasVenc1))+'</b>.'});
+  }
+  /* 3 - pré-saldo */
+  if(c.preSaldo<-0.01){
+    out.push({n:'err',c:'valor',t:'<b>Recursos acima do valor do imóvel.</b> Banco, subsídio, FGTS, bônus e ato somam '+brl(S.valor-c.preSaldo)+', mais que os '+brl(S.valor)+' da venda.'});
+  } else if(c.saldoMensais<-0.01){
+    out.push({n:'err',c:'entrada',t:'<b>Sinais e anuais acima do pré-saldo.</b> Sobram '+brl(-c.saldoMensais)+' negativos para o carnê. Reduza os sinais ou as anuais.'});
+  }
+  /* 4 - ato em até 7 dias */
+  var dAto=parseData(S.dataAto);
+  if(S.ato>0 && dAto && dias(c.venda,dAto)>TX.maxDiasAto){
+    out.push({n:'err',c:'entrada',t:'<b>Vencimento do ato fora do prazo.</b> Máximo '+TX.maxDiasAto+' dias da venda &mdash; data máxima <b>'+fmtData(addDias(c.venda,TX.maxDiasAto))+'</b>.'});
+  }
+  /* 5 - sinais em até 30 / 60 / 90 dias */
+  [[S.s1,S.dataS1,'Sinal 1',0],[S.s2,S.dataS2,'Sinal 2',1],[S.s3,S.dataS3,'Sinal 3',2]].forEach(function(x){
+    var d=parseData(x[1]);
+    if(x[0]>0 && !d){
+      out.push({n:'err',c:'entrada',t:'<b>'+x[2]+' sem vencimento.</b> Informe a data para o valor entrar no fluxo.'});
+    } else if(x[0]>0 && d && dias(c.venda,d)>TX.diasSinal[x[3]]){
+      out.push({n:'err',c:'entrada',t:'<b>'+x[2]+' fora do prazo.</b> Máximo '+TX.diasSinal[x[3]]+' dias da venda &mdash; data máxima <b>'+fmtData(addDias(c.venda,TX.diasSinal[x[3]]))+'</b>.'});
+    }
+  });
+  /* 6 - anuais: dezembro, dentro da obra e até metade da renda */
+  [[S.a1,S.dataA1,'Anual 1'],[S.a2,S.dataA2,'Anual 2'],[S.a3,S.dataA3,'Anual 3']].forEach(function(x){
+    var d=parseData(x[1]);
+    if(x[0]<=0) return;
+    if(!d){ out.push({n:'err',c:'anual',t:'<b>'+x[2]+' sem vencimento.</b> Informe a data para o valor entrar no fluxo.'}); return; }
+    if(d.getMonth()!==11 || d.getFullYear()<c.venda.getFullYear()){
+      out.push({n:'err',c:'anual',t:'<b>'+x[2]+' fora do prazo.</b> As anuais só podem vencer em <b>dezembro</b>, a partir do ano da venda.'});
+    }
+    if(mi(d)>mi(entrega)){
+      out.push({n:'err',c:'anual',t:'<b>'+x[2]+' depois da entrega.</b> As anuais precisam cair dentro do período de obra (até '+rotuloMes(entrega)+').'});
+    }
+    if(S.renda>0 && x[0]>S.renda/2){
+      out.push({n:'warn',c:'anual',t:'<b>'+x[2]+' acima do permitido.</b> Comprometimento de renda superior ao da política &mdash; máximo '+brl(S.renda/2)+' (metade da renda).'});
+    }
+  });
+  /* 7 - dados para o comprometimento de renda */
+  if(S.renda<=0){
+    out.push({n:'warn',c:'renda',t:'<b>Renda não informada.</b> Sem ela não dá para avaliar o comprometimento de renda &mdash; só o % de Pro Soluto é verificado.'});
+  }
+  if(S.parcFin<=0){
+    out.push({n:'warn',c:'parcfin',t:'<b>Parcela do financiamento não informada.</b> O comprometimento de renda sai só com a parcela do carnê, sem os juros de obra e sem a parcela do banco.'});
+  }
+  /* 8 - parcela mínima do produto */
+  if(c.pronto && c.linear && c.linear.parcela>0 && c.linear.parcela<c.e.parcMin){
+    out.push({n:'warn',c:'prazo',t:'<b>Parcela abaixo da mínima do produto.</b> O '+c.e.nome+' exige no mínimo '+brl(c.e.parcMin)+' por parcela &mdash; o fluxo linear ficou em '+brl(c.linear.parcela)+'. Reduza o prazo.'});
+  }
+  /* 9 - política */
+  if(c.pronto && c.veredito){
+    c.veredito.itens.forEach(function(it){
+      if(it.st==='Aprovado') return;
+      var grave = it.st==='Reprovado';
+      var cod = it.id==='ps' ? 'valor' : (it.id==='pz' ? 'prazo' : 'renda');
+      out.push({ n:grave?'err':'warn', c:cod,
+        t:'<b>'+it.lab+' &mdash; '+it.st+'.</b> '+it.valor+' contra o limite de '+it.limite.replace('máx. ','')+' da política '+c.pol.nome+'.' });
+    });
+    if(c.veredito.final==='Aprovado'){
+      out.push({n:'ok',t:'<b>Proposta dentro da política '+c.pol.nome+'.</b> Pro Soluto de '+pctf(c.pctPS)+' em '+c.prazo+' meses'+(S.renda>0?(', com comprometimento de renda máximo de '+pctf(c.crLinear)+' no fluxo linear'):'')+'.'});
+    } else if(c.veredito.acrescimo>0 && c.veredito.itens[0].st!=='Aprovado'){
+      out.push({n:'warn',c:'valor',t:'<b>Para entrar na política '+c.pol.nome+'</b>, o cliente precisa aumentar a entrada em aproximadamente <b>'+brl(c.veredito.acrescimo)+'</b> (ato, sinais ou recursos próprios).'});
+    }
+  }
+  return out;
+}
+
+/* =========================================================
+   CHECKLIST DE APROVAÇÃO (popup "Verificar Simulação")
+   ========================================================= */
+function checklistAprovacao(c){
+  var out=[], pol=c.pol, entrega=parseData(c.e.entrega);
+
+  out.push({ id:'ps', grave:true, label:'% Pro Soluto dentro da política '+pol.nome,
+    ok: c.veredito.itens[0].st==='Aprovado',
+    detail:'Limite '+pctf(pol.pctPS,0)+' ('+brl(pol.pctPS*S.valor)+') — a proposta ficou em '+pctf(c.pctPS)+' ('+brl(c.psCorrigido)+'). Status: '+c.veredito.itens[0].st+'.' });
+
+  out.push({ id:'prazo', grave:true, label:'Prazo do Pro Soluto (máx. '+pol.prazo+' meses)',
+    ok: c.veredito.itens[1].st==='Aprovado',
+    detail: c.prazo+' meses — '+c.nPre+' antes das chaves e '+c.nPos+' depois. Status: '+c.veredito.itens[1].st+'.' });
+
+  out.push({ id:'cr', grave:true, label:'Comprometimento de renda no fluxo linear (máx. '+pctf(pol.cr,0)+')',
+    ok: c.veredito.itens[2].st==='Aprovado',
+    detail: S.renda>0
+      ? ('Máximo de '+pctf(c.crLinear)+' ('+brl(c.crLinear*S.renda)+' de '+brl(S.renda)+'), sendo '+pctf(c.crPS)+' só do carnê (limite '+pctf(pol.crPS,0)+'). Status: '+c.veredito.itens[2].st+'.')
+      : 'Renda não informada — não foi possível avaliar.' });
+
+  out.push({ id:'cresc', grave:false, label:'Comprometimento de renda no fluxo escalonado (máx. '+pctf(pol.cr,0)+')',
+    ok: c.veredito.itens[3].st==='Aprovado',
+    detail: S.renda>0 ? ('Máximo de '+pctf(c.crEscal)+'. Status: '+c.veredito.itens[3].st+'.') : 'Renda não informada.' });
+
+  out.push({ id:'venc1', grave:true, label:'1º vencimento válido (dia 5, 10 ou 15 e até '+TX.maxDiasVenc1+' dias da venda)',
+    ok: TX.diasVenc.indexOf(c.venc1.getDate())>=0 && dias(c.venda,c.venc1)>=0 && dias(c.venda,c.venc1)<=TX.maxDiasVenc1,
+    detail: fmtData(c.venc1)+' — '+dias(c.venda,c.venc1)+' dias após a venda. Data máxima '+fmtData(addDias(c.venda,TX.maxDiasVenc1))+'.' });
+
+  var dAto=parseData(S.dataAto);
+  var atoOk = S.ato<=0 || !dAto || dias(c.venda,dAto)<=TX.maxDiasAto;
+  out.push({ id:'ato', grave:true, label:'Vencimento do ato em até '+TX.maxDiasAto+' dias da venda',
+    ok: atoOk,
+    detail: S.ato>0 ? (brl(S.ato)+(dAto?(' em '+fmtData(dAto)):' (sem data)')+'. Limite '+fmtData(addDias(c.venda,TX.maxDiasAto))+'.') : 'Sem ato cadastrado.' });
+
+  var sinaisOk=true, sinaisDet=[];
+  [[S.s1,S.dataS1,'Sinal 1',0],[S.s2,S.dataS2,'Sinal 2',1],[S.s3,S.dataS3,'Sinal 3',2]].forEach(function(x){
+    if(x[0]<=0) return;
+    var d=parseData(x[1]);
+    if(!d || dias(c.venda,d)>TX.diasSinal[x[3]]) sinaisOk=false;
+    sinaisDet.push(x[2]+' '+brl(x[0])+(d?(' em '+fmtData(d)):' sem data'));
+  });
+  out.push({ id:'sinais', grave:true, label:'Sinais dentro de 30 / 60 / 90 dias',
+    ok: sinaisOk, detail: sinaisDet.length?sinaisDet.join(' · '):'Sem sinais cadastrados.' });
+
+  var anuaisOk=true, anuaisDet=[];
+  [[S.a1,S.dataA1,'Anual 1'],[S.a2,S.dataA2,'Anual 2'],[S.a3,S.dataA3,'Anual 3']].forEach(function(x){
+    if(x[0]<=0) return;
+    var d=parseData(x[1]);
+    if(!d || d.getMonth()!==11 || mi(d)>mi(entrega) || d.getFullYear()<c.venda.getFullYear()) anuaisOk=false;
+    if(S.renda>0 && x[0]>S.renda/2) anuaisOk=false;
+    anuaisDet.push(x[2]+' '+brl(x[0])+(d?(' em '+fmtData(d)):' sem data'));
+  });
+  out.push({ id:'anuais', grave:false, label:'Anuais em dezembro, dentro da obra e até metade da renda',
+    ok: anuaisOk, detail: anuaisDet.length?anuaisDet.join(' · '):'Sem anuais cadastradas.' });
+
+  out.push({ id:'parcmin', grave:false, label:'Parcela acima da mínima do produto ('+brl(c.e.parcMin)+')',
+    ok: !c.linear || c.linear.parcela>=c.e.parcMin,
+    detail: c.linear ? ('Fluxo linear em '+brl(c.linear.parcela)+' por mês.') : '' });
+
+  out.push({ id:'saldo', grave:true, label:'Fluxo fecha com o valor do imóvel',
+    ok: c.preSaldo>=-0.01 && c.saldoMensais>=-0.01,
+    detail: 'Pré-saldo da operação '+brl(c.preSaldo)+' — saldo do carnê '+brl(c.saldoMensais)+'.' });
+
+  return out;
+}
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+function renderEmps(){
+  $('emps').innerHTML = EMPS.map(function(e){
+    return '<button type="button" class="emp'+(e.id===S.empId?' active':'')+'" data-emp="'+e.id+'">'+
+      '<div class="emp-nome">'+e.nome+'</div>'+
+      '<div class="emp-meta">'+
+        '<span>Entrega <b>'+rotuloMes(parseData(e.entrega))+'</b></span>'+
+        '<span>Obra desde <b>'+rotuloMes(parseData(e.inicioObra))+'</b></span>'+
+        '<span>Padrão <b>'+pctf(e.pctPS,0)+' · '+e.prazoPadrao+'x</b></span>'+
+      '</div></button>';
+  }).join('');
+}
+
+function renderPols(){
+  $('pols').innerHTML = POLITICAS.map(function(p){
+    return '<button type="button" class="pol'+(p.id===S.politicaId?' active':'')+'" data-pol="'+p.id+'">'+
+      '<div class="pol-nome">'+p.nome+'</div>'+
+      '<div class="pol-meta">'+
+        '<span>P.S. até <b>'+pctf(p.pctPS,0)+'</b></span>'+
+        '<span>Prazo <b>'+p.prazo+'x</b></span>'+
+        '<span>Renda <b>'+pctf(p.cr,0)+' ('+pctf(p.crPS,0)+')</b></span>'+
+      '</div></button>';
+  }).join('');
+}
+
+function kpi(lab,val,sub,hero){
+  return '<div class="kpi'+(hero?' hero-kpi':'')+'"><div class="kpi-lab">'+lab+'</div>'+
+         '<div class="kpi-val">'+val+'</div><div class="kpi-sub">'+(sub||'')+'</div></div>';
+}
+function mark(id,bad,warn){
+  var el=$(id); if(!el) return;
+  el.classList.toggle('bad',!!bad); el.classList.toggle('warn',!bad && !!warn);
+}
+function msg(id,av,cods,fallback){
+  var el=$(id); if(!el) return;
+  var hit=av.filter(function(a){ return cods.indexOf(a.c)>=0; });
+  if(hit.length){
+    var pior = hit.filter(function(a){return a.n==='err';})[0] || hit[0];
+    el.className='hint '+(pior.n==='err'?'err':'warn');
+    el.innerHTML=pior.t;
+  } else {
+    el.className='hint'; el.innerHTML=fallback||'';
+  }
+}
+function classeSt(st){ return st==='Aprovado'?'ok':(st==='Comitê'?'comite':'rep'); }
+function classeVeredito(st){ return st==='Aprovado'?'aprovado':(st==='Comitê'?'comite':'reprovado'); }
+
+function renderResultado(){
+  var c=calc(), av=validar(c);
+
+  /* campos calculados */
+  $('f-presaldo').value = c.e && S.valor>0 ? brl(c.preSaldo) : '';
+  $('f-prepos').value   = c.pronto ? (c.nPre+' pré / '+c.nPos+' pós') : '';
+
+  /* KPIs */
+  if(!c.pronto){
+    $('summary').innerHTML =
+      kpi('% Pro Soluto','&mdash;','preencha os dados da operação',true) +
+      kpi('Pro Soluto corrigido','&mdash;','') +
+      kpi('Pré-saldo da operação', c.e&&S.valor>0?brl(c.preSaldo):'&mdash;','') +
+      kpi('Prazo','&mdash;','') +
+      kpi('Entrega','&mdash;','');
+    $('cmp').innerHTML='';
+    $('vd').style.display='none';
+  } else {
+    var entrega=parseData(c.e.entrega);
+    $('summary').innerHTML =
+      kpi('% Pro Soluto', pctf(c.pctPS), 'limite '+pctf(c.pol.pctPS,0)+' na política '+c.pol.nome, true) +
+      kpi('Pro Soluto corrigido', brl(c.psCorrigido), c.carencia>0?('carência de '+c.carencia+' mês(es) &middot; +'+brl(c.correcaoCarencia)):'sem correção de carência') +
+      kpi('Pré-saldo da operação', brl(c.preSaldo), 'saldo do carnê '+brl(c.saldoMensais)) +
+      kpi('Prazo do Pro Soluto', c.prazo+' meses', c.nPre+' pré-chaves &middot; '+c.nPos+' pós-chaves') +
+      kpi('Entrega da obra', rotuloMes(entrega), '1º venc. em '+fmtData(c.venc1));
+
+    /* comparativo linear x escalonado */
+    var faixasHtml = c.escalonado.faixas.map(function(f){
+      return '<div class="cmp-faixa"><span>'+f.n+'ª faixa &middot; '+f.prazo+'x &middot; '+pctf(f.pct,0)+'</span><b>'+brl(f.parcela)+'</b></div>';
+    }).join('');
+    $('cmp').innerHTML =
+      '<div class="cmp-card">'+
+        '<div class="cmp-tit">Fluxo Linear &mdash; parcela única</div>'+
+        '<div class="cmp-parc">'+brl(c.linear.parcela)+' <span style="font-size:.9rem;font-weight:400;color:var(--dir-grey)">&times; '+c.prazo+'</span></div>'+
+        '<div class="cmp-rows">'+
+          '<div class="cmp-row"><span>Total pago no carnê</span><b>'+brl(c.linear.total)+'</b></div>'+
+          '<div class="cmp-row"><span>C.R. máximo</span><b>'+(S.renda>0?pctf(c.crLinear):'&mdash;')+'</b></div>'+
+          '<div class="cmp-row"><span>C.R. só do Pro Soluto</span><b>'+(S.renda>0?pctf(c.crPS):'&mdash;')+'</b></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="cmp-card">'+
+        '<div class="cmp-tit">Fluxo Escalonado &mdash; 4 faixas</div>'+
+        '<div class="cmp-faixas">'+faixasHtml+'</div>'+
+        '<div class="cmp-rows">'+
+          '<div class="cmp-row"><span>Total pago no carnê</span><b>'+brl(c.escalonado.total)+'</b></div>'+
+          '<div class="cmp-row"><span>C.R. máximo</span><b>'+(S.renda>0?pctf(c.crEscal):'&mdash;')+'</b></div>'+
+          '<div class="cmp-row"><span>Economia vs. linear</span><b>'+brl(c.linear.total-c.escalonado.total)+'</b></div>'+
+        '</div>'+
+      '</div>';
+
+    /* veredito */
+    var v=c.veredito;
+    var sub = v.final==='Aprovado' ? 'Todos os critérios da política '+c.pol.nome+' estão dentro do limite.'
+            : (v.final==='Comitê' ? 'A proposta passa, mas depende de aprovação do comitê.'
+                                  : 'Um ou mais critérios estão fora da política '+c.pol.nome+'.');
+    $('vd').style.display='';
+    $('vd').innerHTML =
+      '<div class="vd-head '+classeVeredito(v.final)+'">'+
+        '<span>Política '+c.pol.nome+' &mdash; '+v.final+'</span>'+
+        '<span class="vh-sub">'+sub+'</span>'+
+      '</div>'+
+      v.itens.map(function(it){
+        return '<div class="vd-item">'+
+          '<span class="vi-lab">'+it.lab+'</span>'+
+          '<span class="vi-val">'+it.valor+'</span>'+
+          '<span class="vi-lim">'+it.limite+'</span>'+
+          '<span class="st '+classeSt(it.st)+'">'+it.st+'</span>'+
+        '</div>';
+      }).join('');
+  }
+
+  /* Alertas */
+  $('alerts').innerHTML = av.map(function(a){
+    var ico = a.n==='err'?'&#10007;':(a.n==='warn'?'&#9888;':'&#10003;');
+    return '<div class="alert '+a.n+'"><span class="alert-ico">'+ico+'</span><span>'+a.t+'</span></div>';
+  }).join('');
+  $('banner').className = 'banner'+(av.some(function(a){return a.n==='err';})?' on':'');
+
+  /* Destaque nos campos */
+  var errs = av.filter(function(a){return a.n==='err';}).map(function(a){return a.c;});
+  var wrns = av.filter(function(a){return a.n==='warn';}).map(function(a){return a.c;});
+  mark('f-venc1', errs.indexOf('venc1')>=0, false);
+  mark('f-valor', errs.indexOf('valor')>=0, wrns.indexOf('valor')>=0);
+  mark('f-prazo', errs.indexOf('prazo')>=0, wrns.indexOf('prazo')>=0);
+  mark('f-renda', errs.indexOf('renda')>=0, wrns.indexOf('renda')>=0);
+  mark('f-parcfin', errs.indexOf('parcfin')>=0, wrns.indexOf('parcfin')>=0);
+  ['f-ato','f-s1','f-s2','f-s3'].forEach(function(id){ mark(id, errs.indexOf('entrada')>=0, false); });
+  ['f-a1','f-a2','f-a3'].forEach(function(id){ mark(id, errs.indexOf('anual')>=0, wrns.indexOf('anual')>=0); });
+
+  /* Hints inline */
+  msg('h-venc1', av, ['venc1'], c.venda ? ('Dias 5, 10 ou 15. Máximo '+fmtData(addDias(c.venda,TX.maxDiasVenc1))+'.') : 'Dias 5, 10 ou 15.');
+  msg('h-entrada', av, ['entrada']);
+  msg('h-anual',   av, ['anual']);
+  msg('h-renda',   av, ['renda'], 'Usada no comprometimento de renda.');
+  msg('h-parcfin', av, ['parcfin'], 'Valor da 1ª parcela na simulação da CAIXA.');
+  msg('h-prazo',   av, ['prazo'], c.e ? ('Padrão do produto: '+c.e.prazoPadrao+' meses. Máximo da política: '+c.pol.prazo+'.') : '');
+
+  renderTabela(c);
+
+  $('note').innerHTML = c.pronto
+    ? 'Pro Soluto corrigido a <b>'+pctf(c.i1,1)+' a.m.</b> antes das chaves e <b>'+pctf(c.i2,1)+' a.m.</b> depois, '+
+      'com '+(c.carencia>0?('<b>'+c.carencia+' mês(es)</b> de carência entre a venda e o 1º vencimento'):'sem carência')+'. '+
+      'A entrega do '+c.e.nome+' está prevista para <b>'+rotuloMes(parseData(c.e.entrega))+'</b>, '+
+      'por isso '+c.nPre+' parcelas caem antes das chaves e '+c.nPos+' depois. '+
+      'O comprometimento de renda soma a parcela do carnê aos juros de obra durante a construção e à parcela cheia do financiamento após a entrega.'
+    : '';
+}
+
+function renderTabela(c){
+  var tb=$('tbody');
+  if(!c.pronto || !c.fluxo.length){
+    tb.innerHTML='<tr><td colspan="6"><div class="empty">Selecione o empreendimento e preencha os dados da operação para montar o fluxo.</div></td></tr>';
+    $('b-toggle-tbl').style.display='none';
+    return;
+  }
+  $('b-toggle-tbl').style.display='';
+  $('b-toggle-tbl').textContent = S.verTudo ? 'Resumir parcelas' : 'Mostrar todas as parcelas ('+c.fluxo.length+')';
+  $('b-toggle-tbl').className = 'chip'+(S.verTudo?' on':'');
+
+  var linhas=c.fluxo, corte=null;
+  if(!S.verTudo && linhas.length>18){
+    corte={ini:linhas.slice(0,14), fim:linhas.slice(-3), ocultas:linhas.length-17};
+  }
+  var lista = corte ? corte.ini : linhas;
+  var limiteCR = c.pol.cr;
+
+  function tr(r){
+    var fora = r.crLin!==null && S.renda>0 && r.crLin>limiteCR;
+    return '<tr'+(fora?' class="hi"':'')+'>'+
+      '<td>'+(r.n||'&mdash;')+'</td>'+
+      '<td>'+fmtData(r.data)+'</td>'+
+      '<td>'+r.tipo+'</td>'+
+      '<td>'+r.fase+'</td>'+
+      '<td class="num">'+(r.psLin?brl(r.psLin):(r.extra?brl(r.extra):'&mdash;'))+'</td>'+
+      '<td class="num">'+(r.psEsc?brl(r.psEsc):(r.extra?brl(r.extra):'&mdash;'))+'</td>'+
+    '</tr>';
+  }
+  var html = lista.map(tr).join('');
+  if(corte){
+    html += '<tr class="grp"><td colspan="6">&hellip; '+corte.ocultas+' parcelas ocultas &mdash; use "Mostrar todas as parcelas"</td></tr>';
+    html += corte.fim.map(tr).join('');
+  }
+  html += '<tr class="tot"><td></td><td></td><td colspan="2">Total do carnê Pro Soluto</td>'+
+          '<td class="num">'+brl(c.linear.total)+'</td>'+
+          '<td class="num">'+brl(c.escalonado.total)+'</td></tr>';
+  tb.innerHTML=html;
+}
+
+function render(){ renderEmps(); renderPols(); renderResultado(); }
+
+/* =========================================================
+   SINCRONIA DOS CAMPOS
+   ========================================================= */
+/* campos de valor que também aceitam % do valor do imóvel */
+var PARES = [
+  ['financiado','f-fin'], ['subsidio','f-sub'], ['fgts','f-fgts'],
+  ['bonusAdim','f-badim'], ['bonusCamp','f-bcamp'],
+  ['ato','f-ato'], ['s1','f-s1'], ['s2','f-s2'], ['s3','f-s3']
+];
+var SIMPLES = [
+  ['cliente','f-cliente'], ['corretor','f-corretor'], ['unidade','f-unidade'], ['obs','f-obs']
+];
+var DATAS = [
+  ['dataVenda','f-data'], ['dataVenc1','f-venc1'], ['dataAto','f-dato'],
+  ['dataS1','f-ds1'], ['dataS2','f-ds2'], ['dataS3','f-ds3'],
+  ['dataA1','f-da1'], ['dataA2','f-da2'], ['dataA3','f-da3']
+];
+var MOEDAS = [['renda','f-renda'], ['a1','f-a1'], ['a2','f-a2'], ['a3','f-a3'], ['parcFin','f-parcfin']];
+
+function sincronizaCampos(){
+  $('f-valor').value = S.valor?brl(S.valor):'';
+  $('f-idade').value = S.idade||'';
+  $('f-prazo').value = S.prazo||'';
+  $('f-taxa').value  = S.taxaBanco?String(S.taxaBanco).replace('.',','):'';
+  SIMPLES.forEach(function(p){ $(p[1]).value = S[p[0]]||''; });
+  DATAS.forEach(function(p){ $(p[1]).value = S[p[0]]||''; });
+  MOEDAS.forEach(function(p){ $(p[1]).value = S[p[0]]?brl(S[p[0]]):''; });
+  PARES.forEach(function(p){
+    $(p[1]).value = S[p[0]]?brl(S[p[0]]):'';
+    var pc = S.valor>0 ? S[p[0]]/S.valor*100 : 0;
+    $(p[1]+'-p').value = S[p[0]] ? pc.toFixed(2).replace('.',',') : '';
+  });
+}
+
+/* par valor <-> % do valor do imóvel */
+function ligaPar(campo, idMoney){
+  var m=$(idMoney), p=$(idMoney+'-p');
+  function atualizaPct(){
+    var pc = S.valor>0 ? S[campo]/S.valor*100 : 0;
+    p.value = S[campo] ? pc.toFixed(2).replace('.',',') : '';
+    render();
+  }
+  m.addEventListener('input', function(){ S[campo]=num(m.value); atualizaPct(); });
+  m.addEventListener('blur',  function(){ m.value = S[campo]?brl(S[campo]):''; });
+  p.addEventListener('input', function(){
+    S[campo] = S.valor>0 ? S.valor*num(p.value)/100 : 0;
+    m.value = S[campo]?brl(S[campo]):''; render();
+  });
+  p.addEventListener('blur', function(){
+    var pc = S.valor>0 ? S[campo]/S.valor*100 : 0;
+    p.value = S[campo] ? pc.toFixed(2).replace('.',',') : '';
+  });
+}
+function ligaMoeda(campo, id){
+  var el=$(id);
+  el.addEventListener('input', function(){ S[campo]=num(this.value); render(); });
+  el.addEventListener('blur',  function(){ this.value = S[campo]?brl(S[campo]):''; });
+}
+
+/* =========================================================
+   EVENTOS
+   ========================================================= */
+$('emps').addEventListener('click', function(ev){
+  var b=ev.target.closest('[data-emp]'); if(!b) return;
+  S.empId=b.getAttribute('data-emp');
+  sugereDatas();
+  sincronizaCampos(); render();
+});
+$('pols').addEventListener('click', function(ev){
+  var b=ev.target.closest('[data-pol]'); if(!b) return;
+  S.politicaId=b.getAttribute('data-pol'); render();
+});
+
+/* sugere o 1º vencimento e o vencimento do ato a partir da data da venda */
+function sugereDatas(){
+  var venda=parseData(S.dataVenda); if(!venda) return;
+  if(!S.dataAto)  S.dataAto = isoData(venda);
+  if(!S.dataVenc1){
+    /* mês seguinte, no dia 10 - dentro dos 120 dias e num dia válido */
+    var d=addMeses(venda,1);
+    S.dataVenc1 = isoData(new Date(d.getFullYear(), d.getMonth(), 10));
+  }
+}
+
+$('f-valor').addEventListener('input', function(){ S.valor=num(this.value); render(); });
+$('f-valor').addEventListener('blur',  function(){ this.value=S.valor?brl(S.valor):''; sincronizaCampos(); render(); });
+$('f-idade').addEventListener('input', function(){ var v=parseInt(this.value,10); S.idade=isFinite(v)?v:0; });
+$('f-prazo').addEventListener('input', function(){ var v=parseInt(this.value,10); S.prazo=isFinite(v)?Math.max(0,v):0; render(); });
+$('f-taxa').addEventListener('input',  function(){ S.taxaBanco=num(this.value); });
+
+SIMPLES.forEach(function(p){ $(p[1]).addEventListener('input', function(){ S[p[0]]=this.value; }); });
+DATAS.forEach(function(p){
+  $(p[1]).addEventListener('change', function(){
+    S[p[0]]=this.value;
+    if(p[0]==='dataVenda'){ if(!this.value) S.dataVenda=hoje(); sugereDatas(); sincronizaCampos(); }
+    render();
+  });
+});
+MOEDAS.forEach(function(p){ ligaMoeda(p[0], p[1]); });
+PARES.forEach(function(p){ ligaPar(p[0], p[1]); });
+
+$('b-toggle-tbl').addEventListener('click', function(){ S.verTudo=!S.verTudo; renderResultado(); });
+
+$('b-reset').addEventListener('click', function(){
+  S=estadoInicial(); sincronizaCampos(); render();
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+/* =========================================================
+   VERIFICAR SIMULAÇÃO (popup de aprovação)
+   ========================================================= */
+function abrirModal(){ $('modal-overlay').classList.add('open'); document.body.style.overflow='hidden'; }
+function fecharModal(){ $('modal-overlay').classList.remove('open'); document.body.style.overflow=''; }
+$('modal-close').addEventListener('click', fecharModal);
+$('modal-overlay').addEventListener('click', function(ev){ if(ev.target===this) fecharModal(); });
+document.addEventListener('keydown', function(ev){
+  if(ev.key==='Escape' && $('modal-overlay').classList.contains('open')) fecharModal();
+});
+
+$('b-verificar').addEventListener('click', function(){
+  var c=calc();
+  if(!c.pronto){
+    alert('Selecione o empreendimento e preencha valor do imóvel, data da proposta, 1º vencimento e prazo antes de verificar a simulação.');
+    return;
+  }
+  if(S.renda<=0){
+    $('f-renda').classList.add('bad');
+    $('h-renda').className='hint err';
+    $('h-renda').innerHTML='Preencha a renda do cliente para verificar a simulação.';
+    $('f-renda').scrollIntoView({behavior:'smooth',block:'center'});
+    $('f-renda').focus();
+    return;
+  }
+
+  var itens=checklistAprovacao(c);
+  var final=c.veredito.final;
+  var classe = final==='Aprovado'?'aprovado':(final==='Comitê'?'comite':'reprovado');
+  var titulo = final==='Aprovado' ? '&#10003; Cliente Aprovado!'
+             : (final==='Comitê' ? '&#9888; Aprovação em Comitê' : '&#10007; Cliente Reprovado');
+  var subt   = final==='Aprovado'
+      ? 'A proposta está dentro de todos os limites da política '+c.pol.nome+'.'
+      : (final==='Comitê'
+          ? 'A proposta excede a política '+c.pol.nome+' dentro da faixa de tolerância — precisa passar pelo comitê.'
+          : 'Um ou mais critérios obrigatórios estão fora da política '+c.pol.nome+'.');
+
+  $('modal-banner').className='modal-banner '+classe;
+  $('modal-banner').innerHTML = titulo+'<span class="sub">'+subt+'</span>';
+
+  $('modal-checklist').innerHTML = itens.map(function(it){
+    return '<div class="modal-item '+(it.ok?'ok':'fail')+(it.grave?'':' leve')+'">'+
+      '<span class="ico">'+(it.ok?'&#10003;':'&#10007;')+'</span>'+
+      '<span class="txt"><span class="lab">'+it.label+'</span><span class="det">'+it.detail+'</span></span>'+
+    '</div>';
+  }).join('');
+
+  $('modal-renda').innerHTML =
+    '<div><div class="r-lab">Renda do cliente</div><div class="r-val">'+brl(S.renda)+'</div></div>'+
+    '<div><div class="r-lab">Limite ('+pctf(c.pol.cr,0)+')</div><div class="r-val">'+brl(c.pol.cr*S.renda)+'</div></div>'+
+    '<div><div class="r-lab">Maior comprometimento (linear)</div><div class="r-val">'+brl(c.crLinear*S.renda)+' &middot; '+pctf(c.crLinear)+'</div></div>'+
+    '<div><div class="r-lab">Maior comprometimento (escalonado)</div><div class="r-val">'+brl(c.crEscal*S.renda)+' &middot; '+pctf(c.crEscal)+'</div></div>'+
+    (c.veredito.acrescimo>0 && c.veredito.itens[0].st!=='Aprovado'
+      ? '<div style="grid-column:1/-1"><div class="r-lab">Acréscimo de entrada sugerido</div><div class="r-val">'+brl(c.veredito.acrescimo)+'</div></div>'
+      : '');
+  $('modal-renda').style.display='grid';
+
+  abrirModal();
+});
+
+/* =========================================================
+   PDF
+   ========================================================= */
+var logoData=null;
+(function carregaLogo(){
+  var img=new Image();
+  img.onload=function(){
+    var cv=document.createElement('canvas');
+    cv.width=img.naturalWidth; cv.height=img.naturalHeight;
+    cv.getContext('2d').drawImage(img,0,0);
+    try{ logoData={data:cv.toDataURL('image/jpeg',0.92), w:img.naturalWidth, h:img.naturalHeight}; }
+    catch(e){ logoData=null; }
+  };
+  img.src='assets/img/logo-direcional.jpg';
+})();
+
+$('b-pdf').addEventListener('click', function(){
+  var c=calc();
+  if(!c.pronto){ alert('Preencha os dados da operação antes de gerar o PDF.'); return; }
+  if(!window.jspdf || !window.jspdf.jsPDF){ alert('A biblioteca de PDF ainda está carregando. Tente de novo em alguns segundos.'); return; }
+
+  var doc=new window.jspdf.jsPDF({unit:'mm',format:'a4'});
+  var W=doc.internal.pageSize.getWidth(), M=14, y=12;
+
+  if(logoData){
+    var lw=38, lh=lw*logoData.h/logoData.w;
+    doc.addImage(logoData.data,'JPEG',(W-lw)/2, y, lw, lh);
+    y+=lh+6;
+  } else { y+=4; }
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(58,64,67);
+  doc.text('Simulação de Fluxo Associativo — Pro Soluto', W/2, y, {align:'center'}); y+=5;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(114,122,125);
+  doc.text(c.e.nome+(S.unidade?('  ·  '+S.unidade):''), W/2, y, {align:'center'}); y+=7;
+
+  /* identificação */
+  doc.autoTable({
+    startY:y, theme:'plain', margin:{left:M,right:M},
+    body:[
+      ['Cliente', S.cliente||'-', 'Corretor', S.corretor||'-'],
+      ['Renda', S.renda>0?brl(S.renda):'-', 'Idade', S.idade?(S.idade+' anos'):'-'],
+      ['Valor do imóvel', brl(S.valor), 'Financiado', brl(S.financiado)],
+      ['Subsídio / FGTS', brl(S.subsidio)+' / '+brl(S.fgts), 'Bônus adimpl. / campanha', brl(S.bonusAdim)+' / '+brl(S.bonusCamp)],
+      ['Data da proposta', fmtData(c.venda), '1º vencimento', fmtData(c.venc1)],
+      ['Entrega da obra', rotuloMes(parseData(c.e.entrega)), 'Parcela do financiamento', S.parcFin>0?brl(S.parcFin):'-']
+    ],
+    styles:{fontSize:8.5, cellPadding:1.4, textColor:[58,64,67]},
+    columnStyles:{0:{fontStyle:'bold',cellWidth:34,textColor:[114,122,125]},1:{cellWidth:54},
+                  2:{fontStyle:'bold',cellWidth:40,textColor:[114,122,125]},3:{cellWidth:'auto'}}
+  });
+  y=doc.lastAutoTable.finalY+5;
+
+  /* resumo do Pro Soluto */
+  doc.autoTable({
+    startY:y, margin:{left:M,right:M},
+    head:[['Pré-saldo da operação','Pro Soluto corrigido','% Pro Soluto','Prazo','Pré / pós-chaves']],
+    body:[[ brl(c.preSaldo), brl(c.psCorrigido), pctf(c.pctPS), c.prazo+' meses', c.nPre+' / '+c.nPos ]],
+    theme:'grid',
+    headStyles:{fillColor:[228,3,43],textColor:255,fontSize:7.5,fontStyle:'bold'},
+    styles:{fontSize:8.5,cellPadding:2,textColor:[58,64,67]}
+  });
+  y=doc.lastAutoTable.finalY+5;
+
+  /* comparativo dos fluxos */
+  var linhasEsc=c.escalonado.faixas.map(function(f){
+    return f.n+'ª faixa: '+f.prazo+'x de '+brl(f.parcela);
+  }).join('   ·   ');
+  doc.autoTable({
+    startY:y, margin:{left:M,right:M},
+    head:[['Fluxo','Parcelas','Total pago','C.R. máximo']],
+    body:[
+      ['Linear', c.prazo+'x de '+brl(c.linear.parcela), brl(c.linear.total), S.renda>0?pctf(c.crLinear):'-'],
+      ['Escalonado', linhasEsc, brl(c.escalonado.total), S.renda>0?pctf(c.crEscal):'-']
+    ],
+    theme:'grid',
+    headStyles:{fillColor:[228,3,43],textColor:255,fontSize:7.5,fontStyle:'bold'},
+    styles:{fontSize:8,cellPadding:2,textColor:[58,64,67]},
+    columnStyles:{0:{fontStyle:'bold',cellWidth:24},2:{halign:'right',cellWidth:28},3:{halign:'right',cellWidth:24}}
+  });
+  y=doc.lastAutoTable.finalY+5;
+
+  /* veredito da política */
+  doc.autoTable({
+    startY:y, margin:{left:M,right:M},
+    head:[['Política '+c.pol.nome, 'Proposta', 'Limite', c.veredito.final.toUpperCase()]],
+    body:c.veredito.itens.map(function(it){ return [it.lab, it.valor, it.limite.replace('máx. ',''), it.st]; }),
+    theme:'grid',
+    headStyles:{fillColor: c.veredito.final==='Aprovado'?[30,142,74]:(c.veredito.final==='Comitê'?[181,114,0]:[196,0,28]),
+                textColor:255,fontSize:7.5,fontStyle:'bold'},
+    styles:{fontSize:8,cellPadding:2,textColor:[58,64,67]},
+    columnStyles:{0:{cellWidth:56},3:{fontStyle:'bold',cellWidth:26}}
+  });
+  y=doc.lastAutoTable.finalY+6;
+
+  /* fluxo completo */
+  var body=c.fluxo.map(function(r){
+    return [ r.n?String(r.n):'-', fmtData(r.data), r.tipo, r.fase,
+             r.psLin?brl(r.psLin):(r.extra?brl(r.extra):'-'),
+             r.psEsc?brl(r.psEsc):(r.extra?brl(r.extra):'-') ];
+  });
+  body.push([{content:'Total do carnê Pro Soluto',colSpan:4,styles:{fontStyle:'bold'}},
+             {content:brl(c.linear.total),styles:{fontStyle:'bold',halign:'right'}},
+             {content:brl(c.escalonado.total),styles:{fontStyle:'bold',halign:'right'}}]);
+  doc.autoTable({
+    startY:y, margin:{left:M,right:M},
+    head:[['#','Vencimento','Parcela','Fase','P.S. Linear','P.S. Escalonado']],
+    body:body, theme:'grid',
+    headStyles:{fillColor:[228,3,43],textColor:255,fontSize:7,fontStyle:'bold'},
+    styles:{fontSize:7,cellPadding:1.3,textColor:[58,64,67],lineColor:[231,233,234]},
+    alternateRowStyles:{fillColor:[250,251,251]},
+    columnStyles:{0:{cellWidth:10},1:{cellWidth:24},3:{cellWidth:14},
+                  4:{halign:'right',cellWidth:28},5:{halign:'right',cellWidth:28}}
+  });
+  y=doc.lastAutoTable.finalY+6;
+
+  if(S.obs.trim()){
+    if(y>250){ doc.addPage(); y=18; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(58,64,67);
+    doc.text('Observações', M, y); y+=4.5;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(114,122,125);
+    doc.splitTextToSize(S.obs, W-M*2).forEach(function(l){
+      if(y>282){ doc.addPage(); y=18; }
+      doc.text(l, M, y); y+=4;
+    });
+  }
+
+  var rodapeTxt = 'O Pro Soluto é corrigido a '+pctf(c.i1,1)+' a.m. antes das chaves e '+pctf(c.i2,1)+' a.m. após as chaves'+
+    (c.carencia>0?(', com '+c.carencia+' mês(es) de correção de carência entre a venda e o 1º vencimento'):'')+'. '+
+    'O comprometimento de renda soma a parcela do carnê à evolução dos juros de obra durante a construção e à parcela cheia do '+
+    'financiamento após a entrega'+(S.taxaBanco>0?(' (taxa informada: '+pct(S.taxaBanco)+' a.a.)'):'')+'. '+
+    'Simulação de conferência prévia — valores sujeitos a confirmação e aprovação da Direcional.';
+  var total=doc.internal.getNumberOfPages();
+  for(var p=1;p<=total;p++){
+    doc.setPage(p);
+    var H=doc.internal.pageSize.getHeight();
+    doc.setDrawColor(231,233,234); doc.line(M,H-17,W-M,H-17);
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(114,122,125);
+    var ry=H-13;
+    doc.splitTextToSize(rodapeTxt, W-M*2).forEach(function(l){ doc.text(l, M, ry); ry+=3.2; });
+    doc.text('Gerado em '+fmtData(new Date())+'  -  Página '+p+' de '+total, M, H-3);
+  }
+
+  var slug=(c.e.nome+' '+(S.unidade||'')).trim().replace(/[^\w\s-]/g,'').replace(/\s+/g,'-').toLowerCase();
+  doc.save('associativo-'+slug+'.pdf');
+});
+
+/* =========================================================
+   INIT
+   ========================================================= */
+sugereDatas();
+sincronizaCampos();
+render();
+</script>
+</body>
+</html>
