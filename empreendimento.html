@@ -13,6 +13,34 @@
 
 <div id="app"><!-- montado por JS --></div>
 
+<div class="sim-modal-overlay" id="sim-modal-overlay">
+  <div class="sim-modal">
+    <button class="sim-modal-close" id="sim-modal-close" type="button" aria-label="Fechar">&times;</button>
+    <div class="sim-modal-head">
+      <h2>Simular Fluxo</h2>
+      <p>Escolha o tipo de simulação para esta unidade.</p>
+    </div>
+    <div class="sim-modal-opts">
+      <a class="sim-opt" href="simulador-tabela-direta.html" target="_blank" rel="noopener">
+        <span class="sim-opt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg></span>
+        <span class="sim-opt-txt">
+          <span class="sim-opt-tit">Tabela Direta</span>
+          <span class="sim-opt-sub">Fluxo de pagamento direto com a construtora — ato, sinais, mensais e pós-obra.</span>
+        </span>
+        <span class="sim-opt-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+      </a>
+      <a class="sim-opt" href="simulador-associativo.html" target="_blank" rel="noopener">
+        <span class="sim-opt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V8l7-5 7 5v13"></path><path d="M10 21v-6h4v6"></path></svg></span>
+        <span class="sim-opt-txt">
+          <span class="sim-opt-tit">Associativo</span>
+          <span class="sim-opt-sub">Cliente financia pelo MCMV — cálculo do Pro Soluto e comprometimento de renda.</span>
+        </span>
+        <span class="sim-opt-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+      </a>
+    </div>
+  </div>
+</div>
+
 <script src="assets/config.js"></script>
 <script src="assets/data.js"></script>
 <script>
@@ -323,14 +351,9 @@
     '</div>' +
     '<div class="view-toggle">' +
       (emp._cityId === 'ribeirao-preto'
-        ? '<div class="sim-group">' +
-          '<a class="btn-simulador" href="simulador-tabela-direta.html" target="_blank" rel="noopener">' +
+        ? '<button type="button" class="btn-simulador" onclick="window.abrirModalSimulador()">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>' +
-            'Simulador de Fluxo</a>' +
-          '<a class="btn-simulador" href="simulador-associativo.html" target="_blank" rel="noopener">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V8l7-5 7 5v13"></path><path d="M10 21v-6h4v6"></path></svg>' +
-            'Simulador Associativo</a>' +
-          '</div>'
+            'Simular Fluxo</button>'
         : '') +
       '<button class="view-btn" id="view-btn-cards" title="Ver em cards" onclick="setView(\'cards\',this)">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>' +
@@ -395,6 +418,22 @@
   });
   document.addEventListener('click', function () {
     document.querySelectorAll('.fdd.open').forEach(function (f) { f.classList.remove('open'); });
+  });
+
+  // popup "Simular Fluxo" - escolhe Tabela Direta ou Associativo
+  var simOverlay = document.getElementById('sim-modal-overlay');
+  window.abrirModalSimulador = function () {
+    simOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+  function fecharModalSimulador() {
+    simOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('sim-modal-close').addEventListener('click', fecharModalSimulador);
+  simOverlay.addEventListener('click', function (e) { if (e.target === simOverlay) fecharModalSimulador(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && simOverlay.classList.contains('open')) fecharModalSimulador();
   });
 })();
 </script>
