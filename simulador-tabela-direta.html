@@ -190,7 +190,7 @@ td.num,th.num{text-align:right}
           <input id="f-unidade" type="text" placeholder="BL02-0507">
         </div>
         <div>
-          <label for="f-data">Data da venda</label>
+          <label for="f-data">Data da proposta</label>
           <input id="f-data" type="date">
         </div>
         <div>
@@ -309,8 +309,10 @@ td.num,th.num{text-align:right}
   </section>
 
   <div class="foot">
-    Simulação sem juros e sem correção monetária, para fins de apresentação. Valores sujeitos a
-    confirmação e aprovação da Direcional. &middot; <a href="index.html">Voltar ao portal</a>
+    CONDIÇÕES DE PAGAMENTO: Ato e Sinais 1, 2 e 3 sem juros. Mensais, Intermediárias, Anuais e Saldo
+    pós-chaves corrigidos pelo INCC durante o período de obra. Após a obra: 120 parcelas mensais
+    corrigidas pelo IPCA + 1% a.m. Valores sujeitos a confirmação e aprovação da Direcional. &middot;
+    <a href="index.html">Voltar ao portal</a>
   </div>
 
 </main>
@@ -438,13 +440,13 @@ function validar(c){
     out.push({n:'err',c:'ato',t:'<b>Ato abaixo da política.</b> Mínimo '+POL.atoMin+'% = '+brl(c.valor*POL.atoMin/100)+' &mdash; você preencheu '+pct(atoP)+' ('+brl(S.ato)+').'});
   }
 
-  // 2 - Entrada total = 10%
+  // 2 - Entrada minima de 10% (o corretor pode colocar mais)
   var entP = c.valor>0 ? c.entrada/c.valor*100 : 0;
   var alvo = c.valor*POL.entradaTotal/100;
-  if(Math.abs(c.entrada-alvo) > 0.01){
+  if(c.entrada < alvo-0.01){
     var falta = alvo-c.entrada;
-    out.push({n:'err',c:'entrada',t:'<b>Entrada fora da política.</b> Ato + Sinais deve somar '+POL.entradaTotal+'% = '+brl(alvo)+
-      ' &mdash; hoje soma '+pct(entP)+' ('+brl(c.entrada)+'). '+(falta>0?'Faltam '+brl(falta)+'.':'Excedeu '+brl(-falta)+'.')});
+    out.push({n:'err',c:'entrada',t:'<b>Entrada abaixo da política.</b> Ato + Sinais deve somar no mínimo '+POL.entradaTotal+'% = '+brl(alvo)+
+      ' &mdash; hoje soma '+pct(entP)+' ('+brl(c.entrada)+'). Faltam '+brl(falta)+'.'});
   }
 
   // 3 - Intermediárias <= 12%
@@ -479,9 +481,9 @@ function validar(c){
     out.push({n:'err',c:'qtd',t:'<b>Mensal negativa ou zerada.</b> Entrada + intermediárias ('+brl(c.entrada+c.somaInterm)+') já superam o período de obra ('+brl(c.totalObra)+'). Reduza os valores ou aumente o % de obra.'});
   }
 
-  // 6 - % de obra fora do padrão
-  if(c.e && Math.abs(c.pObra-c.e.pctObra)>0.001){
-    out.push({n:'warn',c:'obra',t:'<b>Fluxo fora do padrão do produto.</b> O padrão do '+c.e.nome+' é '+
+  // 6 - % de obra abaixo do mínimo do produto (acima do mínimo pode - dilui menos no pos-obra)
+  if(c.e && c.pObra < c.e.pctObra-0.001){
+    out.push({n:'warn',c:'obra',t:'<b>Período de obra abaixo do mínimo do produto.</b> O mínimo do '+c.e.nome+' é '+
       c.e.pctObra+'% / '+(100-c.e.pctObra)+'% &mdash; você montou '+pct(c.pObra)+' / '+pct(100-c.pObra)+'. Precisa de aprovação.'});
   }
 
@@ -855,7 +857,7 @@ $('b-pdf').addEventListener('click', function(){
     ['Unidade', S.unidade||'-', 'Metragem', S.metragem>0?(S.metragem+' m²'):'-'],
     ['Valor da venda', brl(c.valor), 'Valor do m²', c.m2>0?brl(c.m2):'-'],
     ['Cliente', S.cliente||'-', 'Corretor', S.corretor||'-'],
-    ['Data da venda', fmtData(parseData(S.dataVenda)), 'Fluxo', pct(c.pObra)+' obra / '+pct(c.pPos)+' pós-obra']
+    ['Data da proposta', fmtData(parseData(S.dataVenda)), 'Fluxo', pct(c.pObra)+' obra / '+pct(c.pPos)+' pós-obra']
   ];
   doc.autoTable({
     startY:y, body:info, theme:'plain', margin:{left:M,right:M},
@@ -920,14 +922,19 @@ $('b-pdf').addEventListener('click', function(){
   }
 
   /* rodapé em todas as paginas */
+  var rodapeTxt = 'CONDIÇÕES DE PAGAMENTO: Ato e Sinais 1, 2 e 3 sem juros. Mensais, Intermediárias, '+
+    'Anuais e Saldo pós-chaves corrigidos pelo INCC durante o período de obra. Após a obra: 120 '+
+    'parcelas mensais corrigidas pelo IPCA + 1% a.m. Valores sujeitos a confirmação e aprovação da Direcional.';
   var total=doc.internal.getNumberOfPages();
   for(var p=1;p<=total;p++){
     doc.setPage(p);
     var H=doc.internal.pageSize.getHeight();
-    doc.setDrawColor(231,233,234); doc.line(M,H-14,W-M,H-14);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(114,122,125);
-    doc.text('Simulação sem juros e sem correção monetária, para fins de apresentação. Valores sujeitos a confirmação e aprovação da Direcional.', M, H-10);
-    doc.text('Gerado em '+fmtData(new Date())+'  -  Página '+p+' de '+total, M, H-6.5);
+    doc.setDrawColor(231,233,234); doc.line(M,H-17,W-M,H-17);
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(114,122,125);
+    var rodapeLinhas = doc.splitTextToSize(rodapeTxt, W-M*2);
+    var ry=H-13;
+    rodapeLinhas.forEach(function(l){ doc.text(l, M, ry); ry+=3.2; });
+    doc.text('Gerado em '+fmtData(new Date())+'  -  Página '+p+' de '+total, M, H-3);
   }
 
   var slug=(c.e.nome+' '+(S.unidade||'')).trim().replace(/[^\w\s-]/g,'').replace(/\s+/g,'-').toLowerCase();
