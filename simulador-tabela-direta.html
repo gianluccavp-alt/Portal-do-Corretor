@@ -150,6 +150,48 @@ td.num,th.num{text-align:right}
 .foot{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--dir-line);
       color:var(--dir-grey);font-size:.8rem}
 .foot a{color:var(--dir-red);text-decoration:none}
+
+/* ---------- botao verificar simulacao ---------- */
+.btn-check{background:var(--ok);border-color:var(--ok);color:#fff;
+      display:inline-flex;align-items:center;gap:.45rem}
+.btn-check:hover{background:#166B39;border-color:#166B39}
+.btn-check svg{flex:0 0 auto}
+
+/* ---------- modal de verificacao ---------- */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(58,64,67,.55);
+      z-index:1000;align-items:flex-start;justify-content:center;padding:5vh 1rem;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;max-width:600px;width:100%;
+      box-shadow:0 24px 60px rgba(0,0,0,.25);position:relative;overflow:hidden}
+.modal-close{position:absolute;top:.7rem;right:.8rem;width:34px;height:34px;border-radius:9px;
+      border:0;background:rgba(255,255,255,.18);color:#fff;font-size:1.4rem;line-height:1;
+      cursor:pointer;z-index:2}
+.modal-close:hover{background:rgba(255,255,255,.3)}
+.modal-banner{padding:1.6rem 1.4rem 1.3rem;text-align:center;font-weight:700;font-size:1.3rem;color:#fff}
+.modal-banner.aprovado{background:linear-gradient(135deg,var(--ok),#166B39)}
+.modal-banner.reprovado{background:linear-gradient(135deg,var(--err),#8f0016)}
+.modal-banner .sub{display:block;font-weight:400;font-size:.82rem;margin-top:.3rem;opacity:.9}
+.modal-body{padding:1.2rem 1.4rem 1.4rem;max-height:64vh;overflow-y:auto}
+.modal-checklist{display:flex;flex-direction:column}
+.modal-item{display:flex;gap:.65rem;align-items:flex-start;padding:.65rem 0;border-bottom:1px solid var(--dir-line)}
+.modal-item:last-child{border-bottom:0}
+.modal-item .ico{flex:0 0 auto;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;
+      justify-content:center;font-size:.78rem;font-weight:700;color:#fff;margin-top:.1rem}
+.modal-item.ok .ico{background:var(--ok)}
+.modal-item.fail .ico{background:var(--err)}
+.modal-item.leve.fail .ico{background:var(--warn)}
+.modal-item .txt{flex:1 1 auto;display:flex;flex-direction:column}
+.modal-item .lab{font-weight:500;font-size:.88rem}
+.modal-item.leve .lab::after{content:'opcional';margin-left:.5rem;font-size:.66rem;font-weight:500;
+      letter-spacing:.04em;text-transform:uppercase;color:var(--dir-grey);
+      border:1px solid var(--dir-line);border-radius:999px;padding:.05rem .45rem}
+.modal-item .det{font-size:.8rem;color:var(--dir-grey);margin-top:.15rem}
+.modal-renda{margin-top:.4rem;padding:.9rem 1rem;border-radius:12px;background:#FAFBFB;
+      border:1px solid var(--dir-line);display:grid;grid-template-columns:1fr 1fr;gap:.6rem .9rem}
+.modal-renda .r-lab{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--dir-grey);font-weight:500}
+.modal-renda .r-val{font-weight:700;font-size:1rem;margin-top:.1rem}
+.modal-note{font-size:.72rem;color:var(--dir-grey);margin-top:1rem;line-height:1.5}
+@media(max-width:520px){.modal-renda{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -200,6 +242,11 @@ td.num,th.num{text-align:right}
         <div>
           <label for="f-corretor">Corretor</label>
           <input id="f-corretor" type="text" placeholder="Seu nome">
+        </div>
+        <div>
+          <label for="f-renda">Renda do cliente <span style="text-transform:none">(opcional)</span></label>
+          <input id="f-renda" type="text" inputmode="decimal" placeholder="R$ 0,00">
+          <div class="hint err" id="h-renda" style="display:none"></div>
         </div>
       </div>
     </div>
@@ -303,6 +350,10 @@ td.num,th.num{text-align:right}
     </tr></thead><tbody id="tbody"></tbody></table></div>
     <div class="note" id="note"></div>
     <div class="btn-row">
+      <button class="btn btn-check" id="b-verificar" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        Verificar Simulação
+      </button>
       <button class="btn btn-primary" id="b-pdf" type="button">Baixar PDF</button>
       <button class="btn btn-ghost" id="b-reset" type="button">Limpar simulação</button>
     </div>
@@ -316,6 +367,18 @@ td.num,th.num{text-align:right}
   </div>
 
 </main>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" id="modal-close" type="button" aria-label="Fechar">&times;</button>
+    <div class="modal-banner" id="modal-banner"></div>
+    <div class="modal-body">
+      <div class="modal-checklist" id="modal-checklist"></div>
+      <div class="modal-renda" id="modal-renda"></div>
+      <div class="modal-note">Cálculo de comprometimento de renda com base em financiamento de 120x, taxa de 12% a.a. + seguros MIP/DFI, apenas para fins de aprovação interna &mdash; não substitui a simulação bancária oficial.</div>
+    </div>
+  </div>
+</div>
 
 <script>
 /* =========================================================
@@ -332,6 +395,10 @@ var EMPS = [
 /* Regras da política (valem para todos os produtos) */
 var POL = { atoMin:3, entradaTotal:10, intermMax:12, mesesAntesEntrega:3, prazoPosObra:120 };
 
+/* Motor de financiamento pós-obra (tabela PRICE + seguros MIP/DFI, igual ao
+   simulador de financiamento da Direcional) - usado somente no comprometimento de renda */
+var FIN = { prazo:120, taxaAA:0.12, seguroDFI:0.00007, seguroMIP:0.00021, comprometimentoMax:40 };
+
 var MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 
 /* =========================================================
@@ -339,7 +406,7 @@ var MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','
    ========================================================= */
 var S = {
   empId:null, valor:0, metragem:0, unidade:'', cliente:'', corretor:'', obs:'',
-  dataVenda:hoje(), pctObra:null,
+  dataVenda:hoje(), pctObra:null, renda:0,
   ato:0, s1:0, s2:0, s3:0,
   interm:[],          // [{mes:<idx>, valor:<num>}]
   qtd:null            // null = calcula automático
@@ -424,6 +491,16 @@ function calc(){
   };
 }
 
+/* Financiamento pos-obra (tabela PRICE + seguros) - so 1a parcela, que e a
+   mais alta e a usada para o comprometimento de renda. Formula fechada:
+   no mes 1 o saldo devedor ainda e o proprio valor financiado. */
+function calcFinanciamento(valorFin){
+  var i = Math.pow(1+FIN.taxaAA, 1/12) - 1;
+  var pmtBase = valorFin>0 ? valorFin*i/(1-Math.pow(1+i,-FIN.prazo)) : 0;
+  var parcela1 = pmtBase + valorFin*(FIN.seguroDFI+FIN.seguroMIP);
+  return { i:i, pmtBase:pmtBase, parcela1:parcela1 };
+}
+
 /* =========================================================
    VALIDACOES DA POLÍTICA
    ========================================================= */
@@ -493,6 +570,68 @@ function validar(c){
   }
 
   if(!out.length) out.push({n:'ok',t:'<b>Fluxo dentro da política.</b> Entrada de '+pct(entP)+', '+pct(c.pObra)+' no período de obra e '+pct(c.pPos)+' no pós-obra.'});
+  return out;
+}
+
+/* =========================================================
+   CHECKLIST DE APROVACAO (popup "Verificar Simulação")
+   Reimplementa as mesmas regras de validar() de forma sempre-presente
+   (cada item sempre aparece, ok ou nao) + o comprometimento de renda.
+   Nao reaproveita validar() para nao arriscar o painel de alertas ja em uso.
+   ========================================================= */
+function checklistAprovacao(c){
+  var T=totalMeses(), out=[];
+  var atoP = c.valor>0 ? S.ato/c.valor*100 : 0;
+  out.push({ id:'ato', grave:true, label:'Ato mínimo ('+POL.atoMin+'%)',
+    ok: S.ato>0 && atoP >= POL.atoMin-0.001,
+    detail: 'Mínimo '+brl(c.valor*POL.atoMin/100)+' ('+POL.atoMin+'%) — preenchido '+brl(S.ato)+' ('+pct(atoP)+').' });
+
+  var entP = c.valor>0 ? c.entrada/c.valor*100 : 0;
+  var alvoEntrada = c.valor*POL.entradaTotal/100;
+  out.push({ id:'entrada', grave:true, label:'Entrada mínima (Ato + Sinais ≥ '+POL.entradaTotal+'%)',
+    ok: c.entrada >= alvoEntrada-0.01,
+    detail: 'Mínimo '+brl(alvoEntrada)+' ('+POL.entradaTotal+'%) — preenchido '+brl(c.entrada)+' ('+pct(entP)+').' });
+
+  var intP = c.valor>0 ? c.somaInterm/c.valor*100 : 0;
+  out.push({ id:'intermMax', grave:true, label:'Intermediárias dentro do limite (≤'+POL.intermMax+'%)',
+    ok: intP <= POL.intermMax+0.001,
+    detail: 'Limite '+brl(c.valor*POL.intermMax/100)+' ('+POL.intermMax+'%) — soma atual '+brl(c.somaInterm)+' ('+pct(intP)+').' });
+
+  var limitePrazo = T-POL.mesesAntesEntrega;
+  var foraPrazo = S.interm.some(function(r){ return r.mes>limitePrazo; });
+  out.push({ id:'intermPrazo', grave:true, label:'Última intermediária até '+POL.mesesAntesEntrega+' meses antes da entrega',
+    ok: !foraPrazo,
+    detail: S.interm.length ? ('Limite '+rotuloMes(Math.max(0,limitePrazo))+'.') : 'Sem intermediárias cadastradas.' });
+
+  var mensalOk = !(c.qtd<=0 && c.saldoObra>0.01) && !(c.qtd>0 && c.mensal<=0);
+  out.push({ id:'mensal', grave:true, label:'Parcelas mensais calculadas corretamente',
+    ok: mensalOk,
+    detail: c.qtd>0 ? (c.qtd+' mensais de '+brl(c.mensal)+'.') : 'Sem saldo de obra a diluir em mensais.' });
+
+  out.push({ id:'fecha', grave:true, label:'Fluxo bate com o valor da venda',
+    ok: Math.abs(c.faltante)<=0.01,
+    detail: Math.abs(c.faltante)<=0.01 ? 'Soma das parcelas confere com '+brl(c.valor)+'.' : 'Diferença de '+brl(c.faltante)+'.' });
+
+  out.push({ id:'obraMin', grave:false, label:'Período de obra dentro do mínimo do produto',
+    ok: !c.e || c.pObra >= c.e.pctObra-0.001,
+    detail: c.e ? ('Mínimo do '+c.e.nome+': '+c.e.pctObra+'% — montado '+pct(c.pObra)+'.') : '' });
+
+  var idxOrd=S.interm.map(function(r){return r.mes;}).sort(function(a,b){return a-b;});
+  var espacoOk=true;
+  for(var k=1;k<idxOrd.length;k++){ var g=idxOrd[k]-idxOrd[k-1]; if(g!==6 && g!==12) espacoOk=false; }
+  out.push({ id:'espaco', grave:false, label:'Intermediárias com espaçamento regular (6 ou 12 meses)',
+    ok: espacoOk,
+    detail: S.interm.length>1 ? 'Espaçamento entre as intermediárias cadastradas.' : 'Não se aplica.' });
+
+  if(S.renda>0){
+    var fin = calcFinanciamento(c.saldoPos);
+    var limiteRenda = S.renda*FIN.comprometimentoMax/100;
+    out.push({ id:'renda', grave:true, label:'Comprometimento de renda (máx. '+FIN.comprometimentoMax+'%)',
+      ok: fin.parcela1 <= limiteRenda+0.01,
+      detail: 'Limite '+brl(limiteRenda)+' ('+FIN.comprometimentoMax+'% de '+brl(S.renda)+') — 1ª parcela estimada '+brl(fin.parcela1)+'.',
+      parcela1: fin.parcela1, limite: limiteRenda });
+  }
+
   return out;
 }
 
@@ -671,6 +810,7 @@ function sincronizaCampos(){
   $('f-unidade').value  = S.unidade;
   $('f-cliente').value  = S.cliente;
   $('f-corretor').value = S.corretor;
+  $('f-renda').value    = S.renda?brl(S.renda):'';
   $('f-data').value     = S.dataVenda;
   $('f-obs').value      = S.obs;
   var p = S.pctObra===null ? (e?e.pctObra:'') : S.pctObra;
@@ -730,6 +870,14 @@ $('f-metragem').addEventListener('input', function(){ S.metragem=num(this.value)
 $('f-unidade').addEventListener('input', function(){ S.unidade=this.value; });
 $('f-cliente').addEventListener('input', function(){ S.cliente=this.value; });
 $('f-corretor').addEventListener('input',function(){ S.corretor=this.value; });
+$('f-renda').addEventListener('input', function(){
+  S.renda=num(this.value);
+  if(S.renda>0){ this.classList.remove('bad'); $('h-renda').style.display='none'; }
+});
+$('f-renda').addEventListener('blur',  function(){
+  this.value = S.renda?brl(S.renda):'';
+  if(S.renda>0){ this.classList.remove('bad'); $('h-renda').style.display='none'; }
+});
 $('f-obs').addEventListener('input',     function(){ S.obs=this.value; });
 $('f-data').addEventListener('change',   function(){ S.dataVenda=this.value||hoje(); S.qtd=null; render(); });
 
@@ -809,9 +957,71 @@ $('b-int-clr').addEventListener('click', function(){ S.interm=[]; render(); });
 
 $('b-reset').addEventListener('click', function(){
   S={ empId:null, valor:0, metragem:0, unidade:'', cliente:'', corretor:'', obs:'',
-      dataVenda:hoje(), pctObra:null, ato:0, s1:0, s2:0, s3:0, interm:[], qtd:null };
+      dataVenda:hoje(), pctObra:null, renda:0, ato:0, s1:0, s2:0, s3:0, interm:[], qtd:null };
   sincronizaCampos(); render();
   window.scrollTo({top:0,behavior:'smooth'});
+});
+
+/* =========================================================
+   VERIFICAR SIMULACAO (popup de aprovacao)
+   ========================================================= */
+function abrirModal(){
+  $('modal-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function fecharModal(){
+  $('modal-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+$('modal-close').addEventListener('click', fecharModal);
+$('modal-overlay').addEventListener('click', function(ev){ if(ev.target===this) fecharModal(); });
+document.addEventListener('keydown', function(ev){
+  if(ev.key==='Escape' && $('modal-overlay').classList.contains('open')) fecharModal();
+});
+
+$('b-verificar').addEventListener('click', function(){
+  var c=calc();
+  if(!c.e || c.valor<=0){
+    alert('Selecione o empreendimento e informe o valor da venda antes de verificar a simulação.');
+    return;
+  }
+  if(S.renda<=0){
+    $('f-renda').classList.add('bad');
+    var h=$('h-renda'); h.style.display='block';
+    h.innerHTML='Preencha a renda do cliente para verificar a simulação.';
+    $('f-renda').scrollIntoView({behavior:'smooth',block:'center'});
+    $('f-renda').focus();
+    return;
+  }
+
+  var itens = checklistAprovacao(c);
+  var aprovado = itens.filter(function(it){ return it.grave; }).every(function(it){ return it.ok; });
+
+  $('modal-banner').className = 'modal-banner '+(aprovado?'aprovado':'reprovado');
+  $('modal-banner').innerHTML = aprovado
+    ? '&#10003; Cliente Aprovado!<span class="sub">Todas as regras obrigatórias da política e a renda estão dentro do limite.</span>'
+    : '&#10007; Cliente Reprovado<span class="sub">Um ou mais itens obrigatórios estão fora da política.</span>';
+
+  $('modal-checklist').innerHTML = itens.map(function(it){
+    return '<div class="modal-item '+(it.ok?'ok':'fail')+(it.grave?'':' leve')+'">'+
+      '<span class="ico">'+(it.ok?'&#10003;':'&#10007;')+'</span>'+
+      '<span class="txt"><span class="lab">'+it.label+'</span><span class="det">'+it.detail+'</span></span>'+
+    '</div>';
+  }).join('');
+
+  var rendaItem = itens.find(function(it){ return it.id==='renda'; });
+  if(rendaItem){
+    $('modal-renda').innerHTML =
+      '<div><div class="r-lab">Renda do cliente</div><div class="r-val">'+brl(S.renda)+'</div></div>'+
+      '<div><div class="r-lab">Limite ('+FIN.comprometimentoMax+'%)</div><div class="r-val">'+brl(rendaItem.limite)+'</div></div>'+
+      '<div><div class="r-lab">1ª parcela estimada (pós-obra)</div><div class="r-val">'+brl(rendaItem.parcela1)+'</div></div>'+
+      '<div><div class="r-lab">Resultado</div><div class="r-val" style="color:'+(rendaItem.ok?'var(--ok)':'var(--err)')+'">'+(rendaItem.ok?'Aprovado':'Reprovado')+'</div></div>';
+    $('modal-renda').style.display='grid';
+  } else {
+    $('modal-renda').style.display='none';
+  }
+
+  abrirModal();
 });
 
 /* =========================================================
