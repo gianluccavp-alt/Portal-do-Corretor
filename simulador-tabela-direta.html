@@ -581,7 +581,7 @@ function renderResultado(){
     kpi('Entrada (Ato + Sinais)', brl(c.entrada), pct(entP)+' do valor') +
     kpi('Período de obra', brl(c.totalObra), pct(c.pObra)+' &middot; '+(c.qtd)+' mensais') +
     kpi('Valor da mensal', brl(c.mensal), c.qtd>0?('de '+rotuloMes(inicioMensais())+' a '+rotuloMes(inicioMensais()+c.qtd-1)):'sem mensais', true) +
-    kpi('Saldo pós-obra', brl(c.saldoPos), pct(c.pPos)+' &middot; '+brl(c.parcelaPos)+'/mês em '+POL.prazoPosObra+'x') +
+    kpi('Saldo pós-obra', brl(c.saldoPos), pct(c.pPos)+' &middot; '+POL.prazoPosObra+'x de '+brl(c.parcelaPos)+' + IPCA + 1% a.m.') +
     kpi('Valor do m&sup2;', c.m2>0?brl(c.m2):'&mdash;', S.metragem>0?(S.metragem+' m&sup2;'):'informe a metragem');
 
   /* Alertas */
@@ -624,7 +624,7 @@ function renderResultado(){
           '</td><td class="num">'+(c.valor>0?pct(somaObra/c.valor*100):'-')+'</td></tr>';
     html+='<tr class="grp"><td colspan="5">Pós-obra &mdash; saldo para financiamento / repasse</td></tr>';
     html+='<tr><td>'+(L.length+1)+'</td><td>a partir de '+(T>0?rotuloMes(T+1):'-')+'</td>'+
-          '<td>Saldo pós-obra ('+POL.prazoPosObra+'x de '+brl(c.parcelaPos)+')</td>'+
+          '<td>Saldo pós-obra ('+POL.prazoPosObra+'x de '+brl(c.parcelaPos)+' + IPCA + 1% a.m)</td>'+
           '<td class="num">'+brl(c.saldoPos)+'</td><td class="num">'+(c.valor>0?pct(c.saldoPos/c.valor*100):'-')+'</td></tr>';
     html+='<tr class="tot"><td></td><td></td><td>Total da unidade</td><td class="num">'+brl(somaObra+c.saldoPos)+
           '</td><td class="num">'+(c.valor>0?pct((somaObra+c.saldoPos)/c.valor*100):'-')+'</td></tr>';
@@ -632,8 +632,8 @@ function renderResultado(){
   }
 
   $('note').innerHTML = c.e
-    ? 'Entrega do '+c.e.nome+' prevista para <b>'+rotuloMes(T)+'</b> &middot; '+T+' meses de fluxo de obra a partir da data da venda. '+
-      'O saldo pós-obra é apresentado em '+POL.prazoPosObra+'x apenas como referência, sem juros e sem correção monetária.'
+    ? 'Entrega do '+c.e.nome+' prevista para <b>'+rotuloMes(T)+'</b> &middot; '+T+' meses de fluxo de obra a partir da data da proposta. '+
+      'O valor da parcela do saldo pós-obra é uma referência calculada em '+POL.prazoPosObra+'x — a parcela efetiva é reajustada pelo IPCA + 1% a.m., podendo variar ao longo do contrato.'
     : '';
 }
 
@@ -892,7 +892,7 @@ $('b-pdf').addEventListener('click', function(){
              {content:brl(somaObra),styles:{fontStyle:'bold',halign:'right'}},
              {content:pct(somaObra/c.valor*100),styles:{fontStyle:'bold',halign:'right'}}]);
   body.push([String(L.length+1), 'a partir de '+rotuloMes(T+1),
-             'Saldo pós-obra ('+POL.prazoPosObra+'x de '+brl(c.parcelaPos)+')',
+             'Saldo pós-obra ('+POL.prazoPosObra+'x de '+brl(c.parcelaPos)+' + IPCA + 1% a.m)',
              brl(c.saldoPos), pct(c.saldoPos/c.valor*100)]);
   body.push([{content:'Total da unidade',colSpan:3,styles:{fontStyle:'bold'}},
              {content:brl(somaObra+c.saldoPos),styles:{fontStyle:'bold',halign:'right'}},
