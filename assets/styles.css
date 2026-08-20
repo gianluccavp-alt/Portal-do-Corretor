@@ -87,7 +87,11 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
       font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap;cursor:pointer;transition:all .15s}
 .btn-simulador svg{width:15px;height:15px;stroke:currentColor;flex:0 0 auto}
 .btn-simulador:hover{background:var(--gold);color:var(--white)}
-@media(max-width:640px){.view-toggle{flex-wrap:wrap}.btn-simulador{margin-right:0;margin-bottom:.5rem;flex:1 1 100%;justify-content:center}}
+/* grupo de simuladores: empurra junto os botoes de visualizacao para a direita */
+.sim-group{display:flex;gap:8px;margin-right:auto}
+.sim-group .btn-simulador{margin-right:0}
+@media(max-width:640px){.view-toggle{flex-wrap:wrap}.btn-simulador{margin-right:0;margin-bottom:.5rem;flex:1 1 100%;justify-content:center}
+  .sim-group{flex:1 1 100%;margin-right:0;flex-wrap:wrap}}
 .view-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:var(--white);color:var(--muted);cursor:pointer;transition:all .15s}
 .view-btn svg{width:16px;height:16px;stroke:currentColor}
 .view-btn:hover{border-color:var(--gold);color:var(--gold)}
