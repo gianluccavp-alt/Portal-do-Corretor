@@ -10,6 +10,10 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+<script defer src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.min.js"></script>
+<!-- catalogo de empreendimentos, unidades da planilha, combobox e rich text -> PDF -->
+<script src="assets/simuladores.js"></script>
 <style>
 /* ===== Identidade Grupo Direcional ===== */
 :root{
@@ -48,17 +52,12 @@ body{margin:0;background:var(--dir-bg);font-family:'DM Sans',system-ui,sans-seri
 .card{background:#fff;border:1px solid var(--dir-line);border-radius:14px;padding:1.35rem}
 @media(max-width:700px){.card{padding:1rem}}
 
-/* ---------- cards empreendimento ---------- */
-.emps{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem}
-@media(max-width:900px){.emps{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:480px){.emps{grid-template-columns:1fr}}
-.emp{text-align:left;background:#fff;border:1px solid var(--dir-line);border-radius:12px;
-     padding:.95rem 1rem;cursor:pointer;transition:.15s;font:inherit;color:inherit}
-.emp:hover{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(58,64,67,.10)}
-.emp.active{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(228,3,43,.16);background:#FFF9FA}
-.emp-nome{font-weight:700;line-height:1.25;margin-bottom:.4rem}
-.emp-meta{font-size:.78rem;color:var(--dir-grey);display:flex;flex-direction:column;gap:.1rem}
-.emp-meta b{color:var(--dir-ink);font-weight:500}
+/* ---------- resumo do empreendimento escolhido ---------- */
+.emp-info{display:none;margin-top:1rem;padding-top:.9rem;border-top:1px dashed var(--dir-line);
+     font-size:.83rem;color:var(--dir-grey);flex-wrap:wrap;gap:.35rem 1.3rem;align-items:baseline}
+.emp-info.show{display:flex}
+.emp-info b{color:var(--dir-ink);font-weight:500}
+.emp-info .emp-info-nome{color:var(--dir-ink);font-weight:700;font-size:.92rem}
 
 /* ---------- forms ---------- */
 .grid{display:grid;gap:.9rem}
@@ -99,8 +98,17 @@ textarea{resize:vertical;min-height:70px}
 .pol{text-align:left;background:#fff;border:1px solid var(--dir-line);border-radius:12px;
      padding:.8rem .85rem;cursor:pointer;transition:.15s;font:inherit;color:inherit}
 .pol:hover{border-color:var(--dir-red)}
-.pol.active{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(228,3,43,.16);background:#FFF9FA}
-.pol-nome{font-weight:700;margin-bottom:.3rem}
+.pol.active{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(228,3,43,.16)}
+.pol-head{display:flex;align-items:center;gap:.45rem;margin-bottom:.35rem}
+.pol-ic{flex:0 0 22px;width:22px;height:22px;color:var(--pol-ac)}
+.pol-nome{font-weight:700}
+/* tom suave do nivel: fica sempre visivel, inclusive no card selecionado */
+.pol[data-pol]{background:var(--pol-bg)}
+.pol[data-pol="diamante"]{--pol-ac:#4FA8A8;--pol-bg:#EDF7F7}
+.pol[data-pol="ouro"]    {--pol-ac:#E8A317;--pol-bg:#FDF6E7}
+.pol[data-pol="prata"]   {--pol-ac:#94A3B0;--pol-bg:#F4F6F8}
+.pol[data-pol="bronze"]  {--pol-ac:#C4713A;--pol-bg:#FBF1EA}
+.pol[data-pol="aco"]     {--pol-ac:#4A5A72;--pol-bg:#EEF1F5}
 .pol-meta{font-size:.74rem;color:var(--dir-grey);display:flex;flex-direction:column;gap:.05rem}
 .pol-meta b{color:var(--dir-ink);font-weight:500}
 
@@ -240,6 +248,51 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .modal-renda .r-val{font-weight:700;font-size:1rem;margin-top:.1rem}
 .modal-note{font-size:.72rem;color:var(--dir-grey);margin-top:1rem;line-height:1.5}
 @media(max-width:520px){.modal-renda{grid-template-columns:1fr}}
+
+/* ---------- combobox com busca ---------- */
+.cbx{position:relative}
+.cbx-btn{width:100%;display:flex;align-items:center;gap:.5rem;font:inherit;color:var(--dir-ink);
+     background:#fff;border:1px solid var(--dir-line);border-radius:9px;padding:.6rem .7rem;
+     cursor:pointer;text-align:left;transition:.15s}
+.cbx-btn:hover:not(:disabled){border-color:var(--dir-red)}
+.cbx-btn:disabled{background:#FAFBFB;cursor:not-allowed}
+.cbx.open .cbx-btn{border-color:var(--dir-red);box-shadow:0 0 0 3px rgba(228,3,43,.10)}
+.cbx-val{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cbx-val.ph{color:#A8AEB1}
+.cbx-arrow{flex:0 0 16px;width:16px;height:16px;color:var(--dir-grey);transition:.15s}
+.cbx.open .cbx-arrow{transform:rotate(180deg)}
+.cbx-pop{display:none;position:absolute;z-index:60;top:calc(100% + 4px);left:0;right:0;
+     background:#fff;border:1px solid var(--dir-line);border-radius:11px;
+     box-shadow:0 12px 34px rgba(58,64,67,.16);overflow:hidden}
+.cbx.open .cbx-pop{display:block}
+.cbx-busca{padding:.5rem;border-bottom:1px solid var(--dir-line)}
+.cbx-busca input{padding:.45rem .55rem;font-size:.9rem}
+.cbx-lista{max-height:270px;overflow-y:auto;padding:.25rem}
+.cbx-grupo{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dir-red);
+     font-weight:500;padding:.55rem .55rem .25rem}
+.cbx-opt{padding:.45rem .55rem;border-radius:7px;cursor:pointer;display:flex;
+     align-items:baseline;gap:.45rem;line-height:1.3}
+.cbx-opt.mk{background:var(--dir-bg)}
+.cbx-opt.sel{color:var(--dir-red);font-weight:500}
+.cbx-opt-lab{flex:1 1 auto;min-width:0}
+.cbx-opt-sub{flex:0 0 auto;font-size:.74rem;color:var(--dir-grey)}
+.cbx-vazio{padding:.9rem .6rem;text-align:center;color:var(--dir-grey);font-size:.85rem}
+
+/* ---------- editor de observacoes ---------- */
+.obs-wrap .ql-toolbar.ql-snow{border-color:var(--dir-line);border-radius:9px 9px 0 0;
+     background:#FAFBFB;font-family:'DM Sans',system-ui,sans-serif}
+.obs-wrap .ql-container.ql-snow{border-color:var(--dir-line);border-radius:0 0 9px 9px;
+     font-family:'DM Sans',system-ui,sans-serif;font-size:.95rem}
+.obs-wrap .ql-editor{min-height:220px;resize:vertical;overflow-y:auto}
+.obs-wrap .ql-editor.ql-blank::before{color:#A8AEB1;font-style:normal;left:15px}
+.obs-wrap .ql-editor img{max-width:100%}
+.obs-wrap .ql-snow .ql-stroke{stroke:var(--dir-grey)}
+.obs-wrap .ql-snow .ql-fill{fill:var(--dir-grey)}
+.obs-wrap .ql-snow .ql-picker{color:var(--dir-grey)}
+.obs-wrap .ql-snow.ql-toolbar button:hover .ql-stroke,
+.obs-wrap .ql-snow.ql-toolbar button.ql-active .ql-stroke{stroke:var(--dir-red)}
+.obs-wrap .ql-snow.ql-toolbar button:hover .ql-fill,
+.obs-wrap .ql-snow.ql-toolbar button.ql-active .ql-fill{fill:var(--dir-red)}
 </style>
 </head>
 <body>
@@ -249,7 +302,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   <div class="hero-inner">
     <div class="hero-brand">Portal do Corretor</div>
     <h1>Simulador de <em>Fluxo Associativo</em></h1>
-    <p>Calcule o Pro Soluto do cliente que financia pelo MCMV, veja o carnê nos fluxos linear e escalonado, confira o comprometimento de renda mês a mês e saiba na hora se a proposta aprova na política. Empreendimentos de Ribeirão Preto.</p>
+    <p>Calcule o Pro Soluto do cliente que financia pelo MCMV, veja o carnê nos fluxos linear e escalonado, confira o comprometimento de renda mês a mês e saiba na hora se a proposta aprova na política. Ribeirão Preto, Campinas e Sorocaba.</p>
   </div>
 </header>
 
@@ -257,8 +310,25 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
   <!-- PASSO 1 -->
   <section class="step">
-    <div class="step-label">Passo 1 &middot; Empreendimento</div>
-    <div class="emps" id="emps"></div>
+    <div class="step-label">Passo 1 &middot; Empreendimento e unidade</div>
+    <div class="card">
+      <div class="grid g3">
+        <div>
+          <label>Empreendimento</label>
+          <div id="c-emp"></div>
+        </div>
+        <div>
+          <label>Torre / Bloco</label>
+          <div id="c-bloco"></div>
+        </div>
+        <div>
+          <label>Unidade</label>
+          <div id="c-unid"></div>
+          <div class="hint" id="h-unid"></div>
+        </div>
+      </div>
+      <div class="emp-info" id="emp-info"></div>
+    </div>
   </section>
 
   <!-- PASSO 2 -->
@@ -292,12 +362,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <div class="step-label">Passo 3 &middot; Dados da operação</div>
     <div class="card">
 
-      <div class="sub">Unidade e recursos</div>
+      <div class="sub">Recursos da operação</div>
       <div class="grid g4">
-        <div>
-          <label for="f-unidade">Unidade</label>
-          <input id="f-unidade" type="text" placeholder="BL02-0507">
-        </div>
         <div>
           <label for="f-valor">Valor do imóvel (venda)</label>
           <input id="f-valor" type="text" inputmode="decimal" placeholder="R$ 0,00">
@@ -422,7 +488,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   <section class="step">
     <div class="step-label">Passo 4 &middot; Financiamento bancário</div>
     <div class="card">
-      <div class="grid g3">
+      <div class="grid g2">
         <div>
           <label for="f-parcfin">Parcela do financiamento</label>
           <input id="f-parcfin" type="text" inputmode="decimal" placeholder="R$ 0,00">
@@ -433,17 +499,47 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <input id="f-taxa" type="text" inputmode="decimal" placeholder="6,16">
           <div class="hint">Informativo &mdash; sai no PDF.</div>
         </div>
-        <div>
-          <label for="f-obs">Observações</label>
-          <textarea id="f-obs" placeholder="Opcional - sai no rodapé do PDF"></textarea>
-        </div>
       </div>
     </div>
   </section>
 
   <!-- PASSO 5 -->
   <section class="step">
-    <div class="step-label">Passo 5 &middot; Política da operação</div>
+    <div class="step-label">Passo 5 &middot; Observações</div>
+    <div class="card">
+      <div class="obs-wrap">
+        <div id="obs-toolbar">
+          <span class="ql-formats">
+            <select class="ql-header"><option value="1"></option><option value="2"></option><option value="3"></option><option selected></option></select>
+          </span>
+          <span class="ql-formats">
+            <button class="ql-bold"></button><button class="ql-italic"></button>
+            <button class="ql-underline"></button><button class="ql-strike"></button>
+          </span>
+          <span class="ql-formats">
+            <select class="ql-color"></select><select class="ql-background"></select>
+          </span>
+          <span class="ql-formats">
+            <button class="ql-list" value="ordered"></button>
+            <button class="ql-list" value="bullet"></button>
+            <button class="ql-indent" value="-1"></button>
+            <button class="ql-indent" value="+1"></button>
+          </span>
+          <span class="ql-formats"><select class="ql-align"></select></span>
+          <span class="ql-formats">
+            <button class="ql-link"></button><button class="ql-image"></button>
+          </span>
+          <span class="ql-formats"><button class="ql-clean"></button></span>
+        </div>
+        <div id="obs-editor"></div>
+      </div>
+      <div class="hint" id="h-obs">Sai no PDF com a formatação e as imagens que você usar aqui.</div>
+    </div>
+  </section>
+
+  <!-- PASSO 6 -->
+  <section class="step">
+    <div class="step-label">Passo 6 &middot; Política da operação</div>
     <div class="pols" id="pols"></div>
   </section>
 
@@ -498,22 +594,13 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
 <script>
 /* =========================================================
-   BASE DOS EMPREENDIMENTOS - Ribeirão Preto
-   Extraída da aba "BD Política" da planilha
-   Simulador Pro Soluto - Comercial SP 11.xlsm (linhas 188/213/202/216).
+   BASE DOS EMPREENDIMENTOS
+   Catálogo em assets/simuladores.js (window.SIM_EMPS), extraído da aba
+   "BD Política" da planilha Simulador Pro Soluto - Comercial SP 11.xlsm.
    inicioObra / entrega no formato AAAA-MM-DD (a entrega é sempre fim de mês)
    pctPS / prazoPadrao = política padrão do produto | parcMin = parcela mínima
    ========================================================= */
-var EMPS = [
-  { id:'gaia',     cod:'414V', nome:'Village Gaia',
-    inicioObra:'2026-05-01', entrega:'2029-09-30', pctPS:0.18, prazoPadrao:52, parcMin:150 },
-  { id:'park',     cod:'743V', nome:'Village Park',
-    inicioObra:'2025-04-01', entrega:'2028-01-31', pctPS:0.15, prazoPadrao:52, parcMin:150 },
-  { id:'botanico', cod:'574V', nome:'Reserva Direcional Jardim Botânico',
-    inicioObra:'2024-04-01', entrega:'2026-12-31', pctPS:0.18, prazoPadrao:52, parcMin:150 },
-  { id:'ipiranga', cod:'785V', nome:'Conquista Clube Ipiranga',
-    inicioObra:'2026-06-01', entrega:'2028-08-31', pctPS:0.15, prazoPadrao:36, parcMin:150 }
-];
+var EMPS = window.SIM_EMPS;
 
 /* Escada de políticas - Formulário N34:W40 e Dados I23 da planilha.
    cr = teto de comprometimento de renda total | crPS = teto só da parcela do Pro Soluto */
@@ -560,7 +647,7 @@ var MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','
 function estadoInicial(){
   return {
     empId:null, politicaId:'aco',
-    renda:0, idade:30, cliente:'', corretor:'', unidade:'', obs:'',
+    renda:0, idade:30, cliente:'', corretor:'', blocoId:null, unidade:'', obs:'', obsHtml:'',
     valor:0, financiado:0, subsidio:0, fgts:0, bonusAdim:0, bonusCamp:0,
     dataVenda:hoje(), dataVenc1:'', prazo:84,
     ato:0, dataAto:'',
@@ -571,6 +658,10 @@ function estadoInicial(){
   };
 }
 var S = estadoInicial();
+/* true quando o 1º vencimento foi movido automaticamente por causa de um sinal */
+var venc1Movido = false;
+/* instancia do editor de observações (Passo 5) */
+var quill = null;
 
 /* =========================================================
    HELPERS
@@ -912,6 +1003,14 @@ function validar(c){
       out.push({n:'err',c:'entrada',t:'<b>'+x[2]+' fora do prazo.</b> Máximo '+TX.diasSinal[x[3]]+' dias da venda &mdash; data máxima <b>'+fmtData(addDias(c.venda,TX.diasSinal[x[3]]))+'</b>.'});
     }
   });
+  /* 5b - sinais em ordem decrescente de valor (Sinal 1 ≥ Sinal 2 ≥ Sinal 3) - bloqueia */
+  var sinaisOrdem = [{v:S.s1,lab:'Sinal 1'},{v:S.s2,lab:'Sinal 2'},{v:S.s3,lab:'Sinal 3'}].filter(function(x){ return x.v>0; });
+  for(var so=1; so<sinaisOrdem.length; so++){
+    if(sinaisOrdem[so].v > sinaisOrdem[so-1].v+0.01){
+      out.push({n:'err',c:'entrada',t:'<b>'+sinaisOrdem[so].lab+' maior que '+sinaisOrdem[so-1].lab+'.</b> Os sinais precisam vir em ordem decrescente ('+
+        sinaisOrdem[so-1].lab+' &ge; '+sinaisOrdem[so].lab+') &mdash; corrija antes de prosseguir.'});
+    }
+  }
   /* 6 - anuais: dezembro, dentro da obra e até metade da renda */
   [[S.a1,S.dataA1,'Anual 1'],[S.a2,S.dataA2,'Anual 2'],[S.a3,S.dataA3,'Anual 3']].forEach(function(x){
     var d=parseData(x[1]);
@@ -1000,6 +1099,13 @@ function checklistAprovacao(c){
   out.push({ id:'sinais', grave:true, label:'Sinais dentro de 30 / 60 / 90 dias',
     ok: sinaisOk, detail: sinaisDet.length?sinaisDet.join(' · '):'Sem sinais cadastrados.' });
 
+  var sinaisOrdemChk = [{v:S.s1,lab:'Sinal 1'},{v:S.s2,lab:'Sinal 2'},{v:S.s3,lab:'Sinal 3'}].filter(function(x){ return x.v>0; });
+  var ordemOk=true;
+  for(var soc=1; soc<sinaisOrdemChk.length; soc++){ if(sinaisOrdemChk[soc].v > sinaisOrdemChk[soc-1].v+0.01) ordemOk=false; }
+  out.push({ id:'sinaisOrdem', grave:true, label:'Sinais em ordem decrescente (Sinal 1 ≥ Sinal 2 ≥ Sinal 3)',
+    ok: ordemOk,
+    detail: sinaisOrdemChk.length>1 ? sinaisOrdemChk.map(function(x){return x.lab+' '+brl(x.v);}).join(' · ') : 'Não se aplica.' });
+
   var anuaisOk=true, anuaisDet=[];
   [[S.a1,S.dataA1,'Anual 1'],[S.a2,S.dataA2,'Anual 2'],[S.a3,S.dataA3,'Anual 3']].forEach(function(x){
     if(x[0]<=0) return;
@@ -1025,22 +1131,31 @@ function checklistAprovacao(c){
 /* =========================================================
    RENDER
    ========================================================= */
-function renderEmps(){
-  $('emps').innerHTML = EMPS.map(function(e){
-    return '<button type="button" class="emp'+(e.id===S.empId?' active':'')+'" data-emp="'+e.id+'">'+
-      '<div class="emp-nome">'+e.nome+'</div>'+
-      '<div class="emp-meta">'+
-        '<span>Entrega <b>'+rotuloMes(parseData(e.entrega))+'</b></span>'+
-        '<span>Obra desde <b>'+rotuloMes(parseData(e.inicioObra))+'</b></span>'+
-        '<span>Padrão <b>'+pctf(e.pctPS,0)+' · '+e.prazoPadrao+'x</b></span>'+
-      '</div></button>';
-  }).join('');
+function renderEmpInfo(){
+  var e=emp(), el=$('emp-info');
+  if(!e){ el.className='emp-info'; el.innerHTML=''; return; }
+  el.className='emp-info show';
+  el.innerHTML =
+    '<span class="emp-info-nome">'+e.nome+'</span>'+
+    '<span>Entrega <b>'+rotuloMes(parseData(e.entrega))+'</b></span>'+
+    '<span>Obra desde <b>'+rotuloMes(parseData(e.inicioObra))+'</b></span>'+
+    '<span>Padrão <b>'+pctf(e.pctPS,0)+' · '+e.prazoPadrao+'x</b></span>';
 }
+
+/* medalha: roseta em dois tons + fitas, na cor do nível (--pol-ac) */
+var MEDALHA_SVG =
+  '<svg class="pol-ic" viewBox="0 0 24 24" aria-hidden="true">'+
+    '<path fill="currentColor" d="M8.9 15.3 6.1 21.4c-.2.4.2.8.6.7l2.6-1 1.5 1.8c.3.3.8.2.9-.2l1.2-4.4z"/>'+
+    '<path fill="currentColor" d="M15.1 15.3l2.8 6.1c.2.4-.2.8-.6.7l-2.6-1-1.5 1.8c-.3.3-.8.2-.9-.2l-1.2-4.4z"/>'+
+    '<circle cx="12" cy="9" r="7.8" fill="currentColor" fill-opacity=".28"/>'+
+    '<circle cx="12" cy="9" r="6.1" fill="currentColor"/>'+
+    '<circle cx="12" cy="9" r="2.7" fill="#fff"/>'+
+  '</svg>';
 
 function renderPols(){
   $('pols').innerHTML = POLITICAS.map(function(p){
     return '<button type="button" class="pol'+(p.id===S.politicaId?' active':'')+'" data-pol="'+p.id+'">'+
-      '<div class="pol-nome">'+p.nome+'</div>'+
+      '<div class="pol-head">'+MEDALHA_SVG+'<span class="pol-nome">'+p.nome+'</span></div>'+
       '<div class="pol-meta">'+
         '<span>P.S. até <b>'+pctf(p.pctPS,0)+'</b></span>'+
         '<span>Prazo <b>'+p.prazo+'x</b></span>'+
@@ -1157,11 +1272,13 @@ function renderResultado(){
   mark('f-prazo', errs.indexOf('prazo')>=0, wrns.indexOf('prazo')>=0);
   mark('f-renda', errs.indexOf('renda')>=0, wrns.indexOf('renda')>=0);
   mark('f-parcfin', errs.indexOf('parcfin')>=0, wrns.indexOf('parcfin')>=0);
-  ['f-ato','f-s1','f-s2','f-s3'].forEach(function(id){ mark(id, errs.indexOf('entrada')>=0, false); });
+  ['f-ato','f-s1','f-s2','f-s3'].forEach(function(id){ mark(id, errs.indexOf('entrada')>=0, wrns.indexOf('entrada')>=0); });
   ['f-a1','f-a2','f-a3'].forEach(function(id){ mark(id, errs.indexOf('anual')>=0, wrns.indexOf('anual')>=0); });
 
   /* Hints inline */
-  msg('h-venc1', av, ['venc1'], c.venda ? ('Dias 5, 10 ou 15. Máximo '+fmtData(addDias(c.venda,TX.maxDiasVenc1))+'.') : 'Dias 5, 10 ou 15.');
+  var padraoVenc1 = c.venda ? ('Dias 5, 10 ou 15. Máximo '+fmtData(addDias(c.venda,TX.maxDiasVenc1))+'.') : 'Dias 5, 10 ou 15.';
+  msg('h-venc1', av, ['venc1'],
+      venc1Movido ? ('Ajustado para o mês seguinte ao último sinal. '+padraoVenc1) : padraoVenc1);
   msg('h-entrada', av, ['entrada']);
   msg('h-anual',   av, ['anual']);
   msg('h-renda',   av, ['renda'], 'Usada no comprometimento de renda.');
@@ -1219,7 +1336,145 @@ function renderTabela(c){
   tb.innerHTML=html;
 }
 
-function render(){ renderEmps(); renderPols(); renderResultado(); }
+function render(){ renderEmpInfo(); renderPols(); renderResultado(); }
+
+/* =========================================================
+   PASSO 1 - EMPREENDIMENTO / TORRE / UNIDADE
+   As unidades vêm da mesma planilha que abastece o site de produtos.
+   ========================================================= */
+var comboEmp=null, comboBloco=null, comboUnid=null;
+var unidadesEmp={ blocos:[], unidades:{}, total:0 };
+
+function initCombos(){
+  comboEmp = SimCombo($('c-emp'), {
+    placeholder:'Escolha o empreendimento',
+    buscaPlaceholder:'Buscar empreendimento...',
+    onChange: selecionaEmp
+  });
+  comboEmp.setOpcoes(EMPS.map(function(e){
+    return { value:e.id, label:e.nome, grupo:e.cidade, sub:e.cod };
+  }));
+
+  comboBloco = SimCombo($('c-bloco'), {
+    placeholder:'Torre / bloco', buscaPlaceholder:'Buscar torre...',
+    onChange: function(id){ S.blocoId=id; S.unidade=''; atualizaUnidades(); render(); }
+  });
+
+  comboUnid = SimCombo($('c-unid'), {
+    placeholder:'Unidade', buscaPlaceholder:'Buscar unidade...',
+    onChange: function(v){ S.unidade=v||''; render(); }
+  });
+
+  SimUnidades.aoMudar(function(){ atualizaUnidades(); });
+  SimUnidades.carregar();
+}
+
+function selecionaEmp(id){
+  if(id===S.empId) return;
+  S.empId=id; S.blocoId=null; S.unidade='';
+  sugereDatas(); sincronizaCampos(); render();
+}
+
+function atualizaUnidades(){
+  if(!comboBloco) return;
+  var e=emp(), est=SimUnidades.estado(), hint=$('h-unid');
+
+  if(!e){
+    unidadesEmp={ blocos:[], unidades:{}, total:0 };
+    comboBloco.setOpcoes([]); comboUnid.setOpcoes([]);
+    comboBloco.setDesabilitado(true,'Escolha o empreendimento');
+    comboUnid.setDesabilitado(true,'Escolha o empreendimento');
+    hint.className='hint'; hint.textContent='';
+    return;
+  }
+
+  if(est==='carregando' || est==='inicial'){
+    comboBloco.setDesabilitado(true,'Carregando...');
+    comboUnid.setDesabilitado(true,'Carregando...');
+    hint.className='hint'; hint.textContent='Buscando as unidades disponíveis...';
+    return;
+  }
+
+  if(est==='erro'){
+    /* sem a planilha o corretor digita o código na mão, como era antes */
+    comboBloco.setOpcoes([]);
+    comboBloco.setDesabilitado(true,'Indisponível');
+    comboUnid.setTextoLivre(true);
+    comboUnid.setDesabilitado(false);
+    comboUnid.setValor(S.unidade);
+    hint.className='hint warn';
+    hint.textContent='Não foi possível carregar as unidades — digite o código manualmente (ex.: BL02-0804).';
+    return;
+  }
+
+  unidadesEmp = SimUnidades.porEmpreendimento(e);
+  comboUnid.setTextoLivre(false);
+
+  comboBloco.setDesabilitado(false);
+  comboBloco.setOpcoes(unidadesEmp.blocos.map(function(b){
+    return { value:b.id, label:b.label, sub:b.qtd+' un.' };
+  }));
+  if(S.blocoId && !unidadesEmp.unidades[S.blocoId]) S.blocoId=null;
+  /* empreendimento de torre única já vem escolhido */
+  if(!S.blocoId && unidadesEmp.blocos.length===1) S.blocoId=unidadesEmp.blocos[0].id;
+  comboBloco.setValor(S.blocoId);
+
+  var lista = S.blocoId ? (unidadesEmp.unidades[S.blocoId]||[]) : [];
+  if(S.unidade && lista.indexOf(S.unidade)<0) S.unidade='';
+  comboUnid.setOpcoes(lista.map(function(u){ return { value:u, label:u }; }));
+  comboUnid.setValor(S.unidade);
+  comboUnid.setDesabilitado(!S.blocoId, 'Escolha a torre');
+
+  hint.className='hint';
+  hint.textContent = unidadesEmp.total
+    ? (unidadesEmp.total===1 ? '1 unidade disponível na planilha.'
+                             : unidadesEmp.total+' unidades disponíveis na planilha.')
+    : 'Nenhuma unidade disponível para este empreendimento.';
+}
+
+function sincronizaSelecao(){
+  if(!comboEmp) return;
+  comboEmp.setValor(S.empId);
+  atualizaUnidades();
+}
+
+/* =========================================================
+   PASSO 5 - EDITOR DE OBSERVAÇÕES
+   ========================================================= */
+var LIMITE_OBS = 2*1024*1024;   /* imagens em base64 vivem no estado da página */
+
+function avisaTamanhoObs(){
+  var h=$('h-obs');
+  if((S.obsHtml||'').length > LIMITE_OBS){
+    h.className='hint warn';
+    h.textContent='Observação muito pesada (imagens grandes) — o PDF pode demorar a gerar.';
+  } else {
+    h.className='hint';
+    h.textContent='Sai no PDF com a formatação e as imagens que você usar aqui.';
+  }
+}
+
+function initEditor(){
+  if(typeof Quill==='undefined'){
+    /* CDN fora do ar: cai para uma caixa de texto simples */
+    $('obs-toolbar').style.display='none';
+    $('obs-editor').innerHTML='<textarea id="f-obs" style="min-height:200px" '+
+      'placeholder="Opcional - sai no rodapé do PDF"></textarea>';
+    $('f-obs').addEventListener('input', function(){ S.obs=this.value; S.obsHtml=''; });
+    return;
+  }
+  quill = new Quill('#obs-editor', {
+    theme:'snow',
+    placeholder:'Opcional — o que você escrever aqui sai no PDF.',
+    modules:{ toolbar:'#obs-toolbar' }
+  });
+  if(S.obsHtml) quill.root.innerHTML=S.obsHtml;
+  quill.on('text-change', function(){
+    S.obsHtml = quill.getLength()>1 || quill.root.querySelector('img') ? quill.root.innerHTML : '';
+    S.obs = SimRichPdf.texto(S.obsHtml);
+    avisaTamanhoObs();
+  });
+}
 
 /* =========================================================
    SINCRONIA DOS CAMPOS
@@ -1231,7 +1486,7 @@ var PARES = [
   ['ato','f-ato'], ['s1','f-s1'], ['s2','f-s2'], ['s3','f-s3']
 ];
 var SIMPLES = [
-  ['cliente','f-cliente'], ['corretor','f-corretor'], ['unidade','f-unidade'], ['obs','f-obs']
+  ['cliente','f-cliente'], ['corretor','f-corretor']
 ];
 var DATAS = [
   ['dataVenda','f-data'], ['dataVenc1','f-venc1'], ['dataAto','f-dato'],
@@ -1241,6 +1496,11 @@ var DATAS = [
 var MOEDAS = [['renda','f-renda'], ['a1','f-a1'], ['a2','f-a2'], ['a3','f-a3'], ['parcFin','f-parcfin']];
 
 function sincronizaCampos(){
+  sincronizaSelecao();
+  if(quill){
+    if(S.obsHtml){ if(quill.root.innerHTML!==S.obsHtml) quill.root.innerHTML=S.obsHtml; }
+    else if(quill.getLength()>1) quill.setText('');
+  }
   $('f-valor').value = S.valor?brl(S.valor):'';
   $('f-idade').value = S.idade||'';
   $('f-prazo').value = S.prazo||'';
@@ -1283,16 +1543,31 @@ function ligaMoeda(campo, id){
 /* =========================================================
    EVENTOS
    ========================================================= */
-$('emps').addEventListener('click', function(ev){
-  var b=ev.target.closest('[data-emp]'); if(!b) return;
-  S.empId=b.getAttribute('data-emp');
-  sugereDatas();
-  sincronizaCampos(); render();
-});
 $('pols').addEventListener('click', function(ev){
   var b=ev.target.closest('[data-pol]'); if(!b) return;
   S.politicaId=b.getAttribute('data-pol'); render();
 });
+
+/* Quando o corretor mexe nos sinais, o 1º vencimento do Pro Soluto acompanha:
+   vai para o mês seguinte ao último sinal preenchido, para não ficar uma
+   parcela do carnê caindo junto (ou antes) de um sinal esquecido. */
+function ajustaVenc1PorSinais(){
+  var ultima=null;
+  ['dataS1','dataS2','dataS3'].forEach(function(k){
+    var d=parseData(S[k]);
+    if(d && (!ultima || d>ultima)) ultima=d;
+  });
+  if(!ultima) return false;
+
+  /* preserva o dia escolhido se for um dos dias válidos; senão usa o padrão 10 */
+  var atual=parseData(S.dataVenc1);
+  var dia = (atual && TX.diasVenc.indexOf(atual.getDate())>=0) ? atual.getDate() : 10;
+  var alvo = addMeses(ultima,1);
+  var novo = isoData(new Date(alvo.getFullYear(), alvo.getMonth(), dia));
+  if(novo===S.dataVenc1) return false;
+  S.dataVenc1=novo;
+  return true;
+}
 
 /* sugere o 1º vencimento e o vencimento do ato a partir da data da venda */
 function sugereDatas(){
@@ -1316,16 +1591,38 @@ DATAS.forEach(function(p){
   $(p[1]).addEventListener('change', function(){
     S[p[0]]=this.value;
     if(p[0]==='dataVenda'){ if(!this.value) S.dataVenda=hoje(); sugereDatas(); sincronizaCampos(); }
+    if(p[0]==='dataS1'||p[0]==='dataS2'||p[0]==='dataS3'){
+      if(ajustaVenc1PorSinais()){ $('f-venc1').value=S.dataVenc1; venc1Movido=true; }
+    }
     render();
   });
 });
 MOEDAS.forEach(function(p){ ligaMoeda(p[0], p[1]); });
 PARES.forEach(function(p){ ligaPar(p[0], p[1]); });
 
+/* valor do sinal digitado depois da data: revalida o 1º vencimento */
+['f-s1','f-s2','f-s3'].forEach(function(id){
+  ['input','blur'].forEach(function(ev){
+    $(id).addEventListener(ev, function(){
+      if(ajustaVenc1PorSinais()){ $('f-venc1').value=S.dataVenc1; venc1Movido=true; render(); }
+    });
+    $(id+'-p').addEventListener(ev, function(){
+      if(ajustaVenc1PorSinais()){ $('f-venc1').value=S.dataVenc1; venc1Movido=true; render(); }
+    });
+  });
+});
+
+/* se o corretor mexer no 1º vencimento na mão, o aviso de ajuste some */
+$('f-venc1').addEventListener('change', function(){ venc1Movido=false; });
+
 $('b-toggle-tbl').addEventListener('click', function(){ S.verTudo=!S.verTudo; renderResultado(); });
 
 $('b-reset').addEventListener('click', function(){
-  S=estadoInicial(); sincronizaCampos(); render();
+  S=estadoInicial(); venc1Movido=false;
+  if(quill) quill.setText('');
+  else if($('f-obs')) $('f-obs').value='';
+  avisaTamanhoObs();
+  sincronizaCampos(); render();
   window.scrollTo({top:0,behavior:'smooth'});
 });
 
@@ -1356,15 +1653,20 @@ $('b-verificar').addEventListener('click', function(){
   }
 
   var itens=checklistAprovacao(c);
-  var final=c.veredito.final;
+  var sinaisOrdemFalhou = itens.some(function(it){ return it.id==='sinaisOrdem' && !it.ok; });
+  /* sinais fora de ordem (Sinal 1 ≥ Sinal 2 ≥ Sinal 3) bloqueia a aprovação,
+     independente do resultado do %P.S./prazo/C.R. */
+  var final = sinaisOrdemFalhou ? 'Reprovado' : c.veredito.final;
   var classe = final==='Aprovado'?'aprovado':(final==='Comitê'?'comite':'reprovado');
   var titulo = final==='Aprovado' ? '&#10003; Cliente Aprovado!'
              : (final==='Comitê' ? '&#9888; Aprovação em Comitê' : '&#10007; Cliente Reprovado');
-  var subt   = final==='Aprovado'
+  var subt   = sinaisOrdemFalhou
+      ? 'Os sinais estão fora de ordem (Sinal 1 ≥ Sinal 2 ≥ Sinal 3) — corrija os valores para verificar novamente.'
+      : (final==='Aprovado'
       ? 'A proposta está dentro de todos os limites da política '+c.pol.nome+'.'
       : (final==='Comitê'
           ? 'A proposta excede a política '+c.pol.nome+' dentro da faixa de tolerância — precisa passar pelo comitê.'
-          : 'Um ou mais critérios obrigatórios estão fora da política '+c.pol.nome+'.');
+          : 'Um ou mais critérios obrigatórios estão fora da política '+c.pol.nome+'.'));
 
   $('modal-banner').className='modal-banner '+classe;
   $('modal-banner').innerHTML = titulo+'<span class="sub">'+subt+'</span>';
@@ -1431,7 +1733,7 @@ $('b-pdf').addEventListener('click', function(){
       ['Cliente', S.cliente||'-', 'Corretor', S.corretor||'-'],
       ['Renda', S.renda>0?brl(S.renda):'-', 'Idade', S.idade?(S.idade+' anos'):'-'],
       ['Valor do imóvel', brl(S.valor), 'Financiado', brl(S.financiado)],
-      ['Subsídio / FGTS', brl(S.subsidio)+' / '+brl(S.fgts), 'Bônus adimpl. / campanha', brl(S.bonusAdim)+' / '+brl(S.bonusCamp)],
+      ['Subsídio / FGTS', brl(S.subsidio)+' / '+brl(S.fgts), 'Descontos', brl(S.bonusAdim+S.bonusCamp)],
       ['Data da proposta', fmtData(c.venda), '1º vencimento', fmtData(c.venc1)],
       ['Entrega da obra', rotuloMes(parseData(c.e.entrega)), 'Parcela do financiamento', S.parcFin>0?brl(S.parcFin):'-']
     ],
@@ -1504,15 +1806,20 @@ $('b-pdf').addEventListener('click', function(){
   });
   y=doc.lastAutoTable.finalY+6;
 
-  if(S.obs.trim()){
+  if(S.obs.trim() || (S.obsHtml||'').indexOf('<img')>=0){
     if(y>250){ doc.addPage(); y=18; }
     doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(58,64,67);
-    doc.text('Observações', M, y); y+=4.5;
-    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(114,122,125);
-    doc.splitTextToSize(S.obs, W-M*2).forEach(function(l){
-      if(y>282){ doc.addPage(); y=18; }
-      doc.text(l, M, y); y+=4;
-    });
+    doc.text('Observações', M, y); y+=5;
+    if(S.obsHtml){
+      /* mantém negrito, itálico, cores, listas e imagens do editor */
+      y = SimRichPdf.render(doc, S.obsHtml, { x:M, largura:W-M*2, y:y, topo:18, fundo:278 });
+    } else {
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(114,122,125);
+      doc.splitTextToSize(S.obs, W-M*2).forEach(function(l){
+        if(y>282){ doc.addPage(); y=18; }
+        doc.text(l, M, y); y+=4;
+      });
+    }
   }
 
   var rodapeTxt = 'O Pro Soluto é corrigido a '+pctf(c.i1,1)+' a.m. antes das chaves e '+pctf(c.i2,1)+' a.m. após as chaves'+
@@ -1538,9 +1845,13 @@ $('b-pdf').addEventListener('click', function(){
 /* =========================================================
    INIT
    ========================================================= */
+initCombos();
 sugereDatas();
 sincronizaCampos();
 render();
+avisaTamanhoObs();
+/* o Quill chega por script defer, ou seja, só depois do parse da página */
+document.addEventListener('DOMContentLoaded', initEditor);
 </script>
 </body>
 </html>

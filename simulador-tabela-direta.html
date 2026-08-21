@@ -10,6 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<!-- catalogo de empreendimentos, unidades da planilha e combobox -->
+<script src="assets/simuladores.js"></script>
 <style>
 /* ===== Identidade Grupo Direcional ===== */
 :root{
@@ -48,17 +50,12 @@ body{margin:0;background:var(--dir-bg);font-family:'DM Sans',system-ui,sans-seri
 .card{background:#fff;border:1px solid var(--dir-line);border-radius:14px;padding:1.35rem}
 @media(max-width:700px){.card{padding:1rem}}
 
-/* ---------- cards empreendimento ---------- */
-.emps{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem}
-@media(max-width:900px){.emps{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:480px){.emps{grid-template-columns:1fr}}
-.emp{text-align:left;background:#fff;border:1px solid var(--dir-line);border-radius:12px;
-     padding:.95rem 1rem;cursor:pointer;transition:.15s;font:inherit;color:inherit}
-.emp:hover{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(58,64,67,.10)}
-.emp.active{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(228,3,43,.16);background:#FFF9FA}
-.emp-nome{font-weight:700;line-height:1.25;margin-bottom:.4rem}
-.emp-meta{font-size:.78rem;color:var(--dir-grey);display:flex;flex-direction:column;gap:.1rem}
-.emp-meta b{color:var(--dir-ink);font-weight:500}
+/* ---------- resumo do empreendimento escolhido ---------- */
+.emp-info{display:none;margin-top:1rem;padding-top:.9rem;border-top:1px dashed var(--dir-line);
+     font-size:.83rem;color:var(--dir-grey);flex-wrap:wrap;gap:.35rem 1.3rem;align-items:baseline}
+.emp-info.show{display:flex}
+.emp-info b{color:var(--dir-ink);font-weight:500}
+.emp-info .emp-info-nome{color:var(--dir-ink);font-weight:700;font-size:.92rem}
 
 /* ---------- forms ---------- */
 .grid{display:grid;gap:.9rem}
@@ -75,6 +72,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--dir-red)
       box-shadow:0 0 0 3px rgba(228,3,43,.10)}
 input.bad{border-color:var(--err);background:var(--err-bg)}
 input.warn{border-color:var(--warn);background:var(--warn-bg)}
+input:disabled{background:#FAFBFB;color:#A8AEB1;cursor:not-allowed}
 textarea{resize:vertical;min-height:70px}
 .pair{display:flex;gap:.4rem}
 .pair .money{flex:1 1 auto;min-width:0}
@@ -192,6 +190,35 @@ td.num,th.num{text-align:right}
 .modal-renda .r-val{font-weight:700;font-size:1rem;margin-top:.1rem}
 .modal-note{font-size:.72rem;color:var(--dir-grey);margin-top:1rem;line-height:1.5}
 @media(max-width:520px){.modal-renda{grid-template-columns:1fr}}
+
+/* ---------- combobox com busca ---------- */
+.cbx{position:relative}
+.cbx-btn{width:100%;display:flex;align-items:center;gap:.5rem;font:inherit;color:var(--dir-ink);
+     background:#fff;border:1px solid var(--dir-line);border-radius:9px;padding:.6rem .7rem;
+     cursor:pointer;text-align:left;transition:.15s}
+.cbx-btn:hover:not(:disabled){border-color:var(--dir-red)}
+.cbx-btn:disabled{background:#FAFBFB;cursor:not-allowed}
+.cbx.open .cbx-btn{border-color:var(--dir-red);box-shadow:0 0 0 3px rgba(228,3,43,.10)}
+.cbx-val{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cbx-val.ph{color:#A8AEB1}
+.cbx-arrow{flex:0 0 16px;width:16px;height:16px;color:var(--dir-grey);transition:.15s}
+.cbx.open .cbx-arrow{transform:rotate(180deg)}
+.cbx-pop{display:none;position:absolute;z-index:60;top:calc(100% + 4px);left:0;right:0;
+     background:#fff;border:1px solid var(--dir-line);border-radius:11px;
+     box-shadow:0 12px 34px rgba(58,64,67,.16);overflow:hidden}
+.cbx.open .cbx-pop{display:block}
+.cbx-busca{padding:.5rem;border-bottom:1px solid var(--dir-line)}
+.cbx-busca input{padding:.45rem .55rem;font-size:.9rem}
+.cbx-lista{max-height:270px;overflow-y:auto;padding:.25rem}
+.cbx-grupo{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dir-red);
+     font-weight:500;padding:.55rem .55rem .25rem}
+.cbx-opt{padding:.45rem .55rem;border-radius:7px;cursor:pointer;display:flex;
+     align-items:baseline;gap:.45rem;line-height:1.3}
+.cbx-opt.mk{background:var(--dir-bg)}
+.cbx-opt.sel{color:var(--dir-red);font-weight:500}
+.cbx-opt-lab{flex:1 1 auto;min-width:0}
+.cbx-opt-sub{flex:0 0 auto;font-size:.74rem;color:var(--dir-grey)}
+.cbx-vazio{padding:.9rem .6rem;text-align:center;color:var(--dir-grey);font-size:.85rem}
 </style>
 </head>
 <body>
@@ -209,13 +236,30 @@ td.num,th.num{text-align:right}
 
   <!-- PASSO 1 -->
   <section class="step">
-    <div class="step-label">Passo 1 &middot; Empreendimento</div>
-    <div class="emps" id="emps"></div>
+    <div class="step-label">Passo 1 &middot; Empreendimento e unidade</div>
+    <div class="card">
+      <div class="grid g3">
+        <div>
+          <label>Empreendimento</label>
+          <div id="c-emp"></div>
+        </div>
+        <div>
+          <label>Torre / Bloco</label>
+          <div id="c-bloco"></div>
+        </div>
+        <div>
+          <label>Unidade</label>
+          <div id="c-unid"></div>
+          <div class="hint" id="h-unid"></div>
+        </div>
+      </div>
+      <div class="emp-info" id="emp-info"></div>
+    </div>
   </section>
 
   <!-- PASSO 2 -->
   <section class="step">
-    <div class="step-label">Passo 2 &middot; Unidade e proposta</div>
+    <div class="step-label">Passo 2 &middot; Proposta</div>
     <div class="card">
       <div class="grid g4">
         <div>
@@ -226,10 +270,6 @@ td.num,th.num{text-align:right}
           <label for="f-metragem">Metragem (m&sup2;)</label>
           <input id="f-metragem" type="text" inputmode="decimal" placeholder="0">
           <div class="hint" id="h-m2"></div>
-        </div>
-        <div>
-          <label for="f-unidade">Unidade</label>
-          <input id="f-unidade" type="text" placeholder="BL02-0507">
         </div>
         <div>
           <label for="f-data">Data da proposta</label>
@@ -274,7 +314,7 @@ td.num,th.num{text-align:right}
       <div class="sub">Entrada &mdash; Ato e Sinais</div>
       <div class="grid g4">
         <div>
-          <label for="f-ato">Ato <span style="text-transform:none">(min. 3%)</span></label>
+          <label for="f-ato">Ato <span id="ato-min-lbl" style="text-transform:none">(min. 3%)</span></label>
           <div class="pair">
             <input class="money" id="f-ato" type="text" inputmode="decimal" placeholder="R$ 0,00">
             <input class="pct" id="f-ato-p" type="text" inputmode="decimal" placeholder="%">
@@ -303,7 +343,7 @@ td.num,th.num{text-align:right}
         </div>
       </div>
       <div class="hint" id="h-entrada"></div>
-      <div class="btn-row">
+      <div class="btn-row" id="flow-shortcuts">
         <button class="btn btn-ghost" id="b-entrada10" type="button">Preencher 10% (3% + 7%)</button>
         <button class="btn btn-ghost" id="b-atoonly" type="button">Somente Ato (10%)</button>
       </div>
@@ -395,6 +435,16 @@ var EMPS = [
 /* Regras da política (valem para todos os produtos) */
 var POL = { atoMin:3, entradaTotal:10, intermMax:12, mesesAntesEntrega:3, prazoPosObra:120 };
 
+/* Fluxo Investidor: 100% no período de obra / 0% pós-obra, sem Sinal 1/2/3 -
+   só Ato (mínimo 20%) + mensais até a entrega, sem correção e sem juros
+   (a diluição em "mensal" do calc() já é linear, sem taxa nenhuma). */
+var POL_INVESTIDOR = { atoMin:20 };
+function isInvestidor(){
+  var e=emp(); return (S.pctObra===null ? (e?e.pctObra:0) : S.pctObra) === 100;
+}
+/* ato mínimo em vigor, considerando o fluxo Investidor */
+function atoMinAtual(){ return isInvestidor() ? POL_INVESTIDOR.atoMin : POL.atoMin; }
+
 /* Motor de financiamento pós-obra (tabela PRICE + seguros MIP/DFI, igual ao
    simulador de financiamento da Direcional) - usado somente no comprometimento de renda */
 var FIN = { prazo:120, taxaAA:0.12, seguroDFI:0.00007, seguroMIP:0.00021, comprometimentoMax:40 };
@@ -405,7 +455,7 @@ var MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','
    ESTADO
    ========================================================= */
 var S = {
-  empId:null, valor:0, metragem:0, unidade:'', cliente:'', corretor:'', obs:'',
+  empId:null, valor:0, metragem:0, blocoId:null, unidade:'', cliente:'', corretor:'', obs:'',
   dataVenda:hoje(), pctObra:null, renda:0,
   ato:0, s1:0, s2:0, s3:0,
   interm:[],          // [{mes:<idx>, valor:<num>}]
@@ -509,12 +559,18 @@ function validar(c){
   if(!c.e) return [{n:'warn',t:'Selecione um empreendimento para começar.'}];
   if(c.valor<=0) return [{n:'warn',t:'Informe o valor de venda da unidade para calcular o fluxo.'}];
 
-  // 1 - Ato mínimo
+  // 1 - Ato mínimo (20% no fluxo Investidor)
   var atoP = c.valor>0 ? S.ato/c.valor*100 : 0;
+  var atoMin = atoMinAtual();
   if(S.ato<=0){
-    out.push({n:'err',c:'ato',t:'<b>Ato não preenchido.</b> A política exige no mínimo '+POL.atoMin+'% = '+brl(c.valor*POL.atoMin/100)+'.'});
-  } else if(atoP < POL.atoMin-0.001){
-    out.push({n:'err',c:'ato',t:'<b>Ato abaixo da política.</b> Mínimo '+POL.atoMin+'% = '+brl(c.valor*POL.atoMin/100)+' &mdash; você preencheu '+pct(atoP)+' ('+brl(S.ato)+').'});
+    out.push({n:'err',c:'ato',t:'<b>Ato não preenchido.</b> A política exige no mínimo '+atoMin+'% = '+brl(c.valor*atoMin/100)+'.'});
+  } else if(atoP < atoMin-0.001){
+    out.push({n:'err',c:'ato',t:'<b>Ato abaixo da política.</b> Mínimo '+atoMin+'% = '+brl(c.valor*atoMin/100)+' &mdash; você preencheu '+pct(atoP)+' ('+brl(S.ato)+').'});
+  }
+
+  // 1b - Fluxo Investidor precisa de aprovação quando há intermediárias
+  if(isInvestidor() && S.interm.length){
+    out.push({n:'warn',c:'int',t:'<b>Fluxo Investidor com intermediárias.</b> Esse fluxo precisa de aprovação quando há intermediárias cadastradas.'});
   }
 
   // 2 - Entrada minima de 10% (o corretor pode colocar mais)
@@ -582,9 +638,15 @@ function validar(c){
 function checklistAprovacao(c){
   var T=totalMeses(), out=[];
   var atoP = c.valor>0 ? S.ato/c.valor*100 : 0;
-  out.push({ id:'ato', grave:true, label:'Ato mínimo ('+POL.atoMin+'%)',
-    ok: S.ato>0 && atoP >= POL.atoMin-0.001,
-    detail: 'Mínimo '+brl(c.valor*POL.atoMin/100)+' ('+POL.atoMin+'%) — preenchido '+brl(S.ato)+' ('+pct(atoP)+').' });
+  var atoMin = atoMinAtual();
+  out.push({ id:'ato', grave:true, label:'Ato mínimo ('+atoMin+'%)',
+    ok: S.ato>0 && atoP >= atoMin-0.001,
+    detail: 'Mínimo '+brl(c.valor*atoMin/100)+' ('+atoMin+'%) — preenchido '+brl(S.ato)+' ('+pct(atoP)+').' });
+  if(isInvestidor()){
+    out.push({ id:'investidorInterm', grave:false, label:'Fluxo Investidor sem intermediárias (ou com aprovação)',
+      ok: !S.interm.length,
+      detail: S.interm.length ? 'Há intermediárias cadastradas — esse fluxo precisa de aprovação.' : 'Sem intermediárias cadastradas.' });
+  }
 
   var entP = c.valor>0 ? c.entrada/c.valor*100 : 0;
   var alvoEntrada = c.valor*POL.entradaTotal/100;
@@ -663,26 +725,29 @@ function linhas(c){
 /* =========================================================
    RENDER
    ========================================================= */
-function renderEmps(){
-  $('emps').innerHTML = EMPS.map(function(e){
-    var p=e.entrega.split('-');
-    return '<button type="button" class="emp'+(e.id===S.empId?' active':'')+'" data-emp="'+e.id+'">'+
-      '<div class="emp-nome">'+e.nome+'</div>'+
-      '<div class="emp-meta">'+
-        '<span>Entrega <b>'+MESES[(+p[1])-1]+'/'+p[0]+'</b></span>'+
-        '<span>Fluxo padrão <b>'+e.pctObra+'% / '+(100-e.pctObra)+'%</b></span>'+
-      '</div></button>';
-  }).join('');
+function renderEmpInfo(){
+  var e=emp(), el=$('emp-info');
+  if(!e){ el.className='emp-info'; el.innerHTML=''; return; }
+  el.className='emp-info show';
+  var p=e.entrega.split('-');
+  el.innerHTML =
+    '<span class="emp-info-nome">'+e.nome+'</span>'+
+    '<span>Entrega <b>'+MESES[(+p[1])-1]+'/'+p[0]+'</b></span>'+
+    '<span>Fluxo padrão <b>'+e.pctObra+'% / '+(100-e.pctObra)+'%</b></span>';
 }
 
 function renderPresets(){
   var e=emp(), atual = S.pctObra===null ? (e?e.pctObra:null) : S.pctObra;
   var opts=[30,35,40,45,50];
-  if(e && opts.indexOf(e.pctObra)<0) opts.push(e.pctObra);
+  if(e && opts.indexOf(e.pctObra)<0 && e.pctObra!==100) opts.push(e.pctObra);
   opts.sort(function(a,b){return a-b;});
-  $('presets').innerHTML = opts.map(function(p){
+  var html = opts.map(function(p){
     return '<button type="button" class="chip'+(p===atual?' on':'')+'" data-obra="'+p+'">'+p+'/'+(100-p)+'</button>';
   }).join('');
+  /* Investidor: 100% obra / 0% pós, ato mínimo 20%, sem Sinal 1/2/3 */
+  html += '<button type="button" class="chip'+(atual===100?' on':'')+'" data-obra="100" '+
+          'title="100% no período de obra, sem Sinal 1/2/3. Ato mínimo de 20%.">Investidor</button>';
+  $('presets').innerHTML = html;
 }
 
 function renderInterm(){
@@ -796,18 +861,144 @@ function msg(id,av,cods,fallback){
   }
 }
 
+/* Sinal 1/2/3 não existem no fluxo Investidor: só Ato + mensais.
+   Trava e limpa os campos, ajusta o rótulo do ato mínimo e esconde os
+   atalhos de preenchimento pensados para o fluxo padrão (10%). */
+function atualizaModoInvestidor(){
+  var inv = isInvestidor();
+  ['f-s1','f-s2','f-s3'].forEach(function(id){
+    ['','-p'].forEach(function(suf){
+      var el=$(id+suf);
+      el.disabled = inv;
+      if(inv) el.value='';
+    });
+  });
+  if(inv){ S.s1=0; S.s2=0; S.s3=0; }
+  $('ato-min-lbl').textContent = '(min. '+atoMinAtual()+'%)';
+  $('flow-shortcuts').style.display = inv ? 'none' : '';
+}
+
 function render(){
-  renderEmps(); renderPresets(); renderInterm(); renderResultado();
+  atualizaModoInvestidor();
+  renderEmpInfo(); renderPresets(); renderInterm(); renderResultado();
 }
 
 /* =========================================================
    SINCRONIA DOS CAMPOS
    ========================================================= */
+/* =========================================================
+   PASSO 1 - EMPREENDIMENTO / TORRE / UNIDADE
+   As unidades vêm da mesma planilha que abastece o site de produtos.
+   O catálogo daqui segue só com os produtos de Ribeirão Preto: os demais
+   dependem da política de tabela direta, que ainda será cadastrada.
+   ========================================================= */
+var comboEmp=null, comboBloco=null, comboUnid=null;
+var unidadesEmp={ blocos:[], unidades:{}, total:0 };
+
+/* dados de planilha (sheetName, torres visíveis) do catálogo compartilhado */
+function empPlanilha(){
+  var e=emp(); return e ? window.SIM_EMP_POR_ID(e.id) : null;
+}
+
+function initCombos(){
+  comboEmp = SimCombo($('c-emp'), {
+    placeholder:'Escolha o empreendimento',
+    buscaPlaceholder:'Buscar empreendimento...',
+    onChange: selecionaEmp
+  });
+  comboEmp.setOpcoes(EMPS.map(function(e){
+    var cat=window.SIM_EMP_POR_ID(e.id);
+    return { value:e.id, label:e.nome, grupo:cat?cat.cidade:'', sub:cat?cat.cod:'' };
+  }));
+
+  comboBloco = SimCombo($('c-bloco'), {
+    placeholder:'Torre / bloco', buscaPlaceholder:'Buscar torre...',
+    onChange: function(id){ S.blocoId=id; S.unidade=''; atualizaUnidades(); render(); }
+  });
+
+  comboUnid = SimCombo($('c-unid'), {
+    placeholder:'Unidade', buscaPlaceholder:'Buscar unidade...',
+    onChange: function(v){ S.unidade=v||''; render(); }
+  });
+
+  SimUnidades.aoMudar(function(){ atualizaUnidades(); });
+  SimUnidades.carregar();
+}
+
+function selecionaEmp(id){
+  if(id===S.empId) return;
+  S.empId=id; S.blocoId=null; S.unidade='';
+  S.pctObra=null; S.qtd=null; S.interm=[];
+  sincronizaCampos(); render();
+}
+
+function atualizaUnidades(){
+  if(!comboBloco) return;
+  var e=empPlanilha(), est=SimUnidades.estado(), hint=$('h-unid');
+
+  if(!e){
+    unidadesEmp={ blocos:[], unidades:{}, total:0 };
+    comboBloco.setOpcoes([]); comboUnid.setOpcoes([]);
+    comboBloco.setDesabilitado(true,'Escolha o empreendimento');
+    comboUnid.setDesabilitado(true,'Escolha o empreendimento');
+    hint.className='hint'; hint.textContent='';
+    return;
+  }
+
+  if(est==='carregando' || est==='inicial'){
+    comboBloco.setDesabilitado(true,'Carregando...');
+    comboUnid.setDesabilitado(true,'Carregando...');
+    hint.className='hint'; hint.textContent='Buscando as unidades disponíveis...';
+    return;
+  }
+
+  if(est==='erro'){
+    /* sem a planilha o corretor digita o código na mão, como era antes */
+    comboBloco.setOpcoes([]);
+    comboBloco.setDesabilitado(true,'Indisponível');
+    comboUnid.setTextoLivre(true);
+    comboUnid.setDesabilitado(false);
+    comboUnid.setValor(S.unidade);
+    hint.className='hint warn';
+    hint.textContent='Não foi possível carregar as unidades — digite o código manualmente (ex.: BL02-0804).';
+    return;
+  }
+
+  unidadesEmp = SimUnidades.porEmpreendimento(e);
+  comboUnid.setTextoLivre(false);
+
+  comboBloco.setDesabilitado(false);
+  comboBloco.setOpcoes(unidadesEmp.blocos.map(function(b){
+    return { value:b.id, label:b.label, sub:b.qtd+' un.' };
+  }));
+  if(S.blocoId && !unidadesEmp.unidades[S.blocoId]) S.blocoId=null;
+  if(!S.blocoId && unidadesEmp.blocos.length===1) S.blocoId=unidadesEmp.blocos[0].id;
+  comboBloco.setValor(S.blocoId);
+
+  var lista = S.blocoId ? (unidadesEmp.unidades[S.blocoId]||[]) : [];
+  if(S.unidade && lista.indexOf(S.unidade)<0) S.unidade='';
+  comboUnid.setOpcoes(lista.map(function(u){ return { value:u, label:u }; }));
+  comboUnid.setValor(S.unidade);
+  comboUnid.setDesabilitado(!S.blocoId, 'Escolha a torre');
+
+  hint.className='hint';
+  hint.textContent = unidadesEmp.total
+    ? (unidadesEmp.total===1 ? '1 unidade disponível na planilha.'
+                             : unidadesEmp.total+' unidades disponíveis na planilha.')
+    : 'Nenhuma unidade disponível para este empreendimento.';
+}
+
+function sincronizaSelecao(){
+  if(!comboEmp) return;
+  comboEmp.setValor(S.empId);
+  atualizaUnidades();
+}
+
 function sincronizaCampos(){
+  sincronizaSelecao();
   var e=emp();
   $('f-valor').value    = S.valor?brl(S.valor):'';
   $('f-metragem').value = S.metragem?String(S.metragem).replace('.',','):'';
-  $('f-unidade').value  = S.unidade;
   $('f-cliente').value  = S.cliente;
   $('f-corretor').value = S.corretor;
   $('f-renda').value    = S.renda?brl(S.renda):'';
@@ -850,24 +1041,17 @@ var qtdAutoAnterior=0;
 /* =========================================================
    EVENTOS
    ========================================================= */
-$('emps').addEventListener('click', function(ev){
-  var b=ev.target.closest('[data-emp]'); if(!b) return;
-  S.empId=b.getAttribute('data-emp');
-  S.pctObra=null; S.qtd=null; S.interm=[];
-  sincronizaCampos(); render();
-});
-
 $('presets').addEventListener('click', function(ev){
   var b=ev.target.closest('[data-obra]'); if(!b) return;
   S.pctObra=parseFloat(b.getAttribute('data-obra'));
   $('f-obra').value=S.pctObra; $('f-pos').value=100-S.pctObra;
+  if(S.pctObra===100){ S.s1=0; S.s2=0; S.s3=0; }
   render();
 });
 
 $('f-valor').addEventListener('input', function(){ S.valor=num(this.value); sincQtdAuto(); render(); });
 $('f-valor').addEventListener('blur',  function(){ this.value=S.valor?brl(S.valor):''; sincronizaCampos(); render(); });
 $('f-metragem').addEventListener('input', function(){ S.metragem=num(this.value); render(); });
-$('f-unidade').addEventListener('input', function(){ S.unidade=this.value; });
 $('f-cliente').addEventListener('input', function(){ S.cliente=this.value; });
 $('f-corretor').addEventListener('input',function(){ S.corretor=this.value; });
 $('f-renda').addEventListener('input', function(){
@@ -956,7 +1140,7 @@ $('b-int-anu').addEventListener('click', function(){ gerar(12); });
 $('b-int-clr').addEventListener('click', function(){ S.interm=[]; render(); });
 
 $('b-reset').addEventListener('click', function(){
-  S={ empId:null, valor:0, metragem:0, unidade:'', cliente:'', corretor:'', obs:'',
+  S={ empId:null, valor:0, metragem:0, blocoId:null, unidade:'', cliente:'', corretor:'', obs:'',
       dataVenda:hoje(), pctObra:null, renda:0, ato:0, s1:0, s2:0, s3:0, interm:[], qtd:null };
   sincronizaCampos(); render();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1069,6 +1253,12 @@ $('b-pdf').addEventListener('click', function(){
     ['Cliente', S.cliente||'-', 'Corretor', S.corretor||'-'],
     ['Data da proposta', fmtData(parseData(S.dataVenda)), 'Fluxo', pct(c.pObra)+' obra / '+pct(c.pPos)+' pós-obra']
   ];
+  /* renda só entra no relatório quando o corretor preencheu */
+  if(S.renda>0){
+    var finPdf = calcFinanciamento(c.saldoPos);
+    info.push(['Renda do cliente', brl(S.renda),
+               'Comprometimento', pct(finPdf.parcela1/S.renda*100)+' da renda']);
+  }
   doc.autoTable({
     startY:y, body:info, theme:'plain', margin:{left:M,right:M},
     styles:{fontSize:8.5, cellPadding:1.4, textColor:[58,64,67]},
@@ -1154,6 +1344,7 @@ $('b-pdf').addEventListener('click', function(){
 /* =========================================================
    INIT
    ========================================================= */
+initCombos();
 sincronizaCampos();
 render();
 </script>
