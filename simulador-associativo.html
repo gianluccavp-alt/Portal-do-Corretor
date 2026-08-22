@@ -1135,11 +1135,7 @@ function renderEmpInfo(){
   var e=emp(), el=$('emp-info');
   if(!e){ el.className='emp-info'; el.innerHTML=''; return; }
   el.className='emp-info show';
-  el.innerHTML =
-    '<span class="emp-info-nome">'+e.nome+'</span>'+
-    '<span>Entrega <b>'+rotuloMes(parseData(e.entrega))+'</b></span>'+
-    '<span>Obra desde <b>'+rotuloMes(parseData(e.inicioObra))+'</b></span>'+
-    '<span>Padrão <b>'+pctf(e.pctPS,0)+' · '+e.prazoPadrao+'x</b></span>';
+  el.innerHTML = '<span>Entrega <b>'+rotuloMes(parseData(e.entrega))+'</b></span>';
 }
 
 /* medalha: roseta em dois tons + fitas, na cor do nível (--pol-ac) */
