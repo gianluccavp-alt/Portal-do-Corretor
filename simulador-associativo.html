@@ -762,7 +762,7 @@ function calc(){
 
   var c = {
     e:e, pol:pol, venda:venda, venc1:venc1, prazo:prazo, pronto:false,
-    preSaldo:0, saldoMensais:0, carencia:0, psCorrigido:0, pctPS:0,
+    preSaldo:0, saldoMensais:0, carencia:0, saldoCorrigido:0, psCorrigido:0, pctPS:0,
     nPre:0, nPos:0, i1:TX.jurosPre, i2:TX.jurosPos,
     linear:null, escalonado:null, fluxo:[],
     crLinear:0, crPS:0, crEscal:0, veredito:null,
@@ -791,7 +791,11 @@ function calc(){
   if(c.carencia<0) c.carencia=0;
   var fatorCar = Math.pow(1+taxaCar, c.carencia);
   c.correcaoCarencia = c.saldoMensais*fatorCar - c.saldoMensais;
-  c.psCorrigido = c.saldoMensais*fatorCar + c.somaAnuais*fatorCar;
+  /* base do carnê (Dados!E22 / Formulário!T188): só o saldo mensal
+     corrigido, sem as anuais - elas são pagas à parte, no mês em que
+     caem, e não entram na amortização da parcela mensal/faixa. */
+  c.saldoCorrigido = c.saldoMensais*fatorCar;
+  c.psCorrigido = c.saldoCorrigido + c.somaAnuais*fatorCar;
 
   var baseP = S.valor - S.bonusAdim - S.bonusCamp;
   c.pctPS = baseP>0 ? r4(c.psCorrigido)/baseP : 0;
@@ -801,8 +805,8 @@ function calc(){
   var fPre = c.nPre ? anuidade(c.i1, c.nPre) : 0;
   var fPos = c.nPos ? Math.pow(1+c.i1, c.nPre)*anuidade(c.i2, c.nPos) : 0;
   var pctPre = (fPre+fPos)>0 ? 1 - fPre/(fPre+fPos) : 0;
-  var saldoPre = c.psCorrigido*pctPre;
-  var saldoPos = (c.psCorrigido - saldoPre)*Math.pow(1+c.i1, c.nPre);
+  var saldoPre = c.saldoCorrigido*pctPre;
+  var saldoPos = (c.saldoCorrigido - saldoPre)*Math.pow(1+c.i1, c.nPre);
   var parcPre = r2(pmt(c.i1, c.nPre, saldoPre));
   var parcPos = r2(pmt(c.i2, c.nPos, saldoPos));
   c.linear = {
@@ -819,7 +823,7 @@ function calc(){
   var prazos = [pFaixa, pFaixa, pFaixa, Math.max(0, prazo-3*pFaixa)];
   var accPre=0, accPos=0, faixas=[], totalEsc=0;
   for(var k=0;k<4;k++){
-    var P=prazos[k], V=c.psCorrigido*TX.faixas[k];
+    var P=prazos[k], V=c.saldoCorrigido*TX.faixas[k];
     var bPre = Math.max(0, Math.min(P, c.nPre-accPre));
     var bPos = P - bPre;
     var hPre;
