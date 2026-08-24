@@ -145,6 +145,116 @@ window.SimUnidades = (function () {
     return '';
   }
 
+  function parseBR(s) {
+    if (!s) return 0;
+    s = ('' + s).replace(/"/g, '').trim().replace(/[R$\s]/g, '');
+    s = s.replace(/\./g, '').replace(',', '.');
+    var v = parseFloat(s);
+    return isFinite(v) ? v : 0;
+  }
+
+  /* =========================================================
+     TITULO E SOL DA UNIDADE
+     Mesma classificacao do site de produtos (assets/data.js), usando o
+     registro completo do empreendimento em window.CITIES (config.js) -
+     tipoRule, tipos (rotulos customizados) e solNascente por torre.
+     Sem esse registro (config.js nao carregado, ou emp sem mapeamento),
+     cai no fallback generico: só "2Q C/S" a partir do texto da planilha.
+     ========================================================= */
+  var SIM_ID_TO_CONFIG_ID = {
+    gaia: 'village-gaia', park: 'village-park', botanico: 'reserva-direcional-jardim-botanico',
+    ipiranga: 'direcional-conquista-clube-ipiranga', 'alta-vista': 'alta-vista-mangara',
+    'cores-da-mata': 'cores-da-mata-mangara', 'casa-prado': 'casa-prado-residencial-riva',
+    seleto: 'seleto-amoreiras', 'vila-da-mata': 'conquista-vila-da-mata'
+  };
+  var TIPO_LABEL_PADRAO = {
+    '1q': 'Studio 1Q', '2q-meio': '2Q C/S - Meio', '2q-ponta': '2Q C/S - Ponta',
+    'terreo-meio': 'Terreo C/S C/ AP - Meio', 'terreo-ponta': 'Terreo C/S C/ AP - Ponta'
+  };
+  var NASCENTE_FINAIS_PADRAO = [3, 4, 5, 6];
+
+  function configEmpDe(emp) {
+    var id = emp && SIM_ID_TO_CONFIG_ID[emp.id];
+    if (!id || typeof window.findEmpreendimento !== 'function') return null;
+    return window.findEmpreendimento(id);
+  }
+
+  function classificaTipo(cfg, tipoPlanta, final, andar, bl) {
+    var t = ('' + (tipoPlanta || '')).toLowerCase();
+    var regra = cfg && cfg.tipoRule;
+    if (regra === 'seleto') {
+      var pontaS = [1, 2, 7, 8].indexOf(final) >= 0;
+      if (andar === 0) return pontaS ? 'terreo-ponta' : 'terreo-meio';
+      return pontaS ? '2q-ponta' : '2q-meio';
+    }
+    if (regra === 'casa-prado') {
+      if (andar === 0) return 'garden-ponta';
+      if (andar >= 17) return 'cobertura';
+      return ([1, 4].indexOf(final) >= 0) ? 'tipo-meio' : 'tipo-ponta';
+    }
+    if (regra === 'ipiranga') {
+      var pontaI = [3, 4, 9, 10];
+      if (andar >= 1) return pontaI.indexOf(final) >= 0 ? 'tipo-ponta' : 'tipo-meio';
+      if (pontaI.indexOf(final) >= 0) return 'garden-ponta';
+      var adaptado = (bl === 4) ? [1] : [1, 6, 7];
+      return adaptado.indexOf(final) >= 0 ? 'garden-meio-adaptado' : 'garden-meio';
+    }
+    if (regra === 'village-park') {
+      if (/pcd/i.test(tipoPlanta || '')) return 'tipo-ponta-pcd';
+      if (andar >= 1) {
+        if ([2, 3, 6, 7].indexOf(final) >= 0) return 'tipo-ponta';
+        if (final === 8) return 'office-tipo-meio';
+        return 'tipo-meio';
+      }
+      if (final === 8) return 'office-garden-meio';
+      if ([4, 5].indexOf(final) >= 0) return 'garden-meio';
+      return 'garden-ponta';
+    }
+    if (regra === 'jardim-botanico') {
+      if (/pcd/i.test(tipoPlanta || '')) return 'tipo-meio-pcd';
+      var pontaB = [2, 3, 6, 7];
+      if (andar === 0) {
+        if (pontaB.indexOf(final) >= 0) return 'garden-ponta';
+        if (final === 8) return 'office-garden-meio';
+        return 'garden-meio';
+      }
+      if (pontaB.indexOf(final) >= 0) return 'tipo-ponta';
+      if (bl === 3) return (final === 8) ? 'office-tipo-meio' : 'tipo-meio';
+      if (final === 4 || final === 8) return 'office-tipo-meio';
+      return 'tipo-meio';
+    }
+    if (regra === 'village-gaia') {
+      var pontaG = [2, 3, 6, 7];
+      if (andar === 0) return pontaG.indexOf(final) >= 0 ? 'garden-ponta' : 'garden-meio';
+      if (pontaG.indexOf(final) >= 0) return 'tipo-ponta';
+      if (final === 8) return (andar <= 5) ? 'office-tipo-meio' : 'tipo-meio';
+      return 'tipo-meio';
+    }
+    /* fallback generico: usa o texto da planilha (Tipo Planta/Area) */
+    var pontaFinais = [2, 3, 6, 7];
+    var isPonta = pontaFinais.indexOf(final) >= 0;
+    if (t.indexOf('1q') >= 0 || t.indexOf('adapt') >= 0 || t.indexOf('studio') >= 0) return '1q';
+    if (t.indexOf('terreo') >= 0 || t.indexOf('jardim') >= 0 || t.indexOf('garden') >= 0) {
+      return isPonta ? 'terreo-ponta' : 'terreo-meio';
+    }
+    return isPonta ? '2q-ponta' : '2q-meio';
+  }
+
+  function rotuloTipo(cfg, tipo) {
+    if (cfg && cfg.tipos) {
+      for (var i = 0; i < cfg.tipos.length; i++) if (cfg.tipos[i].key === tipo) return cfg.tipos[i].label;
+    }
+    return TIPO_LABEL_PADRAO[tipo] || tipo;
+  }
+
+  function ehNascente(cfg, bl, final) {
+    if (cfg && cfg.solNascente) {
+      var lista = cfg.solNascente[bl] || cfg.solNascente['default'] || [];
+      return lista.indexOf(final) >= 0;
+    }
+    return NASCENTE_FINAIS_PADRAO.indexOf(final) >= 0;
+  }
+
   /* ---------- fetch com os mesmos fallbacks do site de produtos ---------- */
   function carregar() {
     if (estado === 'carregando' || estado === 'ok') return;
@@ -199,16 +309,26 @@ window.SimUnidades = (function () {
      bloco) e descarta sozinho as vagas de garagem (VG-0010, sem prefixo BL). */
   function numBloco(codigo) { return parseInt(codigo.slice(2, codigo.indexOf('-')), 10); }
 
+  /* valor exato da coluna pelo nome (com um fallback tolerante a espacos/caixa);
+     os nomes batem com o cabecalho real da planilha, ja conferidos em producao */
+  function valorExato(row, nome) {
+    if (Object.prototype.hasOwnProperty.call(row, nome)) return row[nome];
+    var alvo = nome.toLowerCase();
+    for (var k in row) if (k.toLowerCase().trim() === alvo) return row[k];
+    return '';
+  }
+
   function porEmpreendimento(emp) {
-    var vazio = { blocos: [], unidades: {}, total: 0 };
+    var vazio = { blocos: [], unidades: {}, total: 0, detalhes: {} };
     if (!emp || !linhas) return vazio;
 
     var querem = [normKey(emp.sheetName)];
     if (emp.sheetNamesExtra) {
       for (var e = 0; e < emp.sheetNamesExtra.length; e++) querem.push(normKey(emp.sheetNamesExtra[e]));
     }
+    var cfg = configEmpDe(emp);
 
-    var porBloco = {}, total = 0;
+    var porBloco = {}, detalhes = {}, total = 0;
     for (var i = 0; i < linhas.length; i++) {
       var r = linhas[i];
 
@@ -224,6 +344,38 @@ window.SimUnidades = (function () {
       var chave = codigo.slice(0, codigo.indexOf('-'));   /* BL02 */
       if (!porBloco[chave]) porBloco[chave] = { n: n, lista: [] };
       if (porBloco[chave].lista.indexOf(codigo) < 0) { porBloco[chave].lista.push(codigo); total++; }
+
+      /* valores da unidade - mesmas contas do site de produtos (assets/data.js) */
+      var valorFinal  = parseBR(valorExato(r, 'Valor Final Com Kit'));
+      var ba          = parseBR(valorExato(r, 'B.A. da Unidade'));
+      var folgaCampG  = parseBR(valorExato(r, 'Folga Campanha G'));
+      var folgaTabela = parseBR(valorExato(r, 'Folga de Tabela'));
+      var folgaComercial   = parseBR(valorExato(r, 'Folga Comercial'));
+      var folgaPromocional = parseBR(valorExato(r, 'Folga Promocional'));
+      var avaliacao   = parseBR(valorExato(r, 'Valor de Avaliação Bancária'));
+      var areaPriv    = Math.round(parseBR(valorExato(r, 'Área privativa total')));
+      var vagasRaw    = valorExato(r, 'Quantidade de vagas');
+      var vagas       = (vagasRaw === '' || vagasRaw == null) ? null : Math.round(parseBR(vagasRaw));
+      var final       = parseInt(valorExato(r, 'Final unidade') || '0', 10);
+      var andar       = parseInt(valorExato(r, 'Andar') || '0', 10);
+      var tipoPlanta  = valorExato(r, 'Tipo Planta/Área') || '';
+
+      var tabelaDireta = valorFinal - ba - folgaCampG;
+      var associativo  = tabelaDireta - folgaTabela;
+      /* unidade promocional (Folga Promocional > 0): o site de produtos exibe o
+         valor com o desconto comercial/promocional aplicado, não o "cheio" -
+         mesma regra de associativoOf()/tabelaDiretaOf() em assets/data.js */
+      var promocional = folgaPromocional > 0;
+      var assocExibido  = promocional ? (associativo - folgaComercial - folgaPromocional) : associativo;
+      var tabelaExibida = promocional ? (assocExibido + folgaTabela) : tabelaDireta;
+      var tipo = classificaTipo(cfg, tipoPlanta, final, andar, n);
+
+      detalhes[codigo] = {
+        tipoLabel: rotuloTipo(cfg, tipo),
+        sol: ehNascente(cfg, n, final) ? 'Nascente' : 'Poente',
+        areaPriv: areaPriv, vagas: vagas, avaliacao: avaliacao,
+        tabelaDireta: tabelaExibida, associativo: assocExibido, promocional: promocional
+      };
     }
 
     var blocos = Object.keys(porBloco).sort(function (a, b) { return porBloco[a].n - porBloco[b].n; });
@@ -236,7 +388,8 @@ window.SimUnidades = (function () {
         return { id: k, label: 'Torre ' + porBloco[k].n, qtd: porBloco[k].lista.length };
       }),
       unidades: unidades,
-      total: total
+      total: total,
+      detalhes: detalhes
     };
   }
 

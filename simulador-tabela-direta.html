@@ -10,6 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<!-- config.js: so para reaproveitar a classificacao de tipo/sol (tipoRule,
+     tipos, solNascente) do site de produtos ao exibir os dados da unidade -->
+<script src="assets/config.js"></script>
 <!-- catalogo de empreendimentos, unidades da planilha e combobox -->
 <script src="assets/simuladores.js"></script>
 <style>
@@ -56,6 +59,26 @@ body{margin:0;background:var(--dir-bg);font-family:'DM Sans',system-ui,sans-seri
 .emp-info.show{display:flex}
 .emp-info b{color:var(--dir-ink);font-weight:500}
 .emp-info .emp-info-nome{color:var(--dir-ink);font-weight:700;font-size:.92rem}
+
+/* ---------- valores da unidade escolhida (mesmos do site de produtos) ---------- */
+.unid-info{display:none;flex-direction:column;gap:.6rem;margin-top:1rem;padding-top:1rem;
+     border-top:1px solid var(--dir-line)}
+.unid-info.show{display:flex}
+.ui-titulo{font-weight:700;font-size:.95rem}
+.ui-stats{display:flex;flex-wrap:wrap;gap:.5rem 0}
+.ui-stat{display:flex;flex-direction:column;gap:.15rem;padding:0 1.15rem;border-right:1px solid var(--dir-line)}
+.ui-stat:first-child{padding-left:0}
+.ui-stat:last-child{border-right:0}
+.ui-lab{font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;color:var(--dir-grey);font-weight:500}
+.ui-val{font-weight:700;font-size:.95rem;color:var(--dir-ink)}
+.ui-stat.dest{background:#EFF9F2;border:1px solid #C7E7D3;border-radius:10px;padding:.5rem .9rem;margin:-.5rem 0}
+.ui-stat.dest .ui-val{color:var(--ok)}
+.ui-stat.dest .ui-lab{color:#2E7D4F}
+@media(max-width:700px){
+  .ui-stats{row-gap:.85rem}
+  .ui-stat{border-right:0;padding:0 1.15rem 0 0;flex:0 0 auto}
+  .ui-stat.dest{flex-basis:100%;margin:.15rem 0 0}
+}
 
 /* ---------- forms ---------- */
 .grid{display:grid;gap:.9rem}
@@ -253,6 +276,7 @@ td.num,th.num{text-align:right}
           <div class="hint" id="h-unid"></div>
         </div>
       </div>
+      <div class="unid-info" id="unid-info"></div>
       <div class="emp-info" id="emp-info"></div>
     </div>
   </section>
@@ -736,6 +760,23 @@ function renderEmpInfo(){
     '<span>Fluxo padrão <b>'+e.pctObra+'% / '+(100-e.pctObra)+'%</b></span>';
 }
 
+/* valores da unidade escolhida (mesmos que aparecem no site de produtos) -
+   referência rápida para o corretor preencher o restante da simulação */
+function renderUnidInfo(){
+  var el=$('unid-info');
+  var d = (unidadesEmp.detalhes||{})[S.unidade];
+  if(!d){ el.className='unid-info'; el.innerHTML=''; return; }
+  el.className='unid-info show';
+  el.innerHTML =
+    '<div class="ui-titulo">'+d.tipoLabel+'</div>'+
+    '<div class="ui-stats">'+
+      '<div class="ui-stat"><span class="ui-lab">Área privativa</span><span class="ui-val">'+(d.areaPriv>0?d.areaPriv+' m²':'-')+'</span></div>'+
+      '<div class="ui-stat"><span class="ui-lab">Sol</span><span class="ui-val">'+d.sol+'</span></div>'+
+      '<div class="ui-stat"><span class="ui-lab">Vagas</span><span class="ui-val">'+(d.vagas!=null?d.vagas:'-')+'</span></div>'+
+      '<div class="ui-stat dest"><span class="ui-lab">Valor Tabela Direta</span><span class="ui-val">'+brl(d.tabelaDireta)+'</span></div>'+
+    '</div>';
+}
+
 function renderPresets(){
   var e=emp(), atual = S.pctObra===null ? (e?e.pctObra:null) : S.pctObra;
   var opts=[30,35,40,45,50];
@@ -880,7 +921,7 @@ function atualizaModoInvestidor(){
 
 function render(){
   atualizaModoInvestidor();
-  renderEmpInfo(); renderPresets(); renderInterm(); renderResultado();
+  renderEmpInfo(); renderUnidInfo(); renderPresets(); renderInterm(); renderResultado();
 }
 
 /* =========================================================
