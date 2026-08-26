@@ -268,6 +268,8 @@ function rowsToUnits(rows, empSheetName) {
 
     var valorFinal   = parseBR(findFirst(r, [['valor', 'final', 'com', 'kit'], ['valor', 'final', 'kit'], ['valor', 'final']]));
     var ba           = parseBR(findFirst(r, [['ba', 'unidade'], ['b', 'a', 'da', 'unidade'], ['ba'], ['b', 'a']]));
+    // "Bonus Adimplencia" e "B.A. da Unidade" sao colunas distintas na planilha (ver aba de unidades)
+    var bonusAdimplencia = parseBR(findFirst(r, [['bonus', 'adimplencia']]));
     var folgaCampG   = parseBR(findFirst(r, [['folga', 'campanha', 'g'], ['folga', 'campanha']]));
     var folgaTabela  = parseBR(findFirst(r, [['folga', 'de', 'tabela'], ['folga', 'tabela']]));
     var folgaVoltaCx = parseBR(findFirst(r, [['folga', 'volta', 'caixa'], ['folga', 'volta']]));
@@ -316,7 +318,9 @@ function rowsToUnits(rows, empSheetName) {
       unidadePromocionalTabelaDireta: unidadePromocionalTabelaDireta,
       folgaTabela: folgaTabela, folgaVoltaCx: folgaVoltaCx,
       folgaPromocional: folgaPromocional, identificador: identificador,
-      avaliacao: avaliacao, vagas: vagas
+      avaliacao: avaliacao, vagas: vagas,
+      valorFinal: valorFinal, ba: ba, folgaCampG: folgaCampG,
+      bonusAdimplencia: bonusAdimplencia
     });
   }
   return result;
@@ -495,10 +499,18 @@ function renderUnits() {
   }
 
   grid.classList.toggle('list-view', viewMode === 'list');
+  window.CURRENT_UNITS_LIST = list;
   var buildUnit = viewMode === 'list' ? unitRowHtml : unitCardHtml;
   var html = '';
-  for (var j = 0; j < list.length; j++) html += buildUnit(list[j]);
+  for (var j = 0; j < list.length; j++) html += buildUnit(list[j], j);
   grid.innerHTML = html;
+}
+
+// popup de detalhes (informativo) so nos empreendimentos de Ribeirao Preto
+function unitClickAttr(idx) {
+  var emp = window.CURRENT_EMP;
+  if (!(emp && emp._cityId === 'ribeirao-preto')) return '';
+  return ' onclick="abrirUnidadeModal(' + idx + ')" style="cursor:pointer"';
 }
 
 /* dados comuns exibidos tanto no card quanto na linha da lista */
@@ -520,9 +532,9 @@ function unitDisplayData(u) {
   };
 }
 
-function unitCardHtml(u) {
+function unitCardHtml(u, idx) {
   var d = unitDisplayData(u);
-  var html = '<div class="u-card">';
+  var html = '<div class="u-card"' + unitClickAttr(idx) + '>';
   html += '<div class="u-top"><div class="u-top-info">';
   html += '<div class="u-tipo">' + u.tipoLabel + '</div>';
   html += '<div class="u-ap">' + d.apLabel + '</div>';
@@ -546,9 +558,9 @@ function unitCardHtml(u) {
   return html;
 }
 
-function unitRowHtml(u) {
+function unitRowHtml(u, idx) {
   var d = unitDisplayData(u);
-  var html = '<div class="u-row">';
+  var html = '<div class="u-row"' + unitClickAttr(idx) + '>';
   html += '<div class="u-row-id">';
   html += '<span class="u-badge-disp">Disponivel</span>' + d.promoBadge;
   html += '<div class="u-row-tipo-line"><div class="u-tipo">' + u.tipoLabel + '</div>' + d.vagasBadge + '</div>';

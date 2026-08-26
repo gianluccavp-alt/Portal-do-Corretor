@@ -41,6 +41,17 @@
   </div>
 </div>
 
+<div class="unit-modal-overlay" id="unit-modal-overlay">
+  <div class="unit-modal">
+    <button class="unit-modal-close" id="unit-modal-close" type="button" aria-label="Fechar">&times;</button>
+    <div class="unit-modal-head">
+      <h2 id="unit-modal-title"></h2>
+      <p id="unit-modal-sub"></p>
+    </div>
+    <table class="unit-modal-table" id="unit-modal-table"></table>
+  </div>
+</div>
+
 <script src="assets/config.js"></script>
 <script src="assets/data.js"></script>
 <script>
@@ -130,6 +141,15 @@
     return '<div class="hero-loc">' + emp.badges.map(function (b) {
       return '<div class="loc-badge"><span class="loc-dot"></span>' + b + '</div>';
     }).join('') + '</div>';
+  }
+  var MESES_ABREV = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  function entregaBadgeHtml() {
+    if (!emp.entrega || emp._cityId !== 'ribeirao-preto') return '';
+    var p = emp.entrega.split('-');
+    var label = MESES_ABREV[parseInt(p[1], 10) - 1] + '/' + p[0];
+    return '<div class="entrega-badge">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>' +
+      '<span>Entrega prevista &middot; <strong>' + label + '</strong></span></div>';
   }
   function pillsHtml() {
     if (!emp.pills || !emp.pills.length) return '';
@@ -320,6 +340,7 @@
       '<div class="hero-eyebrow">' + emp.eyebrow + '</div>' +
       '<h1 class="hero-title">' + emp.titleHtml + '</h1>' +
       '<p class="hero-sub">' + (emp.sub || '') + '</p>' +
+      entregaBadgeHtml() +
       proximidadesHtml() + badgesHtml() + pillsHtml() +
     '</div></div>' +
 
@@ -434,6 +455,42 @@
   simOverlay.addEventListener('click', function (e) { if (e.target === simOverlay) fecharModalSimulador(); });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && simOverlay.classList.contains('open')) fecharModalSimulador();
+  });
+
+  // popup de detalhes da unidade (somente Ribeirao Preto) - carater informativo
+  var unitOverlay = document.getElementById('unit-modal-overlay');
+  var UNIT_FIELDS = [
+    ['Valor de Avaliação Bancária', 'avaliacao'],
+    ['Valor de Tabela', 'valorFinal'],
+    ['Bônus Adimplência', 'bonusAdimplencia'],
+    ['Desconto Volta ao Caixa', 'folgaVoltaCx'],
+    ['Desconto Associativo', 'folgaTabela'],
+    ['Desconto Campanha G', 'folgaCampG']
+  ];
+  window.abrirUnidadeModal = function (idx) {
+    var list = window.CURRENT_UNITS_LIST || [];
+    var u = list[idx];
+    if (!u) return;
+    var d = unitDisplayData(u);
+    document.getElementById('unit-modal-title').textContent = u.tipoLabel;
+    document.getElementById('unit-modal-sub').innerHTML = d.apLabel;
+    var rows = '';
+    for (var i = 0; i < UNIT_FIELDS.length; i++) {
+      var lbl = UNIT_FIELDS[i][0], val = u[UNIT_FIELDS[i][1]] || 0;
+      rows += '<tr><td class="unit-modal-k">' + lbl + '</td><td class="unit-modal-v">' + fmt(val) + '</td></tr>';
+    }
+    document.getElementById('unit-modal-table').innerHTML = rows;
+    unitOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+  function fecharModalUnidade() {
+    unitOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('unit-modal-close').addEventListener('click', fecharModalUnidade);
+  unitOverlay.addEventListener('click', function (e) { if (e.target === unitOverlay) fecharModalUnidade(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && unitOverlay.classList.contains('open')) fecharModalUnidade();
   });
 })();
 </script>
