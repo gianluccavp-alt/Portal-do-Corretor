@@ -812,7 +812,10 @@ function calc(){
   /* --- fluxo linear (Dados AH24:AI34) ------------------- */
   var fPre = c.nPre ? anuidade(c.i1, c.nPre) : 0;
   var fPos = c.nPos ? Math.pow(1+c.i1, c.nPre)*anuidade(c.i2, c.nPos) : 0;
-  var pctPre = (fPre+fPos)>0 ? 1 - fPre/(fPre+fPos) : 0;
+  /* nos extremos (0 pré ou 0 pós) a formula do meio (1 - fPre/(fPre+fPos))
+     quebra: com fPre=0 ela devolve 1 (100% pré) em vez de 0. Mesmo ajuste
+     de fronteira já usado no fluxo escalonado (var hPre logo abaixo). */
+  var pctPre = (c.nPre && c.nPos) ? 1 - fPre/(fPre+fPos) : (c.nPre ? 1 : 0);
   var saldoPre = c.saldoCorrigido*pctPre;
   var saldoPos = (c.saldoCorrigido - saldoPre)*Math.pow(1+c.i1, c.nPre);
   var parcPre = r2(pmt(c.i1, c.nPre, saldoPre));
