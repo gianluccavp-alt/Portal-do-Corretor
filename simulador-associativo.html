@@ -689,6 +689,14 @@ function brl(n){
   if(!isFinite(n)) n=0;
   return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2,maximumFractionDigits:2});
 }
+/* celula de parcela do fluxo: mostra a parcela do carne e, quando o mes
+   tambem tem sinal/anual, soma o extra em vez de esconder um dos dois */
+function celParcela(v, extra, vazio){
+  if(v && extra) return brl(v)+' + '+brl(extra);
+  if(v) return brl(v);
+  if(extra) return brl(extra);
+  return vazio;
+}
 function pct(n,casas){
   if(!isFinite(n)) n=0;
   var c = casas===undefined?2:casas;
@@ -879,6 +887,18 @@ function calc(){
                    crLin:null, crEsc:null, crPSm:null });
   }
 
+  /* sinais e anuais com vencimento antes do 1º vencimento mensal (venc1) ficam
+     de fora do loop abaixo, que só percorre meses a partir de venc1 - por isso
+     são lançados aqui, em ordem cronológica, antes da 1ª parcela do carnê */
+  sinais.concat(anuais)
+    .filter(function(x){ return mi(x.d)<mi(venc1); })
+    .sort(function(a,b){ return mi(a.d)-mi(b.d); })
+    .forEach(function(x){
+      c.fluxo.push({ n:0, data:x.d, tipo:x.lab, fase: mi(x.d)<mi(entrega)?'Pré':'Pós',
+                     juros:0, extra:x.v, psLin:0, psEsc:0,
+                     crLin:null, crEsc:null, crPSm:null });
+    });
+
   var ev=evBase, nPS=0, mes=0, tipoAnt='Ato Sinal CC/Boleto', guarda=0;
   while(nPS<prazo && guarda<400){
     guarda++;
@@ -910,15 +930,22 @@ function calc(){
 
     var psLin = pre ? parcPre : parcPos;
     var psEsc = parcelaFaixa(nPS);
-    var extra = anu ? anu.v : 0;
     /* AU / AW: quando há anual no mês, a planilha avalia o C.R. sem ela */
-    var crLin = S.renda>0 ? r4((juros + psLin + (anu?0:extra))/S.renda) : 0;
-    var crEsc = S.renda>0 ? r4((juros + psEsc + (anu?0:extra))/S.renda) : 0;
+    var crLin = S.renda>0 ? r4((juros + psLin)/S.renda) : 0;
+    var crEsc = S.renda>0 ? r4((juros + psEsc)/S.renda) : 0;
     var crPSm = S.renda>0 ? r4(psLin/S.renda) : 0;
 
-    c.fluxo.push({ n:nPS, data:d, tipo: anu ? ('Mensal P.S + '+anu.lab) : 'Mensal P.S',
-                   fase:pre?'Pré':'Pós', juros:juros, extra:extra,
+    c.fluxo.push({ n:nPS, data:d, tipo:'Mensal P.S',
+                   fase:pre?'Pré':'Pós', juros:juros, extra:0,
                    psLin:psLin, psEsc:psEsc, crLin:crLin, crEsc:crEsc, crPSm:crPSm });
+
+    /* anual cai no mesmo mes de uma parcela mensal: linha propria, com
+       traco na coluna de numero pois nao conta nas parcelas do carne */
+    if(anu){
+      c.fluxo.push({ n:0, data:d, tipo:anu.lab, fase:pre?'Pré':'Pós',
+                     juros:0, extra:anu.v, psLin:0, psEsc:0,
+                     crLin:null, crEsc:null, crPSm:null });
+    }
 
     if(crLin>c.crLinear) c.crLinear=crLin;
     if(crEsc>c.crEscal)  c.crEscal =crEsc;
@@ -1343,8 +1370,8 @@ function renderTabela(c){
       '<td>'+fmtData(r.data)+'</td>'+
       '<td>'+r.tipo+'</td>'+
       '<td>'+r.fase+'</td>'+
-      '<td class="num">'+(r.psLin?brl(r.psLin):(r.extra?brl(r.extra):'&mdash;'))+'</td>'+
-      '<td class="num">'+(r.psEsc?brl(r.psEsc):(r.extra?brl(r.extra):'&mdash;'))+'</td>'+
+      '<td class="num">'+celParcela(r.psLin, r.extra, '&mdash;')+'</td>'+
+      '<td class="num">'+celParcela(r.psEsc, r.extra, '&mdash;')+'</td>'+
     '</tr>';
   }
   var html = lista.map(tr).join('');
@@ -1810,8 +1837,8 @@ $('b-pdf').addEventListener('click', function(){
   /* fluxo completo */
   var body=c.fluxo.map(function(r){
     return [ r.n?String(r.n):'-', fmtData(r.data), r.tipo, r.fase,
-             r.psLin?brl(r.psLin):(r.extra?brl(r.extra):'-'),
-             r.psEsc?brl(r.psEsc):(r.extra?brl(r.extra):'-') ];
+             celParcela(r.psLin, r.extra, '-'),
+             celParcela(r.psEsc, r.extra, '-') ];
   });
   body.push([{content:'Total do carnê Pro Soluto',colSpan:4,styles:{fontStyle:'bold'}},
              {content:brl(c.linear.total),styles:{fontStyle:'bold',halign:'right'}},
