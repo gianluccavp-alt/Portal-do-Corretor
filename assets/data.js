@@ -639,7 +639,7 @@ function exportarUnidadesPdf() {
 
   var head = ['Tipologia', 'Unidade', 'Area Privativa'];
   if (!hideSol) head.push('Sol');
-  head.push('Valor Tabela Direta', 'Valor de Avaliacao', 'Valor Associativo/Investidor', 'Desconto');
+  head.push('Valor Tabela Direta', 'Valor de Avaliacao', 'Valor Associativo/Investidor');
 
   var body = list.map(function (u) {
     var d = unitDisplayData(u);
@@ -647,11 +647,11 @@ function exportarUnidadesPdf() {
     var unidadeTxt = (u.identificador || u.bl) + ' - ' + andarTxt + ' - Final ' + u.f;
     var row = [u.tipoLabel, unidadeTxt, u.area + ' m2'];
     if (!hideSol) row.push(d.sol);
-    row.push(fmt(d.vTabela), (u.avaliacao && u.avaliacao > 0) ? fmt(u.avaliacao) : '-', fmt(d.vAssoc), fmt(d.desconto));
+    row.push(fmt(d.vTabela), (u.avaliacao && u.avaliacao > 0) ? fmt(u.avaliacao) : '-', fmt(d.vAssoc));
     return row;
   });
 
-  var moneyCols = hideSol ? [3, 4, 5, 6] : [4, 5, 6, 7];
+  var moneyCols = hideSol ? [3, 4, 5] : [4, 5, 6];
   var columnStyles = { 2: { halign: 'right' } };
   moneyCols.forEach(function (i) { columnStyles[i] = { halign: 'right' }; });
 
