@@ -588,6 +588,98 @@ function setView(mode, btn) {
   renderUnits();
 }
 
+/* ---------- export PDF (todas as unidades disponiveis do empreendimento) ---------- */
+var PDF_LOGO = null;
+(function carregaLogoPdf() {
+  var img = new Image();
+  img.onload = function () {
+    try {
+      var cv = document.createElement('canvas');
+      cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+      cv.getContext('2d').drawImage(img, 0, 0);
+      PDF_LOGO = { data: cv.toDataURL('image/jpeg', 0.92), w: img.naturalWidth, h: img.naturalHeight };
+    } catch (e) { PDF_LOGO = null; }
+  };
+  img.src = 'assets/img/logo-direcional.jpg';
+})();
+
+function exportarUnidadesPdf() {
+  var emp = window.CURRENT_EMP;
+  if (!emp) return;
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    alert('A biblioteca de PDF ainda esta carregando. Tente novamente em alguns segundos.');
+    return;
+  }
+  if (!units.length) {
+    alert('Nenhuma unidade disponivel para exportar.');
+    return;
+  }
+
+  var hideSol = !!emp.hideSol;
+  var list = units.slice().sort(function (a, b) {
+    var tA = blocoNum(a.bl), tB = blocoNum(b.bl);
+    if (tA !== tB) return tA - tB;
+    if (a.andar !== b.andar) return a.andar - b.andar;
+    return a.f - b.f;
+  });
+
+  var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+  var W = doc.internal.pageSize.getWidth(), M = 12, y = 12;
+
+  if (PDF_LOGO) {
+    var lw = 30, lh = lw * PDF_LOGO.h / PDF_LOGO.w;
+    doc.addImage(PDF_LOGO.data, 'JPEG', (W - lw) / 2, y, lw, lh);
+    y += lh + 5;
+  } else { y += 4; }
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(58, 64, 67);
+  doc.text('Unidades Disponiveis', W / 2, y, { align: 'center' }); y += 5;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(114, 122, 125);
+  doc.text(emp.nome, W / 2, y, { align: 'center' }); y += 7;
+
+  var head = ['Tipologia', 'Unidade', 'Area Privativa'];
+  if (!hideSol) head.push('Sol');
+  head.push('Valor Tabela Direta', 'Valor de Avaliacao', 'Valor Associativo/Investidor', 'Desconto');
+
+  var body = list.map(function (u) {
+    var d = unitDisplayData(u);
+    var andarTxt = u.andar === 0 ? 'Terreo' : u.andar + 'o andar';
+    var unidadeTxt = (u.identificador || u.bl) + ' - ' + andarTxt + ' - Final ' + u.f;
+    var row = [u.tipoLabel, unidadeTxt, u.area + ' m2'];
+    if (!hideSol) row.push(d.sol);
+    row.push(fmt(d.vTabela), (u.avaliacao && u.avaliacao > 0) ? fmt(u.avaliacao) : '-', fmt(d.vAssoc), fmt(d.desconto));
+    return row;
+  });
+
+  var moneyCols = hideSol ? [3, 4, 5, 6] : [4, 5, 6, 7];
+  var columnStyles = { 2: { halign: 'right' } };
+  moneyCols.forEach(function (i) { columnStyles[i] = { halign: 'right' }; });
+
+  doc.autoTable({
+    startY: y, margin: { left: M, right: M }, head: [head], body: body, theme: 'grid',
+    headStyles: { fillColor: [228, 3, 43], textColor: 255, fontSize: 8, fontStyle: 'bold' },
+    styles: { fontSize: 7.5, cellPadding: 1.8, textColor: [58, 64, 67], lineColor: [231, 233, 234] },
+    alternateRowStyles: { fillColor: [250, 251, 251] },
+    columnStyles: columnStyles
+  });
+
+  var total = doc.internal.getNumberOfPages();
+  var pad2 = function (n) { return n < 10 ? '0' + n : '' + n; };
+  var hoje = new Date();
+  var dataStr = pad2(hoje.getDate()) + '/' + pad2(hoje.getMonth() + 1) + '/' + hoje.getFullYear();
+  for (var p = 1; p <= total; p++) {
+    doc.setPage(p);
+    var H = doc.internal.pageSize.getHeight();
+    doc.setDrawColor(231, 233, 234); doc.line(M, H - 12, W - M, H - 12);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(114, 122, 125);
+    doc.text('Valores sujeitos a confirmacao e disponibilidade.', M, H - 7);
+    doc.text('Gerado em ' + dataStr + '  -  Pagina ' + p + ' de ' + total, W - M, H - 7, { align: 'right' });
+  }
+
+  var slug = (emp.id || emp.nome).toString().trim().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').toLowerCase();
+  doc.save('unidades-disponiveis-' + slug + '.pdf');
+}
+
 /* ---------- tabs + zoom ---------- */
 function switchTab(id, btn) {
   var secs = document.querySelectorAll('.section');
