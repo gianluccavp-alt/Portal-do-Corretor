@@ -67,7 +67,6 @@ function empHasPremio() {
      Valor Associativo/Investidor = Valor Comercial Minimo
      Valor Tabela Direta          = Valor Comercial Minimo + Folga de Tabela */
 var PROMO_SET = null;          // Set de chaves; null = ainda nao carregou
-var PROMO_INFO = null;         // { atualizadoEm, por } da ultima gravacao
 
 /* Chave da unidade na lista de promocionais. O "Identificador" (BL01-0003) se
    repete entre empreendimentos, entao a chave inclui o nome do empreendimento.
@@ -115,7 +114,6 @@ function loadPromocionais() {
   fetchPromocionais(function (data) {
     // as chaves ja vem normalizadas por chavePromo() quando foram gravadas
     PROMO_SET = new Set(data.identificadores.map(function (s) { return ('' + s).trim(); }));
-    PROMO_INFO = { atualizadoEm: data.atualizadoEm || null, por: data.por || null };
     renderUnits();
   });
 }

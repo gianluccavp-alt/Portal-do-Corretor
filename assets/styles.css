@@ -343,10 +343,7 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
 .promo-bar{position:fixed;left:0;right:0;bottom:0;z-index:200;background:var(--white);border-top:1px solid var(--border);box-shadow:0 -2px 16px rgba(28,22,16,.09);padding:.85rem 2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
 .promo-bar-count{font-size:13px;color:var(--muted)}
 .promo-bar-count strong{font-size:1.15rem;color:var(--text);font-family:'Playfair Display',serif}
-.promo-bar-nome{margin-left:auto;display:flex;align-items:center;gap:8px}
-.promo-bar-nome input{border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;width:180px}
-.promo-bar-nome input:focus{border-color:var(--gold-light)}
-.promo-salvar{display:inline-flex;align-items:center;gap:7px;background:#C9601A;color:#fff;border:none;border-radius:100px;padding:11px 22px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background .18s}
+.promo-salvar{margin-left:auto;display:inline-flex;align-items:center;gap:7px;background:#C9601A;color:#fff;border:none;border-radius:100px;padding:11px 22px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background .18s}
 .promo-salvar:hover:not(:disabled){background:#A94E12}
 .promo-salvar:disabled{opacity:.5;cursor:default}
 .promo-toast{font-size:12.5px;font-weight:500}
@@ -366,6 +363,4 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
 @media (max-width:900px){
   .promo-page{padding:1.25rem 1rem 8rem}
   .promo-bar{padding:.75rem 1rem}
-  .promo-bar-nome{margin-left:0;flex:1 1 100%}
-  .promo-bar-nome input{flex:1}
 }

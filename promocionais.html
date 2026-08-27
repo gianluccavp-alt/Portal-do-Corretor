@@ -46,10 +46,7 @@
 <div class="promo-bar" id="promo-bar" style="display:none">
   <div class="promo-bar-count"><strong id="promo-count">0</strong> unidade(s) marcada(s)</div>
   <span class="promo-toast" id="promo-toast"></span>
-  <div class="promo-bar-nome">
-    <input type="text" id="promo-nome" placeholder="Seu nome" autocomplete="off">
-    <button type="button" class="promo-salvar" id="promo-salvar">Salvar promocionais</button>
-  </div>
+  <button type="button" class="promo-salvar" id="promo-salvar">Salvar promocionais</button>
 </div>
 
 <script src="assets/config.js"></script>
@@ -118,8 +115,7 @@
       if (data.atualizadoEm) {
         var d = new Date(data.atualizadoEm);
         toastEl.className = 'promo-toast';
-        toastEl.textContent = 'Última alteração: ' + d.toLocaleString('pt-BR') +
-          (data.por ? ' por ' + data.por : '');
+        toastEl.textContent = 'Última alteração: ' + d.toLocaleString('pt-BR');
       }
       render();
     });
@@ -149,12 +145,6 @@
       statusEl.textContent = 'Erro: ' + msg;
     });
 
-    // nome do usuario lembrado entre sessoes
-    var nomeEl = document.getElementById('promo-nome');
-    try { nomeEl.value = localStorage.getItem('promo_nome') || ''; } catch (e) { /* ignora */ }
-    nomeEl.addEventListener('change', function () {
-      try { localStorage.setItem('promo_nome', nomeEl.value); } catch (e) { /* ignora */ }
-    });
     document.getElementById('promo-salvar').addEventListener('click', salvar);
   }
 
@@ -363,7 +353,6 @@
   function salvar() {
     var btn = document.getElementById('promo-salvar');
     var ids = idsMarcados();
-    var nome = document.getElementById('promo-nome').value.trim();
     btn.disabled = true;
     toastEl.className = 'promo-toast';
     toastEl.textContent = 'Salvando...';
@@ -383,7 +372,7 @@
     if (!url) {   // modo dev: grava em localStorage para testar em localhost
       try {
         localStorage.setItem('promo_dev_list', JSON.stringify({
-          identificadores: ids, atualizadoEm: new Date().toISOString(), por: nome || 'dev'
+          identificadores: ids, atualizadoEm: new Date().toISOString()
         }));
         ok();
       } catch (e) { erro('localStorage indisponível'); }
@@ -394,7 +383,7 @@
     fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ senha: window.PROMO_SENHA, identificadores: ids, por: nome })
+      body: JSON.stringify({ senha: window.PROMO_SENHA, identificadores: ids })
     })
       .then(function (r) { return r.json(); })
       .then(function (res) {

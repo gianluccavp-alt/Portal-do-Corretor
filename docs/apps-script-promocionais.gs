@@ -27,7 +27,7 @@ var KEY   = 'promocionais_ribeirao';   // chave no PropertiesService
 
 function _ler() {
   var raw = PropertiesService.getScriptProperties().getProperty(KEY);
-  return raw ? JSON.parse(raw) : { identificadores: [], atualizadoEm: null, por: null };
+  return raw ? JSON.parse(raw) : { identificadores: [], atualizadoEm: null };
 }
 
 function _json(obj) {
@@ -41,7 +41,7 @@ function doGet() {
 }
 
 // POST protegido por senha: substitui a lista inteira pelos identificadores enviados.
-// Corpo esperado (string JSON): { senha, identificadores: [...], por }
+// Corpo esperado (string JSON): { senha, identificadores: [...] }
 function doPost(e) {
   var body;
   try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
@@ -62,8 +62,7 @@ function doPost(e) {
 
   var data = {
     identificadores: unicos,
-    atualizadoEm: new Date().toISOString(),
-    por: ('' + (body.por || '')).slice(0, 60)
+    atualizadoEm: new Date().toISOString()
   };
   PropertiesService.getScriptProperties().setProperty(KEY, JSON.stringify(data));
   return _json({ ok: true, total: unicos.length, atualizadoEm: data.atualizadoEm });
