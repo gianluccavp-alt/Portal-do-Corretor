@@ -350,8 +350,6 @@ window.SimUnidades = (function () {
       var ba          = parseBR(valorExato(r, 'B.A. da Unidade'));
       var folgaCampG  = parseBR(valorExato(r, 'Folga Campanha G'));
       var folgaTabela = parseBR(valorExato(r, 'Folga de Tabela'));
-      var folgaComercial   = parseBR(valorExato(r, 'Folga Comercial'));
-      var folgaPromocional = parseBR(valorExato(r, 'Folga Promocional'));
       var avaliacao   = parseBR(valorExato(r, 'Valor de Avaliação Bancária'));
       var areaPriv    = Math.round(parseBR(valorExato(r, 'Área privativa total')));
       var vagasRaw    = valorExato(r, 'Quantidade de vagas');
@@ -362,19 +360,13 @@ window.SimUnidades = (function () {
 
       var tabelaDireta = valorFinal - ba - folgaCampG;
       var associativo  = tabelaDireta - folgaTabela;
-      /* unidade promocional (Folga Promocional > 0): o site de produtos exibe o
-         valor com o desconto comercial/promocional aplicado, não o "cheio" -
-         mesma regra de associativoOf()/tabelaDiretaOf() em assets/data.js */
-      var promocional = folgaPromocional > 0;
-      var assocExibido  = promocional ? (associativo - folgaComercial - folgaPromocional) : associativo;
-      var tabelaExibida = promocional ? (assocExibido + folgaTabela) : tabelaDireta;
       var tipo = classificaTipo(cfg, tipoPlanta, final, andar, n);
 
       detalhes[codigo] = {
         tipoLabel: rotuloTipo(cfg, tipo),
         sol: ehNascente(cfg, n, final) ? 'Nascente' : 'Poente',
         areaPriv: areaPriv, vagas: vagas, avaliacao: avaliacao,
-        tabelaDireta: tabelaExibida, associativo: assocExibido, promocional: promocional
+        tabelaDireta: tabelaDireta, associativo: associativo
       };
     }
 

@@ -10,7 +10,6 @@ var activeSol = 'todos';
 var activeTorre = 'todos';
 var activeVaga = 'todos';    // 'todos' | 'com' (vagas > 0) | 'sem' (vagas = 0)
 var activePremio = 'com';    // 'com' = Com Premio (padrao) | 'sem' = Sem Premio
-var activePromo = 'todos';   // 'todos' | 'promo' (so unidades com Folga Promocional > 0)
 var viewMode = 'list';       // 'list' (padrao) | 'cards'
 var NASCENTE_FINAIS = [3, 4, 5, 6];
 
@@ -37,11 +36,6 @@ function showVagasQtd() {
   var emp = window.CURRENT_EMP;
   return !!(emp && emp._cityId === 'ribeirao-preto');
 }
-// Filtro Promocional (unidades com Folga Promocional > 0) so nos produtos de Ribeirao Preto
-function showPromoFilter() {
-  var emp = window.CURRENT_EMP;
-  return !!(emp && emp._cityId === 'ribeirao-preto');
-}
 var VAGA_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
   '<path d="M5 11l1.6-4.4A2 2 0 0 1 8.5 5h7a2 2 0 0 1 1.9 1.6L19 11"></path>' +
   '<rect x="3" y="11" width="18" height="6" rx="2"></rect>' +
@@ -59,15 +53,10 @@ function empHasPremio() {
   for (var i = 0; i < units.length; i++) if ((units[i].folgaVoltaCx || 0) > 0) return true;
   return false;
 }
-// Badge "Promocional": unidades com Folga Promocional > 0 nos empreendimentos de Ribeirao Preto.
-// Nos empreendimentos com Premio (Botanico e Park), so aparece com o filtro "Sem Premio", pois
-// essas unidades nao podem ser vendidas com Premio. Nos empreendimentos sem Premio (ex.: Ipiranga),
-// nao ha esse filtro para alternar, entao a badge aparece sempre que houver Folga Promocional.
+// Badge "Promocional" temporariamente desativada ate definirmos outra forma de
+// marcar unidades promocionais (a regra "Folga Promocional > 0" gerava falsos positivos).
 function promoBadgeHtml(u) {
-  if (!(u.folgaPromocional > 0)) return '';
-  if (empHasPremio() && activePremio !== 'sem') return '';
-  return '<span class="u-badge-promo">Promocional' + INFO_SVG +
-    '<span class="u-tooltip">Unidades promocionais n&atilde;o podem ser vendidas com Pr&ecirc;mio.</span></span>';
+  return '';
 }
 function getSolIcon(u) { return unitNascente(u) ? '&#9728;' : '&#9790;'; }
 function fmt(v) { return v.toLocaleString('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits:0 }); }
@@ -286,10 +275,6 @@ function rowsToUnits(rows, empSheetName) {
     var tabelaDireta = valorFinal - ba - folgaCampG;
     // Valor Associativo/Investidor = Tabela Direta - Folga de Tabela
     var associativo  = tabelaDireta - folgaTabela;
-    // Unidade promocional (Folga Promocional > 0): Associativo - Folga Comercial - Folga Promocional
-    var unidadePromocional = associativo - folgaComercial - folgaPromocional;
-    // Tabela Direta da unidade promocional: Unidade Promocional + Folga de Tabela
-    var unidadePromocionalTabelaDireta = unidadePromocional + folgaTabela;
 
     if (tabelaDireta <= 0) continue;
 
@@ -314,8 +299,7 @@ function rowsToUnits(rows, empSheetName) {
       ap: apStr, num: apNum, bl: bl, f: final, andar: andar,
       tipo: tipo, tipoLabel: tipoLabelFor(window.CURRENT_EMP, tipo),
       area: areaPriv > 0 ? areaPriv : (AREA_MAP[tipo] || 48),
-      tabelaDireta: tabelaDireta, associativo: associativo, unidadePromocional: unidadePromocional,
-      unidadePromocionalTabelaDireta: unidadePromocionalTabelaDireta,
+      tabelaDireta: tabelaDireta, associativo: associativo,
       folgaTabela: folgaTabela, folgaVoltaCx: folgaVoltaCx,
       folgaPromocional: folgaPromocional, identificador: identificador,
       avaliacao: avaliacao, vagas: vagas,
@@ -367,17 +351,6 @@ function setSortOpt(v, btn) {
   ddSelect('[id^="sort-opt-"]', 'sort-val', btn);
   renderUnits();
 }
-// Filtro Promocional: em empreendimentos com Premio, forca o filtro Premio para
-// "Sem Premio" (as promocionais so aparecem nesse estado), depois filtra a lista.
-function setPromo(p, btn) {
-  activePromo = p;
-  ddSelect('[id^="promo-opt-"]', 'promo-val', btn);
-  if (p === 'promo' && empHasPremio() && activePremio !== 'sem') {
-    var semBtn = document.getElementById('premio-opt-sem');
-    if (semBtn) { setPremio('sem', semBtn); return; }  // setPremio ja chama renderUnits()
-  }
-  renderUnits();
-}
 function clearTipo() {
   var opt = document.getElementById('tipo-opt-todos');
   if (opt) setFilter('todos', opt);
@@ -397,10 +370,6 @@ function clearTorre() {
 function clearVaga() {
   var opt = document.getElementById('vaga-opt-todos');
   if (opt) setVaga('todos', opt);
-}
-function clearPromo() {
-  var opt = document.getElementById('promo-opt-todos');
-  if (opt) setPromo('todos', opt);
 }
 
 /* Mostra o dropdown de Premio apenas se ao menos uma unidade tiver
@@ -431,10 +400,8 @@ function updateVagaVisibility() {
 
 /* "Sem Premio" subtrai a Folga Volta ao Caixa dos valores exibidos */
 function premioAdj(u)      { return activePremio === 'sem' ? (u.folgaVoltaCx || 0) : 0; }
-// Unidade promocional (Folga Promocional > 0) exibe a Tabela Direta calculada a partir do Valor Promocional
-function tabelaDiretaOf(u) { return (u.folgaPromocional > 0) ? u.unidadePromocionalTabelaDireta : (u.tabelaDireta - premioAdj(u)); }
-// Unidade promocional (Folga Promocional > 0) exibe o Valor Promocional no lugar do Associativo
-function associativoOf(u)  { return (u.folgaPromocional > 0) ? u.unidadePromocional : (u.associativo - premioAdj(u)); }
+function tabelaDiretaOf(u) { return u.tabelaDireta - premioAdj(u); }
+function associativoOf(u)  { return u.associativo - premioAdj(u); }
 
 /* ---------- render ---------- */
 function renderUnits() {
@@ -474,7 +441,6 @@ function renderUnits() {
       if (activeVaga === 'com' && u.vagas <= 0) continue;
       if (activeVaga === 'sem' && u.vagas > 0) continue;
     }
-    if (activePromo === 'promo' && !(u.folgaPromocional > 0)) continue;
     list.push(u);
   }
 

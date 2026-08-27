@@ -249,16 +249,6 @@
       '<input type="hidden" id="sort" value="num-asc">';
   }
 
-  // filtro Promocional (apenas produtos de Ribeirao Preto): exibe so as unidades com a tag Promocional
-  function promoDropdownHtml() {
-    if (!showPromoFilter()) return '';
-    var opts = ddOpt('Todas', true, "setPromo('todos',this)").replace('class="fdd-opt', 'id="promo-opt-todos" class="fdd-opt') +
-      ddOpt('Promocional', false, "setPromo('promo',this)").replace('class="fdd-opt', 'id="promo-opt-promo" class="fdd-opt') +
-      '<button class="fdd-clear" onclick="clearPromo()"><span>Limpar filtros</span>' + TRASH_SVG + '</button>';
-    return dropdown('Promocional', 'promo-val', opts)
-      .replace('id="promo-val">Todos', 'id="promo-val">Todas')
-      .replace('<div class="fdd">', '<div class="fdd" id="promo-row">');
-  }
   function placeholder(txt) {
     return '<div class="ph"><div class="ph-icon">&#128247;</div><div>Imagens em breve</div><small>' + txt + '</small></div>';
   }
@@ -369,7 +359,6 @@
       torreDropdownHtml() +
       vagaDropdownHtml() +
       sortDropdownHtml() +
-      promoDropdownHtml() +
       '<div class="fcount"><strong id="count-label">0</strong> unidades</div>' +
     '</div>' +
     '<div class="view-toggle">' +
