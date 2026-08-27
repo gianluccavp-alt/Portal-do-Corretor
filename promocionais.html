@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Unidades Promocionais · Uso interno</title>
+<link rel="icon" type="image/webp" href="assets/img/favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<!-- gate de senha: barreira simples contra corretores, NAO e seguranca real -->
+<div class="promo-gate" id="promo-gate">
+  <div class="promo-gate-box">
+    <h1>Unidades Promocionais</h1>
+    <p>Área de uso interno do time comercial.</p>
+    <form id="gate-form">
+      <input type="password" id="gate-input" placeholder="Senha" autocomplete="off">
+      <button type="submit" id="gate-btn">Entrar</button>
+    </form>
+    <div class="promo-gate-err" id="gate-err"></div>
+  </div>
+</div>
+
+<div class="promo-page" id="promo-page" style="display:none">
+  <div class="promo-head">
+    <div>
+      <div class="promo-title">Unidades Promocionais</div>
+      <div class="promo-sub">
+        Marque as unidades que devem aparecer como <strong>Promocional</strong> no site.
+        O valor exibido vem do <strong>Valor Comercial Mínimo</strong> da planilha, então acompanha
+        sozinho os reajustes de tabela. Marque só depois de acertar o VCM no Salesforce.
+      </div>
+    </div>
+    <div class="promo-status" id="promo-status">Carregando planilha...</div>
+  </div>
+
+  <div class="filter-bar" id="promo-filters"></div>
+
+  <div class="units-grid list-view" id="promo-grid"></div>
+</div>
+
+<div class="promo-bar" id="promo-bar" style="display:none">
+  <div class="promo-bar-count"><strong id="promo-count">0</strong> unidade(s) marcada(s)</div>
+  <span class="promo-toast" id="promo-toast"></span>
+  <button type="button" class="promo-salvar" id="promo-salvar">Salvar promocionais</button>
+</div>
+
+<script src="assets/config.js"></script>
+<script src="assets/data.js"></script>
+<script>
+(function () {
+  var CITY_ID = 'ribeirao-preto';
+
+  /* ---------- gate de senha ---------- */
+  var gate = document.getElementById('promo-gate');
+  var gateInput = document.getElementById('gate-input');
+  var gateErr = document.getElementById('gate-err');
+
+  var aberta = false;
+  function abrirPagina() {
+    if (aberta) return;       // evita carregar tudo duas vezes
+    aberta = true;
+    gate.style.display = 'none';
+    document.getElementById('promo-page').style.display = '';
+    document.getElementById('promo-bar').style.display = '';
+    iniciar();
+  }
+  function tentarEntrar(ev) {
+    if (ev) ev.preventDefault();
+    if (gateInput.value === window.PROMO_SENHA) {
+      try { sessionStorage.setItem('promo_auth', '1'); } catch (e) { /* ignora */ }
+      abrirPagina();
+    } else {
+      gateErr.textContent = 'Senha incorreta.';
+      gateInput.value = '';
+      gateInput.focus();
+    }
+  }
+  document.getElementById('gate-form').addEventListener('submit', tentarEntrar);
+
+  /* ---------- estado ---------- */
+  var TODAS = [];            // todas as unidades dos empreendimentos de RP
+  var MARCADAS = {};         // { promoKey: true } (chave = empreendimento::identificador)
+  var EMPS = [];             // empreendimentos de RP (do config)
+  var fEmp = 'todos', fTipo = 'todos', fSol = 'todos', fTorre = 'todos', fVaga = 'todos';
+  var fBusca = '', fOrder = 'num-asc';
+
+  var statusEl = document.getElementById('promo-status');
+  var gridEl = document.getElementById('promo-grid');
+  var countEl = document.getElementById('promo-count');
+  var toastEl = document.getElementById('promo-toast');
+
+  /* ---------- carga ---------- */
+  function iniciar() {
+    for (var c = 0; c < window.CITIES.length; c++) {
+      if (window.CITIES[c].id !== CITY_ID) continue;
+      var lista = window.CITIES[c].empreendimentos;
+      for (var e = 0; e < lista.length; e++) {
+        var obj = lista[e];
+        obj._cityId = CITY_ID;
+        EMPS.push(obj);
+      }
+    }
+
+    // lista promocional atual (Web App ou localStorage em modo dev)
+    fetchPromocionais(function (data) {
+      MARCADAS = {};
+      for (var i = 0; i < data.identificadores.length; i++) {
+        MARCADAS[('' + data.identificadores[i]).trim()] = true;
+      }
+      if (data.atualizadoEm) {
+        var d = new Date(data.atualizadoEm);
+        toastEl.className = 'promo-toast';
+        toastEl.textContent = 'Última alteração: ' + d.toLocaleString('pt-BR');
+      }
+      render();
+    });
+
+    fetchSheetCsv(function (text) {
+      var rows = parseCSV(text);
+      if (!rows || !rows.length) { statusEl.textContent = 'Planilha vazia ou formato inesperado.'; return; }
+      // rowsToUnits usa window.CURRENT_EMP para tipo/sol/torres; roda uma vez por empreendimento
+      TODAS = [];
+      for (var i = 0; i < EMPS.length; i++) {
+        var emp = EMPS[i];
+        window.CURRENT_EMP = emp;
+        var us = rowsToUnits(rows, emp.sheetName);
+        for (var j = 0; j < us.length; j++) {
+          us[j]._empId = emp.id;
+          us[j]._empNome = emp.nome;
+          us[j]._sol = getSol(us[j]);      // depende de CURRENT_EMP: resolve agora
+          TODAS.push(us[j]);
+        }
+      }
+      window.CURRENT_EMP = null;
+      statusEl.innerHTML = '<strong>' + TODAS.length + '</strong> unidades disponíveis · ' +
+        EMPS.length + ' empreendimentos de Ribeirão Preto';
+      montarFiltros();
+      render();
+    }, function (msg) {
+      statusEl.textContent = 'Erro: ' + msg;
+    });
+
+    document.getElementById('promo-salvar').addEventListener('click', salvar);
+  }
+
+  /* ---------- filtros ---------- */
+  /* mesmos SVGs/estrutura dos dropdowns da pagina de empreendimento */
+  var CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+  var CHEV_SVG = '<svg class="fdd-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+
+  function dd(label, valId, opts, valorInicial) {
+    return '<div class="fdd">' +
+      '<button class="fdd-btn" type="button"><span class="fdd-lbl">' + label + '</span>' +
+      '<span class="fdd-val" id="' + valId + '">' + valorInicial + '</span>' + CHEV_SVG + '</button>' +
+      '<div class="fdd-panel">' + opts + '</div>' +
+    '</div>';
+  }
+  function opt(label, on, grupo, valor) {
+    return '<button type="button" class="fdd-opt' + (on ? ' on' : '') + '" data-grupo="' + grupo +
+      '" data-valor="' + valor + '"><span>' + label + '</span>' + CHECK_SVG + '</button>';
+  }
+
+  function montarFiltros() {
+    // Tipo: uniao dos tipos dos 4 empreendimentos, dedup por label
+    var labels = [], vistos = {};
+    for (var i = 0; i < TODAS.length; i++) {
+      var l = TODAS[i].tipoLabel;
+      if (l && !vistos[l]) { vistos[l] = 1; labels.push(l); }
+    }
+    labels.sort();
+
+    var empOpts = opt('Todos', true, 'emp', 'todos');
+    for (var e = 0; e < EMPS.length; e++) empOpts += opt(EMPS[e].nome, false, 'emp', EMPS[e].id);
+
+    var tipoOpts = opt('Todos', true, 'tipo', 'todos');
+    for (var t = 0; t < labels.length; t++) tipoOpts += opt(labels[t], false, 'tipo', labels[t]);
+
+    var torreOpts = opt('Todas', true, 'torre', 'todos');
+    for (var n = 1; n <= 4; n++) torreOpts += opt('Torre ' + n, false, 'torre', String(n));
+
+    document.getElementById('promo-filters').innerHTML =
+      dd('Empreendimento', 'f-emp', empOpts, 'Todos') +
+      dd('Tipo', 'f-tipo', tipoOpts, 'Todos') +
+      dd('Sol', 'f-sol',
+        opt('Todos', true, 'sol', 'todos') +
+        opt('&#9728; Nascente', false, 'sol', 'Nascente') +
+        opt('&#9790; Poente', false, 'sol', 'Poente'), 'Todos') +
+      dd('Torre', 'f-torre', torreOpts, 'Todas') +
+      dd('Vaga', 'f-vaga',
+        opt('Todas', true, 'vaga', 'todos') +
+        opt('Com vaga', false, 'vaga', 'com') +
+        opt('Sem vaga', false, 'vaga', 'sem'), 'Todas') +
+      dd('Ordenar', 'f-ordem',
+        opt('Numeração', true, 'ordem', 'num-asc') +
+        opt('Menor preço', false, 'ordem', 'venda-asc') +
+        opt('Maior preço', false, 'ordem', 'venda-desc') +
+        opt('Marcadas primeiro', false, 'ordem', 'marcadas'), 'Numeração') +
+      '<div class="promo-search"><input type="text" id="f-busca" placeholder="Buscar identificador (BL01-0088)"></div>';
+
+    // dropdowns abrem no clique (mesmo comportamento da pagina de empreendimento)
+    document.querySelectorAll('#promo-filters .fdd-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        var fdd = btn.parentElement;
+        var aberto = fdd.classList.contains('open');
+        document.querySelectorAll('.fdd.open').forEach(function (f) { f.classList.remove('open'); });
+        if (!aberto) fdd.classList.add('open');
+      });
+    });
+    document.addEventListener('click', function () {
+      document.querySelectorAll('.fdd.open').forEach(function (f) { f.classList.remove('open'); });
+    });
+
+    document.querySelectorAll('#promo-filters .fdd-opt').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var grupo = b.getAttribute('data-grupo'), valor = b.getAttribute('data-valor');
+        if (grupo === 'emp') fEmp = valor;
+        if (grupo === 'tipo') fTipo = valor;
+        if (grupo === 'sol') fSol = valor;
+        if (grupo === 'torre') fTorre = valor;
+        if (grupo === 'vaga') fVaga = valor;
+        if (grupo === 'ordem') fOrder = valor;
+
+        var menu = b.parentElement;
+        menu.querySelectorAll('.fdd-opt').forEach(function (o) { o.classList.remove('on'); });
+        b.classList.add('on');
+        var fdd = menu.parentElement;
+        var val = fdd.querySelector('.fdd-val');
+        if (val) val.innerHTML = b.querySelector('span').innerHTML;
+        fdd.classList.remove('open');
+        render();
+      });
+    });
+
+    document.getElementById('f-busca').addEventListener('input', function (ev) {
+      fBusca = ev.target.value.trim().toUpperCase();
+      render();
+    });
+  }
+
+  /* ---------- render ---------- */
+  // VCM valido = existe e desconta de verdade em relacao ao associativo normal
+  function vcmValido(u) { return u.vcm > 0 && u.vcm < u.associativo; }
+
+  function filtradas() {
+    var out = [];
+    for (var i = 0; i < TODAS.length; i++) {
+      var u = TODAS[i];
+      if (fEmp !== 'todos' && u._empId !== fEmp) continue;
+      if (fTipo !== 'todos' && u.tipoLabel !== fTipo) continue;
+      if (fSol !== 'todos' && u._sol !== fSol) continue;
+      if (fTorre !== 'todos' && String(blocoNum(u.bl)) !== fTorre) continue;
+      if (fVaga !== 'todos') {
+        if (u.vagas == null) continue;
+        if (fVaga === 'com' && u.vagas <= 0) continue;
+        if (fVaga === 'sem' && u.vagas > 0) continue;
+      }
+      if (fBusca && ('' + (u.identificador || '')).toUpperCase().indexOf(fBusca) < 0) continue;
+      out.push(u);
+    }
+    out.sort(function (a, b) {
+      if (fOrder === 'venda-asc') return a.associativo - b.associativo;
+      if (fOrder === 'venda-desc') return b.associativo - a.associativo;
+      if (fOrder === 'marcadas') {
+        var ma = MARCADAS[a.promoKey] ? 0 : 1, mb = MARCADAS[b.promoKey] ? 0 : 1;
+        if (ma !== mb) return ma - mb;
+      }
+      if (a._empNome !== b._empNome) return a._empNome < b._empNome ? -1 : 1;
+      var tA = blocoNum(a.bl), tB = blocoNum(b.bl);
+      if (tA !== tB) return tA - tB;
+      if (a.andar !== b.andar) return a.andar - b.andar;
+      return a.f - b.f;
+    });
+    return out;
+  }
+
+  function linhaHtml(u) {
+    var id = u.identificador || '';
+    var marcada = !!MARCADAS[u.promoKey];
+    var valido = vcmValido(u);
+    var andarLabel = u.andar === 0 ? 'Terreo' : u.andar + '<sup>o</sup> andar';
+
+    var h = '<div class="u-row' + (marcada ? ' on' : '') + (valido ? '' : ' invalida') + '">';
+    h += '<div class="promo-check"><input type="checkbox" data-key="' + u.promoKey + '"' +
+      (marcada ? ' checked' : '') + (valido ? '' : ' disabled') + '></div>';
+
+    h += '<div class="u-row-id">';
+    h += '<div class="promo-emp">' + u._empNome + '</div>';
+    h += '<div class="u-row-tipo-line"><div class="u-tipo">' + u.tipoLabel + '</div>' + vagasBadgeHtml(u) + '</div>';
+    h += '<div class="u-ap">' + id + ' &middot; ' + andarLabel + ' &middot; Final ' + u.f + '</div>';
+    h += '</div>';
+
+    h += '<div class="u-row-stats">';
+    h += '<div class="u-row-stat"><div class="u-price-lbl">Tabela Direta atual</div><div class="u-price">' + fmt(u.tabelaDireta) + '</div></div>';
+    h += '<div class="u-row-stat"><div class="u-price-lbl">Associativo atual</div><div class="u-price u-price-sm">' + fmt(u.associativo) + '</div></div>';
+    h += '<div class="u-row-stat"><div class="u-meta-k">Sol</div><div class="u-meta-v">' + u._sol + '</div></div>';
+    h += '</div>';
+
+    if (valido) {
+      h += '<div class="u-row-desc">' +
+        '<span class="u-desc-lbl">Promocional (VCM)</span>' +
+        '<span class="u-desc-val">' + fmt(u.vcm) + '</span>' +
+        '<span class="u-desc-off">Tabela Direta ' + fmt(u.vcm + u.folgaTabela) + '</span>' +
+        '</div>';
+    } else if (u.vcm <= 0) {
+      h += '<div class="promo-aviso">Sem <strong>Valor Comercial M&iacute;nimo</strong> na planilha. ' +
+        'Preencha no Salesforce antes de marcar esta unidade.</div>';
+    } else {
+      h += '<div class="promo-aviso">O <strong>Valor Comercial M&iacute;nimo</strong> (' + fmt(u.vcm) +
+        ') n&atilde;o desconta nada em rela&ccedil;&atilde;o ao associativo atual (' + fmt(u.associativo) +
+        '). Ajuste no Salesforce antes de marcar.</div>';
+    }
+    h += '</div>';
+    return h;
+  }
+
+  function render() {
+    if (!TODAS.length) return;
+    var list = filtradas();
+
+    if (!list.length) {
+      gridEl.innerHTML = '<div class="empty"><div class="empty-icon">&#128269;</div><p>Nenhuma unidade para esse filtro.</p></div>';
+    } else {
+      var html = '';
+      for (var i = 0; i < list.length; i++) html += linhaHtml(list[i]);
+      gridEl.innerHTML = html;
+
+      gridEl.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+        cb.addEventListener('change', function () {
+          var k = cb.getAttribute('data-key');
+          if (cb.checked) MARCADAS[k] = true; else delete MARCADAS[k];
+          cb.closest('.u-row').classList.toggle('on', cb.checked);
+          atualizaContador();
+        });
+      });
+    }
+    atualizaContador();
+  }
+
+  function idsMarcados() {
+    var ids = [];
+    for (var k in MARCADAS) if (MARCADAS[k]) ids.push(k);
+    return ids.sort();
+  }
+  function atualizaContador() { countEl.textContent = idsMarcados().length; }
+
+  /* ---------- salvar ---------- */
+  function salvar() {
+    var btn = document.getElementById('promo-salvar');
+    var ids = idsMarcados();
+    btn.disabled = true;
+    toastEl.className = 'promo-toast';
+    toastEl.textContent = 'Salvando...';
+
+    function ok() {
+      btn.disabled = false;
+      toastEl.className = 'promo-toast ok';
+      toastEl.textContent = ids.length + ' unidade(s) salva(s). O site atualiza no próximo carregamento.';
+    }
+    function erro(msg) {
+      btn.disabled = false;
+      toastEl.className = 'promo-toast err';
+      toastEl.textContent = 'Erro ao salvar: ' + msg;
+    }
+
+    var url = window.PROMO_APPS_SCRIPT_URL;
+    if (!url) {   // modo dev: grava em localStorage para testar em localhost
+      try {
+        localStorage.setItem('promo_dev_list', JSON.stringify({
+          identificadores: ids, atualizadoEm: new Date().toISOString()
+        }));
+        ok();
+      } catch (e) { erro('localStorage indisponível'); }
+      return;
+    }
+
+    // text/plain evita o preflight CORS; o Apps Script le e.postData.contents igual
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ senha: window.PROMO_SENHA, identificadores: ids })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res && res.ok) ok();
+        else erro(res && res.erro === 'senha' ? 'senha do Apps Script não confere' : 'resposta inesperada');
+      })
+      .catch(function () { erro('não foi possível contatar o Apps Script'); });
+  }
+
+  /* Por ultimo: se a sessao ja passou pelo gate, entra direto.
+     Fica no fim porque iniciar() depende das variaveis declaradas acima. */
+  var jaAutenticado = false;
+  try { jaAutenticado = sessionStorage.getItem('promo_auth') === '1'; } catch (e) { /* ignora */ }
+  if (jaAutenticado) abrirPagina(); else gateInput.focus();
+})();
+</script>
+</body>
+</html>

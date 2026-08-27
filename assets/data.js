@@ -10,6 +10,7 @@ var activeSol = 'todos';
 var activeTorre = 'todos';
 var activeVaga = 'todos';    // 'todos' | 'com' (vagas > 0) | 'sem' (vagas = 0)
 var activePremio = 'com';    // 'com' = Com Premio (padrao) | 'sem' = Sem Premio
+var activePromo = 'todos';   // 'todos' | 'promo' (so as unidades marcadas em /promocionais)
 var viewMode = 'list';       // 'list' (padrao) | 'cards'
 var NASCENTE_FINAIS = [3, 4, 5, 6];
 
@@ -36,6 +37,11 @@ function showVagasQtd() {
   var emp = window.CURRENT_EMP;
   return !!(emp && emp._cityId === 'ribeirao-preto');
 }
+// Filtro Promocional so nos produtos de Ribeirao Preto (mesma regra da badge)
+function showPromoFilter() {
+  var emp = window.CURRENT_EMP;
+  return !!(emp && emp._cityId === 'ribeirao-preto');
+}
 var VAGA_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
   '<path d="M5 11l1.6-4.4A2 2 0 0 1 8.5 5h7a2 2 0 0 1 1.9 1.6L19 11"></path>' +
   '<rect x="3" y="11" width="18" height="6" rx="2"></rect>' +
@@ -53,10 +59,74 @@ function empHasPremio() {
   for (var i = 0; i < units.length; i++) if ((units[i].folgaVoltaCx || 0) > 0) return true;
   return false;
 }
-// Badge "Promocional" temporariamente desativada ate definirmos outra forma de
-// marcar unidades promocionais (a regra "Folga Promocional > 0" gerava falsos positivos).
+/* ---------- unidades promocionais ----------
+   A lista de unidades promocionais e escolhida a dedo pelo comercial na pagina
+   /promocionais e guardada por "Identificador" (ex.: BL01-0088). O valor
+   promocional vem da coluna "Valor Comercial Minimo" da planilha - assim ele
+   acompanha sozinho reajustes de tabela/INCC.
+     Valor Associativo/Investidor = Valor Comercial Minimo
+     Valor Tabela Direta          = Valor Comercial Minimo + Folga de Tabela */
+var PROMO_SET = null;          // Set de chaves; null = ainda nao carregou
+
+/* Chave da unidade na lista de promocionais. O "Identificador" (BL01-0003) se
+   repete entre empreendimentos, entao a chave inclui o nome do empreendimento.
+   ATENCAO: assets/simuladores.js tem uma copia identica desta funcao - as duas
+   precisam gerar exatamente a mesma chave. */
+function chavePromo(nomeEmp, identificador) {
+  var e = ('' + (nomeEmp || '')).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+  return e + '::' + ('' + (identificador || '')).trim().toUpperCase();
+}
+
+/* Fail-safe: unidade marcada mas com VCM ausente/incoerente e tratada como
+   normal (sem badge, valores cheios) em vez de exibir um valor errado. */
+function isPromo(u) {
+  if (!PROMO_SET || !u.promoKey || !PROMO_SET.has(u.promoKey)) return false;
+  return u.vcm > 0 && u.vcm < u.associativo;
+}
+
+/* Le a lista de promocionais. Sem PROMO_APPS_SCRIPT_URL configurada, cai no
+   modo dev (localStorage), que permite testar o fluxo inteiro em localhost. */
+var PROMO_DEV_KEY = 'promo_dev_list';
+function fetchPromocionais(onOk, onErr) {
+  var url = window.PROMO_APPS_SCRIPT_URL;
+  if (!url) {
+    var raw = null;
+    try { raw = localStorage.getItem(PROMO_DEV_KEY); } catch (e) { raw = null; }
+    var dev = { identificadores: [], atualizadoEm: null, por: null };
+    if (raw) { try { dev = JSON.parse(raw) || dev; } catch (e2) { /* ignora */ } }
+    onOk(dev);
+    return;
+  }
+  fetch(url)
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (data) {
+      if (data && data.identificadores) onOk(data);
+      else if (onErr) onErr();
+    })
+    .catch(function () { if (onErr) onErr(); });
+}
+
+/* Carrega a lista e re-renderiza. So roda em Ribeirao Preto - nos demais
+   empreendimentos nem chega a fazer a requisicao. */
+function loadPromocionais() {
+  if (!showPromoFilter()) return;
+  fetchPromocionais(function (data) {
+    // as chaves ja vem normalizadas por chavePromo() quando foram gravadas
+    PROMO_SET = new Set(data.identificadores.map(function (s) { return ('' + s).trim(); }));
+    renderUnits();
+  });
+}
+
+/* Badge "Promocional": aparece SEMPRE que a unidade for promocional, em qualquer
+   estado dos filtros. O valor promocional tambem e sempre exibido (isPromo nao
+   olha o filtro de Premio), entao esconder a badge confundiria o corretor - ele
+   veria o preco com desconto sem saber que e promocional. O aviso de que nao
+   pode ser vendida com Premio fica na tooltip. */
 function promoBadgeHtml(u) {
-  return '';
+  if (!isPromo(u)) return '';
+  return '<span class="u-badge-promo">Promocional' + INFO_SVG +
+    '<span class="u-tooltip">Unidades promocionais n&atilde;o podem ser vendidas com Pr&ecirc;mio.</span></span>';
 }
 function getSolIcon(u) { return unitNascente(u) ? '&#9728;' : '&#9790;'; }
 function fmt(v) { return v.toLocaleString('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits:0 }); }
@@ -262,13 +332,13 @@ function rowsToUnits(rows, empSheetName) {
     var folgaCampG   = parseBR(findFirst(r, [['folga', 'campanha', 'g'], ['folga', 'campanha']]));
     var folgaTabela  = parseBR(findFirst(r, [['folga', 'de', 'tabela'], ['folga', 'tabela']]));
     var folgaVoltaCx = parseBR(findFirst(r, [['folga', 'volta', 'caixa'], ['folga', 'volta']]));
-    // Folga Comercial, Folga Promocional e Identificador: exclusivos dos empreendimentos de Ribeirao Preto.
+    // Valor Comercial Minimo e Identificador: usados pelas unidades promocionais (Ribeirao Preto).
+    // O matcher casa "Valor Comercial Minimo" e nao "VCM considerando Desconto Campanha".
     var isRibeiraoPreto = !!(window.CURRENT_EMP && window.CURRENT_EMP._cityId === 'ribeirao-preto');
-    var folgaComercial = 0, folgaPromocional = 0, identificador = '';
+    var vcm = 0, identificador = '';
     if (isRibeiraoPreto) {
-      folgaComercial   = parseBR(findFirst(r, [['folga', 'comercial']]));
-      folgaPromocional = parseBR(findFirst(r, [['folga', 'promocional']]));
-      identificador    = findFirst(r, [['identificador']]);
+      vcm           = parseBR(findFirst(r, [['valor', 'comercial', 'minimo']]));
+      identificador = findFirst(r, [['identificador']]);
     }
 
     // Valor Tabela Direta = Valor Final Com Kit - B.A. da Unidade - Folga Campanha "G"
@@ -301,7 +371,8 @@ function rowsToUnits(rows, empSheetName) {
       area: areaPriv > 0 ? areaPriv : (AREA_MAP[tipo] || 48),
       tabelaDireta: tabelaDireta, associativo: associativo,
       folgaTabela: folgaTabela, folgaVoltaCx: folgaVoltaCx,
-      folgaPromocional: folgaPromocional, identificador: identificador,
+      vcm: vcm, identificador: identificador,
+      promoKey: isRibeiraoPreto ? chavePromo(empSheetName, identificador) : '',
       avaliacao: avaliacao, vagas: vagas,
       valorFinal: valorFinal, ba: ba, folgaCampG: folgaCampG,
       bonusAdimplencia: bonusAdimplencia
@@ -351,6 +422,17 @@ function setSortOpt(v, btn) {
   ddSelect('[id^="sort-opt-"]', 'sort-val', btn);
   renderUnits();
 }
+// Filtro Promocional: em empreendimentos com Premio, forca o filtro Premio para
+// "Sem Premio" (as promocionais so aparecem nesse estado), depois filtra a lista.
+function setPromo(p, btn) {
+  activePromo = p;
+  ddSelect('[id^="promo-opt-"]', 'promo-val', btn);
+  if (p === 'promo' && empHasPremio() && activePremio !== 'sem') {
+    var semBtn = document.getElementById('premio-opt-sem');
+    if (semBtn) { setPremio('sem', semBtn); return; }  // setPremio ja chama renderUnits()
+  }
+  renderUnits();
+}
 function clearTipo() {
   var opt = document.getElementById('tipo-opt-todos');
   if (opt) setFilter('todos', opt);
@@ -370,6 +452,10 @@ function clearTorre() {
 function clearVaga() {
   var opt = document.getElementById('vaga-opt-todos');
   if (opt) setVaga('todos', opt);
+}
+function clearPromo() {
+  var opt = document.getElementById('promo-opt-todos');
+  if (opt) setPromo('todos', opt);
 }
 
 /* Mostra o dropdown de Premio apenas se ao menos uma unidade tiver
@@ -400,8 +486,11 @@ function updateVagaVisibility() {
 
 /* "Sem Premio" subtrai a Folga Volta ao Caixa dos valores exibidos */
 function premioAdj(u)      { return activePremio === 'sem' ? (u.folgaVoltaCx || 0) : 0; }
-function tabelaDiretaOf(u) { return u.tabelaDireta - premioAdj(u); }
-function associativoOf(u)  { return u.associativo - premioAdj(u); }
+/* Unidade promocional exibe o Valor Comercial Minimo no lugar do Associativo, e
+   VCM + Folga de Tabela no lugar da Tabela Direta. Valor absoluto: nao sofre o
+   ajuste de Premio (promocional e Premio nao se combinam). */
+function tabelaDiretaOf(u) { return isPromo(u) ? (u.vcm + u.folgaTabela) : (u.tabelaDireta - premioAdj(u)); }
+function associativoOf(u)  { return isPromo(u) ? u.vcm                   : (u.associativo - premioAdj(u)); }
 
 /* ---------- render ---------- */
 function renderUnits() {
@@ -441,6 +530,7 @@ function renderUnits() {
       if (activeVaga === 'com' && u.vagas <= 0) continue;
       if (activeVaga === 'sem' && u.vagas > 0) continue;
     }
+    if (activePromo === 'promo' && !isPromo(u)) continue;
     list.push(u);
   }
 
@@ -669,7 +759,30 @@ function initZoom() {
   })(zoomables[i]);
 }
 
-/* ---------- fetch da planilha ---------- */
+/* ---------- fetch da planilha ----------
+   Tenta a URL direta e, se falhar (CORS/erro), dois proxies publicos.
+   Compartilhado entre a pagina de empreendimento e /promocionais. */
+function fetchSheetCsv(onText, onErr) {
+  var CSV_URL = window.SHEET_CSV_URL;
+  function tryUrl(url, nextFn) {
+    fetch(url)
+      .then(function (r) { if (!r.ok) { nextFn(); return; } return r.text(); })
+      .then(function (text) {
+        if (text === undefined) return;
+        if (!text || text.trim().charAt(0) === '<') { nextFn(); return; }
+        onText(text);
+      })
+      .catch(function () { nextFn(); });
+  }
+  tryUrl(CSV_URL, function () {
+    tryUrl('https://corsproxy.io/?' + encodeURIComponent(CSV_URL), function () {
+      tryUrl('https://api.allorigins.win/raw?url=' + encodeURIComponent(CSV_URL), function () {
+        onErr('Não foi possível acessar a planilha após 3 tentativas.');
+      });
+    });
+  });
+}
+
 function doUpdate() {
   var btn    = document.getElementById('btn-update');
   var status = document.getElementById('update-status');
@@ -708,22 +821,5 @@ function doUpdate() {
     var luEl = document.getElementById('last-update'); if (luEl) luEl.textContent = 'Atualizado as ' + hm;
     finish(true, newUnits.length + ' unidades carregadas');
   }
-  function tryUrl(url, nextFn) {
-    fetch(url)
-      .then(function (r) { if (!r.ok) { nextFn(); return; } return r.text(); })
-      .then(function (text) {
-        if (text === undefined) return;
-        if (!text || text.trim().charAt(0) === '<') { nextFn(); return; }
-        processCSV(text);
-      })
-      .catch(function () { nextFn(); });
-  }
-  var CSV_URL = window.SHEET_CSV_URL;
-  tryUrl(CSV_URL, function () {
-    tryUrl('https://corsproxy.io/?' + encodeURIComponent(CSV_URL), function () {
-      tryUrl('https://api.allorigins.win/raw?url=' + encodeURIComponent(CSV_URL), function () {
-        finish(false, 'Não foi possível acessar a planilha após 3 tentativas.');
-      });
-    });
-  });
+  fetchSheetCsv(processCSV, function (msg) { finish(false, msg); });
 }
