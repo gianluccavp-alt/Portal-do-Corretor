@@ -79,9 +79,46 @@ window.SimUnidades = (function () {
   var linhas = null;
   var erroMsg = '';
   var ouvintes = [];
+  /* chaves das unidades promocionais (marcadas em /promocionais);
+     null = ainda nao carregou. Mesma fonte usada pelo site de produtos. */
+  var PROMO_SET = null;
+
+  /* COPIA IDENTICA de chavePromo() em assets/data.js - as duas precisam gerar
+     exatamente a mesma chave. O "Identificador" (BL01-0003) se repete entre
+     empreendimentos, por isso a chave inclui o nome do empreendimento. */
+  function chavePromo(nomeEmp, identificador) {
+    var e = ('' + (nomeEmp || '')).toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+    return e + '::' + ('' + (identificador || '')).trim().toUpperCase();
+  }
 
   function avisa() {
     for (var i = 0; i < ouvintes.length; i++) ouvintes[i](estado, erroMsg);
+  }
+
+  /* Le a lista de promocionais do Web App (ou do localStorage em modo dev).
+     Falha silenciosa: sem a lista, nenhuma unidade e tratada como promocional. */
+  function carregaPromocionais() {
+    function aplica(data) {
+      if (!data || !data.identificadores) return;
+      PROMO_SET = {};
+      for (var i = 0; i < data.identificadores.length; i++) {
+        PROMO_SET[('' + data.identificadores[i]).trim()] = true;
+      }
+      avisa();
+    }
+    var url = window.PROMO_APPS_SCRIPT_URL;
+    if (!url) {
+      try {
+        var raw = localStorage.getItem('promo_dev_list');
+        if (raw) aplica(JSON.parse(raw));
+      } catch (e) { /* sem localStorage: segue sem promocionais */ }
+      return;
+    }
+    fetch(url)
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(aplica)
+      .catch(function () { /* segue sem promocionais */ });
   }
 
   /* ---------- CSV (portado de assets/data.js) ---------- */
@@ -259,6 +296,8 @@ window.SimUnidades = (function () {
   function carregar() {
     if (estado === 'carregando' || estado === 'ok') return;
 
+    carregaPromocionais();
+
     try {
       var cache = sessionStorage.getItem(CACHE_KEY);
       if (cache) { linhas = JSON.parse(cache); estado = 'ok'; avisa(); return; }
@@ -327,6 +366,8 @@ window.SimUnidades = (function () {
       for (var e = 0; e < emp.sheetNamesExtra.length; e++) querem.push(normKey(emp.sheetNamesExtra[e]));
     }
     var cfg = configEmpDe(emp);
+    /* unidades promocionais so existem em Ribeirao Preto */
+    var ehRP = emp.cidade === 'Ribeirão Preto';
 
     var porBloco = {}, detalhes = {}, total = 0;
     for (var i = 0; i < linhas.length; i++) {
@@ -350,6 +391,7 @@ window.SimUnidades = (function () {
       var ba          = parseBR(valorExato(r, 'B.A. da Unidade'));
       var folgaCampG  = parseBR(valorExato(r, 'Folga Campanha G'));
       var folgaTabela = parseBR(valorExato(r, 'Folga de Tabela'));
+      var vcm         = parseBR(valorExato(r, 'Valor Comercial Mínimo'));
       var avaliacao   = parseBR(valorExato(r, 'Valor de Avaliação Bancária'));
       var areaPriv    = Math.round(parseBR(valorExato(r, 'Área privativa total')));
       var vagasRaw    = valorExato(r, 'Quantidade de vagas');
@@ -360,13 +402,21 @@ window.SimUnidades = (function () {
 
       var tabelaDireta = valorFinal - ba - folgaCampG;
       var associativo  = tabelaDireta - folgaTabela;
+      /* unidade promocional (marcada em /promocionais): exibe o Valor Comercial
+         Minimo no lugar do associativo, e VCM + Folga de Tabela na tabela direta.
+         Fail-safe: VCM ausente/incoerente cai nos valores normais. */
+      var promocional = ehRP && !!PROMO_SET &&
+                        PROMO_SET[chavePromo(emp.sheetName, codigo)] === true &&
+                        vcm > 0 && vcm < associativo;
+      var assocExibido  = promocional ? vcm : associativo;
+      var tabelaExibida = promocional ? (vcm + folgaTabela) : tabelaDireta;
       var tipo = classificaTipo(cfg, tipoPlanta, final, andar, n);
 
       detalhes[codigo] = {
         tipoLabel: rotuloTipo(cfg, tipo),
         sol: ehNascente(cfg, n, final) ? 'Nascente' : 'Poente',
         areaPriv: areaPriv, vagas: vagas, avaliacao: avaliacao,
-        tabelaDireta: tabelaDireta, associativo: associativo
+        tabelaDireta: tabelaExibida, associativo: assocExibido, promocional: promocional
       };
     }
 

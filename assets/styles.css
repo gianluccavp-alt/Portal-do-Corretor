@@ -307,3 +307,65 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
 .emp-cta svg{width:14px;height:14px}
 .home-hidden{display:none}
 .home-foot{text-align:center;padding:2rem;color:var(--muted);font-size:12px;border-top:1px solid var(--border)}
+
+/* ============================================================
+   PAGINA /promocionais (uso interno do comercial)
+   Reaproveita .filter-bar / .u-row do site; o que muda e o
+   checkbox de marcacao, a barra de salvar e o gate de senha.
+   ============================================================ */
+.promo-page{max-width:1400px;margin:0 auto;padding:1.5rem 2rem 7rem}
+/* sem barra de abas nesta pagina: o filtro gruda no topo da janela */
+.promo-page .filter-bar{top:12px}
+.promo-head{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:.5rem}
+.promo-title{font-family:'Playfair Display',serif;font-size:1.75rem;color:var(--dark);line-height:1.2}
+.promo-sub{font-size:13px;color:var(--muted);margin-top:4px;max-width:640px}
+.promo-status{font-size:12px;color:var(--muted);text-align:right;line-height:1.5}
+.promo-status strong{color:var(--text)}
+.promo-search{flex:1 1 180px;min-width:150px;display:flex;align-items:center;padding:0 12px}
+.promo-search input{width:100%;border:none;background:none;outline:none;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text)}
+.promo-search input::placeholder{color:var(--muted)}
+
+/* linha: checkbox + conteudo */
+.promo-page .u-row{align-items:center}
+.promo-page .u-row.on{border-color:#E0A356;background:#FFFDF8}
+.promo-page .u-row.invalida{opacity:.62}
+.promo-check{flex:0 0 auto;display:flex;align-items:center;margin-right:1rem}
+.promo-check input{width:20px;height:20px;accent-color:#C9601A;cursor:pointer}
+.promo-check input:disabled{cursor:not-allowed}
+.promo-emp{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.promo-aviso{flex:1 1 100%;margin-top:.6rem;font-size:12px;color:#A32020;background:#FDECEC;border:1px solid #F3C4C4;border-radius:8px;padding:7px 11px}
+/* preco promocional que a unidade passara a exibir no site */
+.promo-page .u-row-desc{background:#FFF6E9;border-color:#F0CE9C}
+.promo-page .u-row-desc .u-desc-val{color:#8A4A12}
+.promo-page .u-row-desc .u-desc-off{color:#A9702F}
+
+/* barra fixa de salvar */
+.promo-bar{position:fixed;left:0;right:0;bottom:0;z-index:200;background:var(--white);border-top:1px solid var(--border);box-shadow:0 -2px 16px rgba(28,22,16,.09);padding:.85rem 2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.promo-bar-count{font-size:13px;color:var(--muted)}
+.promo-bar-count strong{font-size:1.15rem;color:var(--text);font-family:'Playfair Display',serif}
+.promo-bar-nome{margin-left:auto;display:flex;align-items:center;gap:8px}
+.promo-bar-nome input{border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;width:180px}
+.promo-bar-nome input:focus{border-color:var(--gold-light)}
+.promo-salvar{display:inline-flex;align-items:center;gap:7px;background:#C9601A;color:#fff;border:none;border-radius:100px;padding:11px 22px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background .18s}
+.promo-salvar:hover:not(:disabled){background:#A94E12}
+.promo-salvar:disabled{opacity:.5;cursor:default}
+.promo-toast{font-size:12.5px;font-weight:500}
+.promo-toast.ok{color:var(--green)}
+.promo-toast.err{color:#A32020}
+
+/* gate de senha */
+.promo-gate{position:fixed;inset:0;z-index:400;background:var(--dark);display:flex;align-items:center;justify-content:center;padding:2rem}
+.promo-gate-box{background:var(--white);border-radius:16px;padding:2.25rem;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,.3)}
+.promo-gate-box h1{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--dark);margin-bottom:6px}
+.promo-gate-box p{font-size:13px;color:var(--muted);margin-bottom:1.25rem}
+.promo-gate-box input{width:100%;border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:.85rem}
+.promo-gate-box input:focus{border-color:var(--gold-light)}
+.promo-gate-box button{width:100%;background:var(--dark);color:#fff;border:none;border-radius:10px;padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer}
+.promo-gate-err{font-size:12.5px;color:#A32020;margin-top:.65rem;min-height:1em}
+
+@media (max-width:900px){
+  .promo-page{padding:1.25rem 1rem 8rem}
+  .promo-bar{padding:.75rem 1rem}
+  .promo-bar-nome{margin-left:0;flex:1 1 100%}
+  .promo-bar-nome input{flex:1}
+}

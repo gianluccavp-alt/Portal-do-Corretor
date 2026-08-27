@@ -15,6 +15,19 @@ window.SHEET_CSV_URL =
 /* Nome EXATO (ou aproximado) da coluna que identifica o empreendimento */
 window.EMP_COLUMN = 'Nome do Empreendimento';
 
+/* ---------- Unidades promocionais (Ribeirao Preto) ----------
+   A pagina /promocionais (uso interno do comercial) marca unidades como
+   promocionais. A lista de "Identificador" marcados fica guardada num Web App
+   do Google Apps Script (ver docs/apps-script-promocionais.gs).
+   - PROMO_APPS_SCRIPT_URL: URL .../exec da implantacao do Web App.
+     Vazio = modo dev: a lista e lida/gravada em localStorage['promo_dev_list'].
+   - PROMO_SENHA: senha compartilhada para abrir a pagina /promocionais.
+     OBS: e apenas uma barreira contra corretores no navegador, NAO e
+     seguranca real (fica visivel neste arquivo). */
+window.PROMO_APPS_SCRIPT_URL =
+  'https://script.google.com/macros/s/AKfycbzdIPLNZvTUFJdmgPirOdF3zJzq2Y9mZlsxfw5qOW7I35Afm8Grdj4LPqwIhwMKJAg/exec';
+window.PROMO_SENHA = '3815Comercial!';
+
 /* Empreendimentos.
    - id: slug usado na URL (empreendimento.html?e=<id>)
    - sheetName: valor que aparece na coluna "Nome do Empreendimento" na planilha.
