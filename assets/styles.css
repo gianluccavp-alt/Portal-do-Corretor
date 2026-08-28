@@ -85,13 +85,15 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
 
 /* ---------- VIEW TOGGLE (cards / lista) ---------- */
 .view-toggle{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-bottom:1rem}
-.btn-simulador{display:flex;align-items:center;gap:7px;margin-right:auto;padding:0 16px;height:36px;
+.vt-left{display:flex;align-items:center;gap:6px;margin-right:auto}
+.vt-left:empty{display:none}
+.btn-simulador,.btn-book{display:flex;align-items:center;gap:7px;padding:0 16px;height:36px;
       border-radius:9px;border:1px solid var(--gold);background:var(--white);color:var(--gold);
       font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;text-decoration:none;
       white-space:nowrap;cursor:pointer;transition:all .15s}
-.btn-simulador svg{width:15px;height:15px;stroke:currentColor;flex:0 0 auto}
-.btn-simulador:hover{background:var(--gold);color:var(--white)}
-@media(max-width:640px){.view-toggle{flex-wrap:wrap}.btn-simulador{margin-right:0;margin-bottom:.5rem;flex:1 1 100%;justify-content:center}}
+.btn-simulador svg,.btn-book svg{width:15px;height:15px;stroke:currentColor;flex:0 0 auto}
+.btn-simulador:hover,.btn-book:hover{background:var(--gold);color:var(--white)}
+@media(max-width:640px){.view-toggle{flex-wrap:wrap}.vt-left{width:100%;margin-right:0;margin-bottom:.5rem}.btn-simulador,.btn-book{flex:1 1 0;justify-content:center}}
 .view-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:var(--white);color:var(--muted);cursor:pointer;transition:all .15s}
 .view-btn svg{width:16px;height:16px;stroke:currentColor}
 .view-btn:hover{border-color:var(--gold);color:var(--gold)}

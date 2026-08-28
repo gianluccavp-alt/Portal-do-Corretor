@@ -374,11 +374,18 @@
       '<div class="fcount"><strong id="count-label">0</strong> unidades</div>' +
     '</div>' +
     '<div class="view-toggle">' +
+      '<div class="vt-left">' +
       (emp._cityId === 'ribeirao-preto'
         ? '<button type="button" class="btn-simulador" onclick="window.abrirModalSimulador()">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>' +
             'Simular Fluxo</button>'
         : '') +
+      (emp.book
+        ? '<a class="btn-book" href="' + emp.book + '" download title="Baixar o book de mesa deste empreendimento">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>' +
+            'Book</a>'
+        : '') +
+      '</div>' +
       '<button class="view-btn" id="view-btn-cards" title="Ver em cards" onclick="setView(\'cards\',this)">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>' +
       '</button>' +
