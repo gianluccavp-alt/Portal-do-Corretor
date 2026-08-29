@@ -135,7 +135,7 @@ textarea{resize:vertical;min-height:70px}
 .btn-row{display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.75rem}
 
 /* ---------- resultado ---------- */
-.summary{display:grid;grid-template-columns:repeat(5,1fr);gap:.7rem;margin-bottom:1.1rem}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:1.1rem}
 @media(max-width:980px){.summary{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:560px){.summary{grid-template-columns:repeat(2,1fr)}}
 .kpi{background:#fff;border:1px solid var(--dir-line);border-radius:12px;padding:.85rem .9rem}
@@ -149,9 +149,15 @@ textarea{resize:vertical;min-height:70px}
 /* comparativo linear x escalonado */
 .cmp{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:1.1rem}
 @media(max-width:700px){.cmp{grid-template-columns:1fr}}
-.cmp-card{background:#fff;border:1px solid var(--dir-line);border-radius:12px;padding:1rem 1.05rem}
-.cmp-tit{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dir-red);
-      font-weight:500;margin-bottom:.55rem}
+.cmp-card{position:relative;background:#fff;border:1px solid var(--dir-line);border-radius:12px;
+      padding:1rem 1.05rem;cursor:pointer;transition:.15s}
+.cmp-card:hover{border-color:var(--dir-red)}
+.cmp-card.sel{border-color:var(--dir-red);box-shadow:0 0 0 3px rgba(228,3,43,.10)}
+.cmp-tit{display:flex;align-items:center;gap:.45rem;font-size:.72rem;letter-spacing:.08em;
+      text-transform:uppercase;color:var(--dir-red);font-weight:500;margin-bottom:.55rem}
+.cmp-dot{flex:0 0 auto;width:13px;height:13px;border-radius:50%;border:2px solid var(--dir-line);transition:.15s}
+.cmp-card.sel .cmp-dot{border-color:var(--dir-red);background:var(--dir-red);
+      box-shadow:inset 0 0 0 2px #fff}
 .cmp-parc{font-size:1.35rem;font-weight:700;letter-spacing:-.5px;line-height:1.25}
 .cmp-faixas{display:flex;flex-direction:column;gap:.18rem;margin:.15rem 0 .5rem}
 .cmp-faixa{display:flex;justify-content:space-between;gap:.7rem;font-size:.86rem}
@@ -358,16 +364,31 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <div class="hint" id="h-renda"></div>
         </div>
         <div>
-          <label for="f-idade">Idade (anos)</label>
-          <input id="f-idade" type="number" min="18" max="100" step="1" placeholder="30">
-        </div>
-        <div>
           <label for="f-cliente">Nome do cliente</label>
           <input id="f-cliente" type="text" placeholder="Nome do cliente">
         </div>
         <div>
           <label for="f-corretor">Corretor</label>
           <input id="f-corretor" type="text" placeholder="Seu nome">
+        </div>
+        <div>
+          <label for="f-fin">Financiado pelo banco</label>
+          <div class="pair">
+            <input class="money" id="f-fin" type="text" inputmode="decimal" placeholder="R$ 0,00">
+            <input class="pct" id="f-fin-p" type="text" inputmode="decimal" placeholder="%">
+          </div>
+        </div>
+        <div>
+          <label for="f-sub">Subsídio</label>
+          <div class="pair">
+            <input class="money" id="f-sub" type="text" inputmode="decimal" placeholder="R$ 0,00">
+            <input class="pct" id="f-sub-p" type="text" inputmode="decimal" placeholder="%">
+          </div>
+        </div>
+        <div>
+          <label for="f-parcfin">Parcela do financiamento</label>
+          <input id="f-parcfin" type="text" inputmode="decimal" placeholder="R$ 0,00">
+          <div class="hint" id="h-parcfin">Valor da 1ª parcela na simulação da CAIXA.</div>
         </div>
       </div>
     </div>
@@ -391,20 +412,6 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <input id="f-valor" type="text" inputmode="decimal" placeholder="R$ 0,00">
         </div>
         <div>
-          <label for="f-fin">Financiado pelo banco</label>
-          <div class="pair">
-            <input class="money" id="f-fin" type="text" inputmode="decimal" placeholder="R$ 0,00">
-            <input class="pct" id="f-fin-p" type="text" inputmode="decimal" placeholder="%">
-          </div>
-        </div>
-        <div>
-          <label for="f-sub">Subsídio</label>
-          <div class="pair">
-            <input class="money" id="f-sub" type="text" inputmode="decimal" placeholder="R$ 0,00">
-            <input class="pct" id="f-sub-p" type="text" inputmode="decimal" placeholder="%">
-          </div>
-        </div>
-        <div>
           <label for="f-fgts">FGTS</label>
           <div class="pair">
             <input class="money" id="f-fgts" type="text" inputmode="decimal" placeholder="R$ 0,00">
@@ -426,7 +433,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           </div>
         </div>
         <div>
-          <label>Pré-saldo da operação</label>
+          <label>Entrada</label>
           <input id="f-presaldo" type="text" readonly>
           <div class="hint">Imóvel &minus; banco &minus; subsídio &minus; FGTS &minus; bônus &minus; ato.</div>
         </div>
@@ -506,28 +513,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     </div>
   </section>
 
-  <!-- PASSO 4 -->
-  <section class="step">
-    <div class="step-label">Passo 5 &middot; Financiamento bancário</div>
-    <div class="card">
-      <div class="grid g2">
-        <div>
-          <label for="f-parcfin">Parcela do financiamento</label>
-          <input id="f-parcfin" type="text" inputmode="decimal" placeholder="R$ 0,00">
-          <div class="hint" id="h-parcfin">Valor da 1ª parcela na simulação da CAIXA.</div>
-        </div>
-        <div>
-          <label for="f-taxa">Taxa de juros do banco (a.a.)</label>
-          <input id="f-taxa" type="text" inputmode="decimal" placeholder="6,16">
-          <div class="hint">Informativo &mdash; sai no PDF.</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- PASSO 5 -->
   <section class="step">
-    <div class="step-label">Passo 6 &middot; Observações</div>
+    <div class="step-label">Passo 5 &middot; Observações</div>
     <div class="card">
       <div class="obs-wrap">
         <div id="obs-toolbar">
@@ -670,6 +658,7 @@ function estadoInicial(){
     s1:0, s2:0, s3:0, dataS1:'', dataS2:'', dataS3:'',
     a1:0, a2:0, a3:0, dataA1:'', dataA2:'', dataA3:'',
     parcFin:0, taxaBanco:0,
+    fluxoTipo:'linear',
     verTudo:false
   };
 }
@@ -1202,7 +1191,6 @@ function renderUnidInfo(){
       '<div class="ui-stat"><span class="ui-lab">Sol</span><span class="ui-val">'+d.sol+'</span></div>'+
       '<div class="ui-stat"><span class="ui-lab">Vagas</span><span class="ui-val">'+(d.vagas!=null?d.vagas:'-')+'</span></div>'+
       '<div class="ui-stat"><span class="ui-lab">Valor de avaliação</span><span class="ui-val">'+brl(d.avaliacao)+'</span></div>'+
-      '<div class="ui-stat dest"><span class="ui-lab">Valor Associativo/Investidor</span><span class="ui-val">'+brl(d.associativo)+'</span></div>'+
     '</div>';
 }
 
@@ -1249,8 +1237,7 @@ function renderResultado(){
   if(!c.pronto){
     $('summary').innerHTML =
       kpi('% Pro Soluto','&mdash;','preencha os dados da operação',true) +
-      kpi('Pro Soluto corrigido','&mdash;','') +
-      kpi('Pré-saldo da operação', c.e&&S.valor>0?brl(c.preSaldo):'&mdash;','') +
+      kpi('Entrada', c.e&&S.valor>0?brl(c.preSaldo):'&mdash;','') +
       kpi('Prazo','&mdash;','') +
       kpi('Entrega','&mdash;','');
     $('cmp').innerHTML='';
@@ -1259,8 +1246,7 @@ function renderResultado(){
     var entrega=parseData(c.e.entrega);
     $('summary').innerHTML =
       kpi('% Pro Soluto', pctf(c.pctPS), 'limite '+pctf(c.pol.pctPS,0)+' na política '+c.pol.nome, true) +
-      kpi('Pro Soluto corrigido', brl(c.psCorrigido), c.carencia>0?('carência de '+c.carencia+' mês(es) &middot; +'+brl(c.correcaoCarencia)):'sem correção de carência') +
-      kpi('Pré-saldo da operação', brl(c.preSaldo), 'saldo do carnê '+brl(c.saldoMensais)) +
+      kpi('Entrada', brl(c.preSaldo), 'saldo do carnê '+brl(c.saldoMensais)) +
       kpi('Prazo do Pro Soluto', c.prazo+' meses', c.nPre+' pré-chaves &middot; '+c.nPos+' pós-chaves') +
       kpi('Entrega da obra', rotuloMes(entrega), '1º venc. em '+fmtData(c.venc1));
 
@@ -1269,8 +1255,8 @@ function renderResultado(){
       return '<div class="cmp-faixa"><span>'+f.n+'ª faixa &middot; '+f.prazo+'x &middot; '+pctf(f.pct,0)+'</span><b>'+brl(f.parcela)+'</b></div>';
     }).join('');
     $('cmp').innerHTML =
-      '<div class="cmp-card">'+
-        '<div class="cmp-tit">Fluxo Linear &mdash; parcela única</div>'+
+      '<div class="cmp-card'+(S.fluxoTipo==='linear'?' sel':'')+'" data-fluxo="linear">'+
+        '<div class="cmp-tit"><span class="cmp-dot"></span>Fluxo Linear &mdash; parcela única</div>'+
         '<div class="cmp-parc">'+brl(c.linear.parcela)+' <span style="font-size:.9rem;font-weight:400;color:var(--dir-grey)">&times; '+c.prazo+'</span></div>'+
         '<div class="cmp-rows">'+
           '<div class="cmp-row"><span>Total pago no carnê</span><b>'+brl(c.linear.total)+'</b></div>'+
@@ -1278,8 +1264,8 @@ function renderResultado(){
           '<div class="cmp-row"><span>C.R. só do Pro Soluto</span><b>'+(S.renda>0?pctf(c.crPS):'&mdash;')+'</b></div>'+
         '</div>'+
       '</div>'+
-      '<div class="cmp-card">'+
-        '<div class="cmp-tit">Fluxo Escalonado &mdash; 4 faixas</div>'+
+      '<div class="cmp-card'+(S.fluxoTipo==='escalonado'?' sel':'')+'" data-fluxo="escalonado">'+
+        '<div class="cmp-tit"><span class="cmp-dot"></span>Fluxo Escalonado &mdash; 4 faixas</div>'+
         '<div class="cmp-faixas">'+faixasHtml+'</div>'+
         '<div class="cmp-rows">'+
           '<div class="cmp-row"><span>Total pago no carnê</span><b>'+brl(c.escalonado.total)+'</b></div>'+
@@ -1554,9 +1540,7 @@ function sincronizaCampos(){
     else if(quill.getLength()>1) quill.setText('');
   }
   $('f-valor').value = S.valor?brl(S.valor):'';
-  $('f-idade').value = S.idade||'';
   $('f-prazo').value = S.prazo||'';
-  $('f-taxa').value  = S.taxaBanco?String(S.taxaBanco).replace('.',','):'';
   SIMPLES.forEach(function(p){ $(p[1]).value = S[p[0]]||''; });
   DATAS.forEach(function(p){ $(p[1]).value = S[p[0]]||''; });
   MOEDAS.forEach(function(p){ $(p[1]).value = S[p[0]]?brl(S[p[0]]):''; });
@@ -1600,6 +1584,12 @@ $('pols').addEventListener('click', function(ev){
   S.politicaId=b.getAttribute('data-pol'); render();
 });
 
+/* escolha do fluxo (linear x escalonado) que vai para o PDF */
+$('cmp').addEventListener('click', function(ev){
+  var b=ev.target.closest('[data-fluxo]'); if(!b) return;
+  S.fluxoTipo=b.getAttribute('data-fluxo'); render();
+});
+
 /* Quando o corretor mexe nos sinais, o 1º vencimento do Pro Soluto acompanha:
    vai para o mês seguinte ao último sinal preenchido, para não ficar uma
    parcela do carnê caindo junto (ou antes) de um sinal esquecido. */
@@ -1634,9 +1624,7 @@ function sugereDatas(){
 
 $('f-valor').addEventListener('input', function(){ S.valor=num(this.value); render(); });
 $('f-valor').addEventListener('blur',  function(){ this.value=S.valor?brl(S.valor):''; sincronizaCampos(); render(); });
-$('f-idade').addEventListener('input', function(){ var v=parseInt(this.value,10); S.idade=isFinite(v)?v:0; });
 $('f-prazo').addEventListener('input', function(){ var v=parseInt(this.value,10); S.prazo=isFinite(v)?Math.max(0,v):0; render(); });
-$('f-taxa').addEventListener('input',  function(){ S.taxaBanco=num(this.value); });
 
 SIMPLES.forEach(function(p){ $(p[1]).addEventListener('input', function(){ S[p[0]]=this.value; }); });
 DATAS.forEach(function(p){
@@ -1783,7 +1771,7 @@ $('b-pdf').addEventListener('click', function(){
     startY:y, theme:'plain', margin:{left:M,right:M},
     body:[
       ['Cliente', S.cliente||'-', 'Corretor', S.corretor||'-'],
-      ['Renda', S.renda>0?brl(S.renda):'-', 'Idade', S.idade?(S.idade+' anos'):'-'],
+      ['Renda', S.renda>0?brl(S.renda):'-', 'Fluxo escolhido', S.fluxoTipo==='escalonado'?'Escalonado':'Linear'],
       ['Valor do imóvel', brl(S.valor), 'Financiado', brl(S.financiado)],
       ['Subsídio / FGTS', brl(S.subsidio)+' / '+brl(S.fgts), 'Descontos', brl(S.bonusAdim+S.bonusCamp)],
       ['Data da proposta', fmtData(c.venda), '1º vencimento', fmtData(c.venc1)],
@@ -1795,66 +1783,36 @@ $('b-pdf').addEventListener('click', function(){
   });
   y=doc.lastAutoTable.finalY+5;
 
-  /* resumo do Pro Soluto */
+  /* resumo da operação */
   doc.autoTable({
     startY:y, margin:{left:M,right:M},
-    head:[['Pré-saldo da operação','Pro Soluto corrigido','% Pro Soluto','Prazo','Pré / pós-chaves']],
-    body:[[ brl(c.preSaldo), brl(c.psCorrigido), pctf(c.pctPS), c.prazo+' meses', c.nPre+' / '+c.nPos ]],
+    head:[['Entrada','Prazo','Pré / pós-chaves']],
+    body:[[ brl(c.preSaldo), c.prazo+' meses', c.nPre+' / '+c.nPos ]],
     theme:'grid',
     headStyles:{fillColor:[228,3,43],textColor:255,fontSize:7.5,fontStyle:'bold'},
     styles:{fontSize:8.5,cellPadding:2,textColor:[58,64,67]}
   });
   y=doc.lastAutoTable.finalY+5;
 
-  /* comparativo dos fluxos */
-  var linhasEsc=c.escalonado.faixas.map(function(f){
-    return f.n+'ª faixa: '+f.prazo+'x de '+brl(f.parcela);
-  }).join('   ·   ');
-  doc.autoTable({
-    startY:y, margin:{left:M,right:M},
-    head:[['Fluxo','Parcelas','Total pago','C.R. máximo']],
-    body:[
-      ['Linear', c.prazo+'x de '+brl(c.linear.parcela), brl(c.linear.total), S.renda>0?pctf(c.crLinear):'-'],
-      ['Escalonado', linhasEsc, brl(c.escalonado.total), S.renda>0?pctf(c.crEscal):'-']
-    ],
-    theme:'grid',
-    headStyles:{fillColor:[228,3,43],textColor:255,fontSize:7.5,fontStyle:'bold'},
-    styles:{fontSize:8,cellPadding:2,textColor:[58,64,67]},
-    columnStyles:{0:{fontStyle:'bold',cellWidth:24},2:{halign:'right',cellWidth:28},3:{halign:'right',cellWidth:24}}
-  });
-  y=doc.lastAutoTable.finalY+5;
-
-  /* veredito da política */
-  doc.autoTable({
-    startY:y, margin:{left:M,right:M},
-    head:[['Política '+c.pol.nome, 'Proposta', 'Limite', c.veredito.final.toUpperCase()]],
-    body:c.veredito.itens.map(function(it){ return [it.lab, it.valor, it.limite.replace('máx. ',''), it.st]; }),
-    theme:'grid',
-    headStyles:{fillColor: c.veredito.final==='Aprovado'?[30,142,74]:(c.veredito.final==='Comitê'?[181,114,0]:[196,0,28]),
-                textColor:255,fontSize:7.5,fontStyle:'bold'},
-    styles:{fontSize:8,cellPadding:2,textColor:[58,64,67]},
-    columnStyles:{0:{cellWidth:56},3:{fontStyle:'bold',cellWidth:26}}
-  });
-  y=doc.lastAutoTable.finalY+6;
-
-  /* fluxo completo */
+  /* fluxo completo - apenas a coluna do fluxo escolhido na simulação */
+  var esc = S.fluxoTipo==='escalonado';
+  var colFluxo = esc ? 'P.S. Escalonado' : 'P.S. Linear';
+  var totalFluxo = esc ? c.escalonado.total : c.linear.total;
   var body=c.fluxo.map(function(r){
     return [ r.n?String(r.n):'-', fmtData(r.data), r.tipo, r.fase,
-             celParcela(r.psLin, r.extra, '-'),
-             celParcela(r.psEsc, r.extra, '-') ];
+             celParcela(esc?r.psEsc:r.psLin, r.extra, '-') ];
   });
   body.push([{content:'Total do carnê Pro Soluto',colSpan:4,styles:{fontStyle:'bold'}},
-             {content:brl(c.linear.total),styles:{fontStyle:'bold',halign:'right'}},
-             {content:brl(c.escalonado.total),styles:{fontStyle:'bold',halign:'right'}}]);
+             {content:brl(totalFluxo),styles:{fontStyle:'bold',halign:'right'}}]);
   doc.autoTable({
     startY:y, margin:{left:M,right:M},
-    head:[['#','Vencimento','Parcela','Fase','P.S. Linear','P.S. Escalonado']],
+    head:[['#','Vencimento','Parcela','Fase',colFluxo]],
     body:body, theme:'grid',
     headStyles:{fillColor:[228,3,43],textColor:255,fontSize:7,fontStyle:'bold'},
     styles:{fontSize:7,cellPadding:1.3,textColor:[58,64,67],lineColor:[231,233,234]},
     alternateRowStyles:{fillColor:[250,251,251]},
     columnStyles:{0:{cellWidth:10},1:{cellWidth:24},3:{cellWidth:14},
-                  4:{halign:'right',cellWidth:28},5:{halign:'right',cellWidth:28}}
+                  4:{halign:'right',cellWidth:32}}
   });
   y=doc.lastAutoTable.finalY+6;
 
@@ -1877,7 +1835,7 @@ $('b-pdf').addEventListener('click', function(){
   var rodapeTxt = 'O Pro Soluto é corrigido a '+pctf(c.i1,1)+' a.m. antes das chaves e '+pctf(c.i2,1)+' a.m. após as chaves'+
     (c.carencia>0?(', com '+c.carencia+' mês(es) de correção de carência entre a venda e o 1º vencimento'):'')+'. '+
     'O comprometimento de renda soma a parcela do carnê à evolução dos juros de obra durante a construção e à parcela cheia do '+
-    'financiamento após a entrega'+(S.taxaBanco>0?(' (taxa informada: '+pct(S.taxaBanco)+' a.a.)'):'')+'. '+
+    'financiamento após a entrega. '+
     'Simulação de conferência prévia — valores sujeitos a confirmação e aprovação da Direcional.';
   var total=doc.internal.getNumberOfPages();
   for(var p=1;p<=total;p++){
