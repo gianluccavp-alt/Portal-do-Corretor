@@ -51,7 +51,10 @@ body{margin:0;background:var(--dir-bg);font-family:'DM Sans',system-ui,sans-seri
 .step{margin-bottom:1.5rem}
 .step-label{display:flex;align-items:center;gap:.55rem;color:var(--dir-red);font-weight:500;
             font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.7rem}
-.step-label::before{content:'';width:22px;height:2px;background:var(--dir-red);border-radius:2px}
+.step-label::before{content:'';width:22px;height:2px;background:var(--dir-red);border-radius:2px;flex:0 0 auto}
+button.step-label{width:100%;font-family:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.step-n,.step-sum,.step-chev{display:none}
+.sub-body{display:block}
 .card{background:#fff;border:1px solid var(--dir-line);border-radius:14px;padding:1.35rem}
 @media(max-width:700px){.card{padding:1rem}}
 
@@ -73,7 +76,7 @@ body{margin:0;background:var(--dir-bg);font-family:'DM Sans',system-ui,sans-seri
 .ui-stat:last-child{border-right:0}
 .ui-lab{font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;color:var(--dir-grey);font-weight:500}
 .ui-val{font-weight:700;font-size:.95rem;color:var(--dir-ink)}
-.ui-stat.dest{background:#EFF9F2;border:1px solid #C7E7D3;border-radius:10px;padding:.5rem .9rem;margin:-.5rem 0}
+.ui-stat.dest{background:#EFF9F2;border:1px solid #C7E7D3;border-radius:9px;padding:.5rem .9rem;margin:-.5rem 0}
 .ui-stat.dest .ui-val{color:var(--ok)}
 .ui-stat.dest .ui-lab{color:#2E7D4F}
 @media(max-width:700px){
@@ -99,16 +102,27 @@ input.bad{border-color:var(--err);background:var(--err-bg)}
 input.warn{border-color:var(--warn);background:var(--warn-bg)}
 input[readonly]{background:#FAFBFB;font-weight:700}
 textarea{resize:vertical;min-height:70px}
-.pair{display:flex;gap:.4rem}
+.pair{position:relative;display:flex;gap:0;border:1px solid var(--dir-line);border-radius:9px;background:#fff;overflow:hidden;transition:.15s}
+/* sufixo % do campo de percentual - o input guarda so o numero */
+.pair::after{content:'%';position:absolute;right:.55rem;top:50%;transform:translateY(-50%);
+     font-size:.86rem;color:var(--dir-grey);pointer-events:none}
+.pair:focus-within{border-color:var(--dir-red);box-shadow:0 0 0 3px rgba(228,3,43,.10)}
+.pair input{border:0;border-radius:0;background:none}
+.pair input:focus{box-shadow:none}
 .pair .money{flex:1 1 auto;min-width:0}
-.pair .pct{flex:0 0 84px;text-align:right}
+.pair .pct{flex:0 0 76px;text-align:right;padding-right:1.25rem;border-left:1px solid var(--dir-line);color:var(--dir-grey)}
+.pair:has(input.bad){border-color:var(--err);background:var(--err-bg)}
+.pair:has(input.warn){border-color:var(--warn);background:var(--warn-bg)}
+.pair input.bad,.pair input.warn{background:none}
 .hint{font-size:.74rem;color:var(--dir-grey);margin-top:.3rem}
 .hint.err{color:var(--err);font-weight:500}
 .hint.warn{color:var(--warn);font-weight:500}
-.sub{font-weight:700;font-size:.95rem;margin:1.35rem 0 .7rem;padding-top:1.1rem;
-     border-top:1px dashed var(--dir-line)}
-.sub:first-of-type{margin-top:0;padding-top:0;border-top:0}
+.sub{display:flex;align-items:baseline;gap:.4rem;width:100%;font-family:inherit;font-weight:700;
+     font-size:.95rem;color:var(--dir-ink);text-align:left;background:none;border:0;cursor:default;
+     margin:1.35rem 0 .7rem;padding:1.1rem 0 0;border-top:1px dashed var(--dir-line)}
+.sub-block:first-child .sub{margin-top:0;padding-top:0;border-top:0}
 .sub .lt{font-weight:400;color:var(--dir-grey);font-size:.82rem}
+.sub-chev,.sub-sum{display:none}
 
 /* ---------- chips / politicas ---------- */
 .chip{font:inherit;font-size:.78rem;padding:.42rem .7rem;border-radius:999px;cursor:pointer;
@@ -138,7 +152,7 @@ textarea{resize:vertical;min-height:70px}
 .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:1.1rem}
 @media(max-width:980px){.summary{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:560px){.summary{grid-template-columns:repeat(2,1fr)}}
-.kpi{background:#fff;border:1px solid var(--dir-line);border-radius:12px;padding:.85rem .9rem}
+.kpi{background:#fff;border:1px solid var(--dir-line);border-radius:14px;padding:.85rem .9rem}
 .kpi.hero-kpi{background:linear-gradient(135deg,var(--dir-red),var(--dir-red-dark));
       border-color:var(--dir-red);color:#fff}
 .kpi.hero-kpi .kpi-lab,.kpi.hero-kpi .kpi-sub{color:rgba(255,255,255,.82)}
@@ -149,7 +163,7 @@ textarea{resize:vertical;min-height:70px}
 /* comparativo linear x escalonado */
 .cmp{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:1.1rem}
 @media(max-width:700px){.cmp{grid-template-columns:1fr}}
-.cmp-card{position:relative;background:#fff;border:1px solid var(--dir-line);border-radius:12px;
+.cmp-card{position:relative;background:#fff;border:1px solid var(--dir-line);border-radius:14px;
       padding:1rem 1.05rem;cursor:pointer;transition:.15s}
 .cmp-card:hover{border-color:var(--dir-red)}
 .cmp-card.sel{border-color:var(--dir-red);box-shadow:0 0 0 3px rgba(228,3,43,.10)}
@@ -170,7 +184,7 @@ textarea{resize:vertical;min-height:70px}
 .cmp-row b{font-weight:700}
 
 /* veredito */
-.vd{background:#fff;border:1px solid var(--dir-line);border-radius:12px;overflow:hidden;margin-bottom:1.1rem}
+.vd{background:#fff;border:1px solid var(--dir-line);border-radius:14px;overflow:hidden;margin-bottom:1.1rem}
 .vd-head{padding:.9rem 1.05rem;font-weight:700;color:#fff;display:flex;align-items:center;
       justify-content:space-between;gap:.7rem;flex-wrap:wrap}
 .vd-head .vh-sub{font-weight:400;font-size:.8rem;opacity:.9}
@@ -196,7 +210,7 @@ textarea{resize:vertical;min-height:70px}
 .st.rep{background:var(--err-bg);border-color:#F3C6CE;color:var(--err)}
 
 .alerts{display:flex;flex-direction:column;gap:.45rem;margin-bottom:1.1rem}
-.alert{display:flex;gap:.6rem;align-items:flex-start;padding:.65rem .85rem;border-radius:10px;
+.alert{display:flex;gap:.6rem;align-items:flex-start;padding:.65rem .85rem;border-radius:9px;
        font-size:.86rem;border:1px solid}
 .alert.err{background:var(--err-bg);border-color:#F3C6CE;color:var(--err)}
 .alert.warn{background:var(--warn-bg);border-color:#F0DCB0;color:var(--warn)}
@@ -206,10 +220,10 @@ textarea{resize:vertical;min-height:70px}
 
 .banner{display:none;align-items:center;gap:.6rem;background:var(--err);color:#fff;font-weight:700;
         letter-spacing:.05em;text-transform:uppercase;font-size:.8rem;padding:.6rem 1rem;
-        border-radius:10px;margin-bottom:1rem}
+        border-radius:9px;margin-bottom:1rem}
 .banner.on{display:flex}
 
-.tbl-wrap{overflow-x:auto;border:1px solid var(--dir-line);border-radius:12px;background:#fff}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--dir-line);border-radius:14px;background:#fff}
 table{width:100%;border-collapse:collapse;font-size:.87rem;min-width:520px}
 thead th{background:var(--dir-ink);color:#fff;font-weight:500;font-size:.72rem;letter-spacing:.07em;
       text-transform:uppercase;text-align:left;padding:.6rem .8rem;white-space:nowrap}
@@ -237,7 +251,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(58,64,67,.55);
       z-index:1000;align-items:flex-start;justify-content:center;padding:5vh 1rem;overflow-y:auto}
 .modal-overlay.open{display:flex}
-.modal{background:#fff;border-radius:16px;max-width:600px;width:100%;
+.modal{background:#fff;border-radius:14px;max-width:600px;width:100%;
       box-shadow:0 24px 60px rgba(0,0,0,.25);position:relative;overflow:hidden}
 .modal-close{position:absolute;top:.7rem;right:.8rem;width:34px;height:34px;border-radius:9px;
       border:0;background:rgba(255,255,255,.18);color:#fff;font-size:1.4rem;line-height:1;
@@ -263,7 +277,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       letter-spacing:.04em;text-transform:uppercase;color:var(--dir-grey);
       border:1px solid var(--dir-line);border-radius:999px;padding:.05rem .45rem}
 .modal-item .det{font-size:.8rem;color:var(--dir-grey);margin-top:.15rem}
-.modal-renda{margin-top:.4rem;padding:.9rem 1rem;border-radius:12px;background:#FAFBFB;
+.modal-renda{margin-top:.4rem;padding:.9rem 1rem;border-radius:14px;background:#FAFBFB;
       border:1px solid var(--dir-line);display:grid;grid-template-columns:1fr 1fr;gap:.6rem .9rem}
 .modal-renda .r-lab{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--dir-grey);font-weight:500}
 .modal-renda .r-val{font-weight:700;font-size:1rem;margin-top:.1rem}
@@ -283,7 +297,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .cbx-arrow{flex:0 0 16px;width:16px;height:16px;color:var(--dir-grey);transition:.15s}
 .cbx.open .cbx-arrow{transform:rotate(180deg)}
 .cbx-pop{display:none;position:absolute;z-index:60;top:calc(100% + 4px);left:0;right:0;
-     background:#fff;border:1px solid var(--dir-line);border-radius:11px;
+     background:#fff;border:1px solid var(--dir-line);border-radius:14px;
      box-shadow:0 12px 34px rgba(58,64,67,.16);overflow:hidden}
 .cbx.open .cbx-pop{display:block}
 .cbx-busca{padding:.5rem;border-bottom:1px solid var(--dir-line)}
@@ -314,9 +328,129 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .obs-wrap .ql-snow.ql-toolbar button.ql-active .ql-stroke{stroke:var(--dir-red)}
 .obs-wrap .ql-snow.ql-toolbar button:hover .ql-fill,
 .obs-wrap .ql-snow.ql-toolbar button.ql-active .ql-fill{fill:var(--dir-red)}
+
+/* =========================================================
+   SHELL MOBILE - appbar, barra da unidade, acordeao e abas.
+   Tudo abaixo de 860px; acima disso a pagina segue igual.
+   ========================================================= */
+.appbar,.unitbar,.tabbar{display:none}
+
+@media(max-width:860px){
+  .hero{display:none}
+
+  .appbar{position:sticky;top:0;z-index:300;display:flex;align-items:center;gap:.25rem;
+     height:56px;padding:0 .75rem;background:#fff;border-bottom:1px solid var(--dir-line)}
+  .appbar-back{flex:0 0 auto;width:40px;height:40px;display:flex;align-items:center;
+     justify-content:center;color:var(--dir-ink)}
+  .appbar-back svg{width:22px;height:22px}
+  .appbar-t{flex:1 1 auto;min-width:0;font-size:.98rem;font-weight:700;letter-spacing:-.2px;
+     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .appbar-logo{flex:0 0 auto;height:21px;width:auto;display:block}
+
+  .unitbar{background:#fff;border-bottom:1px solid var(--dir-line);padding:.7rem 1.1rem .8rem}
+  .unitbar.show{display:block}
+  .ub-emp{display:flex;align-items:center;gap:.45rem;margin-bottom:.3rem;font-size:.66rem;
+     font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dir-red)}
+  .ub-emp::before{content:'';flex:0 0 auto;width:16px;height:2px;border-radius:2px;background:var(--dir-red)}
+  .ub-emp span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ub-r{display:flex;align-items:baseline;justify-content:space-between;gap:.6rem}
+  .ub-r+.ub-r{margin-top:.1rem}
+  .ub-a{font-size:.94rem;font-weight:700;letter-spacing:-.2px;overflow:hidden;
+     text-overflow:ellipsis;white-space:nowrap}
+  .ub-b{flex:0 0 auto;font-size:.84rem;font-weight:700;letter-spacing:-.2px}
+  .ub-c{font-size:.76rem;color:var(--dir-grey);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ub-d{flex:0 0 auto;font-size:.76rem;color:var(--dir-grey)}
+
+  .wrap{padding:.85rem 1.1rem calc(62px + env(safe-area-inset-bottom,0px) + 1.2rem)}
+  body.tab-dados #tab-result{display:none}
+  body.tab-result #tab-dados{display:none}
+
+  /* ---- acordeao dos passos ---- */
+  .step{margin-bottom:.55rem}
+  button.step-label{display:flex;align-items:center;gap:.7rem;min-height:56px;margin:0;
+     padding:.75rem .8rem;background:#fff;border:1px solid var(--dir-line);border-radius:14px;
+     color:var(--dir-ink);font-size:.85rem;font-weight:600;letter-spacing:0;text-transform:none}
+  button.step-label::before{display:none}
+  .s-pre{display:none}
+  .step-n{display:flex;flex:0 0 auto;width:23px;height:23px;border-radius:50%;align-items:center;
+     justify-content:center;font-size:.72rem;font-weight:700;background:var(--dir-bg);
+     border:1px solid var(--dir-line);color:var(--dir-grey);transition:.15s}
+  .step.done .step-n{background:#EFF9F2;border-color:#C7E7D3;color:var(--ok)}
+  .step.open .step-n{background:var(--dir-red);border-color:var(--dir-red);color:#fff}
+  .step-t{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .step-sum{display:block;flex:1 1 0;min-width:0;text-align:right;font-size:.74rem;
+     font-weight:400;color:var(--dir-grey);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .step-chev{display:block;flex:0 0 auto;width:16px;height:16px;color:#A8AEB1;transition:transform .18s}
+  .step.open .step-chev{transform:rotate(180deg);color:var(--dir-ink)}
+
+  .step>.card,.step>.pols{display:none}
+  .step.open>button.step-label{border-bottom-left-radius:0;border-bottom-right-radius:0}
+  .step.open>.card{display:block;margin-top:0;border-top:0;
+     border-top-left-radius:0;border-top-right-radius:0}
+  .step.open>.pols{display:grid;margin-top:.55rem}
+  .card{padding:.9rem .8rem}
+
+  /* os dados da unidade sobem para a barra fixa do topo */
+  .unid-info,.emp-info{display:none!important}
+
+  /* ---- gavetas do passo 4 ---- */
+  .sub{align-items:center;gap:.55rem;min-height:48px;margin:0;padding:.85rem 0;
+     border-top:1px solid var(--dir-line);font-size:.85rem;cursor:pointer}
+  .sub-block:first-child .sub{border-top:0;padding-top:.2rem}
+  .sub .lt{display:none}
+  .sub-t{flex:0 0 auto}
+  .sub-chev{display:block;flex:0 0 auto;width:14px;height:14px;color:#A8AEB1;transition:transform .18s}
+  .sub-block.open .sub-chev{transform:rotate(90deg);color:var(--dir-ink)}
+  .sub-sum{display:block;flex:1 1 0;min-width:0;text-align:right;font-size:.74rem;font-weight:400;
+     color:var(--dir-grey);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sub-body{display:none;padding-bottom:.35rem}
+  .sub-block.open .sub-body{display:block}
+
+  /* ---- alvo de toque ---- */
+  input,select,textarea{min-height:46px}
+  .pair input{min-height:44px}
+  .cbx-btn{min-height:46px}
+  .chip{min-height:38px}
+
+  /* ---- aba resultado ---- */
+  #tab-result>.step>.step-label{display:none}
+  #tab-result .step{margin-bottom:0}
+  .btn-row{position:sticky;bottom:calc(62px + env(safe-area-inset-bottom,0px));z-index:120;
+     display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:1.25rem -1.1rem 0;
+     padding:.7rem 1.1rem;background:#fff;border-top:1px solid var(--dir-line)}
+  .btn-row .btn{min-height:46px;justify-content:center}
+  #b-pdf{grid-column:1/-1;order:-1}
+
+  /* ---- abas fixas ---- */
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:400;display:flex;background:#fff;
+     border-top:1px solid var(--dir-line);padding-bottom:env(safe-area-inset-bottom,0px)}
+  .tabbtn{flex:1 1 0;position:relative;display:flex;flex-direction:column;align-items:center;
+     justify-content:center;gap:.22rem;height:62px;background:none;border:0;cursor:pointer;
+     font-family:inherit;font-size:.68rem;font-weight:600;color:var(--dir-grey)}
+  .tabbtn svg{width:21px;height:21px}
+  .tabbtn.on{color:var(--dir-red);font-weight:700}
+  .tabbtn.on::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+     width:46px;height:2px;background:var(--dir-red);border-radius:0 0 2px 2px}
+  .tabbtn-ic{position:relative;display:block;line-height:0}
+  .tabdot{display:none;position:absolute;top:-2px;right:-4px;width:9px;height:9px;
+     border-radius:50%;border:1.5px solid #fff}
+  .tabdot.ok{display:block;background:var(--ok)}
+  .tabdot.comite{display:block;background:var(--warn)}
+  .tabdot.rep{display:block;background:var(--err)}
+}
 </style>
 </head>
-<body>
+<body class="tab-dados">
+
+<header class="appbar">
+  <a class="appbar-back" href="index.html" aria-label="Voltar ao portal">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  </a>
+  <div class="appbar-t">Simulador Associativo</div>
+  <img class="appbar-logo" src="assets/img/logo-direcional.jpg" alt="Grupo Direcional">
+</header>
+
+<div class="unitbar" id="unitbar"></div>
 
 <header class="hero">
   <img class="hero-logo" src="assets/img/logo-direcional.jpg" alt="Grupo Direcional">
@@ -329,9 +463,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
 <main class="wrap">
 
+<div id="tab-dados">
+
   <!-- PASSO 1 -->
   <section class="step">
-    <div class="step-label">Passo 1 &middot; Empreendimento e unidade</div>
+    <button class="step-label" type="button" data-step="1"><span class="step-n">1</span><span class="step-t"><span class="s-pre">Passo 1 &middot; </span>Empreendimento e unidade</span><span class="step-sum" id="sum-1"></span><svg class="step-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
     <div class="card">
       <div class="grid g3">
         <div>
@@ -355,7 +491,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
   <!-- PASSO 2 -->
   <section class="step">
-    <div class="step-label">Passo 2 &middot; Cliente</div>
+    <button class="step-label" type="button" data-step="2"><span class="step-n">2</span><span class="step-t"><span class="s-pre">Passo 2 &middot; </span>Cliente</span><span class="step-sum" id="sum-2"></span><svg class="step-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
     <div class="card">
       <div class="grid g4">
         <div>
@@ -372,17 +508,17 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <input id="f-corretor" type="text" placeholder="Seu nome">
         </div>
         <div>
-          <label for="f-fin">Financiado pelo banco</label>
+          <label for="f-fin">Valor do financiamento</label>
           <div class="pair">
             <input class="money" id="f-fin" type="text" inputmode="decimal" placeholder="R$ 0,00">
-            <input class="pct" id="f-fin-p" type="text" inputmode="decimal" placeholder="%">
+            <input class="pct" id="f-fin-p" type="text" inputmode="decimal">
           </div>
         </div>
         <div>
           <label for="f-sub">Subsídio</label>
           <div class="pair">
             <input class="money" id="f-sub" type="text" inputmode="decimal" placeholder="R$ 0,00">
-            <input class="pct" id="f-sub-p" type="text" inputmode="decimal" placeholder="%">
+            <input class="pct" id="f-sub-p" type="text" inputmode="decimal">
           </div>
         </div>
         <div>
@@ -396,50 +532,51 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
   <!-- PASSO 3 -->
   <section class="step">
-    <div class="step-label">Passo 3 &middot; Política da operação</div>
+    <button class="step-label" type="button" data-step="3"><span class="step-n">3</span><span class="step-t"><span class="s-pre">Passo 3 &middot; </span>Política da operação</span><span class="step-sum" id="sum-3"></span><svg class="step-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
     <div class="pols" id="pols"></div>
   </section>
 
   <!-- PASSO 4 -->
   <section class="step">
-    <div class="step-label">Passo 4 &middot; Dados da operação</div>
+    <button class="step-label" type="button" data-step="4"><span class="step-n">4</span><span class="step-t"><span class="s-pre">Passo 4 &middot; </span>Dados da operação</span><span class="step-sum" id="sum-4"></span><svg class="step-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
     <div class="card">
 
-      <div class="sub">Recursos da operação</div>
+      <div class="sub-block open" data-sub="recursos"><button class="sub" type="button"><svg class="sub-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg><span class="sub-t">Recursos da operação</span><span class="sub-sum" id="ssum-recursos"></span></button><div class="sub-body">
       <div class="grid g4">
         <div>
-          <label for="f-valor">Valor do imóvel (venda)</label>
+          <label for="f-valor">Valor do imóvel</label>
           <input id="f-valor" type="text" inputmode="decimal" placeholder="R$ 0,00">
         </div>
         <div>
           <label for="f-fgts">FGTS</label>
           <div class="pair">
             <input class="money" id="f-fgts" type="text" inputmode="decimal" placeholder="R$ 0,00">
-            <input class="pct" id="f-fgts-p" type="text" inputmode="decimal" placeholder="%">
+            <input class="pct" id="f-fgts-p" type="text" inputmode="decimal">
           </div>
         </div>
         <div>
           <label for="f-badim">Bônus Adimplência</label>
           <div class="pair">
             <input class="money" id="f-badim" type="text" inputmode="decimal" placeholder="R$ 0,00">
-            <input class="pct" id="f-badim-p" type="text" inputmode="decimal" placeholder="%">
+            <input class="pct" id="f-badim-p" type="text" inputmode="decimal">
           </div>
         </div>
         <div>
           <label for="f-bcamp">Bônus Campanha</label>
           <div class="pair">
             <input class="money" id="f-bcamp" type="text" inputmode="decimal" placeholder="R$ 0,00">
-            <input class="pct" id="f-bcamp-p" type="text" inputmode="decimal" placeholder="%">
+            <input class="pct" id="f-bcamp-p" type="text" inputmode="decimal">
           </div>
         </div>
         <div>
           <label>Entrada</label>
           <input id="f-presaldo" type="text" readonly>
-          <div class="hint">Imóvel &minus; banco &minus; subsídio &minus; FGTS &minus; bônus &minus; ato.</div>
+          <div class="hint">Imóvel &minus; financiamento &minus; subsídio &minus; FGTS &minus; bônus &minus; ato.</div>
         </div>
       </div>
 
-      <div class="sub">Datas e prazo</div>
+      </div></div>
+      <div class="sub-block" data-sub="datas"><button class="sub" type="button"><svg class="sub-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg><span class="sub-t">Datas e prazo</span><span class="sub-sum" id="ssum-datas"></span></button><div class="sub-body">
       <div class="grid g4">
         <div>
           <label for="f-data">Data da proposta / venda</label>
@@ -462,13 +599,14 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
       </div>
 
-      <div class="sub">Ato e sinais <span class="lt">&mdash; ato em até 7 dias da venda; sinais em até 30, 60 e 90 dias</span></div>
+      </div></div>
+      <div class="sub-block" data-sub="ato"><button class="sub" type="button"><svg class="sub-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg><span class="sub-t">Ato e sinais</span><span class="lt">&mdash; ato em até 7 dias da venda; sinais em até 30, 60 e 90 dias</span><span class="sub-sum" id="ssum-ato"></span></button><div class="sub-body">
       <div class="grid g4">
         <div>
           <label for="f-ato">Ato (CC / boleto)</label>
           <div class="pair">
             <input class="money" id="f-ato" type="text" inputmode="decimal" placeholder="R$ 0,00">
-            <input class="pct" id="f-ato-p" type="text" inputmode="decimal" placeholder="%">
+            <input class="pct" id="f-ato-p" type="text" inputmode="decimal">
           </div>
         </div>
         <div><label for="f-dato">Vencimento do ato</label><input id="f-dato" type="date"></div>
@@ -476,7 +614,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <label for="f-s1">Sinal 1</label>
           <div class="pair">
             <input class="money" id="f-s1" type="text" inputmode="decimal" placeholder="R$ 0,00">
-            <input class="pct" id="f-s1-p" type="text" inputmode="decimal" placeholder="%">
+            <input class="pct" id="f-s1-p" type="text" inputmode="decimal">
           </div>
         </div>
         <div><label for="f-ds1">Vencimento do sinal 1</label><input id="f-ds1" type="date"></div>
@@ -484,7 +622,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <label for="f-s2">Sinal 2</label>
           <div class="pair">
             <input class="money" id="f-s2" type="text" inputmode="decimal" placeholder="R$ 0,00">
-            <input class="pct" id="f-s2-p" type="text" inputmode="decimal" placeholder="%">
+            <input class="pct" id="f-s2-p" type="text" inputmode="decimal">
           </div>
         </div>
         <div><label for="f-ds2">Vencimento do sinal 2</label><input id="f-ds2" type="date"></div>
@@ -492,14 +630,15 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
           <label for="f-s3">Sinal 3</label>
           <div class="pair">
             <input class="money" id="f-s3" type="text" inputmode="decimal" placeholder="R$ 0,00">
-            <input class="pct" id="f-s3-p" type="text" inputmode="decimal" placeholder="%">
+            <input class="pct" id="f-s3-p" type="text" inputmode="decimal">
           </div>
         </div>
         <div><label for="f-ds3">Vencimento do sinal 3</label><input id="f-ds3" type="date"></div>
       </div>
       <div class="hint" id="h-entrada"></div>
 
-      <div class="sub">Anuais <span class="lt">&mdash; somente em dezembro e dentro do período de obra</span></div>
+      </div></div>
+      <div class="sub-block" data-sub="anuais"><button class="sub" type="button"><svg class="sub-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg><span class="sub-t">Anuais</span><span class="lt">&mdash; somente em dezembro e dentro do período de obra</span><span class="sub-sum" id="ssum-anuais"></span></button><div class="sub-body">
       <div class="grid g4">
         <div><label for="f-a1">Anual 1</label><input id="f-a1" type="text" inputmode="decimal" placeholder="R$ 0,00"></div>
         <div><label for="f-da1">Vencimento da anual 1</label><input id="f-da1" type="date"></div>
@@ -509,13 +648,14 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
         <div><label for="f-da3">Vencimento da anual 3</label><input id="f-da3" type="date"></div>
       </div>
       <div class="hint" id="h-anual"></div>
+      </div></div>
 
     </div>
   </section>
 
   <!-- PASSO 5 -->
   <section class="step">
-    <div class="step-label">Passo 5 &middot; Observações</div>
+    <button class="step-label" type="button" data-step="5"><span class="step-n">5</span><span class="step-t"><span class="s-pre">Passo 5 &middot; </span>Observações</span><span class="step-sum" id="sum-5"></span><svg class="step-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
     <div class="card">
       <div class="obs-wrap">
         <div id="obs-toolbar">
@@ -546,6 +686,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       <div class="hint" id="h-obs">Sai no PDF com a formatação e as imagens que você usar aqui.</div>
     </div>
   </section>
+
+</div><!-- /tab-dados -->
+
+<div id="tab-result">
 
   <!-- RESULTADO -->
   <section class="step">
@@ -582,7 +726,20 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <a href="index.html">Voltar ao portal</a>
   </div>
 
+</div><!-- /tab-result -->
+
 </main>
+
+<nav class="tabbar" id="tabbar">
+  <button type="button" class="tabbtn on" data-tab="dados">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.5"></rect><line x1="8" y1="8" x2="16" y2="8"></line><line x1="8" y1="12" x2="16" y2="12"></line><line x1="8" y1="16" x2="13" y2="16"></line></svg>
+    <span>Dados</span>
+  </button>
+  <button type="button" class="tabbtn" data-tab="result">
+    <span class="tabbtn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="20" x2="5" y2="12"></line><line x1="12" y1="20" x2="12" y2="5"></line><line x1="19" y1="20" x2="19" y2="9"></line></svg><i class="tabdot" id="tabdot"></i></span>
+    <span>Resultado</span>
+  </button>
+</nav>
 
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
@@ -1374,7 +1531,122 @@ function renderTabela(c){
   tb.innerHTML=html;
 }
 
-function render(){ renderEmpInfo(); renderUnidInfo(); renderPols(); renderResultado(); }
+function render(){ renderEmpInfo(); renderUnidInfo(); renderPols(); renderResultado(); renderShell(); }
+
+/* =========================================================
+   SHELL MOBILE
+   Barra da unidade, resumos do acordeao e ponto de status da
+   aba Resultado. So le S / calc() e escreve texto - nao altera
+   estado nem participa do calculo.
+   ========================================================= */
+function politicaAtual(){
+  for(var i=0;i<POLITICAS.length;i++) if(POLITICAS[i].id===S.politicaId) return POLITICAS[i];
+  return null;
+}
+function secaoDo(el){ while(el && el.nodeName!=='SECTION') el=el.parentNode; return el; }
+function setSum(n,txt,done){
+  var el=$('sum-'+n); if(!el) return;
+  el.textContent = txt||'';
+  var sec=secaoDo(el); if(sec) sec.classList.toggle('done', !!done);
+}
+function setSubSum(k,txt){ var el=$('ssum-'+k); if(el) el.textContent=txt||''; }
+
+function renderShell(){
+  var e=emp();
+  var d=(unidadesEmp.detalhes||{})[S.unidade];
+  var pol=politicaAtual();
+  var c=calc();
+
+  /* barra da unidade (fica visivel nas duas abas) */
+  var ub=$('unitbar');
+  if(ub){
+    if(e){
+      var tipo = d ? (d.tipoLabel + (d.areaPriv>0 ? ' \u00b7 '+d.areaPriv+' m\u00b2' : ''))
+                   : 'Escolha a torre e a unidade';
+      var valor = S.valor>0 ? brl(S.valor) : (d ? brl(d.avaliacao) : '');
+      ub.className='unitbar show';
+      ub.innerHTML =
+        '<div class="ub-emp"><span>'+e.nome+' \u00b7 '+e.cidade+'</span></div>'+
+        '<div class="ub-r">'+
+          '<span class="ub-a">'+(S.unidade ? 'Unidade '+S.unidade : 'Unidade n\u00e3o escolhida')+'</span>'+
+          '<span class="ub-b">'+valor+'</span>'+
+        '</div>'+
+        '<div class="ub-r">'+
+          '<span class="ub-c">'+tipo+'</span>'+
+          '<span class="ub-d">Entrega '+rotuloMes(parseData(e.entrega))+'</span>'+
+        '</div>';
+    } else { ub.className='unitbar'; ub.innerHTML=''; }
+  }
+
+  /* resumos dos passos */
+  setSum(1, e ? (e.nome + (S.unidade ? ' \u00b7 '+S.unidade : '')) : '', !!(e && S.unidade));
+  var r2=[]; if(S.cliente) r2.push(S.cliente); if(S.renda>0) r2.push(brl(S.renda));
+  setSum(2, r2.join(' \u00b7 '), S.renda>0);
+  setSum(3, pol?pol.nome:'', !!pol);
+  var r4=[]; if(S.valor>0) r4.push(brl(S.valor)); if(S.prazo>0) r4.push(S.prazo+' meses');
+  setSum(4, r4.join(' \u00b7 '), !!(S.valor>0 && S.prazo>0));
+  var temObs = !!(S.obsHtml && S.obsHtml.replace(/<[^>]*>/g,'').replace(/&nbsp;/g,'').trim());
+  setSum(5, temObs?'preenchido':'vazio', temObs);
+
+  /* resumos das gavetas do passo 4 */
+  setSubSum('recursos', S.valor>0?brl(S.valor):'');
+  setSubSum('datas', S.prazo>0
+    ? (S.prazo+' meses'+(c.pronto?' \u00b7 '+c.nPre+' pr\u00e9 / '+c.nPos+' p\u00f3s':''))
+    : '');
+  var totAto=(S.ato||0)+(S.s1||0)+(S.s2||0)+(S.s3||0);
+  setSubSum('ato', totAto>0?brl(totAto):'n\u00e3o lan\u00e7ado');
+  var totAnu=(S.a1||0)+(S.a2||0)+(S.a3||0);
+  setSubSum('anuais', totAnu>0?brl(totAnu):'nenhuma');
+
+  /* ponto de status na aba Resultado */
+  var dot=$('tabdot');
+  if(dot){
+    var cls='tabdot';
+    if(c.pronto && c.veredito){
+      cls += c.veredito.final==='Aprovado' ? ' ok'
+           : (c.veredito.final==='Comit\u00ea' ? ' comite' : ' rep');
+    }
+    dot.className=cls;
+  }
+}
+
+function setTab(t){
+  document.body.classList.remove('tab-dados','tab-result');
+  document.body.classList.add('tab-'+t);
+  var bs=document.querySelectorAll('.tabbtn');
+  for(var i=0;i<bs.length;i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-tab')===t);
+  window.scrollTo(0,0);
+}
+
+/* acordeao dos passos, gavetas do passo 4 e troca de aba.
+   Acima de 860px o CSS mantem tudo aberto, entao alternar a
+   classe .open nao muda nada no desktop. */
+/* acima de 860px o CSS mantem tudo aberto, entao o aria acompanha o
+   que a tela realmente mostra, nao a classe .open */
+function syncAria(){
+  var mob = window.matchMedia('(max-width:860px)').matches;
+  var i, b, bs;
+  bs=document.querySelectorAll('button.step-label');
+  for(i=0;i<bs.length;i++){ b=bs[i];
+    b.setAttribute('aria-expanded', mob ? (b.parentNode.classList.contains('open')?'true':'false') : 'true'); }
+  bs=document.querySelectorAll('.sub-block > button.sub');
+  for(i=0;i<bs.length;i++){ b=bs[i];
+    b.setAttribute('aria-expanded', mob ? (b.parentNode.classList.contains('open')?'true':'false') : 'true'); }
+}
+window.addEventListener('resize', syncAria);
+
+document.addEventListener('click', function(ev){
+  var t=ev.target; if(!t || !t.closest) return;
+  var lb=t.closest('button.step-label');
+  if(lb){ lb.parentNode.classList.toggle('open'); syncAria(); return; }
+  var sb=t.closest('.sub-block > button.sub');
+  if(sb){ sb.parentNode.classList.toggle('open'); syncAria(); return; }
+  var tb=t.closest('.tabbtn');
+  if(tb){ setTab(tb.getAttribute('data-tab')); return; }
+});
+
+/* passo 1 comeca aberto */
+(function(){ var s1=secaoDo($('sum-1')); if(s1) s1.classList.add('open'); syncAria(); })();
 
 /* =========================================================
    PASSO 1 - EMPREENDIMENTO / TORRE / UNIDADE
