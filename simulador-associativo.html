@@ -66,15 +66,19 @@ button.step-label::before{display:none}
      justify-content:center;font-size:.74rem;font-weight:700;background:var(--dir-bg);
      border:1px solid var(--dir-line);color:var(--dir-grey);transition:.15s}
 .step-n{position:relative}
+/* concluido: check verde */
 .step.done .step-n{background:#EFF9F2;border-color:#C7E7D3;color:transparent}
-.step.done .step-n::after{content:'';position:absolute;inset:0;background:#EFF9F2;border-radius:50%;
-     display:flex;align-items:center;justify-content:center}
 .step.done .step-n::before{content:'';position:absolute;left:50%;top:50%;width:9px;height:5px;
      border-left:2px solid var(--ok);border-bottom:2px solid var(--ok);
      transform:translate(-50%,-65%) rotate(-45deg)}
-.step.done.open .step-n{background:var(--dir-red);border-color:var(--dir-red);color:#fff}
-.step.done.open .step-n::after,.step.done.open .step-n::before{content:none}
+/* preenchido com erro: "!" ambar (vence o concluido) */
+.step.warn .step-n{background:var(--warn-bg);border-color:#F0DCB0;color:transparent}
+.step.warn .step-n::before{content:'!';display:flex;align-items:center;justify-content:center;
+     position:absolute;inset:0;border:0;width:auto;height:auto;transform:none;
+     color:var(--warn);font-size:.92rem;font-weight:700}
+/* aberto (aba atual): numero vermelho, vence todos */
 .step.open .step-n{background:var(--dir-red);border-color:var(--dir-red);color:#fff}
+.step.open .step-n::before{content:none}
 .step-t{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .step-sum{display:block;flex:1 1 0;min-width:0;text-align:right;font-size:.8rem;font-weight:400;
      color:var(--dir-grey);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -309,9 +313,9 @@ textarea{resize:vertical;min-height:70px}
 .vd-item .vi-val{flex:0 0 auto;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .vd-item .vi-lim{flex:0 0 auto;color:var(--dir-grey);font-size:.78rem;font-variant-numeric:tabular-nums;
       white-space:nowrap}
-.vd-item .st{flex:0 0 auto;width:34px}
-.st{display:inline-block;text-align:center;font-size:.66rem;font-weight:700;letter-spacing:.03em;
-      text-transform:uppercase;padding:.22rem 0;border-radius:999px;border:1px solid}
+.vd-item .st{flex:0 0 auto;white-space:nowrap}
+.st{display:inline-block;text-align:center;font-size:.64rem;font-weight:700;letter-spacing:.02em;
+      text-transform:uppercase;padding:.2rem .5rem;border-radius:999px;border:1px solid;white-space:nowrap}
 .st.ok{background:#EFF9F2;border-color:#C7E7D3;color:var(--ok)}
 .st.comite{background:var(--warn-bg);border-color:#F0DCB0;color:var(--warn)}
 .st.rep{background:var(--err-bg);border-color:#F3C6CE;color:var(--err)}
@@ -368,7 +372,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .modal-banner.aprovado{background:linear-gradient(135deg,var(--ok),#166B39)}
 .modal-banner.comite{background:linear-gradient(135deg,var(--warn),#8A5700)}
 .modal-banner.reprovado{background:linear-gradient(135deg,var(--err),#8f0016)}
-.modal-banner .sub{display:block;font-weight:400;font-size:.82rem;margin-top:.3rem;opacity:.9}
+.modal-banner .sub{display:block;font-weight:400;font-size:.82rem;margin-top:.3rem;color:#fff;opacity:.92}
 .modal-body{padding:1.2rem 1.4rem 1.4rem;max-height:64vh;overflow-y:auto}
 .modal-checklist{display:flex;flex-direction:column}
 .modal-item{display:flex;gap:.65rem;align-items:flex-start;padding:.65rem 0;border-bottom:1px solid var(--dir-line)}
@@ -555,19 +559,21 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .sheet-foot-s{display:block;font-size:.72rem;font-weight:400;color:var(--dir-grey);margin-top:.1rem}
 .sheet-foot-v{font-size:1.1rem;font-weight:700;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
 
-.sc-n,.pl-n{flex:0 0 28px}
-.sc-d,.pl-d{flex:0 0 78px}
-.sc-c,.pl-c{flex:0 0 62px}
-.sc-v,.pl-v{flex:1 1 auto;text-align:right}
-.pl-grp{padding:.5rem .9rem;background:#FAFBFB;border-top:1px solid var(--dir-line);font-size:.68rem;
-     font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dir-grey)}
-.pl{display:flex;align-items:center;gap:.6rem;min-height:41px;padding:.35rem .9rem;
+.sc-n,.pl-n{flex:0 0 26px}
+.sc-d,.pl-d{flex:0 0 84px}
+.sc-p,.pl-p{flex:1 1 auto;min-width:0}
+.sc-f,.pl-f{flex:0 0 44px}
+.sc-v,.pl-v{flex:0 0 84px;text-align:right}
+.pl{display:flex;align-items:center;gap:.6rem;min-height:42px;padding:.35rem .9rem;
      border-top:1px solid var(--dir-line)}
+.pl:first-child{border-top:0}
 .pl-n{font-size:.76rem;color:#A8AEB1;font-variant-numeric:tabular-nums}
 .pl-d{font-size:.82rem;font-weight:500;font-variant-numeric:tabular-nums}
-.pl-c{font-size:.76rem;color:var(--dir-grey);font-variant-numeric:tabular-nums}
-.pl.hi .pl-c{color:var(--err);font-weight:600}
-.pl-v{font-size:.87rem;font-weight:700;letter-spacing:-.2px;font-variant-numeric:tabular-nums}
+.pl-p{font-size:.8rem;color:var(--dir-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl-f{font-size:.76rem;color:var(--dir-grey)}
+.pl-v{font-size:.86rem;font-weight:700;letter-spacing:-.2px;font-variant-numeric:tabular-nums}
+.pl.hi{background:var(--err-bg)}
+.pl.hi .pl-v{color:var(--err)}
 .pl-extra .pl-v{color:var(--warn)}
 
 /* folha em tela cheia no celular */
@@ -615,8 +621,11 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
   #tab-result .tbl-tools,#tab-result .tbl-wrap{display:none}
   #tab-result .note{display:none}
-  #tab-result .btn-row{position:sticky;bottom:0;z-index:5;margin-top:.5rem;padding:.75rem 0 .25rem;
-       background:#fff}
+  #tab-result{padding-bottom:5rem}
+  #tab-result .btn-row{position:sticky;bottom:1rem;z-index:5;margin:1rem 0 0;padding:.55rem;
+       background:#fff;border:1px solid var(--dir-line);border-radius:14px;
+       box-shadow:0 10px 30px rgba(58,64,67,.16)}
+  .foot{position:relative;z-index:1}
 }
 </style>
 </head>
@@ -948,8 +957,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
       <div class="fases" id="sheet-fases"></div>
     </div>
     <div class="sheet-cols">
-      <span class="sc-n">#</span><span class="sc-d">Vencto</span>
-      <span class="sc-c">C.R. do mês</span><span class="sc-v">Parcela</span>
+      <span class="sc-n">#</span><span class="sc-d">Vencimento</span>
+      <span class="sc-p">Parcela</span><span class="sc-f">Fase</span><span class="sc-v">Valor</span>
     </div>
     <div class="sheet-body" id="sheet-body"></div>
     <div class="sheet-foot" id="sheet-foot"></div>
@@ -1806,10 +1815,12 @@ function politicaAtual(){
   return null;
 }
 function secaoDo(el){ while(el && el.nodeName!=='SECTION') el=el.parentNode; return el; }
-function setSum(n,txt,done){
+function setSum(n,txt,done,warn){
   var el=$('sum-'+n); if(!el) return;
   el.textContent = txt||'';
-  var sec=secaoDo(el); if(sec) sec.classList.toggle('done', !!done);
+  var sec=secaoDo(el); if(!sec) return;
+  sec.classList.toggle('done', !!done && !warn);
+  sec.classList.toggle('warn', !!warn);
 }
 function setSubSum(k,txt){ var el=$('ssum-'+k); if(el) el.textContent=txt||''; }
 
@@ -1856,13 +1867,20 @@ function renderShell(){
     } else { ub.className='unitbar'; ub.innerHTML=''; }
   }
 
-  /* resumos dos passos */
+  /* resumos dos passos (com estado de atencao quando ha erro no passo) */
+  var av = validar(c);
+  function erroEm(cods){
+    return av.some(function(a){ return a.n==='err' && cods.indexOf(a.c)>=0; });
+  }
+  var warn2 = erroEm(['renda','parcfin']);
+  var warn4 = erroEm(['venc1','valor','prazo','entrada','anual']);
+
   setSum(1, e ? (e.nome + (S.unidade ? ' \u00b7 '+S.unidade : '')) : '', !!(e && S.unidade));
   var r2=[]; if(S.cliente) r2.push(S.cliente); if(S.renda>0) r2.push(brl(S.renda));
-  setSum(2, r2.join(' \u00b7 '), S.renda>0);
+  setSum(2, r2.join(' \u00b7 '), S.renda>0, warn2);
   setSum(3, pol?pol.nome:'', !!pol);
   var r4=[]; if(S.valor>0) r4.push(brl(S.valor)); if(S.prazo>0) r4.push(S.prazo+' meses');
-  setSum(4, r4.join(' \u00b7 '), !!(S.valor>0 && S.prazo>0));
+  setSum(4, r4.join(' \u00b7 '), !!(S.valor>0 && S.prazo>0), warn4);
   var temObs = !!(S.obsHtml && S.obsHtml.replace(/<[^>]*>/g,'').replace(/&nbsp;/g,'').trim());
   setSum(5, temObs?'preenchido':'vazio', temObs);
 
@@ -1937,22 +1955,19 @@ function renderSheet(){
       '<span class="r"><i>P\u00f3s-chaves</i><b>'+brl(f.pos)+'</b></span>'+
     '</div>';
 
-  var html='', faseAtual=null;
+  var FASE_CURTA = { '-':'\u2014', 'Pr\u00e9':'Pr\u00e9', 'P\u00f3s':'P\u00f3s' };
+  var html='';
   for(var k=0;k<c.fluxo.length;k++){
     var r=c.fluxo[k];
-    if(r.fase!==faseAtual){
-      faseAtual=r.fase;
-      html += '<div class="pl-grp">'+(FASE_ROTULO[faseAtual]||faseAtual)+'</div>';
-    }
     var val = esc ? r.psEsc : r.psLin;
     var cr  = esc ? r.crEsc : r.crLin;
     var fora = cr!==null && S.renda>0 && cr>limCR;
-    var col3 = (cr!==null && S.renda>0) ? pctf(cr)
-             : (val ? '\u2014' : r.tipo.replace('Ato Sinal CC/Boleto','Ato'));
-    html += '<div class="pl'+(fora?' hi':'')+(!val&&r.extra?' pl-extra':'')+'">'+
+    html += '<div class="pl'+(fora?' hi':'')+(!val&&r.extra?' pl-extra':'')+'" '+
+      (fora?'title="Comprometimento de renda de '+pctf(cr)+' neste m\u00eas, acima do limite da pol\u00edtica">':'')+'>'+
       '<span class="pl-n">'+(r.n||'\u2014')+'</span>'+
       '<span class="pl-d">'+fmtData(r.data)+'</span>'+
-      '<span class="pl-c">'+col3+'</span>'+
+      '<span class="pl-p">'+r.tipo+'</span>'+
+      '<span class="pl-f">'+(FASE_CURTA[r.fase]||r.fase)+'</span>'+
       '<span class="pl-v">'+celParcela(val, r.extra, '\u2014')+'</span>'+
     '</div>';
   }
@@ -2018,9 +2033,21 @@ window.addEventListener('resize', syncAria);
 document.addEventListener('click', function(ev){
   var t=ev.target; if(!t || !t.closest) return;
   var lb=t.closest('button.step-label');
-  if(lb){ lb.parentNode.classList.toggle('open'); syncAria(); return; }
+  if(lb){
+    var sec=lb.parentNode, abrir=!sec.classList.contains('open');
+    var abertas=document.querySelectorAll('section.step.open');
+    for(var i=0;i<abertas.length;i++) abertas[i].classList.remove('open');
+    if(abrir) sec.classList.add('open');
+    syncAria(); return;
+  }
   var sb=t.closest('.sub-block > button.sub');
-  if(sb){ sb.parentNode.classList.toggle('open'); syncAria(); return; }
+  if(sb){
+    var bloco=sb.parentNode, abrirS=!bloco.classList.contains('open');
+    var abS=document.querySelectorAll('.sub-block.open');
+    for(var j=0;j<abS.length;j++) abS[j].classList.remove('open');
+    if(abrirS) bloco.classList.add('open');
+    syncAria(); return;
+  }
   var tb=t.closest('.tabbtn');
   if(tb){ setTab(tb.getAttribute('data-tab')); return; }
   if(t.closest('#b-parcelas')){ abreSheet(); return; }
