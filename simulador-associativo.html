@@ -438,6 +438,139 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   .tabdot.comite{display:block;background:var(--warn)}
   .tabdot.rep{display:block;background:var(--err)}
 }
+
+/* =========================================================
+   CARNE COMPLETO - resumo por fase + folha em tela cheia
+   ========================================================= */
+.carne-resumo{display:none;background:#fff;border:1px solid var(--dir-line);border-radius:14px;
+     padding:.9rem 1rem 1rem;margin-bottom:1.1rem}
+.cr-k{font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--dir-grey);
+     font-weight:500;margin-bottom:.6rem}
+.cr-row{display:flex;align-items:baseline;justify-content:space-between;gap:.7rem;font-size:.86rem}
+.cr-row+.cr-row{margin-top:.35rem}
+.cr-row span{color:var(--dir-grey)}
+.cr-row b{font-weight:700;font-variant-numeric:tabular-nums}
+.cr-tot{display:flex;align-items:baseline;justify-content:space-between;gap:.7rem;margin-top:.6rem;
+     padding-top:.6rem;border-top:2px solid var(--dir-red)}
+.cr-tot-k{font-size:.86rem;font-weight:700}
+.cr-tot-v{font-size:1.05rem;font-weight:700;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
+.cr-btn{display:flex;align-items:center;justify-content:center;gap:.45rem;width:100%;min-height:44px;
+     margin-top:.85rem;font:inherit;font-size:.87rem;font-weight:500;color:var(--dir-ink);background:#fff;
+     border:1px solid var(--dir-line);border-radius:9px;cursor:pointer;transition:.15s}
+.cr-btn:hover{border-color:var(--dir-red);color:var(--dir-red)}
+.cr-btn svg{flex:0 0 auto;width:15px;height:15px;stroke:currentColor}
+
+.seg{display:flex;gap:3px;padding:3px;background:var(--dir-bg);border:1px solid var(--dir-line);
+     border-radius:999px}
+.seg button{flex:1 1 0;min-height:34px;font:inherit;font-size:.82rem;font-weight:500;
+     color:var(--dir-grey);background:none;border:0;border-radius:999px;cursor:pointer;transition:.15s}
+.seg button.on{background:var(--dir-red);color:#fff;font-weight:600}
+
+.sheet{display:none;position:fixed;inset:0;z-index:900;background:rgba(58,64,67,.55)}
+.sheet.open{display:flex}
+.sheet-box{display:flex;flex-direction:column;background:#fff;overflow:hidden}
+.sheet-head{flex:0 0 auto;display:flex;align-items:center;gap:.25rem;height:56px;padding:0 .75rem;
+     border-bottom:1px solid var(--dir-line)}
+.sheet-close{flex:0 0 auto;width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+     background:none;border:0;border-radius:9px;color:var(--dir-ink);cursor:pointer}
+.sheet-close:hover{background:var(--dir-bg)}
+.sheet-close svg{width:20px;height:20px}
+.sheet-ttl{flex:1 1 auto;min-width:0}
+.sheet-t{font-size:.98rem;font-weight:700;letter-spacing:-.2px}
+.sheet-s{font-size:.74rem;color:var(--dir-grey)}
+.sheet-tools{flex:0 0 auto;padding:.7rem .9rem .8rem;border-bottom:1px solid var(--dir-line)}
+.fases{margin-top:.8rem}
+.fase-track{display:flex;gap:2px;height:6px}
+.fase-track span{border-radius:999px;background:var(--dir-red)}
+.fase-track span.pos{background:#F3AEBB}
+.fase-legend{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-top:.45rem}
+.fase-legend i{display:block;font-size:.7rem;font-style:normal;color:var(--dir-grey)}
+.fase-legend b{display:block;margin-top:.1rem;font-size:.8rem;font-weight:700;
+     font-variant-numeric:tabular-nums}
+.fase-legend .r{text-align:right}
+.sheet-cols{flex:0 0 auto;display:flex;align-items:center;gap:.6rem;height:34px;padding:0 .9rem;
+     background:var(--dir-ink);color:#fff;font-size:.64rem;font-weight:500;letter-spacing:.07em;
+     text-transform:uppercase}
+.sheet-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sheet-foot{flex:0 0 auto;display:flex;align-items:baseline;justify-content:space-between;gap:.7rem;
+     padding:.85rem .9rem;background:#FFF9FA;border-top:2px solid var(--dir-red)}
+.sheet-foot-k{font-size:.86rem;font-weight:700}
+.sheet-foot-s{display:block;font-size:.72rem;font-weight:400;color:var(--dir-grey);margin-top:.1rem}
+.sheet-foot-v{font-size:1.1rem;font-weight:700;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+
+.sc-n,.pl-n{flex:0 0 28px}
+.sc-d,.pl-d{flex:0 0 78px}
+.sc-c,.pl-c{flex:0 0 62px}
+.sc-v,.pl-v{flex:1 1 auto;text-align:right}
+.pl-grp{padding:.5rem .9rem;background:#FAFBFB;border-top:1px solid var(--dir-line);font-size:.68rem;
+     font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dir-grey)}
+.pl{display:flex;align-items:center;gap:.6rem;min-height:41px;padding:.35rem .9rem;
+     border-top:1px solid var(--dir-line)}
+.pl-n{font-size:.76rem;color:#A8AEB1;font-variant-numeric:tabular-nums}
+.pl-d{font-size:.82rem;font-weight:500;font-variant-numeric:tabular-nums}
+.pl-c{font-size:.76rem;color:var(--dir-grey);font-variant-numeric:tabular-nums}
+.pl.hi .pl-c{color:var(--err);font-weight:600}
+.pl-v{font-size:.87rem;font-weight:700;letter-spacing:-.2px;font-variant-numeric:tabular-nums}
+.pl-extra .pl-v{color:var(--warn)}
+
+/* folha em tela cheia no celular */
+@media(max-width:860px){
+  .sheet-box{width:100%;height:100%;border-radius:0}
+  .tbl-tools,.tbl-wrap{display:none}
+  .carne-resumo{display:block}
+}
+/* folha como modal no desktop */
+@media(min-width:861px){
+  .sheet{align-items:center;justify-content:center;padding:4vh 1rem}
+  .sheet-box{width:100%;max-width:640px;max-height:92vh;border-radius:14px;
+       box-shadow:0 24px 60px rgba(0,0,0,.25)}
+}
+
+/* =========================================================
+   DESKTOP EM DUAS COLUNAS (>=1200px)
+   Formulario a esquerda, resultado grudado a direita.
+   ========================================================= */
+@media(min-width:1200px){
+  .hero{padding:2rem 2rem 1.75rem}
+  .hero h1{font-size:1.95rem}
+  .hero p{max-width:74ch}
+
+  .unitbar{display:none;background:#fff;border-bottom:1px solid var(--dir-line);padding:.85rem 2rem .95rem}
+  .unitbar.show{display:block}
+  .ub-inner{max-width:1400px;margin:0 auto}
+  .ub-compact{display:none}
+  .ub-strip{display:flex;align-items:center;flex-wrap:wrap;gap:.35rem 0}
+  .ub-i{padding:0 1.35rem;border-right:1px solid var(--dir-line)}
+  .ub-i:first-child{padding-left:0}
+  .ub-i:last-child{border-right:0}
+  .ub-k{display:block;font-size:.66rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;
+       color:var(--dir-grey)}
+  .ub-v{display:block;margin-top:.12rem;font-size:.94rem;font-weight:700;letter-spacing:-.2px}
+  .unid-info,.emp-info{display:none!important}
+
+  .wrap{max-width:1400px;display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:0 2rem;
+       align-items:start;padding:1.5rem 2rem 3rem}
+  #tab-dados{min-width:0}
+  #tab-result{min-width:0;position:sticky;top:1.25rem;max-height:calc(100vh - 2.5rem);
+       overflow-y:auto;overscroll-behavior:contain}
+  .foot{grid-column:1/-1;margin-top:1.75rem}
+
+  #tab-dados .g4{grid-template-columns:repeat(3,1fr)}
+
+  #tab-result .step-label{margin-bottom:.85rem}
+  #tab-result .summary{grid-template-columns:1fr 1fr}
+  #tab-result .cmp{grid-template-columns:1fr}
+  #tab-result .tbl-tools,#tab-result .tbl-wrap{display:none}
+  #tab-result .carne-resumo{display:block}
+  #tab-result .note{display:none}
+  #tab-result .vd-item{grid-template-columns:1fr 92px;row-gap:.15rem}
+  #tab-result .vd-item .vi-lab{grid-column:1/2}
+  #tab-result .vd-item .vi-val{grid-column:1/2;color:var(--dir-grey);font-size:.8rem}
+  #tab-result .vd-item .vi-lim{grid-column:1/2}
+  #tab-result .vd-item .st{grid-column:2/3;grid-row:1/4;align-self:center}
+  #tab-result .btn-row{position:sticky;bottom:0;z-index:5;margin-top:.5rem;padding:.75rem 0 .25rem;
+       background:#fff}
+}
 </style>
 </head>
 <body class="tab-dados">
@@ -450,7 +583,6 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   <img class="appbar-logo" src="assets/img/logo-direcional.jpg" alt="Grupo Direcional">
 </header>
 
-<div class="unitbar" id="unitbar"></div>
 
 <header class="hero">
   <img class="hero-logo" src="assets/img/logo-direcional.jpg" alt="Grupo Direcional">
@@ -460,6 +592,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <p>Calcule o Pro Soluto do cliente que financia pelo MCMV, veja o carnê nos fluxos linear e escalonado, confira o comprometimento de renda mês a mês e saiba na hora se a proposta aprova na política. Ribeirão Preto, Campinas e Sorocaba.</p>
   </div>
 </header>
+
+<div class="unitbar" id="unitbar"></div>
 
 <main class="wrap">
 
@@ -699,6 +833,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <div class="cmp" id="cmp"></div>
     <div class="vd" id="vd" style="display:none"></div>
     <div class="alerts" id="alerts"></div>
+    <div class="carne-resumo" id="carne-resumo"></div>
     <div class="tbl-tools">
       <button class="chip" id="b-toggle-tbl" type="button">Mostrar todas as parcelas</button>
     </div>
@@ -718,6 +853,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     </div>
   </section>
 
+</div><!-- /tab-result -->
+
   <div class="foot">
     O Pro Soluto é corrigido a 0,5% a.m. antes das chaves e 1,5% a.m. após as chaves, e sofre correção
     de carência entre a data da venda e o 1º vencimento. O comprometimento de renda soma a parcela do
@@ -726,7 +863,6 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <a href="index.html">Voltar ao portal</a>
   </div>
 
-</div><!-- /tab-result -->
 
 </main>
 
@@ -740,6 +876,34 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     <span>Resultado</span>
   </button>
 </nav>
+
+<!-- folha do carne completo: tela cheia no mobile, modal no desktop -->
+<div class="sheet" id="sheet" aria-hidden="true">
+  <div class="sheet-box" role="dialog" aria-modal="true" aria-labelledby="sheet-t">
+    <div class="sheet-head">
+      <button class="sheet-close" id="sheet-close" type="button" aria-label="Fechar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+      <div class="sheet-ttl">
+        <div class="sheet-t" id="sheet-t">Carnê completo</div>
+        <div class="sheet-s" id="sheet-s"></div>
+      </div>
+    </div>
+    <div class="sheet-tools">
+      <div class="seg" id="sheet-seg">
+        <button type="button" data-fluxo="linear">Linear</button>
+        <button type="button" data-fluxo="escalonado">Escalonado</button>
+      </div>
+      <div class="fases" id="sheet-fases"></div>
+    </div>
+    <div class="sheet-cols">
+      <span class="sc-n">#</span><span class="sc-d">Vencto</span>
+      <span class="sc-c">C.R. do mês</span><span class="sc-v">Parcela</span>
+    </div>
+    <div class="sheet-body" id="sheet-body"></div>
+    <div class="sheet-foot" id="sheet-foot"></div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
@@ -1564,16 +1728,32 @@ function renderShell(){
       var tipo = d ? (d.tipoLabel + (d.areaPriv>0 ? ' \u00b7 '+d.areaPriv+' m\u00b2' : ''))
                    : 'Escolha a torre e a unidade';
       var valor = S.valor>0 ? brl(S.valor) : (d ? brl(d.avaliacao) : '');
+      var entrega = rotuloMes(parseData(e.entrega));
+      function ubi(k,v){ return '<div class="ub-i"><span class="ub-k">'+k+'</span><span class="ub-v">'+v+'</span></div>'; }
+      var strip = ubi('Unidade', S.unidade || 'n\u00e3o escolhida');
+      if(d){
+        strip += ubi('Tipologia', d.tipoLabel)+
+                 ubi('\u00c1rea privativa', d.areaPriv>0 ? d.areaPriv+' m\u00b2' : '\u2014')+
+                 ubi('Sol', d.sol || '\u2014')+
+                 ubi('Vagas', d.vagas!=null ? d.vagas : '\u2014')+
+                 ubi('Avalia\u00e7\u00e3o', brl(d.avaliacao));
+      }
+      strip += ubi('Entrega', entrega);
       ub.className='unitbar show';
       ub.innerHTML =
+        '<div class="ub-inner">'+
         '<div class="ub-emp"><span>'+e.nome+' \u00b7 '+e.cidade+'</span></div>'+
-        '<div class="ub-r">'+
-          '<span class="ub-a">'+(S.unidade ? 'Unidade '+S.unidade : 'Unidade n\u00e3o escolhida')+'</span>'+
-          '<span class="ub-b">'+valor+'</span>'+
+        '<div class="ub-compact">'+
+          '<div class="ub-r">'+
+            '<span class="ub-a">'+(S.unidade ? 'Unidade '+S.unidade : 'Unidade n\u00e3o escolhida')+'</span>'+
+            '<span class="ub-b">'+valor+'</span>'+
+          '</div>'+
+          '<div class="ub-r">'+
+            '<span class="ub-c">'+tipo+'</span>'+
+            '<span class="ub-d">Entrega '+entrega+'</span>'+
+          '</div>'+
         '</div>'+
-        '<div class="ub-r">'+
-          '<span class="ub-c">'+tipo+'</span>'+
-          '<span class="ub-d">Entrega '+rotuloMes(parseData(e.entrega))+'</span>'+
+        '<div class="ub-strip">'+strip+'</div>'+
         '</div>';
     } else { ub.className='unitbar'; ub.innerHTML=''; }
   }
@@ -1598,6 +1778,8 @@ function renderShell(){
   var totAnu=(S.a1||0)+(S.a2||0)+(S.a3||0);
   setSubSum('anuais', totAnu>0?brl(totAnu):'nenhuma');
 
+  renderCarne(c);
+
   /* ponto de status na aba Resultado */
   var dot=$('tabdot');
   if(dot){
@@ -1609,6 +1791,131 @@ function renderShell(){
     dot.className=cls;
   }
 }
+
+/* =========================================================
+   CARNE COMPLETO
+   Resumo por fase (substitui a tabela no celular e na coluna
+   estreita do desktop) e a folha com todas as parcelas.
+   A folha mostra uma coluna de Pro Soluto por vez - por isso
+   cabem 4 colunas sem rolagem lateral.
+   ========================================================= */
+var FASE_ROTULO = { '-':'Ato', 'Pr\u00e9':'Pr\u00e9-chaves', 'P\u00f3s':'P\u00f3s-chaves' };
+
+/* soma por fase da coluna de Pro Soluto que esta selecionada */
+function somaFases(c, esc){
+  var o={ pre:0, pos:0, extra:0, linPre:0, linPos:0, nExtra:0 };
+  for(var i=0;i<c.fluxo.length;i++){
+    var r=c.fluxo[i], v = esc ? r.psEsc : r.psLin;
+    if(r.fase==='Pr\u00e9'){ o.pre+=v||0; o.linPre++; }
+    else if(r.fase==='P\u00f3s'){ o.pos+=v||0; o.linPos++; }
+    if(r.extra){ o.extra+=r.extra; o.nExtra++; }
+  }
+  return o;
+}
+
+function renderCarne(c){
+  var el=$('carne-resumo'); if(!el) return;
+  if(!c.pronto || !c.fluxo.length){
+    el.innerHTML='<div class="cr-k">Carn\u00ea por fase</div>'+
+      '<div class="cr-row"><span>Preencha os dados da opera\u00e7\u00e3o para montar o carn\u00ea.</span></div>';
+    return;
+  }
+  var esc = S.fluxoTipo==='escalonado';
+  var f = somaFases(c, esc);
+  var total = esc ? c.escalonado.total : c.linear.total;
+  el.innerHTML =
+    '<div class="cr-k">Carn\u00ea por fase \u00b7 fluxo '+(esc?'escalonado':'linear')+'</div>'+
+    '<div class="cr-row"><span>Pr\u00e9-chaves</span><b>'+brl(f.pre)+'</b></div>'+
+    '<div class="cr-row"><span>P\u00f3s-chaves</span><b>'+brl(f.pos)+'</b></div>'+
+    '<div class="cr-tot"><span class="cr-tot-k">Total do carn\u00ea</span>'+
+      '<span class="cr-tot-v">'+brl(total)+'</span></div>'+
+    (f.extra>0 ? '<div class="cr-row" style="margin-top:.55rem"><span>Ato e sinais \u00b7 '+f.nExtra+
+       ' lan\u00e7amentos <em style="font-style:normal;color:#A8AEB1">(fora do carn\u00ea)</em></span><b>'+brl(f.extra)+'</b></div>' : '')+
+    '<button type="button" class="cr-btn" id="b-carne">'+
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"></rect><line x1="8" y1="12" x2="16" y2="12"></line><line x1="8" y1="16" x2="13" y2="16"></line></svg>'+
+      'Ver todas as '+c.fluxo.length+' parcelas</button>';
+}
+
+function renderSheet(){
+  var c=calc();
+  var esc = S.fluxoTipo==='escalonado';
+  var bs=$('sheet-seg').getElementsByTagName('button');
+  for(var i=0;i<bs.length;i++) bs[i].className = (bs[i].getAttribute('data-fluxo')===S.fluxoTipo)?'on':'';
+
+  if(!c.pronto || !c.fluxo.length){
+    $('sheet-s').textContent='';
+    $('sheet-fases').innerHTML='';
+    $('sheet-body').innerHTML='<div class="empty">Preencha os dados da opera\u00e7\u00e3o para montar o carn\u00ea.</div>';
+    $('sheet-foot').innerHTML='';
+    return;
+  }
+
+  var e=emp(), f=somaFases(c,esc), limCR=c.pol.cr;
+  $('sheet-s').textContent = (S.unidade ? 'Unidade '+S.unidade+' \u00b7 ' : (e?e.nome+' \u00b7 ':'')) +
+    c.fluxo.length+' lan\u00e7amentos';
+
+  $('sheet-fases').innerHTML =
+    '<div class="fase-track">'+
+      '<span style="flex:'+Math.max(f.linPre,1)+'"></span>'+
+      '<span class="pos" style="flex:'+Math.max(f.linPos,1)+'"></span>'+
+    '</div>'+
+    '<div class="fase-legend">'+
+      '<span><i>Pr\u00e9-chaves</i><b>'+brl(f.pre)+'</b></span>'+
+      '<span class="r"><i>P\u00f3s-chaves</i><b>'+brl(f.pos)+'</b></span>'+
+    '</div>';
+
+  var html='', faseAtual=null;
+  for(var k=0;k<c.fluxo.length;k++){
+    var r=c.fluxo[k];
+    if(r.fase!==faseAtual){
+      faseAtual=r.fase;
+      html += '<div class="pl-grp">'+(FASE_ROTULO[faseAtual]||faseAtual)+'</div>';
+    }
+    var val = esc ? r.psEsc : r.psLin;
+    var cr  = esc ? r.crEsc : r.crLin;
+    var fora = cr!==null && S.renda>0 && cr>limCR;
+    var col3 = (cr!==null && S.renda>0) ? pctf(cr)
+             : (val ? '\u2014' : r.tipo.replace('Ato Sinal CC/Boleto','Ato'));
+    html += '<div class="pl'+(fora?' hi':'')+(!val&&r.extra?' pl-extra':'')+'">'+
+      '<span class="pl-n">'+(r.n||'\u2014')+'</span>'+
+      '<span class="pl-d">'+fmtData(r.data)+'</span>'+
+      '<span class="pl-c">'+col3+'</span>'+
+      '<span class="pl-v">'+celParcela(val, r.extra, '\u2014')+'</span>'+
+    '</div>';
+  }
+  $('sheet-body').innerHTML=html;
+
+  $('sheet-foot').innerHTML =
+    '<span class="sheet-foot-k">Total do carn\u00ea'+
+      '<span class="sheet-foot-s">fluxo '+(esc?'escalonado':'linear')+' \u00b7 '+c.prazo+' parcelas</span></span>'+
+    '<span class="sheet-foot-v">'+brl(esc?c.escalonado.total:c.linear.total)+'</span>';
+}
+
+function abreSheet(){
+  $('sheet').classList.add('open');
+  $('sheet').setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+  renderSheet();
+  $('sheet-body').scrollTop=0;
+  $('sheet-close').focus();
+}
+function fechaSheet(){
+  $('sheet').classList.remove('open');
+  $('sheet').setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+}
+
+$('sheet-close').addEventListener('click', fechaSheet);
+$('sheet').addEventListener('click', function(ev){ if(ev.target===this) fechaSheet(); });
+document.addEventListener('keydown', function(ev){
+  if(ev.key==='Escape' && $('sheet').classList.contains('open')) fechaSheet();
+});
+$('sheet-seg').addEventListener('click', function(ev){
+  var b=ev.target.closest('button[data-fluxo]'); if(!b) return;
+  S.fluxoTipo=b.getAttribute('data-fluxo');
+  render();          /* mantem os cards de comparacao em sincronia */
+  renderSheet();
+});
 
 function setTab(t){
   document.body.classList.remove('tab-dados','tab-result');
@@ -1643,6 +1950,7 @@ document.addEventListener('click', function(ev){
   if(sb){ sb.parentNode.classList.toggle('open'); syncAria(); return; }
   var tb=t.closest('.tabbtn');
   if(tb){ setTab(tb.getAttribute('data-tab')); return; }
+  if(t.closest('#b-carne')){ abreSheet(); return; }
 });
 
 /* passo 1 comeca aberto */
