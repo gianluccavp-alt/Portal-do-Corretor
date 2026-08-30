@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-29T00:00:00Z",
+  "title": "Design System: Portal do Corretor",
+  "extensions": {
+    "colorMeta": {
+      "direcional-red": {
+        "role": "primary",
+        "displayName": "Vermelho Direcional",
+        "canonical": "#E4032B",
+        "tonalRamp": ["#3d0009", "#5f0011", "#8a0019", "#b30020", "#E4032B", "#f2405f", "#f87f96", "#fdc9d3"]
+      },
+      "direcional-red-deep": {
+        "role": "primary",
+        "displayName": "Vermelho Direcional Profundo",
+        "canonical": "#B8001F",
+        "tonalRamp": ["#33000a", "#520010", "#7a0016", "#9c001b", "#B8001F", "#e63a53", "#f38498", "#fbc7d1"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "canonical": "#3A4043",
+        "tonalRamp": ["#151719", "#202325", "#2c3134", "#3A4043", "#565d61", "#818a8e", "#aeb5b8", "#dde1e2"]
+      },
+      "slate-grey": {
+        "role": "neutral",
+        "displayName": "Cinza Ardósia",
+        "canonical": "#727A7D",
+        "tonalRamp": ["#1c1f20", "#2f3335", "#454b4d", "#5b6265", "#727A7D", "#969c9e", "#bcc0c2", "#e2e4e5"]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Fio de Cabelo",
+        "canonical": "#E7E9EA",
+        "tonalRamp": ["#6b6f70", "#8a8f90", "#a9adae", "#c8cbcc", "#E7E9EA", "#eef0f0", "#f4f5f5", "#fbfbfb"]
+      },
+      "app-bg": {
+        "role": "neutral",
+        "displayName": "Fundo do App",
+        "canonical": "#F5F6F7",
+        "tonalRamp": ["#6f7071", "#8d8f90", "#acadae", "#cacccd", "#e2e3e4", "#edeeef", "#F5F6F7", "#fcfcfd"]
+      },
+      "field-muted": {
+        "role": "neutral",
+        "displayName": "Campo Silenciado",
+        "canonical": "#FAFBFB",
+        "tonalRamp": ["#747575", "#919292", "#aeafaf", "#cbcccc", "#e4e5e5", "#f0f1f1", "#FAFBFB", "#ffffff"]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Sucesso",
+        "canonical": "#1E8E4A",
+        "tonalRamp": ["#0a3d20", "#0f5a2f", "#14713b", "#1E8E4A", "#2fae61", "#5cc688", "#93dcb0", "#c8efd7"]
+      },
+      "warning": {
+        "role": "tertiary",
+        "displayName": "Alerta",
+        "canonical": "#B57200",
+        "tonalRamp": ["#3d2700", "#5c3b00", "#7d5000", "#9a6300", "#B57200", "#e09b1f", "#f0bd63", "#f8dfae"]
+      },
+      "error": {
+        "role": "tertiary",
+        "displayName": "Erro",
+        "canonical": "#C4001C",
+        "tonalRamp": ["#3a0008", "#5c000d", "#800012", "#a00017", "#C4001C", "#ef3a51", "#f78496", "#fcc7d0"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Título de hero da home. <em> fica vermelho, sem itálico." },
+      "headline": { "displayName": "Headline", "purpose": "h1 das páginas de simulador." },
+      "title": { "displayName": "Title", "purpose": "Subtítulos de seção — hierarquia por peso 700, não por escala." },
+      "body": { "displayName": "Body", "purpose": "Texto corrido; apoio limitado a ~56–60ch." },
+      "label": { "displayName": "Label", "purpose": "Rótulos de campo e chaves de stat, caixa-alta tracked." },
+      "overline": { "displayName": "Overline", "purpose": "Rótulo de passo (.step-label) e eyebrow de marca, em vermelho." }
+    },
+    "shadows": [
+      { "name": "hover-card", "value": "0 6px 22px rgba(58,64,67,0.10)", "purpose": "Cartões de cidade e empreendimento na home ao hover (com translateY(-2px))." },
+      { "name": "active-select", "value": "0 4px 20px rgba(228,3,43,0.16)", "purpose": "Cartão de cidade selecionado — sombra tingida de vermelho." },
+      { "name": "hover-art", "value": "drop-shadow(0 8px 18px rgba(58,64,67,0.16))", "purpose": "Cards de política/ranking (PNG) ao hover." },
+      { "name": "focus-ring", "value": "0 0 0 3px rgba(228,3,43,0.10)", "purpose": "Halo de foco de campos de formulário, junto da borda vermelha. Gesto de refinamento assinatura." },
+      { "name": "fixed-bar", "value": "0 -2px 16px rgba(28,22,16,0.09)", "purpose": "Barras fixas de rodapé (ex.: salvar em /promocionais)." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "ease", "purpose": "Easing padrão de todas as transições de estado." },
+      { "name": "duration-fast", "value": "150ms", "purpose": "Transição padrão de botões, chips, campos." },
+      { "name": "duration-hover", "value": "180ms", "purpose": "Hover de cards de arte/política." },
+      { "name": "duration-card", "value": "200ms", "purpose": "Hover de cartões de navegação da home (borda + translateY + sombra)." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "480px" },
+      { "name": "md", "value": "700px" },
+      { "name": "lg", "value": "820px" },
+      { "name": "xl", "value": "1100px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação principal de um passo/fluxo. Vermelho sólido; hover escurece.",
+      "html": "<button class=\"ds-btn-primary\">Gerar PDF</button>",
+      "css": ".ds-btn-primary{font-family:'DM Sans',system-ui,sans-serif;font-weight:500;font-size:15px;color:#fff;background:#E4032B;border:1px solid #E4032B;border-radius:9px;padding:0.62rem 1.05rem;cursor:pointer;transition:background .15s,border-color .15s}.ds-btn-primary:hover{background:#B8001F;border-color:#B8001F}.ds-btn-primary:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(228,3,43,.25)}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Ação secundária. Fundo branco; hover troca borda e texto para vermelho.",
+      "html": "<button class=\"ds-btn-ghost\">Voltar</button>",
+      "css": ".ds-btn-ghost{font-family:'DM Sans',system-ui,sans-serif;font-weight:500;font-size:15px;color:#3A4043;background:#fff;border:1px solid #E7E9EA;border-radius:9px;padding:0.62rem 1.05rem;cursor:pointer;transition:border-color .15s,color .15s}.ds-btn-ghost:hover{border-color:#E4032B;color:#E4032B}.ds-btn-ghost:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(228,3,43,.15)}"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Chip de filtro/política. Pill branco; selecionado fica vermelho sólido.",
+      "html": "<div><button class=\"ds-chip\">Todos</button> <button class=\"ds-chip ds-chip--on\">2 dormitórios</button></div>",
+      "css": ".ds-chip{font-family:'DM Sans',system-ui,sans-serif;font-size:.78rem;padding:.42rem .7rem;border-radius:999px;background:#fff;border:1px solid #E7E9EA;color:#727A7D;cursor:pointer;transition:border-color .15s,color .15s,background .15s}.ds-chip:hover{border-color:#E4032B;color:#E4032B}.ds-chip--on{background:#E4032B;border-color:#E4032B;color:#fff}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo de formulário. Foco = borda vermelha + halo 10%. Readonly = fundo silenciado + peso 700.",
+      "html": "<label class=\"ds-label\">Valor da entrada</label><input class=\"ds-input\" value=\"R$ 45.000\"><input class=\"ds-input ds-input--ro\" value=\"R$ 312.400\" readonly>",
+      "css": ".ds-label{display:block;font-family:'DM Sans',system-ui,sans-serif;font-size:.76rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:#727A7D;margin-bottom:.32rem}.ds-input{width:100%;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;color:#3A4043;background:#fff;border:1px solid #E7E9EA;border-radius:9px;padding:.6rem .7rem;transition:border-color .15s,box-shadow .15s;margin-bottom:.6rem}.ds-input:focus{outline:none;border-color:#E4032B;box-shadow:0 0 0 3px rgba(228,3,43,.10)}.ds-input--ro{background:#FAFBFB;font-weight:700}"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Container de conteúdo. Branco, borda fio-de-cabelo, sem sombra em repouso.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card__title\">Resumo do empreendimento</div><p class=\"ds-card__body\">Alta Vista Mangará · Campinas, SP · 300 unidades</p></div>",
+      "css": ".ds-card{background:#fff;border:1px solid #E7E9EA;border-radius:14px;padding:1.35rem;font-family:'DM Sans',system-ui,sans-serif}.ds-card__title{font-weight:700;font-size:.95rem;color:#3A4043;margin-bottom:.4rem}.ds-card__body{margin:0;font-size:15px;line-height:1.5;color:#727A7D}"
+    },
+    {
+      "name": "Step Label",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Rótulo de passo assinatura: caixa-alta tracked, vermelho, com barra de 22×2px antes.",
+      "html": "<div class=\"ds-step\">Passo 1 · Escolha a cidade</div>",
+      "css": ".ds-step{display:flex;align-items:center;gap:.55rem;font-family:'DM Sans',system-ui,sans-serif;font-weight:500;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:#E4032B}.ds-step::before{content:'';width:22px;height:2px;border-radius:2px;background:#E4032B}"
+    },
+    {
+      "name": "Stat Strip",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Faixa de valores da unidade escolhida. Colunas com divisor; coluna-destaque em verde-sucesso.",
+      "html": "<div class=\"ds-stats\"><div class=\"ds-stat\"><span class=\"ds-stat__k\">Andar</span><span class=\"ds-stat__v\">7º</span></div><div class=\"ds-stat\"><span class=\"ds-stat__k\">Valor final</span><span class=\"ds-stat__v\">R$ 348.900</span></div><div class=\"ds-stat ds-stat--dest\"><span class=\"ds-stat__k\">Folga de tabela</span><span class=\"ds-stat__v\">R$ 12.400</span></div></div>",
+      "css": ".ds-stats{display:flex;flex-wrap:wrap;gap:.5rem 0;font-family:'DM Sans',system-ui,sans-serif}.ds-stat{display:flex;flex-direction:column;gap:.15rem;padding:0 1.15rem;border-right:1px solid #E7E9EA}.ds-stat:first-child{padding-left:0}.ds-stat:last-child{border-right:0}.ds-stat__k{font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;color:#727A7D;font-weight:500}.ds-stat__v{font-weight:700;font-size:.95rem;color:#3A4043}.ds-stat--dest{background:#EFF9F2;border:1px solid #C7E7D3;border-radius:10px;padding:.5rem .9rem}.ds-stat--dest .ds-stat__v{color:#1E8E4A}.ds-stat--dest .ds-stat__k{color:#2E7D4F}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Field Companion",
+    "overview": "O Portal do Corretor é o instrumento que o corretor abre ao lado do comprador — no celular, numa mesa de stand, sob a pressão de uma negociação. O sistema visual existe para deixar o dado à frente e o cliente confortável: superfícies brancas, uma linha cinza fininha que organiza sem pesar, e o vermelho Direcional reservado para o que exige ação ou atenção. Nada compete com o número.\n\nA atmosfera é precisa, institucional e sóbria. É a cara de um sistema oficial — o corretor precisa confiar que o que ele vê é o que o comercial vê. Isso se traduz em tipografia funcional (uma única família, DM Sans), títulos com respiro e leve aperto de tracking, rótulos em caixa-alta discretos, e zero ornamento. O refinamento mora no detalhe: o halo vermelho a 10% no foco de um campo, a barrinha de 22px antes de um rótulo de passo, o realce verde-suave de um valor-destaque.\n\nEste documento descreve o mundo Direcional — implementado hoje na home (index.html) e nos dois simuladores. O visual dourado + serifado (Playfair Display, --gold #9E6B2E, fundo creme) que ainda vive em empreendimento.html, promocionais.html e assets/styles.css é legado e anti-referência: as duas páginas devem convergir para este sistema, não o contrário.",
+    "keyCharacteristics": [
+      "Uma família tipográfica só (DM Sans), do rótulo ao título.",
+      "Vermelho Direcional como voz única de ação e status — nunca como preenchimento decorativo.",
+      "Superfícies planas: borda de 1px define os containers; sombra é resposta a estado.",
+      "Fundo #F5F6F7, cartões brancos, cantos suaves (9–16px).",
+      "Mobile-first: alvos de toque generosos por padding, quebra graciosa de grids."
+    ],
+    "rules": [
+      { "name": "The One Voice Rule", "body": "O vermelho Direcional cobre no máximo ~10% de qualquer tela. Ele é para ação e status, nunca para preencher área. Se um bloco inteiro ficou vermelho, está errado.", "section": "colors" },
+      { "name": "The Neutral Canvas Rule", "body": "Toda superfície começa branca sobre fundo #F5F6F7, delimitada por 1px solid #E7E9EA. Não introduza cinzas ou beges novos; a escala já resolve texto, borda, fundo e campo desabilitado.", "section": "colors" },
+      { "name": "The Weight-Not-Size Rule", "body": "A separação entre título de seção e corpo é feita por peso (700 vs 400), não por salto de tamanho. Títulos de seção ficam perto de 0.95rem.", "section": "typography" },
+      { "name": "The Uppercase-Is-Tracked Rule", "body": "Todo texto em caixa-alta leva tracking ≥ 0.04em (rótulos) ou 0.1em (passos). Caixa-alta sem tracking não existe neste sistema.", "section": "typography" },
+      { "name": "The Flat-At-Rest Rule", "body": "Nenhuma superfície tem sombra em repouso. Se um cartão precisa saltar sem que o usuário interaja com ele, aumente o contraste de borda ou o espaço em volta — não adicione sombra.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do usar DM Sans para tudo. Rótulo, corpo e título saem da mesma família; a hierarquia é peso + tracking.",
+      "Do delimitar cada superfície com 1px solid #E7E9EA sobre branco, fundo de página #F5F6F7.",
+      "Do reservar o vermelho #E4032B para ação e status (≤10% da tela). Hover do primário é sempre #B8001F.",
+      "Do dar foco com borda vermelha + halo 0 0 0 3px rgba(228,3,43,.10) — nunca outline do navegador.",
+      "Do sinalizar valores calculados/readonly com fundo #FAFBFB e peso 700.",
+      "Do abrir cada etapa com o .step-label vermelho e sua barrinha de 22px.",
+      "Do manter alvos de toque confortáveis por padding e colapsar grids (.g3/.g4 → 2 col em ≤820px → 1 col em ≤480px).",
+      "Do usar verde-sucesso (#1E8E4A / #EFF9F2 / #C7E7D3) só para valores favoráveis de negócio (folga de tabela, desconto)."
+    ],
+    "donts": [
+      "Don't trazer Playfair Display, o dourado (#9E6B2E / #C9A96E), o fundo creme (#FAF7F2) ou a tinta #1C1610 do sistema legado. São anti-referência.",
+      "Don't re-tematizar a página por empreendimento (o --gold/--dark/--green variável de empreendimento.html). A identidade é uma só: Direcional.",
+      "Don't adicionar sombra a cartões em repouso. Sombra é resposta a hover/foco.",
+      "Don't usar o vermelho como cor de fundo de blocos grandes ou como preenchimento decorativo.",
+      "Don't introduzir novos cinzas, bordas ou raios fora das escalas aqui — xs 8 / sm 9 / md 14 / lg 16 / xl 18 / pill.",
+      "Don't usar caixa-alta sem tracking.",
+      "Don't escurecer o hero com imagem/gradiente; ele é branco com o padrão de setas e borda inferior."
+    ]
+  }
+}
