@@ -26,8 +26,8 @@
   --ok:#1E8E4A; --warn:#B57200; --warn-bg:#FFF7E6; --err:#C4001C; --err-bg:#FDEEF0;
 }
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--dir-bg);font-family:'DM Sans',system-ui,sans-serif;color:var(--dir-ink);
+html{-webkit-text-size-adjust:100%;overflow-x:clip}
+body{margin:0;overflow-x:clip;background:var(--dir-bg);font-family:'DM Sans',system-ui,sans-serif;color:var(--dir-ink);
      font-size:15px;line-height:1.5}
 
 /* ---------- header ---------- */
@@ -482,8 +482,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   .card{padding:.9rem .8rem}
 
   /* politicas: carrossel horizontal com snap - cara de app */
-  .step.open>.pols{display:flex;overflow-x:auto;gap:.7rem;margin:.6rem -1.1rem 0;
-     padding:.2rem 1.1rem .6rem;scroll-snap-type:x proximity;scrollbar-width:none}
+  .step.open>.pols{display:flex;overflow-x:auto;overscroll-behavior-x:contain;gap:.7rem;
+     margin:.6rem -1.1rem 0;padding:.2rem 1.1rem .6rem;scroll-snap-type:x proximity;scrollbar-width:none}
   .pols::-webkit-scrollbar{display:none}
   .pols>.pol{flex:0 0 45%;max-width:none;scroll-snap-align:start}
   .pols>.pol img{width:100%}
