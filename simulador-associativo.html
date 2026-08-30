@@ -65,10 +65,16 @@ button.step-label::before{display:none}
 .step-n{display:flex;flex:0 0 auto;width:24px;height:24px;border-radius:50%;align-items:center;
      justify-content:center;font-size:.74rem;font-weight:700;background:var(--dir-bg);
      border:1px solid var(--dir-line);color:var(--dir-grey);transition:.15s}
-.step.done .step-n{background:#EFF9F2;border-color:#C7E7D3;color:var(--ok);font-size:0}
-.step.done .step-n::after{content:'\2713';font-size:.8rem;font-weight:700}
-.step.open .step-n{background:var(--dir-red);border-color:var(--dir-red);color:#fff;font-size:.74rem}
-.step.open .step-n::after{content:none}
+.step-n{position:relative}
+.step.done .step-n{background:#EFF9F2;border-color:#C7E7D3;color:transparent}
+.step.done .step-n::after{content:'';position:absolute;inset:0;background:#EFF9F2;border-radius:50%;
+     display:flex;align-items:center;justify-content:center}
+.step.done .step-n::before{content:'';position:absolute;left:50%;top:50%;width:9px;height:5px;
+     border-left:2px solid var(--ok);border-bottom:2px solid var(--ok);
+     transform:translate(-50%,-65%) rotate(-45deg)}
+.step.done.open .step-n{background:var(--dir-red);border-color:var(--dir-red);color:#fff}
+.step.done.open .step-n::after,.step.done.open .step-n::before{content:none}
+.step.open .step-n{background:var(--dir-red);border-color:var(--dir-red);color:#fff}
 .step-t{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .step-sum{display:block;flex:1 1 0;min-width:0;text-align:right;font-size:.8rem;font-weight:400;
      color:var(--dir-grey);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -78,8 +84,12 @@ button.step-label::before{display:none}
 .step.open>button.step-label{border-bottom-left-radius:0;border-bottom-right-radius:0}
 .step.open>.card{display:block;margin-top:0;border-top:0;border-top-left-radius:0;border-top-right-radius:0}
 .step.open>.pols{display:grid;margin-top:.6rem}
-/* o rotulo "Simulacao" da aba Resultado continua sendo um div, nao entra no acordeao */
-#tab-result>.step>.step-label{margin-bottom:.85rem}
+/* o rotulo "Simulacao" da aba Resultado nao entra no acordeao */
+.result{margin-bottom:0}
+.result-label{display:flex;align-items:center;gap:.55rem;min-height:0;margin:0 0 1rem;padding:0;
+     background:none;border:0;border-radius:0;color:var(--dir-red);font-size:.78rem;font-weight:500;
+     letter-spacing:.1em;text-transform:uppercase}
+.result-label::before{content:'';width:22px;height:2px;background:var(--dir-red);border-radius:2px;flex:0 0 auto}
 .card{background:#fff;border:1px solid var(--dir-line);border-radius:14px;padding:1.35rem}
 @media(max-width:700px){.card{padding:1rem}}
 
@@ -206,9 +216,9 @@ textarea{resize:vertical;min-height:70px}
 .btn-primary{background:var(--dir-red);border-color:var(--dir-red);color:#fff}
 .btn-primary:hover{background:var(--dir-red-dark);border-color:var(--dir-red-dark)}
 .btn-row{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin-top:.9rem}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;min-height:44px}
 .btn svg{flex:0 0 auto;width:16px;height:16px;stroke:currentColor}
-.btn-ico{flex:0 0 auto;width:42px;padding:0}
+.btn-ico{flex:0 0 auto;width:44px;padding:0}
 .btn-ico svg{width:17px;height:17px}
 #b-parcelas{flex:1 1 auto}
 #b-pdf{flex:1 1 auto}
@@ -293,20 +303,15 @@ textarea{resize:vertical;min-height:70px}
 .vd-head.aprovado{background:linear-gradient(135deg,var(--ok),#166B39)}
 .vd-head.comite{background:linear-gradient(135deg,var(--warn),#8A5700)}
 .vd-head.reprovado{background:linear-gradient(135deg,var(--err),#8f0016)}
-.vd-item{display:grid;grid-template-columns:1fr auto auto 92px;gap:.7rem;align-items:center;
-      padding:.6rem 1.05rem;border-top:1px solid var(--dir-line);font-size:.86rem}
-.vd-item .vi-lab{font-weight:500}
-.vd-item .vi-val,.vd-item .vi-lim{font-variant-numeric:tabular-nums;white-space:nowrap}
-.vd-item .vi-lim{color:var(--dir-grey);font-size:.8rem}
-@media(max-width:640px){
-  .vd-item{grid-template-columns:1fr 92px;row-gap:.15rem}
-  .vd-item .vi-lab{grid-column:1/2}
-  .vd-item .vi-val{grid-column:1/2;color:var(--dir-grey);font-size:.8rem}
-  .vd-item .vi-lim{grid-column:1/2}
-  .vd-item .st{grid-column:2/3;grid-row:1/4;align-self:center}
-}
-.st{display:inline-block;text-align:center;font-size:.7rem;font-weight:700;letter-spacing:.05em;
-      text-transform:uppercase;padding:.24rem .5rem;border-radius:999px;border:1px solid}
+.vd-item{display:flex;align-items:center;gap:.55rem;padding:.62rem 1.05rem;
+      border-top:1px solid var(--dir-line);font-size:.84rem}
+.vd-item .vi-lab{flex:1 1 auto;min-width:0;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vd-item .vi-val{flex:0 0 auto;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.vd-item .vi-lim{flex:0 0 auto;color:var(--dir-grey);font-size:.78rem;font-variant-numeric:tabular-nums;
+      white-space:nowrap}
+.vd-item .st{flex:0 0 auto;width:34px}
+.st{display:inline-block;text-align:center;font-size:.66rem;font-weight:700;letter-spacing:.03em;
+      text-transform:uppercase;padding:.22rem 0;border-radius:999px;border:1px solid}
 .st.ok{background:#EFF9F2;border-color:#C7E7D3;color:var(--ok)}
 .st.comite{background:var(--warn-bg);border-color:#F0DCB0;color:var(--warn)}
 .st.rep{background:var(--err-bg);border-color:#F3C6CE;color:var(--err)}
@@ -483,8 +488,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   .chip{min-height:38px}
 
   /* ---- aba resultado ---- */
-  #tab-result>.step>.step-label{display:none}
-  #tab-result .step{margin-bottom:0}
+  #tab-result .note{display:none}
+  .foot{display:none}
   .btn-row{position:sticky;bottom:calc(62px + env(safe-area-inset-bottom,0px));z-index:120;
      display:flex;gap:.5rem;margin:1.25rem -1.1rem 0;padding:.7rem 1.1rem;background:#fff;
      border-top:1px solid var(--dir-line)}
@@ -608,14 +613,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
   #tab-dados .g4{grid-template-columns:repeat(3,1fr)}
 
-  #tab-result .step-label{margin-bottom:.85rem}
   #tab-result .tbl-tools,#tab-result .tbl-wrap{display:none}
   #tab-result .note{display:none}
-  #tab-result .vd-item{grid-template-columns:1fr 92px;row-gap:.15rem}
-  #tab-result .vd-item .vi-lab{grid-column:1/2}
-  #tab-result .vd-item .vi-val{grid-column:1/2;color:var(--dir-grey);font-size:.8rem}
-  #tab-result .vd-item .vi-lim{grid-column:1/2}
-  #tab-result .vd-item .st{grid-column:2/3;grid-row:1/4;align-self:center}
   #tab-result .btn-row{position:sticky;bottom:0;z-index:5;margin-top:.5rem;padding:.75rem 0 .25rem;
        background:#fff}
 }
@@ -874,8 +873,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 <div id="tab-result">
 
   <!-- RESULTADO -->
-  <section class="step">
-    <div class="step-label">Simulação</div>
+  <section class="result">
+    <div class="step-label result-label">Simulação</div>
     <div class="banner" id="banner"><span>&#9888;</span> Proposta fora da política &mdash; revise os pontos em vermelho</div>
     <div class="vd" id="vd" style="display:none"></div>
     <div class="summary" id="summary"></div>
@@ -1702,18 +1701,22 @@ function renderResultado(){
         '<span class="vh-mais"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>'+
       '</div>'+
       v.itens.map(function(it){
+        /* uma linha por criterio: rotulo curto, valor, limite enxuto, selo Ok/! */
+        var lab = it.lab.replace('Comprom. de renda','C.R.').replace(' do Pro Soluto','');
+        var lim = it.limite.split(' · ')[0];   /* corta o "· P.S. X de Y" que estoura */
+        var selo = it.st==='Aprovado' ? 'Ok' : (it.st==='Comitê' ? 'Comitê' : 'Fora');
         return '<div class="vd-item">'+
-          '<span class="vi-lab">'+it.lab+'</span>'+
+          '<span class="vi-lab">'+lab+'</span>'+
           '<span class="vi-val">'+it.valor+'</span>'+
-          '<span class="vi-lim">'+it.limite+'</span>'+
-          '<span class="st '+classeSt(it.st)+'">'+it.st+'</span>'+
+          '<span class="vi-lim">'+lim+'</span>'+
+          '<span class="st '+classeSt(it.st)+'">'+selo+'</span>'+
         '</div>';
       }).join('');
   }
 
-  /* Alertas */
-  $('alerts').innerHTML = av.map(function(a){
-    var ico = a.n==='err'?'&#10007;':(a.n==='warn'?'&#9888;':'&#10003;');
+  /* Alertas: so erros e avisos. O "tudo certo" ja esta no veredito. */
+  $('alerts').innerHTML = av.filter(function(a){ return a.n!=='ok'; }).map(function(a){
+    var ico = a.n==='err'?'&#10007;':'&#9888;';
     return '<div class="alert '+a.n+'"><span class="alert-ico">'+ico+'</span><span>'+a.t+'</span></div>';
   }).join('');
   $('banner').className = 'banner'+(av.some(function(a){return a.n==='err';})?' on':'');
