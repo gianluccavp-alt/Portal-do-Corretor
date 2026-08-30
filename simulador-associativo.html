@@ -621,10 +621,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   .wrap{max-width:1400px;display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:0 2rem;
        align-items:start;padding:1.5rem 2rem 3rem}
   #tab-dados{min-width:0}
-  /* painel de resultado gruda no topo e rola por dentro;
-     a barra de acoes e o ultimo bloco da coluna - aparece ao fim da rolagem */
-  #tab-result{min-width:0;position:sticky;top:1.25rem;overflow-y:auto;overscroll-behavior:contain;
-       max-height:calc(100vh - 2.5rem);padding-right:.25rem}
+  /* coluna de resultado sem scroll proprio: rola junto com a pagina */
+  #tab-result{min-width:0}
   #tab-result>.result{margin:0}
   #tab-result>.btn-row{position:static;margin:1.1rem 0 0;padding:1.1rem 0 .1rem;
        border-top:1px solid var(--dir-line)}
@@ -892,9 +890,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   <section class="result">
     <div class="step-label result-label">Simulação</div>
     <div class="banner" id="banner"><span>&#9888;</span> Proposta fora da política &mdash; revise os pontos em vermelho</div>
-    <div class="vd" id="vd" style="display:none"></div>
-    <div class="summary" id="summary"></div>
     <div class="cmp" id="cmp"></div>
+    <div class="summary" id="summary"></div>
+    <div class="vd" id="vd" style="display:none"></div>
     <div class="alerts" id="alerts"></div>
     <div class="tbl-tools">
       <button class="chip" id="b-toggle-tbl" type="button">Mostrar todas as parcelas</button>
