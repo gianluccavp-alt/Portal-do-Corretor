@@ -52,9 +52,34 @@ body{margin:0;background:var(--dir-bg);font-family:'DM Sans',system-ui,sans-seri
 .step-label{display:flex;align-items:center;gap:.55rem;color:var(--dir-red);font-weight:500;
             font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.7rem}
 .step-label::before{content:'';width:22px;height:2px;background:var(--dir-red);border-radius:2px;flex:0 0 auto}
-button.step-label{width:100%;font-family:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
-.step-n,.step-sum,.step-chev{display:none}
-.sub-body{display:block}
+
+/* ---- acordeao dos passos (todas as larguras) ---- */
+.step{margin-bottom:.6rem}
+button.step-label{display:flex;align-items:center;gap:.8rem;width:100%;min-height:58px;margin:0;
+     padding:.8rem .95rem;font-family:inherit;font-size:.9rem;font-weight:600;letter-spacing:0;
+     text-transform:none;color:var(--dir-ink);background:#fff;border:1px solid var(--dir-line);
+     border-radius:14px;cursor:pointer;text-align:left;transition:border-color .15s}
+button.step-label:hover{border-color:#D2D6D8}
+button.step-label::before{display:none}
+.s-pre{display:none}
+.step-n{display:flex;flex:0 0 auto;width:24px;height:24px;border-radius:50%;align-items:center;
+     justify-content:center;font-size:.74rem;font-weight:700;background:var(--dir-bg);
+     border:1px solid var(--dir-line);color:var(--dir-grey);transition:.15s}
+.step.done .step-n{background:#EFF9F2;border-color:#C7E7D3;color:var(--ok);font-size:0}
+.step.done .step-n::after{content:'\2713';font-size:.8rem;font-weight:700}
+.step.open .step-n{background:var(--dir-red);border-color:var(--dir-red);color:#fff;font-size:.74rem}
+.step.open .step-n::after{content:none}
+.step-t{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.step-sum{display:block;flex:1 1 0;min-width:0;text-align:right;font-size:.8rem;font-weight:400;
+     color:var(--dir-grey);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.step-chev{display:block;flex:0 0 auto;width:17px;height:17px;color:#A8AEB1;transition:transform .18s}
+.step.open .step-chev{transform:rotate(180deg);color:var(--dir-ink)}
+.step>.card,.step>.pols{display:none}
+.step.open>button.step-label{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.step.open>.card{display:block;margin-top:0;border-top:0;border-top-left-radius:0;border-top-right-radius:0}
+.step.open>.pols{display:grid;margin-top:.6rem}
+/* o rotulo "Simulacao" da aba Resultado continua sendo um div, nao entra no acordeao */
+#tab-result>.step>.step-label{margin-bottom:.85rem}
 .card{background:#fff;border:1px solid var(--dir-line);border-radius:14px;padding:1.35rem}
 @media(max-width:700px){.card{padding:1rem}}
 
@@ -117,12 +142,46 @@ textarea{resize:vertical;min-height:70px}
 .hint{font-size:.74rem;color:var(--dir-grey);margin-top:.3rem}
 .hint.err{color:var(--err);font-weight:500}
 .hint.warn{color:var(--warn);font-weight:500}
-.sub{display:flex;align-items:baseline;gap:.4rem;width:100%;font-family:inherit;font-weight:700;
-     font-size:.95rem;color:var(--dir-ink);text-align:left;background:none;border:0;cursor:default;
-     margin:1.35rem 0 .7rem;padding:1.1rem 0 0;border-top:1px dashed var(--dir-line)}
-.sub-block:first-child .sub{margin-top:0;padding-top:0;border-top:0}
-.sub .lt{font-weight:400;color:var(--dir-grey);font-size:.82rem}
-.sub-chev,.sub-sum{display:none}
+.sub{display:flex;align-items:center;gap:.55rem;width:100%;min-height:50px;margin:0;padding:.9rem 0;
+     font-family:inherit;font-size:.88rem;font-weight:600;color:var(--dir-ink);text-align:left;
+     background:none;border:0;border-top:1px solid var(--dir-line);cursor:pointer}
+.sub-block:first-child .sub{border-top:0;padding-top:.15rem}
+.sub .lt{display:none}
+.sub-t{flex:0 0 auto}
+.sub-chev{display:block;flex:0 0 auto;width:15px;height:15px;color:#A8AEB1;transition:transform .18s}
+.sub-block.open .sub-chev{transform:rotate(90deg);color:var(--dir-ink)}
+.sub-sum{display:block;flex:1 1 0;min-width:0;text-align:right;font-size:.8rem;font-weight:400;
+     color:var(--dir-grey);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sub-body{display:none;padding-bottom:.4rem}
+.sub-block.open .sub-body{display:block}
+/* "Recursos da operacao" e "Datas e prazo" nao sao gaveta no prototipo:
+   sao rotulos e o conteudo fica sempre visivel. So Ato/sinais e Anuais abrem. */
+.sub-block[data-sub="recursos"]>.sub,
+.sub-block[data-sub="datas"]>.sub{min-height:0;padding:1.3rem 0 .75rem;border-top:0;cursor:default;
+     font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--dir-grey)}
+.sub-block[data-sub="recursos"]:first-child>.sub{padding-top:0}
+.sub-block[data-sub="recursos"]>.sub .sub-chev,
+.sub-block[data-sub="datas"]>.sub .sub-chev,
+.sub-block[data-sub="recursos"]>.sub .sub-sum,
+.sub-block[data-sub="datas"]>.sub .sub-sum{display:none}
+.sub-block[data-sub="recursos"]>.sub-body,
+.sub-block[data-sub="datas"]>.sub-body{display:block}
+
+/* Entrada: barra de largura total com a formula e o valor calculado */
+.entrada-box{grid-column:1/-1;display:flex;align-items:center;gap:.9rem;min-height:58px;
+     margin-top:.2rem;padding:0 1rem;background:#FAFBFB;border:1px solid var(--dir-line);
+     border-radius:9px}
+.entrada-box label{flex:0 0 auto;margin:0}
+.entrada-f{flex:1 1 auto;min-width:0;font-size:.75rem;color:#A8AEB1;overflow:hidden;
+     text-overflow:ellipsis;white-space:nowrap}
+.entrada-box input{flex:0 0 auto;width:auto;min-height:0;padding:0;border:0;background:none;
+     text-align:right;font-size:1.2rem;font-weight:700;letter-spacing:-.3px}
+.entrada-box input:focus{box-shadow:none}
+@media(max-width:560px){
+  .entrada-box{flex-wrap:wrap;gap:.15rem .9rem;padding:.7rem 1rem}
+  .entrada-f{flex:1 1 100%;order:3;white-space:normal}
+  .entrada-box input{flex:1 1 auto;text-align:right}
+}
 
 /* ---------- chips / politicas ---------- */
 .chip{font:inherit;font-size:.78rem;padding:.42rem .7rem;border-radius:999px;cursor:pointer;
@@ -146,12 +205,49 @@ textarea{resize:vertical;min-height:70px}
 .btn-ghost:hover{border-color:var(--dir-red);color:var(--dir-red)}
 .btn-primary{background:var(--dir-red);border-color:var(--dir-red);color:#fff}
 .btn-primary:hover{background:var(--dir-red-dark);border-color:var(--dir-red-dark)}
-.btn-row{display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.75rem}
+.btn-row{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin-top:.9rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem}
+.btn svg{flex:0 0 auto;width:16px;height:16px;stroke:currentColor}
+.btn-ico{flex:0 0 auto;width:42px;padding:0}
+.btn-ico svg{width:17px;height:17px}
+#b-parcelas{flex:1 1 auto}
+#b-pdf{flex:1 1 auto}
 
 /* ---------- resultado ---------- */
-.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:1.1rem}
-@media(max-width:980px){.summary{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:560px){.summary{grid-template-columns:repeat(2,1fr)}}
+.summary{display:flex;flex-direction:column;gap:.7rem;margin-bottom:.7rem}
+.kpi-hero{border-radius:14px;background:linear-gradient(135deg,var(--dir-red),var(--dir-red-dark));
+     color:#fff;padding:.95rem 1.05rem 1.05rem}
+.kpi-hero.off{background:#fff;border:1px solid var(--dir-line);color:var(--dir-ink)}
+.kh-k{font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.82)}
+.kpi-hero.off .kh-k{color:var(--dir-grey)}
+.kh-row{display:flex;align-items:baseline;gap:.65rem;margin-top:.2rem}
+.kh-v{font-size:2.1rem;font-weight:700;letter-spacing:-1.2px;line-height:1}
+.kh-lim{font-size:.8rem;color:rgba(255,255,255,.82)}
+.kpi-hero.off .kh-lim{color:var(--dir-grey)}
+.kh-bar{height:5px;border-radius:999px;background:rgba(255,255,255,.25);overflow:hidden;margin-top:.7rem}
+.kh-bar i{display:block;height:100%;border-radius:999px;background:#fff}
+.kh-sub{font-size:.74rem;color:rgba(255,255,255,.82);margin-top:.45rem}
+.kpi-hero.off .kh-sub{color:var(--dir-grey)}
+.kpi-duo{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.kpi-ok{background:#EFF9F2;border-color:#C7E7D3}
+.kpi-ok .kpi-lab{color:#2E7D4F}
+.kpi-ok .kpi-val{color:var(--ok)}
+.kpi-ok .kpi-sub{color:#2E7D4F}
+.kpi-bad{background:var(--err-bg);border-color:#F3C6CE}
+.kpi-bad .kpi-lab,.kpi-bad .kpi-sub{color:#8f0016}
+.kpi-bad .kpi-val{color:var(--err)}
+
+.fx{background:#fff;border:1px solid var(--dir-line);border-radius:14px;padding:.95rem 1.05rem 1.05rem}
+.fx-k{font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+     color:var(--dir-grey);margin-bottom:.7rem}
+.fx-parc{display:flex;align-items:baseline;gap:.5rem;margin:.85rem 0 .7rem;font-size:1.55rem;
+     font-weight:700;letter-spacing:-.8px;line-height:1}
+.fx-parc span{font-size:.85rem;font-weight:400;color:var(--dir-grey);letter-spacing:0}
+.fx .cmp-faixas{margin:.85rem 0 .7rem}
+.fx-rows{display:flex;flex-direction:column;gap:.4rem;padding-top:.7rem;border-top:1px solid var(--dir-line)}
+.fx-note{margin-top:.7rem;padding:.55rem .7rem;border-radius:9px;background:#EFF9F2;
+     border:1px solid #C7E7D3;font-size:.78rem;color:var(--ok);line-height:1.45}
+.fx-note b{font-weight:700}
 .kpi{background:#fff;border:1px solid var(--dir-line);border-radius:14px;padding:.85rem .9rem}
 .kpi.hero-kpi{background:linear-gradient(135deg,var(--dir-red),var(--dir-red-dark));
       border-color:var(--dir-red);color:#fff}
@@ -161,8 +257,7 @@ textarea{resize:vertical;min-height:70px}
 .kpi-sub{font-size:.74rem;color:var(--dir-grey);margin-top:.1rem}
 
 /* comparativo linear x escalonado */
-.cmp{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:1.1rem}
-@media(max-width:700px){.cmp{grid-template-columns:1fr}}
+.cmp{margin-bottom:.7rem}
 .cmp-card{position:relative;background:#fff;border:1px solid var(--dir-line);border-radius:14px;
       padding:1rem 1.05rem;cursor:pointer;transition:.15s}
 .cmp-card:hover{border-color:var(--dir-red)}
@@ -185,9 +280,16 @@ textarea{resize:vertical;min-height:70px}
 
 /* veredito */
 .vd{background:#fff;border:1px solid var(--dir-line);border-radius:14px;overflow:hidden;margin-bottom:1.1rem}
-.vd-head{padding:.9rem 1.05rem;font-weight:700;color:#fff;display:flex;align-items:center;
-      justify-content:space-between;gap:.7rem;flex-wrap:wrap}
-.vd-head .vh-sub{font-weight:400;font-size:.8rem;opacity:.9}
+.vd-head{padding:.85rem 1.05rem;font-weight:700;color:#fff;display:flex;align-items:center;
+      gap:.75rem;cursor:pointer}
+.vd-head .vh-ico{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.2);
+      display:flex;align-items:center;justify-content:center}
+.vd-head .vh-ico svg{width:14px;height:14px;stroke:#fff;stroke-width:3.4}
+.vd-head .vh-txt{flex:1 1 auto;min-width:0}
+.vd-head .vh-tit{display:block;font-size:.94rem;font-weight:700;letter-spacing:-.1px}
+.vd-head .vh-sub{display:block;font-weight:400;font-size:.76rem;opacity:.88;margin-top:.05rem}
+.vd-head .vh-mais{flex:0 0 auto;opacity:.85}
+.vd-head .vh-mais svg{width:17px;height:17px;stroke:#fff;stroke-width:2}
 .vd-head.aprovado{background:linear-gradient(135deg,var(--ok),#166B39)}
 .vd-head.comite{background:linear-gradient(135deg,var(--warn),#8A5700)}
 .vd-head.reprovado{background:linear-gradient(135deg,var(--err),#8f0016)}
@@ -333,7 +435,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
    SHELL MOBILE - appbar, barra da unidade, acordeao e abas.
    Tudo abaixo de 860px; acima disso a pagina segue igual.
    ========================================================= */
-.appbar,.unitbar,.tabbar{display:none}
+.appbar,.unitbar,.tabbar,.ub-strip{display:none}
 
 @media(max-width:860px){
   .hero{display:none}
@@ -365,46 +467,14 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   body.tab-dados #tab-result{display:none}
   body.tab-result #tab-dados{display:none}
 
-  /* ---- acordeao dos passos ---- */
-  .step{margin-bottom:.55rem}
-  button.step-label{display:flex;align-items:center;gap:.7rem;min-height:56px;margin:0;
-     padding:.75rem .8rem;background:#fff;border:1px solid var(--dir-line);border-radius:14px;
-     color:var(--dir-ink);font-size:.85rem;font-weight:600;letter-spacing:0;text-transform:none}
-  button.step-label::before{display:none}
-  .s-pre{display:none}
-  .step-n{display:flex;flex:0 0 auto;width:23px;height:23px;border-radius:50%;align-items:center;
-     justify-content:center;font-size:.72rem;font-weight:700;background:var(--dir-bg);
-     border:1px solid var(--dir-line);color:var(--dir-grey);transition:.15s}
-  .step.done .step-n{background:#EFF9F2;border-color:#C7E7D3;color:var(--ok)}
-  .step.open .step-n{background:var(--dir-red);border-color:var(--dir-red);color:#fff}
-  .step-t{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .step-sum{display:block;flex:1 1 0;min-width:0;text-align:right;font-size:.74rem;
-     font-weight:400;color:var(--dir-grey);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .step-chev{display:block;flex:0 0 auto;width:16px;height:16px;color:#A8AEB1;transition:transform .18s}
-  .step.open .step-chev{transform:rotate(180deg);color:var(--dir-ink)}
-
-  .step>.card,.step>.pols{display:none}
-  .step.open>button.step-label{border-bottom-left-radius:0;border-bottom-right-radius:0}
-  .step.open>.card{display:block;margin-top:0;border-top:0;
-     border-top-left-radius:0;border-top-right-radius:0}
-  .step.open>.pols{display:grid;margin-top:.55rem}
+  .step-label,.step-t{font-size:.85rem}
+  button.step-label{gap:.7rem;min-height:56px;padding:.75rem .8rem}
   .card{padding:.9rem .8rem}
 
   /* os dados da unidade sobem para a barra fixa do topo */
   .unid-info,.emp-info{display:none!important}
 
-  /* ---- gavetas do passo 4 ---- */
-  .sub{align-items:center;gap:.55rem;min-height:48px;margin:0;padding:.85rem 0;
-     border-top:1px solid var(--dir-line);font-size:.85rem;cursor:pointer}
-  .sub-block:first-child .sub{border-top:0;padding-top:.2rem}
-  .sub .lt{display:none}
-  .sub-t{flex:0 0 auto}
-  .sub-chev{display:block;flex:0 0 auto;width:14px;height:14px;color:#A8AEB1;transition:transform .18s}
-  .sub-block.open .sub-chev{transform:rotate(90deg);color:var(--dir-ink)}
-  .sub-sum{display:block;flex:1 1 0;min-width:0;text-align:right;font-size:.74rem;font-weight:400;
-     color:var(--dir-grey);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .sub-body{display:none;padding-bottom:.35rem}
-  .sub-block.open .sub-body{display:block}
+  .sub{min-height:48px;padding:.85rem 0;font-size:.85rem}
 
   /* ---- alvo de toque ---- */
   input,select,textarea{min-height:46px}
@@ -416,10 +486,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   #tab-result>.step>.step-label{display:none}
   #tab-result .step{margin-bottom:0}
   .btn-row{position:sticky;bottom:calc(62px + env(safe-area-inset-bottom,0px));z-index:120;
-     display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:1.25rem -1.1rem 0;
-     padding:.7rem 1.1rem;background:#fff;border-top:1px solid var(--dir-line)}
-  .btn-row .btn{min-height:46px;justify-content:center}
-  #b-pdf{grid-column:1/-1;order:-1}
+     display:flex;gap:.5rem;margin:1.25rem -1.1rem 0;padding:.7rem 1.1rem;background:#fff;
+     border-top:1px solid var(--dir-line)}
+  .btn-row .btn{min-height:46px;padding-left:.7rem;padding-right:.7rem;font-size:.86rem}
+  .btn-ico{width:46px;padding:0}
 
   /* ---- abas fixas ---- */
   .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:400;display:flex;background:#fff;
@@ -442,24 +512,6 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 /* =========================================================
    CARNE COMPLETO - resumo por fase + folha em tela cheia
    ========================================================= */
-.carne-resumo{display:none;background:#fff;border:1px solid var(--dir-line);border-radius:14px;
-     padding:.9rem 1rem 1rem;margin-bottom:1.1rem}
-.cr-k{font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--dir-grey);
-     font-weight:500;margin-bottom:.6rem}
-.cr-row{display:flex;align-items:baseline;justify-content:space-between;gap:.7rem;font-size:.86rem}
-.cr-row+.cr-row{margin-top:.35rem}
-.cr-row span{color:var(--dir-grey)}
-.cr-row b{font-weight:700;font-variant-numeric:tabular-nums}
-.cr-tot{display:flex;align-items:baseline;justify-content:space-between;gap:.7rem;margin-top:.6rem;
-     padding-top:.6rem;border-top:2px solid var(--dir-red)}
-.cr-tot-k{font-size:.86rem;font-weight:700}
-.cr-tot-v{font-size:1.05rem;font-weight:700;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
-.cr-btn{display:flex;align-items:center;justify-content:center;gap:.45rem;width:100%;min-height:44px;
-     margin-top:.85rem;font:inherit;font-size:.87rem;font-weight:500;color:var(--dir-ink);background:#fff;
-     border:1px solid var(--dir-line);border-radius:9px;cursor:pointer;transition:.15s}
-.cr-btn:hover{border-color:var(--dir-red);color:var(--dir-red)}
-.cr-btn svg{flex:0 0 auto;width:15px;height:15px;stroke:currentColor}
-
 .seg{display:flex;gap:3px;padding:3px;background:var(--dir-bg);border:1px solid var(--dir-line);
      border-radius:999px}
 .seg button{flex:1 1 0;min-height:34px;font:inherit;font-size:.82rem;font-weight:500;
@@ -517,7 +569,6 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 @media(max-width:860px){
   .sheet-box{width:100%;height:100%;border-radius:0}
   .tbl-tools,.tbl-wrap{display:none}
-  .carne-resumo{display:block}
 }
 /* folha como modal no desktop */
 @media(min-width:861px){
@@ -558,10 +609,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   #tab-dados .g4{grid-template-columns:repeat(3,1fr)}
 
   #tab-result .step-label{margin-bottom:.85rem}
-  #tab-result .summary{grid-template-columns:1fr 1fr}
-  #tab-result .cmp{grid-template-columns:1fr}
   #tab-result .tbl-tools,#tab-result .tbl-wrap{display:none}
-  #tab-result .carne-resumo{display:block}
   #tab-result .note{display:none}
   #tab-result .vd-item{grid-template-columns:1fr 92px;row-gap:.15rem}
   #tab-result .vd-item .vi-lab{grid-column:1/2}
@@ -589,7 +637,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   <div class="hero-inner">
     <div class="hero-brand">Portal do Corretor</div>
     <h1>Simulador de <em>Fluxo Associativo</em></h1>
-    <p>Calcule o Pro Soluto do cliente que financia pelo MCMV, veja o carnê nos fluxos linear e escalonado, confira o comprometimento de renda mês a mês e saiba na hora se a proposta aprova na política. Ribeirão Preto, Campinas e Sorocaba.</p>
+    <p>Pro Soluto MCMV &middot; carnê linear e escalonado &middot; comprometimento de renda e verificação de política. Ribeirão Preto, Campinas e Sorocaba.</p>
   </div>
 </header>
 
@@ -702,10 +750,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
             <input class="pct" id="f-bcamp-p" type="text" inputmode="decimal">
           </div>
         </div>
-        <div>
-          <label>Entrada</label>
+        <div class="entrada-box">
+          <label for="f-presaldo">Entrada</label>
+          <span class="entrada-f">imóvel &minus; financiamento &minus; subsídio &minus; FGTS &minus; bônus &minus; ato</span>
           <input id="f-presaldo" type="text" readonly>
-          <div class="hint">Imóvel &minus; financiamento &minus; subsídio &minus; FGTS &minus; bônus &minus; ato.</div>
         </div>
       </div>
 
@@ -829,11 +877,10 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   <section class="step">
     <div class="step-label">Simulação</div>
     <div class="banner" id="banner"><span>&#9888;</span> Proposta fora da política &mdash; revise os pontos em vermelho</div>
+    <div class="vd" id="vd" style="display:none"></div>
     <div class="summary" id="summary"></div>
     <div class="cmp" id="cmp"></div>
-    <div class="vd" id="vd" style="display:none"></div>
     <div class="alerts" id="alerts"></div>
-    <div class="carne-resumo" id="carne-resumo"></div>
     <div class="tbl-tools">
       <button class="chip" id="b-toggle-tbl" type="button">Mostrar todas as parcelas</button>
     </div>
@@ -844,12 +891,17 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
     </tr></thead><tbody id="tbody"></tbody></table></div>
     <div class="note" id="note"></div>
     <div class="btn-row">
-      <button class="btn btn-check" id="b-verificar" type="button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        Verificar Simulação
+      <button class="btn btn-ghost btn-ico" id="b-reset" type="button" title="Limpar simulação" aria-label="Limpar simulação">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
       </button>
-      <button class="btn btn-primary" id="b-pdf" type="button">Baixar PDF</button>
-      <button class="btn btn-ghost" id="b-reset" type="button">Limpar simulação</button>
+      <button class="btn btn-ghost" id="b-parcelas" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"></rect><line x1="8" y1="12" x2="16" y2="12"></line><line x1="8" y1="16" x2="13" y2="16"></line></svg>
+        Ver parcelas
+      </button>
+      <button class="btn btn-primary" id="b-pdf" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        Baixar PDF
+      </button>
     </div>
   </section>
 
@@ -1525,6 +1577,15 @@ function renderPols(){
   }).join('');
 }
 
+/* C.R. maximo do fluxo escolhido, colorido pelo teto da politica */
+function kpiCR(c){
+  if(S.renda<=0) return kpi('C.R. máximo','&mdash;','informe a renda do cliente');
+  var cr = S.fluxoTipo==='escalonado' ? c.crEscal : c.crLinear;
+  var cls = cr<=c.pol.cr ? ' kpi-ok' : ' kpi-bad';
+  return '<div class="kpi'+cls+'"><div class="kpi-lab">C.R. máximo</div>'+
+         '<div class="kpi-val">'+pctf(cr)+'</div>'+
+         '<div class="kpi-sub">limite '+pctf(c.pol.cr,1)+'</div></div>';
+}
 function kpi(lab,val,sub,hero){
   return '<div class="kpi'+(hero?' hero-kpi':'')+'"><div class="kpi-lab">'+lab+'</div>'+
          '<div class="kpi-val">'+val+'</div><div class="kpi-sub">'+(sub||'')+'</div></div>';
@@ -1554,57 +1615,91 @@ function renderResultado(){
   $('f-presaldo').value = c.e && S.valor>0 ? brl(c.preSaldo) : '';
   $('f-prepos').value   = c.pronto ? (c.nPre+' pré / '+c.nPos+' pós') : '';
 
-  /* KPIs */
+  /* ---------- KPIs, fluxo e veredito (layout do prototipo) ---------- */
+  var totAtoSinais = (S.ato||0)+(S.s1||0)+(S.s2||0)+(S.s3||0);
+
   if(!c.pronto){
     $('summary').innerHTML =
-      kpi('% Pro Soluto','&mdash;','preencha os dados da operação',true) +
-      kpi('Entrada', c.e&&S.valor>0?brl(c.preSaldo):'&mdash;','') +
-      kpi('Prazo','&mdash;','') +
-      kpi('Entrega','&mdash;','');
+      '<div class="kpi-hero off"><div class="kh-k">% Pro Soluto</div>'+
+        '<div class="kh-row"><span class="kh-v">&mdash;</span></div>'+
+        '<div class="kh-sub">preencha os dados da operação</div></div>'+
+      '<div class="kpi-duo">'+
+        kpi('Entrada', c.e&&S.valor>0?brl(c.preSaldo):'&mdash;', totAtoSinais>0?('ato + sinais '+brl(totAtoSinais)):'')+
+        kpi('C.R. máximo','&mdash;','')+
+      '</div>';
     $('cmp').innerHTML='';
     $('vd').style.display='none';
   } else {
-    var entrega=parseData(c.e.entrega);
+    /* KPI herói: quanto do limite de Pro Soluto a proposta já usa */
+    var usoPS = c.pol.pctPS>0 ? Math.min(c.pctPS/c.pol.pctPS,1)*100 : 0;
+    var folga = (c.pol.pctPS - c.pctPS) * S.valor;
     $('summary').innerHTML =
-      kpi('% Pro Soluto', pctf(c.pctPS), 'limite '+pctf(c.pol.pctPS,0)+' na política '+c.pol.nome, true) +
-      kpi('Entrada', brl(c.preSaldo), 'saldo do carnê '+brl(c.saldoMensais)) +
-      kpi('Prazo do Pro Soluto', c.prazo+' meses', c.nPre+' pré-chaves &middot; '+c.nPos+' pós-chaves') +
-      kpi('Entrega da obra', rotuloMes(entrega), '1º venc. em '+fmtData(c.venc1));
+      '<div class="kpi-hero">'+
+        '<div class="kh-k">% Pro Soluto</div>'+
+        '<div class="kh-row"><span class="kh-v">'+pctf(c.pctPS)+'</span>'+
+          '<span class="kh-lim">limite '+pctf(c.pol.pctPS,1)+'</span></div>'+
+        '<div class="kh-bar"><i style="width:'+usoPS.toFixed(1)+'%"></i></div>'+
+        '<div class="kh-sub">'+brl(c.saldoMensais)+' de saldo no carnê &middot; '+
+          (folga>=0 ? 'folga de '+brl(folga) : brl(-folga)+' acima do limite')+'</div>'+
+      '</div>'+
+      '<div class="kpi-duo">'+
+        kpi('Entrada', brl(c.preSaldo), totAtoSinais>0?('ato + sinais '+brl(totAtoSinais)):'')+
+        kpiCR(c)+
+      '</div>';
 
-    /* comparativo linear x escalonado */
-    var faixasHtml = c.escalonado.faixas.map(function(f){
-      return '<div class="cmp-faixa"><span>'+f.n+'ª faixa &middot; '+f.prazo+'x &middot; '+pctf(f.pct,0)+'</span><b>'+brl(f.parcela)+'</b></div>';
+    /* card de fluxo: um por vez, com o alternador */
+    var esc = S.fluxoTipo==='escalonado';
+    var f   = somaFases(c, esc);
+    var economia = c.linear.total - c.escalonado.total;
+    var faixasHtml = c.escalonado.faixas.map(function(x){
+      return '<div class="cmp-faixa"><span>'+x.n+'ª faixa &middot; '+x.prazo+'x &middot; '+pctf(x.pct,0)+'</span><b>'+brl(x.parcela)+'</b></div>';
     }).join('');
+    var nota='';
+    if(Math.abs(economia)>0.5){
+      nota = '<div class="fx-note">'+ (esc
+        ? 'No linear a parcela é fixa em <b>'+brl(c.linear.parcela)+'</b>; o escalonado '+
+          (economia>0?'economiza ':'custa ')+'<b>'+brl(Math.abs(economia))+'</b>'+(economia>0?' no total.':' a mais no total.')
+        : 'No escalonado a 1ª faixa cai para <b>'+brl(c.escalonado.faixas[0].parcela)+'</b> e o total '+
+          (economia>0?'economiza ':'custa ')+'<b>'+brl(Math.abs(economia))+'</b>'+(economia>0?'.':' a mais.')
+      )+'</div>';
+    }
     $('cmp').innerHTML =
-      '<div class="cmp-card'+(S.fluxoTipo==='linear'?' sel':'')+'" data-fluxo="linear">'+
-        '<div class="cmp-tit"><span class="cmp-dot"></span>Fluxo Linear &mdash; parcela única</div>'+
-        '<div class="cmp-parc">'+brl(c.linear.parcela)+' <span style="font-size:.9rem;font-weight:400;color:var(--dir-grey)">&times; '+c.prazo+'</span></div>'+
-        '<div class="cmp-rows">'+
-          '<div class="cmp-row"><span>Total pago no carnê</span><b>'+brl(c.linear.total)+'</b></div>'+
-          '<div class="cmp-row"><span>C.R. máximo</span><b>'+(S.renda>0?pctf(c.crLinear):'&mdash;')+'</b></div>'+
+      '<div class="fx">'+
+        '<div class="fx-k">Fluxo do carnê</div>'+
+        '<div class="seg">'+
+          '<button type="button" data-fluxo="linear"'+(esc?'':' class="on"')+'>Linear</button>'+
+          '<button type="button" data-fluxo="escalonado"'+(esc?' class="on"':'')+'>Escalonado</button>'+
+        '</div>'+
+        (esc ? '<div class="cmp-faixas">'+faixasHtml+'</div>'
+             : '<div class="fx-parc">'+brl(c.linear.parcela)+'<span>&times; '+c.prazo+'</span></div>')+
+        '<div class="fx-rows">'+
+          '<div class="cmp-row"><span>Total pago no carnê</span><b>'+brl(esc?c.escalonado.total:c.linear.total)+'</b></div>'+
+          '<div class="cmp-row"><span>Pré-chaves</span><b>'+brl(f.pre)+'</b></div>'+
+          '<div class="cmp-row"><span>Pós-chaves</span><b>'+brl(f.pos)+'</b></div>'+
           '<div class="cmp-row"><span>C.R. só do Pro Soluto</span><b>'+(S.renda>0?pctf(c.crPS):'&mdash;')+'</b></div>'+
         '</div>'+
-      '</div>'+
-      '<div class="cmp-card'+(S.fluxoTipo==='escalonado'?' sel':'')+'" data-fluxo="escalonado">'+
-        '<div class="cmp-tit"><span class="cmp-dot"></span>Fluxo Escalonado &mdash; 4 faixas</div>'+
-        '<div class="cmp-faixas">'+faixasHtml+'</div>'+
-        '<div class="cmp-rows">'+
-          '<div class="cmp-row"><span>Total pago no carnê</span><b>'+brl(c.escalonado.total)+'</b></div>'+
-          '<div class="cmp-row"><span>C.R. máximo</span><b>'+(S.renda>0?pctf(c.crEscal):'&mdash;')+'</b></div>'+
-          '<div class="cmp-row"><span>Economia vs. linear</span><b>'+brl(c.linear.total-c.escalonado.total)+'</b></div>'+
-        '</div>'+
+        nota+
       '</div>';
 
     /* veredito */
     var v=c.veredito;
-    var sub = v.final==='Aprovado' ? 'Todos os critérios da política '+c.pol.nome+' estão dentro do limite.'
-            : (v.final==='Comitê' ? 'A proposta passa, mas depende de aprovação do comitê.'
-                                  : 'Um ou mais critérios estão fora da política '+c.pol.nome+'.');
+    var okN=0; for(var q=0;q<v.itens.length;q++) if(v.itens[q].st==='Aprovado') okN++;
+    var sub = v.final==='Aprovado' ? okN+' de '+v.itens.length+' critérios dentro do limite'
+            : (v.final==='Comitê' ? 'passa, mas depende de aprovação do comitê'
+                                  : (v.itens.length-okN)+' de '+v.itens.length+' critérios fora do limite');
+    var ico = v.final==='Aprovado'
+      ? '<polyline points="20 6 9 17 4 12"></polyline>'
+      : (v.final==='Comitê'
+          ? '<line x1="12" y1="8" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>'
+          : '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>');
     $('vd').style.display='';
     $('vd').innerHTML =
-      '<div class="vd-head '+classeVeredito(v.final)+'">'+
-        '<span>Política '+c.pol.nome+' &mdash; '+v.final+'</span>'+
-        '<span class="vh-sub">'+sub+'</span>'+
+      '<div class="vd-head '+classeVeredito(v.final)+'" role="button" tabindex="0" '+
+           'title="Ver checklist detalhado">'+
+        '<span class="vh-ico"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">'+ico+'</svg></span>'+
+        '<span class="vh-txt"><b class="vh-tit">'+v.final+' na política '+c.pol.nome+'</b>'+
+          '<span class="vh-sub">'+sub+'</span></span>'+
+        '<span class="vh-mais"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>'+
       '</div>'+
       v.itens.map(function(it){
         return '<div class="vd-item">'+
@@ -1778,8 +1873,6 @@ function renderShell(){
   var totAnu=(S.a1||0)+(S.a2||0)+(S.a3||0);
   setSubSum('anuais', totAnu>0?brl(totAnu):'nenhuma');
 
-  renderCarne(c);
-
   /* ponto de status na aba Resultado */
   var dot=$('tabdot');
   if(dot){
@@ -1811,29 +1904,6 @@ function somaFases(c, esc){
     if(r.extra){ o.extra+=r.extra; o.nExtra++; }
   }
   return o;
-}
-
-function renderCarne(c){
-  var el=$('carne-resumo'); if(!el) return;
-  if(!c.pronto || !c.fluxo.length){
-    el.innerHTML='<div class="cr-k">Carn\u00ea por fase</div>'+
-      '<div class="cr-row"><span>Preencha os dados da opera\u00e7\u00e3o para montar o carn\u00ea.</span></div>';
-    return;
-  }
-  var esc = S.fluxoTipo==='escalonado';
-  var f = somaFases(c, esc);
-  var total = esc ? c.escalonado.total : c.linear.total;
-  el.innerHTML =
-    '<div class="cr-k">Carn\u00ea por fase \u00b7 fluxo '+(esc?'escalonado':'linear')+'</div>'+
-    '<div class="cr-row"><span>Pr\u00e9-chaves</span><b>'+brl(f.pre)+'</b></div>'+
-    '<div class="cr-row"><span>P\u00f3s-chaves</span><b>'+brl(f.pos)+'</b></div>'+
-    '<div class="cr-tot"><span class="cr-tot-k">Total do carn\u00ea</span>'+
-      '<span class="cr-tot-v">'+brl(total)+'</span></div>'+
-    (f.extra>0 ? '<div class="cr-row" style="margin-top:.55rem"><span>Ato e sinais \u00b7 '+f.nExtra+
-       ' lan\u00e7amentos <em style="font-style:normal;color:#A8AEB1">(fora do carn\u00ea)</em></span><b>'+brl(f.extra)+'</b></div>' : '')+
-    '<button type="button" class="cr-btn" id="b-carne">'+
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"></rect><line x1="8" y1="12" x2="16" y2="12"></line><line x1="8" y1="16" x2="13" y2="16"></line></svg>'+
-      'Ver todas as '+c.fluxo.length+' parcelas</button>';
 }
 
 function renderSheet(){
@@ -1950,7 +2020,7 @@ document.addEventListener('click', function(ev){
   if(sb){ sb.parentNode.classList.toggle('open'); syncAria(); return; }
   var tb=t.closest('.tabbtn');
   if(tb){ setTab(tb.getAttribute('data-tab')); return; }
-  if(t.closest('#b-carne')){ abreSheet(); return; }
+  if(t.closest('#b-parcelas')){ abreSheet(); return; }
 });
 
 /* passo 1 comeca aberto */
@@ -2257,7 +2327,12 @@ document.addEventListener('keydown', function(ev){
   if(ev.key==='Escape' && $('modal-overlay').classList.contains('open')) fecharModal();
 });
 
-$('b-verificar').addEventListener('click', function(){
+/* O botao "Verificar Simulacao" saiu: o veredito fica visivel o tempo todo
+   na coluna de resultado. O checklist detalhado abre clicando no cabecalho. */
+$('vd').addEventListener('click', function(ev){
+  if(ev.target.closest('.vd-head')) abreVerificacao();
+});
+function abreVerificacao(){
   var c=calc();
   if(!c.pronto){
     alert('Selecione o empreendimento e preencha valor do imóvel, data da proposta, 1º vencimento e prazo antes de verificar a simulação.');
@@ -2309,7 +2384,7 @@ $('b-verificar').addEventListener('click', function(){
   $('modal-renda').style.display='grid';
 
   abrirModal();
-});
+}
 
 /* =========================================================
    PDF
