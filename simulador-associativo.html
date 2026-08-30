@@ -622,14 +622,12 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
        align-items:start;padding:1.5rem 2rem 3rem}
   #tab-dados{min-width:0}
   /* painel de resultado gruda no topo e rola por dentro;
-     a barra de acoes fica FIXA no rodape da tela, alinhada a coluna */
+     a barra de acoes e o ultimo bloco da coluna - aparece ao fim da rolagem */
   #tab-result{min-width:0;position:sticky;top:1.25rem;overflow-y:auto;overscroll-behavior:contain;
-       max-height:calc(100vh - 2.5rem - 5rem)}
-  #tab-result>.result{margin:0;padding-right:.25rem}
-  #tab-result>.btn-row{position:fixed;bottom:1.25rem;right:max(2rem,calc(50% - 668px));width:430px;
-       z-index:40;margin:0;padding:.6rem;background:#fff;border:1px solid var(--dir-line);
-       border-radius:14px;box-shadow:0 14px 34px rgba(58,64,67,.20)}
-  body{padding-bottom:7rem}
+       max-height:calc(100vh - 2.5rem);padding-right:.25rem}
+  #tab-result>.result{margin:0}
+  #tab-result>.btn-row{position:static;margin:1.1rem 0 0;padding:1.1rem 0 .1rem;
+       border-top:1px solid var(--dir-line)}
 
   #tab-dados .g4{grid-template-columns:repeat(3,1fr)}
 
