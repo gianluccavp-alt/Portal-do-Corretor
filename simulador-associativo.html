@@ -1891,8 +1891,7 @@ function renderShell(){
   setSum(3, pol?pol.nome:'', !!pol);
   var r4=[]; if(S.valor>0) r4.push(brl(S.valor)); if(S.prazo>0) r4.push(S.prazo+' meses');
   setSum(4, r4.join(' \u00b7 '), !!(S.valor>0 && S.prazo>0), warn4);
-  var temObs = !!(S.obsHtml && S.obsHtml.replace(/<[^>]*>/g,'').replace(/&nbsp;/g,'').trim());
-  setSum(5, temObs?'preenchido':'vazio', temObs);
+  setSum(5, '', false);
 
   /* resumos das gavetas do passo 4 */
   setSubSum('recursos', S.valor>0?brl(S.valor):'');
