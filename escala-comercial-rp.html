@@ -432,6 +432,23 @@
   var PADRAO_UTEIS = [0, 1, 2, 0, 1];
   var TODOS = ['G', 'J', 'V'];
 
+  /* Nas semanas em que quem folga no fim de semana é a Juliana, o padrão
+     acima deixava ela com só 1 dia útil (quarta), enquanto Gabriel e Vitor
+     sempre têm 2 dias úteis na semana da própria folga. A partir da semana
+     seguinte à atual (n >= 1), essas semanas passam a usar esta ordem, que
+     dá 2 dias úteis pra Juliana também (terça e sexta) — agosto e a semana
+     corrente (31/08–06/09) continuam exatamente como já estavam. */
+  var UTEIS_FOLGA_JU = ['V', 'J', 'G', 'V', 'J'];
+
+  /* Na semana de folga do Gabriel, quem cobre sábado + domingo é a Ju —
+     e a segunda-feira da semana seguinte (folga do Vitor) também cai pra
+     ela, emendando sábado + domingo direto com a segunda. Essa mesma
+     ordem resolve isso sem tirar nem dar plantão de ninguém: só troca
+     quais dias da semana a Ju e o Vitor pegam (ele assume a segunda e a
+     quinta; ela, terça e sexta). Também a partir da semana seguinte à
+     atual (n >= 1). */
+  var UTEIS_FOLGA_VITOR = UTEIS_FOLGA_JU;
+
   var PESSOA = {
     G: { nome: 'Gabriel', curto: 'Gab',   ini: 'G', cls: 'g' },
     J: { nome: 'Juliana', curto: 'Ju',    ini: 'J', cls: 'j' },
@@ -452,9 +469,14 @@
     var n = Math.round((seg - ANCORA) / (7 * DIA));
 
     var inicio = mod(1 + n, 3);
-    var uteis = PADRAO_UTEIS.map(function (off) {
-      return CICLO_UTEIS[(inicio + off) % 3];
-    });
+    var uteis;
+    if (inicio === 1 && n >= 1) {
+      uteis = UTEIS_FOLGA_JU;
+    } else if (inicio === 0 && n >= 1) {
+      uteis = UTEIS_FOLGA_VITOR;
+    } else {
+      uteis = PADRAO_UTEIS.map(function (off) { return CICLO_UTEIS[(inicio + off) % 3]; });
+    }
 
     var folga = CICLO_FDS[mod(1 + n, 3)];
     var domingo = CICLO_FDS[mod(n, 3)];
