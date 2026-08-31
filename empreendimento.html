@@ -560,6 +560,43 @@
   if (mqPhone.addEventListener) mqPhone.addEventListener('change', onBreakpoint);
   else if (mqPhone.addListener) mqPhone.addListener(onBreakpoint);
 
+  // 6) Plantas e Galeria: envolve a grade num frame e injeta setas de navegacao.
+  //    No desktop o CSS mantem a grade como esta; so no mobile (< 768px) ela
+  //    vira carrossel com scroll-snap, e as setas (topo-esquerda) rolam 1 card.
+  var CAR_PREV_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+  var CAR_NEXT_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+  function initCarousel(grid) {
+    if (!grid || grid.dataset.carousel) return;
+    grid.dataset.carousel = '1';
+    var frame = document.createElement('div');
+    frame.className = 'carousel-frame';
+    grid.parentNode.insertBefore(frame, grid);
+    frame.appendChild(grid);
+    var arrows = document.createElement('div');
+    arrows.className = 'car-arrows';
+    arrows.innerHTML =
+      '<button type="button" class="car-arrow car-prev disabled" aria-label="Anterior">' + CAR_PREV_SVG + '</button>' +
+      '<button type="button" class="car-arrow car-next" aria-label="Próximo">' + CAR_NEXT_SVG + '</button>';
+    frame.appendChild(arrows);
+    var prevBtn = arrows.querySelector('.car-prev'), nextBtn = arrows.querySelector('.car-next');
+    function cardStep() {
+      var card = grid.children[0];
+      var gap = parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap) || 0;
+      return card ? (card.getBoundingClientRect().width + gap) : grid.clientWidth * 0.8;
+    }
+    function syncArrows() {
+      var max = grid.scrollWidth - grid.clientWidth - 2;
+      prevBtn.classList.toggle('disabled', grid.scrollLeft <= 2);
+      nextBtn.classList.toggle('disabled', grid.scrollLeft >= max);
+    }
+    prevBtn.addEventListener('click', function () { grid.scrollBy({ left: -cardStep(), behavior: 'smooth' }); });
+    nextBtn.addEventListener('click', function () { grid.scrollBy({ left: cardStep(), behavior: 'smooth' }); });
+    grid.addEventListener('scroll', syncArrows);
+    syncArrows();
+  }
+  initCarousel(document.querySelector('#tab-plantas .plantas-grid'));
+  initCarousel(document.querySelector('#tab-galeria .g-grid'));
+
   // popup "Simular Fluxo" - escolhe Tabela Direta ou Associativo
   var simOverlay = document.getElementById('sim-modal-overlay');
   window.abrirModalSimulador = function () {
