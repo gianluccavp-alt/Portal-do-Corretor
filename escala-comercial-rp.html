@@ -94,8 +94,7 @@
   display:block;font-size:.72rem;font-weight:500;letter-spacing:.11em;
   text-transform:uppercase;color:var(--dir-red);margin-bottom:.55rem;
 }
-.esc-title{margin:0 0 .5rem;font-size:clamp(1.6rem,6vw,2.15rem);font-weight:700;letter-spacing:-.6px;line-height:1.12}
-.esc-sub{margin:0;max-width:52ch;font-size:.93rem;color:var(--grey);line-height:1.5}
+.esc-title{margin:0;font-size:clamp(1.6rem,6vw,2.15rem);font-weight:700;letter-spacing:-.6px;line-height:1.12}
 
 /* ---------- Plantão de hoje ---------- */
 .hoje{
@@ -237,12 +236,6 @@
 .acao-ok{font-size:.8rem;color:var(--esc-ju);align-self:center}
 .acao-ok.err{color:#C4001C}
 
-.nota{
-  margin-top:1.4rem;background:var(--muted);border:1px solid var(--line);border-radius:14px;
-  padding:.9rem 1.05rem;font-size:.8rem;color:var(--grey);line-height:1.5;
-}
-.nota b{color:var(--ink);font-weight:500}
-
 /* ---------- Telas maiores ---------- */
 @media(min-width:460px){
   .pill{font-size:.7rem;max-width:64px}
@@ -307,8 +300,7 @@
 <section class="esc-hero">
   <div class="wrap">
     <span class="esc-eyebrow">Plantão noturno</span>
-    <h1 class="esc-title">Escala de plantão<br>da coordenação</h1>
-    <p class="esc-sub">Rodízio automático entre Gabriel, Juliana e Vitor — dias úteis em revezamento e fins de semana com uma folga completa por coordenador.</p>
+    <h1 class="esc-title">Escala do Plantão</h1>
 
     <div class="hoje" id="hoje">
       <span class="hoje-label">Plantão de hoje</span>
@@ -340,27 +332,23 @@
   </div>
 
   <section class="semanas" aria-labelledby="lab-semanas">
-    <h2 class="sec-label" id="lab-semanas">Semana a semana</h2>
+    <h2 class="sec-label" id="lab-semanas">Última semana</h2>
     <div id="semanas-lista"></div>
   </section>
 
   <div class="acoes">
     <button class="acao" type="button" id="btn-copiar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2.5"></rect><path d="M5 15H4.5A1.5 1.5 0 013 13.5v-9A1.5 1.5 0 014.5 3h9A1.5 1.5 0 0115 4.5V5"></path></svg>
-      Copiar escala do mês
+      Copiar escala da semana
     </button>
-    <button class="acao" type="button" id="btn-hoje">Voltar para hoje</button>
     <span class="acao-ok" id="copia-ok" role="status"></span>
   </div>
-
-  <p class="nota"><b>Como a escala é montada:</b> de segunda a sexta os três se revezam na ordem do ciclo, e a cada semana a ordem avança um coordenador. No fim de semana, um coordenador folga o sábado e o domingo inteiros; dos outros dois, um cobre só o sábado e o outro cobre sábado e domingo — as duas rodadas giram em ciclos de três semanas.</p>
 
 </main>
 
 <footer class="home-foot">
   <div class="wrap">
     <span><strong>Produtos SPI</strong> · Grupo Direcional — São Paulo Interior</span>
-    <span>Uso interno da coordenação comercial</span>
   </div>
 </footer>
 
@@ -580,34 +568,33 @@
     aplicarFoco();
   }
 
-  function renderSemanas() {
-    var ano = new Date(cursor).getUTCFullYear();
-    var mes = new Date(cursor).getUTCMonth();
-    var inicio = segundaDa(cursor);
-    var fimMes = Date.UTC(ano, mes + 1, 0);
+  /* Segunda da semana atual e da que já terminou. */
+  function semanaAtual()   { return segundaDa(HOJE); }
+  function semanaPassada() { return segundaDa(HOJE) - 7 * DIA; }
 
-    var html = '';
-    for (var seg = inicio; seg <= fimMes; seg += 7 * DIA) {
-      var s = semanaDe(seg);
-      var dom = seg + 6 * DIA;
+  function cardSemana(seg) {
+    var s = semanaDe(seg);
+    var dom = seg + 6 * DIA;
 
-      html += '<article class="sem-card">' +
-                '<header class="sem-head">' +
-                  '<span class="sem-per">' + dd(seg) + ' – ' + dd(dom) + '</span>' +
-                  '<span class="sem-folga">Folga no fim de semana: <b>' +
-                    PESSOA[s.folga].nome + '</b></span>' +
-                '</header>';
+    var html = '<article class="sem-card">' +
+                 '<header class="sem-head">' +
+                   '<span class="sem-per">' + dd(seg) + ' – ' + dd(dom) + '</span>' +
+                   '<span class="sem-folga">Folga no fim de semana: <b>' +
+                     PESSOA[s.folga].nome + '</b></span>' +
+                 '</header>';
 
-      for (var i = 0; i < 7; i++) {
-        var ts = seg + i * DIA;
-        html += '<div class="sem-row' + (ts === HOJE ? ' e-hoje' : '') + '">' +
-                  '<span class="sem-dia"><b>' + maiuscula(nomeDia(ts)) + '</b><span>' + dd(ts) + '</span></span>' +
-                  '<span class="sem-nomes">' + plantaoDe(ts).map(tag).join('') + '</span>' +
-                '</div>';
-      }
-      html += '</article>';
+    for (var i = 0; i < 7; i++) {
+      var ts = seg + i * DIA;
+      html += '<div class="sem-row' + (ts === HOJE ? ' e-hoje' : '') + '">' +
+                '<span class="sem-dia"><b>' + maiuscula(nomeDia(ts)) + '</b><span>' + dd(ts) + '</span></span>' +
+                '<span class="sem-nomes">' + plantaoDe(ts).map(tag).join('') + '</span>' +
+              '</div>';
     }
-    lista.innerHTML = html;
+    return html + '</article>';
+  }
+
+  function renderSemanas() {
+    lista.innerHTML = cardSemana(semanaPassada());
   }
 
   function aplicarFoco() {
@@ -640,43 +627,29 @@
     var d = new Date(cursor);
     cursor = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + delta, 1);
     renderCalendario();
-    renderSemanas();
     copiaOk.textContent = '';
     copiaOk.classList.remove('err');
   }
   document.getElementById('mes-prev').addEventListener('click', function () { irPara(-1); });
   document.getElementById('mes-next').addEventListener('click', function () { irPara(1); });
-  document.getElementById('btn-hoje').addEventListener('click', function () {
-    var d = new Date(HOJE);
-    cursor = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1);
-    renderCalendario();
-    renderSemanas();
-    copiaOk.textContent = '';
-    copiaOk.classList.remove('err');
-  });
 
   /* ---------- Copiar no formato da planilha ---------- */
-  function textoDoMes() {
-    var ano = new Date(cursor).getUTCFullYear();
-    var mes = new Date(cursor).getUTCMonth();
-    var inicio = segundaDa(cursor);
-    var fimMes = Date.UTC(ano, mes + 1, 0);
-
-    var linhas = ['ESCALA PLANTÃO COMERCIAL — ' + MESES[mes].toUpperCase() + ' ' + ano, ''];
-    for (var seg = inicio; seg <= fimMes; seg += 7 * DIA) {
-      linhas.push('Dia\tData\tPlantão Noite');
-      for (var i = 0; i < 7; i++) {
-        var ts = seg + i * DIA;
-        var nomes = plantaoDe(ts).map(function (k) { return PESSOA[k].curto; }).join(' e ');
-        linhas.push(maiuscula(nomeDia(ts)) + '\t' + dd(ts) + '\t' + nomes);
-      }
-      linhas.push('');
+  function textoDaSemana(seg) {
+    var linhas = [
+      'ESCALA PLANTÃO COMERCIAL — ' + dd(seg) + ' a ' + dd(seg + 6 * DIA),
+      '',
+      'Dia\tData\tPlantão Noite'
+    ];
+    for (var i = 0; i < 7; i++) {
+      var ts = seg + i * DIA;
+      var nomes = plantaoDe(ts).map(function (k) { return PESSOA[k].curto; }).join(' e ');
+      linhas.push(maiuscula(nomeDia(ts)) + '\t' + dd(ts) + '\t' + nomes);
     }
     return linhas.join('\n');
   }
 
   document.getElementById('btn-copiar').addEventListener('click', function () {
-    var txt = textoDoMes();
+    var txt = textoDaSemana(semanaAtual());
     function feito() {
       copiaOk.classList.remove('err');
       copiaOk.textContent = 'Escala copiada.';
