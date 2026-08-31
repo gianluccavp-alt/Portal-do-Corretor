@@ -3,159 +3,283 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Grupo Direcional - São Paulo Interior</title>
+<title>Portal do Corretor · Grupo Direcional — São Paulo Interior</title>
 <link rel="icon" type="image/webp" href="assets/img/favicon.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css">
-<style>
-  /* ===== Identidade Grupo Direcional (escopo: home) ===== */
-  :root{
-    --dir-red:#E4032B; --dir-red-dark:#B8001F;
-    --dir-grey:#727A7D; --dir-ink:#3A4043; --dir-line:#E7E9EA;
-  }
-  body{background:#F5F6F7;font-family:'DM Sans',sans-serif}
-
-  /* hero com plano de fundo Direcional (setas) */
-  .home-hero{background:#fff url('assets/img/hero-bg.png') center/cover no-repeat;
-    padding:3.5rem 2rem;min-height:380px;
-    display:flex;flex-direction:column;justify-content:center;
-    border-bottom:1px solid var(--dir-line)}
-  .home-hero::before{display:none}
-  /* logo no canto superior direito */
-  .hero-logo{position:absolute;top:26px;right:34px;height:56px;width:auto;z-index:3}
-  @media(max-width:600px){.hero-logo{height:42px;top:18px;right:18px}}
-  .home-brand{color:var(--dir-red);font-weight:500}
-  .home-title{font-family:'DM Sans',sans-serif;font-weight:700;color:var(--dir-ink);letter-spacing:-.5px}
-  .home-title em{color:var(--dir-red);font-style:normal}
-  .home-sub{color:var(--dir-grey)}
-
-  /* rótulo de passo */
-  .step-label{color:var(--dir-red)}
-  .step-label::before{background:var(--dir-red)}
-
-  /* cards de cidade */
-  .city-card{border-color:var(--dir-line)}
-  .city-card:hover{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(58,64,67,.10)}
-  .city-card.active{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(228,3,43,.16)}
-  .city-card-top{background:linear-gradient(135deg,#565D60,#3A4043)}
-  .city-card.active .city-card-top{background:linear-gradient(135deg,var(--dir-red),var(--dir-red-dark))}
-  .city-name{font-family:'DM Sans',sans-serif;font-weight:700}
-  .city-count{color:var(--dir-grey)}
-  .city-count strong{font-family:'DM Sans',sans-serif;color:var(--dir-ink)}
-  .city-arrow{color:var(--dir-red)}
-
-  /* cards de empreendimento */
-  .emp-card{border-color:var(--dir-line)}
-  .emp-card:hover{border-color:var(--dir-red);box-shadow:0 6px 22px rgba(58,64,67,.10)}
-  .emp-thumb{background-color:#3A4043}
-  .emp-thumb::after{background:linear-gradient(transparent 40%,rgba(58,64,67,.7))}
-  .emp-thumb-ph{background:linear-gradient(135deg,#565D60,#3A4043);color:#fff;font-family:'DM Sans',sans-serif;font-weight:700}
-  .emp-city{color:var(--dir-red)}
-  .emp-name{font-family:'DM Sans',sans-serif;font-weight:700;color:var(--dir-ink)}
-  .emp-desc{color:var(--dir-grey)}
-  .emp-cta{color:var(--dir-red)}
-
-  /* card "Em Breve" (nao clicavel) */
-  .emp-card-soon{cursor:default}
-  .emp-card-soon:hover{border-color:var(--dir-line);box-shadow:none}
-  .emp-card-soon .emp-thumb-ph{background:linear-gradient(135deg,#8A9196,#5A6266)}
-  /* thumb do "Em Breve" e um logo (nao um render): mostra inteiro, sem escurecer */
-  .emp-card-soon .emp-thumb{background-size:contain;background-repeat:no-repeat;background-color:#fff}
-  .emp-card-soon .emp-thumb::after{display:none}
-  .emp-soon-tag{display:inline-block;margin-top:.35rem;padding:.15rem .6rem;
-    border:1px solid var(--dir-line);border-radius:999px;
-    font-size:.72rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--dir-grey)}
-
-  .home-foot{border-top-color:var(--dir-line);color:var(--dir-grey)}
-</style>
+<link rel="stylesheet" href="assets/home.css">
 </head>
 <body>
 
-<header class="home-hero">
-  <img class="hero-logo" src="assets/img/logo-direcional.jpg" alt="Grupo Direcional">
-  <div class="home-hero-inner">
-    <div class="home-brand">Portal do Corretor</div>
-    <h1 class="home-title">Grupo Direcional - <em>São Paulo Interior</em></h1>
-    <p class="home-sub">Selecione a cidade e o empreendimento para consultar unidades, valores, plantas e disponibilidade em tempo real.</p>
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <div class="brand-lockup">
+      <img class="brand-logo" src="assets/img/logo-direcional-header.png" width="415" height="95" alt="Grupo Direcional">
+      <span class="brand-rule"></span>
+      <span class="brand-name">Portal do Corretor</span>
+    </div>
+    <nav class="header-links" aria-label="Simuladores">
+      <a class="header-link" href="simulador-associativo.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2.5" width="16" height="19" rx="2.5"></rect><line x1="8" y1="7" x2="16" y2="7"></line><line x1="8" y1="12" x2="8" y2="12"></line><line x1="12" y1="12" x2="12" y2="12"></line><line x1="16" y1="12" x2="16" y2="12"></line><line x1="8" y1="16.5" x2="8" y2="16.5"></line><line x1="12" y1="16.5" x2="12" y2="16.5"></line><line x1="16" y1="16.5" x2="16" y2="16.5"></line></svg>
+        Simulador Associativo
+      </a>
+      <a class="header-link" href="simulador-tabela-direta.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"></rect><line x1="2.5" y1="9.5" x2="21.5" y2="9.5"></line><line x1="9" y1="9.5" x2="9" y2="19.5"></line></svg>
+        Tabela Direta
+      </a>
+    </nav>
   </div>
 </header>
 
-<main class="home-wrap">
-  <div class="step-label">Passo 1 &middot; Escolha a cidade</div>
-  <div class="city-grid" id="city-grid"></div>
-
-  <div id="emp-section" class="home-hidden">
-    <div class="step-label" id="emp-step">Passo 2 &middot; Escolha o empreendimento</div>
-    <div class="emp-grid" id="emp-grid"></div>
+<section class="home-hero">
+  <div class="wrap">
+    <h1 class="home-title">Grupo Direcional<br><em>São Paulo Interior</em></h1>
+    <p class="home-sub">Selecione a cidade e o empreendimento para consultar unidades, valores, plantas e disponibilidade — os mesmos números que o comercial enxerga.</p>
   </div>
+</section>
+
+<main class="home-main wrap" id="conteudo">
+
+  <section class="section" aria-labelledby="passo-1">
+    <h2 class="step-label" id="passo-1">Passo 1 · Escolha a cidade</h2>
+    <div class="city-grid" id="city-grid"></div>
+  </section>
+
+  <section class="section home-hidden" id="emp-section" aria-labelledby="emp-step">
+    <div class="carousel" id="emp-carousel">
+      <div class="carousel-head">
+        <h2 class="step-label" id="emp-step" aria-live="polite">Passo 2 · Escolha o empreendimento</h2>
+        <div class="carousel-nav" id="emp-nav" hidden>
+          <button class="car-btn" type="button" id="emp-prev" aria-label="Empreendimentos anteriores" aria-controls="emp-grid">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 5 8 12 15 19"></polyline></svg>
+          </button>
+          <button class="car-btn" type="button" id="emp-next" aria-label="Próximos empreendimentos" aria-controls="emp-grid">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 5 16 12 9 19"></polyline></svg>
+          </button>
+        </div>
+      </div>
+      <div class="carousel-viewport" id="emp-grid"></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="ferramentas">
+    <h2 class="step-label" id="ferramentas">Ferramentas</h2>
+    <div class="tool-grid">
+      <a class="tool-card" href="simulador-associativo.html">
+        <span class="tool-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2.5" width="16" height="19" rx="2.5"></rect><line x1="8" y1="7" x2="16" y2="7"></line><line x1="8" y1="12" x2="8" y2="12"></line><line x1="12" y1="12" x2="12" y2="12"></line><line x1="16" y1="12" x2="16" y2="12"></line><line x1="8" y1="16.5" x2="8" y2="16.5"></line><line x1="12" y1="16.5" x2="12" y2="16.5"></line><line x1="16" y1="16.5" x2="16" y2="16.5"></line></svg>
+        </span>
+        <span>
+          <span class="tool-title">Simulador Associativo
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </span>
+          <span class="tool-desc">Fluxo de pagamento MCMV com Pro Soluto: sinal, parcelas, anuais e saldo pós-chaves.</span>
+        </span>
+      </a>
+      <a class="tool-card" href="simulador-tabela-direta.html">
+        <span class="tool-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"></rect><line x1="2.5" y1="9.5" x2="21.5" y2="9.5"></line><line x1="9" y1="9.5" x2="9" y2="19.5"></line></svg>
+        </span>
+        <span>
+          <span class="tool-title">Simulador de Tabela Direta
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </span>
+          <span class="tool-desc">Condições da tabela direta com as regras reais da operação, a partir dos valores da unidade.</span>
+        </span>
+      </a>
+    </div>
+  </section>
+
 </main>
 
-<footer class="home-foot">Produtos SPI &middot; Dados carregados diretamente da planilha oficial</footer>
+<footer class="home-foot">
+  <div class="wrap">
+    <span><strong>Produtos SPI</strong> · Grupo Direcional — São Paulo Interior</span>
+    <span>Dados carregados diretamente da planilha oficial</span>
+  </div>
+</footer>
 
 <script src="assets/config.js"></script>
 <script>
 (function () {
-  var cityGrid = document.getElementById('city-grid');
-  var empSection = document.getElementById('emp-section');
-  var empGrid = document.getElementById('emp-grid');
-  var empStep = document.getElementById('emp-step');
+  var cityGrid  = document.getElementById('city-grid');
+  var empSection= document.getElementById('emp-section');
+  var empGrid   = document.getElementById('emp-grid');
+  var empStep   = document.getElementById('emp-step');
+  var empNav    = document.getElementById('emp-nav');
+  var btnPrev   = document.getElementById('emp-prev');
+  var btnNext   = document.getElementById('emp-next');
 
-  window.CITIES.forEach(function (city, idx) {
+  var ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
+  var PH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"></rect><circle cx="8.5" cy="9.5" r="1.6"></circle><path d="M3.5 17l4.8-4.4a2 2 0 012.7 0l3 2.8m0 0l2-1.8a2 2 0 012.7 0l1.8 1.6"></path></svg>';
+
+  var reduceMotion = window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)')
+    : { matches: false };
+
+  function scrollBehavior() { return reduceMotion.matches ? 'auto' : 'smooth'; }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function notice(title, body) {
+    return '<div class="notice"><strong>' + esc(title) + '</strong>' + esc(body) + '</div>';
+  }
+
+  /* ---------- Passo 1: cidades ---------- */
+  var CITIES = Array.isArray(window.CITIES) ? window.CITIES : [];
+
+  if (!CITIES.length) {
+    cityGrid.innerHTML = notice(
+      'Não foi possível carregar as cidades',
+      'A lista de empreendimentos não chegou. Recarregue a página; se continuar assim, avise o time comercial.'
+    );
+  }
+
+  CITIES.forEach(function (city, idx) {
+    var total = (city.empreendimentos || []).length;
     var btn = document.createElement('button');
     btn.className = 'city-card';
+    btn.type = 'button';
+    btn.setAttribute('aria-pressed', 'false');
+    btn.setAttribute('aria-controls', 'emp-section');
     btn.innerHTML =
-      '<div class="city-card-top"><div class="city-name">' + city.name + '</div>' +
-      '<div class="city-uf">' + city.uf + '</div></div>' +
-      '<div class="city-card-bottom"><div class="city-count"><strong>' +
-      city.empreendimentos.length + '</strong> empreendimentos</div>' +
-      '<div class="city-arrow">&rarr;</div></div>';
+      '<span class="city-head">' +
+        '<span>' +
+          '<span class="city-name">' + esc(city.name) + '</span>' +
+          '<span class="city-uf">' + esc(city.uf) + '</span>' +
+        '</span>' +
+        '<span class="city-arrow">' + ARROW + '</span>' +
+      '</span>' +
+      '<span class="city-count"><strong>' + total + '</strong> ' +
+      (total === 1 ? 'empreendimento' : 'empreendimentos') + '</span>';
     btn.addEventListener('click', function () { selectCity(idx, btn); });
     cityGrid.appendChild(btn);
   });
 
-  function selectCity(idx, btn) {
-    document.querySelectorAll('.city-card').forEach(function (c) { c.classList.remove('active'); });
-    btn.classList.add('active');
-    var city = window.CITIES[idx];
-    empStep.innerHTML = 'Passo 2 &middot; Empreendimentos em ' + city.name;
-    empGrid.innerHTML = '';
-    city.empreendimentos.forEach(function (emp) {
-      var cardName = emp.cardNome || emp.nome;
-      var thumb = emp.heroImg
-        ? '<div class="emp-thumb" style="background-image:url(\'' + emp.heroImg + '\')"></div>'
-        : '<div class="emp-thumb-ph">' + cardName.charAt(0) + '</div>';
-
-      // card "Em Breve": apenas visual, sem link
-      if (emp.comingSoon) {
-        var d = document.createElement('div');
-        d.className = 'emp-card emp-card-soon';
-        d.innerHTML = thumb +
-          '<div class="emp-body">' +
-          '<div class="emp-city">' + city.name + ' &middot; ' + city.uf + '</div>' +
-          '<div class="emp-name">' + cardName + '</div>' +
-          '<div class="emp-desc"><span class="emp-soon-tag">' + (emp.sub || 'Em Breve') + '</span></div>' +
-          '</div>';
-        empGrid.appendChild(d);
-        return;
-      }
-
-      var a = document.createElement('a');
-      a.className = 'emp-card';
-      a.href = 'empreendimento.html?e=' + encodeURIComponent(emp.id);
-      a.innerHTML = thumb +
-        '<div class="emp-body">' +
-        '<div class="emp-city">' + city.name + ' &middot; ' + city.uf + '</div>' +
-        '<div class="emp-name">' + cardName + '</div>' +
-        '<div class="emp-desc">' + (emp.sub || '') + '</div>' +
-        '<div class="emp-cta">Ver unidades ' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>' +
-        '</div></div>';
-      empGrid.appendChild(a);
-    });
-    empSection.classList.remove('home-hidden');
-    empSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  /* ---------- Passo 2: carrossel de empreendimentos ---------- */
+  function thumb(emp) {
+    if (!emp.heroImg) {
+      return '<span class="emp-thumb"><span class="emp-thumb-ph">' + PH_ICON +
+             '<span>Imagens em breve</span></span></span>';
+    }
+    var base = 'assets/img/cards/' + emp.id;
+    return '<span class="emp-thumb">' +
+      '<img src="' + esc(base) + '.webp"' +
+      ' srcset="' + esc(base) + '@480.webp 480w, ' + esc(base) + '@640.webp 640w, ' + esc(base) + '.webp 960w"' +
+      ' sizes="(max-width: 560px) 65vw, (max-width: 820px) 35vw, (max-width: 1000px) 25vw, 265px"' +
+      ' width="960" height="720" loading="lazy" decoding="async" alt=""' +
+      ' onerror="this.onerror=null;this.removeAttribute(\'srcset\');this.src=\'' + esc(emp.heroImg) + '\'">' +
+      '</span>';
   }
+
+  function selectCity(idx, btn) {
+    document.querySelectorAll('.city-card').forEach(function (c) {
+      c.setAttribute('aria-pressed', String(c === btn));
+    });
+
+    var city = CITIES[idx];
+    var emps = city.empreendimentos || [];
+    empStep.textContent = 'Passo 2 · Empreendimentos em ' + city.name;
+    empGrid.innerHTML = '';
+    empGrid.scrollLeft = 0;
+
+    if (!emps.length) {
+      empNav.hidden = true;
+      empGrid.style.gridAutoColumns = '100%';
+      empGrid.innerHTML = notice(
+        'Nenhum empreendimento em ' + city.name,
+        'Esta cidade ainda não tem produto publicado no portal.'
+      );
+      empSection.classList.remove('home-hidden');
+      empSection.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+      return;
+    }
+
+    emps.forEach(function (emp) {
+      var cardName = emp.cardNome || emp.nome;
+      var el;
+
+      if (emp.comingSoon) {
+        el = document.createElement('div');
+        el.className = 'emp-card emp-card-soon';
+        el.setAttribute('aria-disabled', 'true');
+        el.innerHTML = thumb(emp) +
+          '<div class="emp-body">' +
+            '<div class="emp-name">' + esc(cardName) + '</div>' +
+            '<span class="emp-soon-tag">Em breve</span>' +
+          '</div>';
+      } else {
+        el = document.createElement('a');
+        el.className = 'emp-card';
+        el.href = 'empreendimento.html?e=' + encodeURIComponent(emp.id);
+        el.innerHTML = thumb(emp) +
+          '<div class="emp-body">' +
+            '<div class="emp-name">' + esc(cardName) + '</div>' +
+            '<span class="emp-go">' + ARROW + '</span>' +
+          '</div>';
+      }
+      empGrid.appendChild(el);
+    });
+
+    empSection.classList.remove('home-hidden');
+    fitColumns();
+    updateNav();
+    empSection.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+  }
+
+  /* ---------- Controles do carrossel ---------- */
+  function gapPx() {
+    return parseFloat(getComputedStyle(empGrid).columnGap) || 0;
+  }
+
+  function overflows() {
+    return empGrid.scrollWidth - empGrid.clientWidth > 4;
+  }
+
+  /* Quando tudo cabe na largura, as colunas se esticam para preencher a faixa —
+     mas nunca ficam mais largas que o tamanho padrão de um card do breakpoint. */
+  function fitColumns() {
+    empGrid.style.gridAutoColumns = '';
+    var first = empGrid.firstElementChild;
+    if (!first || !first.classList.contains('emp-card')) return;
+    if (overflows()) return;
+
+    var gap = gapPx();
+    var baseW = first.getBoundingClientRect().width;
+    var fits = Math.floor((empGrid.clientWidth + gap) / (baseW + gap)) || 1;
+    var cols = Math.max(empGrid.children.length, fits);
+    empGrid.style.gridAutoColumns =
+      'calc((100% - ' + (cols - 1) + ' * ' + gap + 'px) / ' + cols + ')';
+  }
+
+  function updateNav() {
+    if (!overflows()) { empNav.hidden = true; return; }
+    empNav.hidden = false;
+    var max = empGrid.scrollWidth - empGrid.clientWidth;
+    btnPrev.disabled = empGrid.scrollLeft <= 2;
+    btnNext.disabled = empGrid.scrollLeft >= max - 2;
+  }
+
+  function step() {
+    var card = empGrid.firstElementChild;
+    if (!card) return empGrid.clientWidth;
+    return card.getBoundingClientRect().width + gapPx();
+  }
+
+  btnPrev.addEventListener('click', function () {
+    empGrid.scrollBy({ left: -step(), behavior: scrollBehavior() });
+  });
+  btnNext.addEventListener('click', function () {
+    empGrid.scrollBy({ left: step(), behavior: scrollBehavior() });
+  });
+  empGrid.addEventListener('scroll', updateNav, { passive: true });
+  window.addEventListener('resize', function () { fitColumns(); updateNav(); });
 })();
 </script>
 </body>

@@ -515,7 +515,7 @@ window.CITIES = [
         eyebrow: 'Conquista Vila da Mata · Sorocaba, SP',
         titleHtml: 'Conquista <em>Vila da Mata</em>',
         sub: 'Empreendimento Conquista Vila da Mata em Sorocaba.',
-        heroImg: null, badges: [], pills: [], torres: 2,
+        heroImg: 'assets/img/conquista-vila-da-mata/fachada.jpg', badges: [], pills: [], torres: 2,
         implantacao: { img: null, legenda: [] }, plantas: [],
         galeria: { heroImg: null, heroTitle: '', heroSub: '', items: [] }, vagasImg: null
       }
