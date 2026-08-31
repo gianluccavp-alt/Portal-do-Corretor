@@ -457,6 +457,109 @@
     document.querySelectorAll('.fdd.open').forEach(function (f) { f.classList.remove('open'); });
   });
 
+  /* =====================================================================
+     EXPERIENCIA DE APP NO CELULAR (< 768px)
+     Nada abaixo altera o desktop: o CSS correspondente vive todo dentro da
+     media query (max-width:767px). Aqui so preparamos o DOM (faixa de chips,
+     cabecalho dos bottom sheets e tab bar inferior) e sincronizamos estados.
+     ===================================================================== */
+
+  // 1) agrupa os dropdowns numa faixa rolavel de chips.
+  //    No desktop .fbar-chips e display:contents, entao o layout nao muda.
+  var filterBar = document.querySelector('.filter-bar');
+  if (filterBar && !filterBar.querySelector('.fbar-chips')) {
+    var chipsWrap = document.createElement('div');
+    chipsWrap.className = 'fbar-chips';
+    filterBar.insertBefore(chipsWrap, filterBar.firstChild);
+    Array.prototype.forEach.call(filterBar.querySelectorAll('.fdd'), function (f) {
+      chipsWrap.appendChild(f);
+    });
+  }
+
+  // 2) cabecalho de bottom sheet (grabber + titulo) dentro de cada painel
+  Array.prototype.forEach.call(document.querySelectorAll('.fdd'), function (fdd) {
+    var panel = fdd.querySelector('.fdd-panel');
+    var lbl = fdd.querySelector('.fdd-lbl');
+    if (!panel || panel.querySelector('.fdd-sheet-head')) return;
+    var head = document.createElement('div');
+    head.className = 'fdd-sheet-head';
+    head.innerHTML = '<span class="fdd-grab"></span><strong></strong>';
+    head.querySelector('strong').textContent = lbl ? lbl.textContent : '';
+    panel.insertBefore(head, panel.firstChild);
+  });
+
+  // 3) chip preenchido quando o filtro sai do padrao (guarda o valor inicial)
+  var chipState = [];
+  Array.prototype.forEach.call(document.querySelectorAll('.fdd'), function (fdd) {
+    var val = fdd.querySelector('.fdd-val');
+    if (val) chipState.push({ fdd: fdd, padrao: val.textContent });
+  });
+  function syncChips() {
+    chipState.forEach(function (c) {
+      var val = c.fdd.querySelector('.fdd-val');
+      c.fdd.classList.toggle('on', !!val && val.textContent !== c.padrao);
+    });
+  }
+  // trava o scroll do fundo enquanto um sheet estiver aberto
+  function syncSheetLock() {
+    var aberto = !!document.querySelector('.fdd.open');
+    if (window.matchMedia('(max-width:767px)').matches) {
+      document.body.style.overflow = aberto ? 'hidden' : '';
+    } else {
+      document.body.style.overflow = '';
+    }
+  }
+  document.addEventListener('click', function () {
+    setTimeout(function () { syncChips(); syncSheetLock(); }, 0);
+  });
+  syncChips();
+
+  // 4) tab bar inferior espelhando as abas existentes
+  var MTAB_ICONS = {
+    unidades: '<svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
+    plantas: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="10" x2="14" y2="10"></line><line x1="14" y1="10" x2="14" y2="21"></line></svg>',
+    implantacao: '<svg viewBox="0 0 24 24"><polygon points="1 6 8 3 16 6 23 3 23 18 16 21 8 18 1 21 1 6"></polygon><line x1="8" y1="3" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="21"></line></svg>',
+    galeria: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>',
+    vagas: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 17V7h3.5a3 3 0 0 1 0 6H9"></path></svg>'
+  };
+  var MTAB_LABELS = { unidades: 'Unidades', plantas: 'Plantas', implantacao: 'Implantação', galeria: 'Galeria', vagas: 'Vagas' };
+
+  var navTabs = document.querySelectorAll('.nav-tab');
+  if (navTabs.length && !document.getElementById('mobile-tabbar')) {
+    var tabbar = document.createElement('nav');
+    tabbar.className = 'mtabbar';
+    tabbar.id = 'mobile-tabbar';
+    tabbar.setAttribute('aria-label', 'Seções do empreendimento');
+    var criados = 0;
+    Array.prototype.forEach.call(navTabs, function (navTab) {
+      var m = /switchTab\('([^']+)'/.exec(navTab.getAttribute('onclick') || '');
+      if (!m) return;
+      var id = m[1];
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'mtab' + (navTab.classList.contains('active') ? ' on' : '');
+      btn.innerHTML = (MTAB_ICONS[id] || '') + '<span></span>';
+      btn.querySelector('span').textContent = MTAB_LABELS[id] || navTab.textContent;
+      btn.addEventListener('click', function () {
+        switchTab(id, navTab);
+        Array.prototype.forEach.call(tabbar.querySelectorAll('.mtab'), function (b) { b.classList.remove('on'); });
+        btn.classList.add('on');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      tabbar.appendChild(btn);
+      criados++;
+    });
+    tabbar.style.gridTemplateColumns = 'repeat(' + criados + ',1fr)';
+    document.body.appendChild(tabbar);
+  }
+
+  // 5) trocar de faixa (girar o aparelho, redimensionar) re-renderiza a lista
+  //    para alternar entre a linha compacta do celular e a do desktop
+  var mqPhone = window.matchMedia('(max-width:767px)');
+  function onBreakpoint() { renderUnits(); syncSheetLock(); }
+  if (mqPhone.addEventListener) mqPhone.addEventListener('change', onBreakpoint);
+  else if (mqPhone.addListener) mqPhone.addListener(onBreakpoint);
+
   // popup "Simular Fluxo" - escolhe Tabela Direta ou Associativo
   var simOverlay = document.getElementById('sim-modal-overlay');
   window.abrirModalSimulador = function () {

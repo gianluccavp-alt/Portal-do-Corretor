@@ -554,9 +554,11 @@ function renderUnits() {
     return;
   }
 
-  grid.classList.toggle('list-view', viewMode === 'list');
+  var phone = isPhoneView() && !!window.CURRENT_EMP;
+  grid.classList.toggle('list-view', phone || viewMode === 'list');
+  grid.classList.toggle('phone-view', phone);
   window.CURRENT_UNITS_LIST = list;
-  var buildUnit = viewMode === 'list' ? unitRowHtml : unitCardHtml;
+  var buildUnit = phone ? unitMobileHtml : (viewMode === 'list' ? unitRowHtml : unitCardHtml);
   var html = '';
   for (var j = 0; j < list.length; j++) html += buildUnit(list[j], j);
   grid.innerHTML = html;
@@ -586,6 +588,37 @@ function unitDisplayData(u) {
     // desconto real entre o exibido em Tabela Direta e Associativo/Promocional
     vTabela: vTabela, vAssoc: vAssoc, desconto: vTabela - vAssoc
   };
+}
+
+/* ---------- visualizacao mobile (experiencia de app) ----------
+   Abaixo de 768px a lista de unidades vira uma linha compacta: um unico valor
+   em destaque (Associativo/Investidor, pedido do time comercial), Tabela Direta
+   como apoio, e o toque abre o popup com todos os valores. */
+function isPhoneView() {
+  return window.matchMedia && window.matchMedia('(max-width:767px)').matches;
+}
+
+function unitMobileHtml(u, idx) {
+  var d = unitDisplayData(u);
+  var clickable = unitClickAttr(idx);
+  var html = '<div class="u-m"' + clickable + '>';
+  html += '<div class="u-m-main">';
+  html += '<div class="u-m-top"><span class="u-tipo">' + u.tipoLabel + '</span>' + d.promoBadge + '<span class="u-badge-disp">Disponivel</span></div>';
+  html += '<div class="u-m-id"><span class="u-ap">' + d.apLabel + '</span></div>';
+  html += '<div class="u-m-vals">';
+  html += '<div class="u-m-price"><div class="u-price-lbl">Associativo/Investidor</div>';
+  html += '<div class="u-m-assoc">' + fmt(d.vAssoc) + '</div>';
+  html += '<div class="u-m-tabela">Tabela ' + fmt(d.vTabela) + '</div></div>';
+  html += '<div class="u-m-meta"><span class="u-m-area">' + u.area + ' m&sup2;</span>';
+  if (!d.hideSol) {
+    html += '<span class="u-m-sol" style="color:' + d.solColor + ';background:' + d.solBg + ';border:1px solid ' + d.solBorder + '">' + d.solIcon + ' ' + d.sol + '</span>';
+  }
+  html += d.vagasBadge + '</div></div></div>';  // fecha .u-m-meta, .u-m-vals e .u-m-main
+  if (clickable) {
+    html += '<div class="u-m-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>';
+  }
+  html += '</div>';
+  return html;
 }
 
 function unitCardHtml(u, idx) {

@@ -366,3 +366,157 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
   .promo-page{padding:1.25rem 1rem 8rem}
   .promo-bar{padding:.75rem 1rem}
 }
+
+/* =========================================================================
+   EXPERIENCIA DE APP NO CELULAR (< 768px) — pagina de empreendimento
+   Nada aqui vale no desktop: todas as regras vivem dentro da media query.
+   ========================================================================= */
+/* Elementos criados so para o celular: invisiveis e sem efeito no desktop.
+   .fbar-chips usa display:contents para nao alterar o layout da barra atual. */
+.fbar-chips{display:contents}
+.mtabbar{display:none}
+.fdd-sheet-head{display:none}
+
+@media (max-width:767px){
+  html,body{overflow-x:hidden;max-width:100%}
+  body{padding-bottom:76px}
+
+  /* ---- HERO compacto ---- */
+  .hero{min-height:268px}
+  .hero-inner{padding:2.5rem 1rem 1.25rem;justify-content:flex-end}
+  .hero-title{font-size:2rem;margin-bottom:12px}
+  .hero-sub{display:none}
+  .entrega-badge{margin-bottom:0}
+  .prox{margin:.75rem 0 0}
+  .prox-items{gap:8px}
+  .hero-loc,.pills{margin-top:.75rem;margin-bottom:0;gap:8px}
+  .pill{padding:8px 16px}
+  .pill-num{font-size:1.25rem}
+  .hero-eyebrow{margin-bottom:10px}
+
+  /* voltar: botao circular de 44px, alvo de toque confortavel */
+  .hero-back{top:12px;left:12px;width:44px;height:44px;border-radius:50%;
+    border:1px solid rgba(255,255,255,0.18);background:rgba(28,22,16,0.38);
+    backdrop-filter:blur(6px);align-items:center;justify-content:center;font-size:0;gap:0}
+  .hero-back::before{content:'';width:20px;height:20px;
+    background:currentColor;-webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='15 18 9 12 15 6'/></svg>") center/contain no-repeat;
+    mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='15 18 9 12 15 6'/></svg>") center/contain no-repeat}
+
+  /* ---- NAV: abas saem do topo e viram tab bar inferior ----
+     A barra some, mas o bloco de atualizacao da planilha continua vivo,
+     flutuando sobre o hero. */
+  .nav{position:static;background:none;border-bottom:0;height:0;overflow:visible}
+  .nav-inner{padding:0;overflow:visible;display:block}
+  .nav-tab{display:none}
+  .upd{position:absolute;top:12px;right:12px;z-index:210;margin-left:0;
+    gap:8px;align-items:center;max-width:calc(100% - 24px)}
+  .btn-update{height:44px;padding:0 16px;border:1px solid rgba(255,255,255,0.18);
+    background:rgba(28,22,16,0.38);backdrop-filter:blur(6px);color:rgba(255,255,255,0.92)}
+  .btn-update:hover{background:rgba(28,22,16,0.55);transform:none;box-shadow:none}
+  /* espaco curto: fica so o horario da ultima carga, a contagem some */
+  .last-update{color:rgba(255,255,255,0.75);font-size:11px;max-width:104px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:1}
+  .update-status{display:none}
+  .update-status.ok{color:#B7D9C2}
+
+  /* ---- SECOES ---- */
+  .section{padding:1.25rem 1rem 1.5rem}
+  .stitle{font-size:1.35rem}
+  .ssub{font-size:13px;margin-bottom:1.25rem}
+
+  /* ---- FILTROS: faixa de chips com scroll proprio + bottom sheet ---- */
+  /* z-index acima da tab bar (400): a barra e sticky, entao cria contexto de
+     empilhamento e leva o bottom sheet junto */
+  .filter-bar{position:sticky;top:0;z-index:500;margin:0 -1rem 0;padding:0;
+    display:block;border-radius:0;border-left:0;border-right:0;border-top:0;
+    background:var(--cream);box-shadow:0 2px 16px rgba(28,22,16,0.07)}
+  .fbar-chips{display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;
+    padding:12px 16px 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .fbar-chips::-webkit-scrollbar{display:none}
+  .fdd{border-right:0;border-bottom:0;flex:0 0 auto}
+  .fdd-btn{height:40px;padding:0 15px;gap:6px;border:1px solid var(--border);
+    border-radius:100px;background:var(--white)}
+  .fdd-lbl{font-size:13px;font-weight:500;letter-spacing:0;
+    text-transform:none;color:var(--text)}
+  .fdd-val{font-size:13px}
+  .fdd.on .fdd-btn{background:var(--dark);border-color:var(--dark)}
+  .fdd.on .fdd-lbl{display:none}
+  .fdd.on .fdd-val{color:#fff}
+  .fdd.on .fdd-chev{stroke:rgba(255,255,255,.75)}
+  .fdd:not(.on) .fdd-val{display:none}
+  .fcount{margin-left:0;padding:0 16px 11px;font-size:11.5px}
+
+  /* o painel do filtro vira bottom sheet: preso na base, largura total */
+  .fdd-panel{position:fixed;left:0;right:0;bottom:0;top:auto;
+    width:100%;min-width:0;max-width:none;max-height:74vh;overflow-y:auto;
+    border-radius:20px 20px 0 0;border-left:0;border-right:0;border-bottom:0;
+    padding:0 12px calc(26px + env(safe-area-inset-bottom));z-index:1000;
+    box-shadow:0 -8px 40px rgba(28,22,16,.22);
+    transition:transform .22s cubic-bezier(.32,.72,0,1),opacity .15s,visibility .15s}
+  .fdd:not(.open) .fdd-panel{opacity:0;visibility:hidden;transform:translateY(100%)}
+  .fdd.open .fdd-panel{opacity:1;visibility:visible;transform:translateY(0)}
+  .fdd.open::after{content:'';position:fixed;inset:0;background:rgba(28,22,16,.55);z-index:999}
+  .fdd-sheet-head{display:flex;flex-direction:column;align-items:center;gap:10px;
+    padding:10px 0 12px;position:sticky;top:0;background:var(--white);z-index:2}
+  .fdd-grab{width:38px;height:4px;border-radius:100px;background:var(--border)}
+  .fdd-sheet-head strong{align-self:flex-start;padding-left:2px;
+    font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--text)}
+  .fdd-opt{min-height:52px;padding:12px 14px;border-radius:12px;font-size:15px}
+  .fdd-opt svg{width:17px;height:17px}
+  .fdd-clear{min-height:52px;padding:14px;margin-top:8px;font-size:14px}
+
+  /* ---- ACOES ---- */
+  /* Simular / Book / PDF numa unica faixa, sem quebra de linha */
+  .view-toggle{gap:8px;margin-top:.75rem;margin-bottom:.75rem;flex-wrap:nowrap}
+  .vt-left{width:auto;flex:1 1 auto;min-width:0;gap:8px;margin-bottom:0;margin-right:0}
+  .btn-simulador,.btn-book{height:46px;border-radius:12px;font-size:13px}
+  #view-btn-cards,#view-btn-list{display:none}
+  #view-btn-pdf{width:46px;height:46px;border-radius:12px}
+
+  /* ---- UNIDADES: linha compacta de app ---- */
+  .units-grid.phone-view{display:flex;flex-direction:column;gap:10px}
+  .u-m{background:var(--white);border:1px solid var(--border);border-radius:14px;
+    padding:13px 14px;display:flex;align-items:center;gap:10px}
+  .u-m:active{border-color:var(--gold-light);background:#FEFDFB}
+  .u-m-main{flex:1;min-width:0}
+  .u-m-top{display:flex;align-items:center;gap:6px;margin-bottom:3px;min-width:0}
+  .u-m-top .u-tipo{margin-bottom:0;flex:1;min-width:0;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .u-m-top .u-badge-disp,.u-m-top .u-badge-promo{flex-shrink:0}
+  /* identificador ocupa a linha inteira: nada de "BL01-0003 . Terreo . Fin..." */
+  .u-m-id{margin-bottom:8px;min-width:0}
+  .u-m-id .u-ap{font-size:1rem;white-space:normal}
+  .u-m-vals{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;min-width:0}
+  .u-m-price{min-width:0}
+  .u-m-assoc{font-family:'DM Sans',sans-serif;font-weight:800;font-size:1.2rem;
+    color:var(--green);line-height:1.15}
+  .u-m-tabela{font-size:11px;color:var(--muted);margin-top:2px}
+  .u-m-meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+  .u-m-area{font-size:12px;font-weight:500;color:var(--dark)}
+  .u-m-sol{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;
+    padding:3px 9px;border-radius:100px;white-space:nowrap}
+  .u-m-chevron{flex-shrink:0;display:flex;align-items:center;color:var(--muted)}
+  .u-m-chevron svg{width:18px;height:18px}
+
+  /* ---- TAB BAR INFERIOR ---- */
+  .mtabbar{position:fixed;left:0;right:0;bottom:0;z-index:400;display:grid;
+    gap:2px;background:var(--white);border-top:1px solid var(--border);
+    padding:6px 4px calc(12px + env(safe-area-inset-bottom))}
+  .mtab{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;min-height:52px;border:0;background:none;cursor:pointer;line-height:1;
+    color:var(--muted);font-family:'DM Sans',sans-serif;font-weight:400;padding:0 2px}
+  .mtab svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round}
+  .mtab span{font-size:10px;letter-spacing:.3px;white-space:nowrap}
+  .mtab.on{color:var(--gold);font-weight:600}
+
+  /* ---- MODAIS viram bottom sheet ---- */
+  .sim-modal-overlay,.unit-modal-overlay{padding:0;align-items:flex-end}
+  .sim-modal,.unit-modal{border-radius:20px 20px 0 0;max-width:none;
+    padding-bottom:calc(1.6rem + env(safe-area-inset-bottom))}
+
+  /* ---- GALERIA / PLANTAS ---- */
+  .g-grid,.plantas-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .g-img{height:112px}
+  .impl-wrap,.zoom-box{max-width:100%}
+}
