@@ -515,6 +515,10 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
   .sim-modal,.unit-modal{border-radius:20px 20px 0 0;max-width:none;
     padding-bottom:calc(1.6rem + env(safe-area-inset-bottom))}
 
+  /* card de planta em destaque (some ao filtrar por Tipo): a lista compacta
+     ja mostra a unidade, a foto da planta so ocupa espaco no celular */
+  #planta-destaque{display:none!important}
+
   /* ---- GALERIA / PLANTAS ---- */
   .g-grid,.plantas-grid{grid-template-columns:1fr 1fr;gap:10px}
   .g-img{height:112px}
