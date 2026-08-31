@@ -556,7 +556,7 @@
   // 5) trocar de faixa (girar o aparelho, redimensionar) re-renderiza a lista
   //    para alternar entre a linha compacta do celular e a do desktop
   var mqPhone = window.matchMedia('(max-width:767px)');
-  function onBreakpoint() { renderUnits(); syncSheetLock(); }
+  function onBreakpoint() { renderUnits(); syncSheetLock(); syncZoomCopy(); }
   if (mqPhone.addEventListener) mqPhone.addEventListener('change', onBreakpoint);
   else if (mqPhone.addListener) mqPhone.addListener(onBreakpoint);
 
@@ -592,10 +592,71 @@
     prevBtn.addEventListener('click', function () { grid.scrollBy({ left: -cardStep(), behavior: 'smooth' }); });
     nextBtn.addEventListener('click', function () { grid.scrollBy({ left: cardStep(), behavior: 'smooth' }); });
     grid.addEventListener('scroll', syncArrows);
-    syncArrows();
+    window.addEventListener('resize', syncArrows);
+    // a aba (Plantas/Galeria) comeca escondida (.section sem "active"), entao
+    // na montagem scrollWidth/clientWidth do carrossel sao 0 e as setas
+    // nasciam travadas ate o usuario arrastar manualmente (o que disparava
+    // o listener de 'scroll'). ResizeObserver acompanha o elemento e recalcula
+    // assim que a aba fica visivel e ganha largura de verdade.
+    if (window.ResizeObserver) {
+      new ResizeObserver(syncArrows).observe(grid);
+    } else {
+      requestAnimationFrame(function () { requestAnimationFrame(syncArrows); });
+    }
   }
   initCarousel(document.querySelector('#tab-plantas .plantas-grid'));
   initCarousel(document.querySelector('#tab-galeria .g-grid'));
+
+  // 7) zoom por toque no mobile: o zoom por hover (initZoom, mousemove) nao
+  //    existe em tela sensivel ao toque. No celular, tocar numa imagem com
+  //    zoom (implantacao, plantas, mapa de vagas) abre ela em tela cheia.
+  var lightbox = document.createElement('div');
+  lightbox.className = 'zoom-lightbox';
+  lightbox.id = 'zoom-lightbox';
+  lightbox.innerHTML =
+    '<button type="button" class="zoom-lightbox-close" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>' +
+    '<img id="zoom-lightbox-img" src="" alt="">';
+  document.body.appendChild(lightbox);
+  var lightboxImg = document.getElementById('zoom-lightbox-img');
+  function openLightbox(img) {
+    lightboxImg.src = img.currentSrc || img.src;
+    lightboxImg.alt = img.alt || '';
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+    if (!document.querySelector('.fdd.open')) document.body.style.overflow = '';
+  }
+  lightbox.addEventListener('click', function (e) { if (e.target === lightbox) closeLightbox(); });
+  lightbox.querySelector('.zoom-lightbox-close').addEventListener('click', closeLightbox);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox(); });
+  document.querySelectorAll('.zoom-box').forEach(function (box) {
+    var img = box.querySelector('.zoom-img');
+    if (!img) return;
+    box.addEventListener('click', function (e) {
+      if (!mqPhone.matches) return;   // no desktop mantem so o zoom por hover
+      e.preventDefault();
+      openLightbox(img);
+    });
+  });
+
+  // troca "Passe o mouse..." por "Toque para ampliar..." no celular, onde o
+  // gesto de hover nao existe
+  document.querySelectorAll('.zoom-hint').forEach(function (h) { h.dataset.orig = h.textContent; });
+  var ssubPlantas = document.querySelector('#tab-plantas .ssub');
+  var ssubImpl = document.querySelector('#tab-implantacao .ssub');
+  if (ssubPlantas) ssubPlantas.dataset.orig = ssubPlantas.textContent;
+  if (ssubImpl) ssubImpl.dataset.orig = ssubImpl.textContent;
+  function syncZoomCopy() {
+    var phone = mqPhone.matches;
+    document.querySelectorAll('.zoom-hint').forEach(function (h) {
+      h.textContent = phone ? '\u{1F50D} Toque para ampliar' : h.dataset.orig;
+    });
+    if (ssubPlantas) ssubPlantas.textContent = phone ? 'Toque em cada planta para ampliar.' : ssubPlantas.dataset.orig;
+    if (ssubImpl) ssubImpl.textContent = phone ? 'Toque na imagem para ampliar.' : ssubImpl.dataset.orig;
+  }
+  syncZoomCopy();
 
   // popup "Simular Fluxo" - escolhe Tabela Direta ou Associativo
   var simOverlay = document.getElementById('sim-modal-overlay');

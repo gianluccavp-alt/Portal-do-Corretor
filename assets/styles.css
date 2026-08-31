@@ -540,4 +540,22 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
     display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .15s}
   .car-arrow svg{width:17px;height:17px}
   .car-arrow.disabled{opacity:.35;pointer-events:none}
+
+  /* zoom por toque: sem hover no touch, o zoom-box vira botao e o "hint"
+     fica sempre visivel (nao ha :hover para escondê-lo) */
+  .zoom-box{cursor:pointer}
+  .zoom-box:hover .zoom-img{transform:none}
+  .zoom-box:hover .zoom-hint{opacity:1}
 }
+
+/* ---- LIGHTBOX de zoom (imagem em tela cheia) ----
+   Criada por JS (empreendimento.html); so e aberta no mobile, mas a regra
+   fica fora da media query porque o elemento e unico e sempre no DOM. */
+.zoom-lightbox{display:none;position:fixed;inset:0;z-index:2000;
+  background:rgba(15,12,8,0.94);align-items:center;justify-content:center;padding:5vh 4vw}
+.zoom-lightbox.open{display:flex}
+.zoom-lightbox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;background:#fff}
+.zoom-lightbox-close{position:absolute;top:calc(16px + env(safe-area-inset-top));right:16px;
+  width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,0.25);
+  background:rgba(255,255,255,0.1);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.zoom-lightbox-close svg{width:18px;height:18px}
