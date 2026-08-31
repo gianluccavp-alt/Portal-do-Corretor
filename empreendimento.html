@@ -457,6 +457,207 @@
     document.querySelectorAll('.fdd.open').forEach(function (f) { f.classList.remove('open'); });
   });
 
+  /* =====================================================================
+     EXPERIENCIA DE APP NO CELULAR (< 768px)
+     Nada abaixo altera o desktop: o CSS correspondente vive todo dentro da
+     media query (max-width:767px). Aqui so preparamos o DOM (faixa de chips,
+     cabecalho dos bottom sheets e tab bar inferior) e sincronizamos estados.
+     ===================================================================== */
+
+  // 1) agrupa os dropdowns numa faixa rolavel de chips.
+  //    No desktop .fbar-chips e display:contents, entao o layout nao muda.
+  var filterBar = document.querySelector('.filter-bar');
+  if (filterBar && !filterBar.querySelector('.fbar-chips')) {
+    var chipsWrap = document.createElement('div');
+    chipsWrap.className = 'fbar-chips';
+    filterBar.insertBefore(chipsWrap, filterBar.firstChild);
+    Array.prototype.forEach.call(filterBar.querySelectorAll('.fdd'), function (f) {
+      chipsWrap.appendChild(f);
+    });
+  }
+
+  // 2) cabecalho de bottom sheet (grabber + titulo) dentro de cada painel
+  Array.prototype.forEach.call(document.querySelectorAll('.fdd'), function (fdd) {
+    var panel = fdd.querySelector('.fdd-panel');
+    var lbl = fdd.querySelector('.fdd-lbl');
+    if (!panel || panel.querySelector('.fdd-sheet-head')) return;
+    var head = document.createElement('div');
+    head.className = 'fdd-sheet-head';
+    head.innerHTML = '<span class="fdd-grab"></span><strong></strong>';
+    head.querySelector('strong').textContent = lbl ? lbl.textContent : '';
+    panel.insertBefore(head, panel.firstChild);
+  });
+
+  // 3) chip preenchido quando o filtro sai do padrao (guarda o valor inicial)
+  var chipState = [];
+  Array.prototype.forEach.call(document.querySelectorAll('.fdd'), function (fdd) {
+    var val = fdd.querySelector('.fdd-val');
+    if (val) chipState.push({ fdd: fdd, padrao: val.textContent });
+  });
+  function syncChips() {
+    chipState.forEach(function (c) {
+      var val = c.fdd.querySelector('.fdd-val');
+      c.fdd.classList.toggle('on', !!val && val.textContent !== c.padrao);
+    });
+  }
+  // trava o scroll do fundo enquanto um sheet estiver aberto
+  function syncSheetLock() {
+    var aberto = !!document.querySelector('.fdd.open');
+    if (window.matchMedia('(max-width:767px)').matches) {
+      document.body.style.overflow = aberto ? 'hidden' : '';
+    } else {
+      document.body.style.overflow = '';
+    }
+  }
+  document.addEventListener('click', function () {
+    setTimeout(function () { syncChips(); syncSheetLock(); }, 0);
+  });
+  syncChips();
+
+  // 4) tab bar inferior espelhando as abas existentes
+  var MTAB_ICONS = {
+    unidades: '<svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
+    plantas: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="10" x2="14" y2="10"></line><line x1="14" y1="10" x2="14" y2="21"></line></svg>',
+    implantacao: '<svg viewBox="0 0 24 24"><polygon points="1 6 8 3 16 6 23 3 23 18 16 21 8 18 1 21 1 6"></polygon><line x1="8" y1="3" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="21"></line></svg>',
+    galeria: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>',
+    vagas: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 17V7h3.5a3 3 0 0 1 0 6H9"></path></svg>'
+  };
+  var MTAB_LABELS = { unidades: 'Unidades', plantas: 'Plantas', implantacao: 'Implantação', galeria: 'Galeria', vagas: 'Vagas' };
+
+  var navTabs = document.querySelectorAll('.nav-tab');
+  if (navTabs.length && !document.getElementById('mobile-tabbar')) {
+    var tabbar = document.createElement('nav');
+    tabbar.className = 'mtabbar';
+    tabbar.id = 'mobile-tabbar';
+    tabbar.setAttribute('aria-label', 'Seções do empreendimento');
+    var criados = 0;
+    Array.prototype.forEach.call(navTabs, function (navTab) {
+      var m = /switchTab\('([^']+)'/.exec(navTab.getAttribute('onclick') || '');
+      if (!m) return;
+      var id = m[1];
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'mtab' + (navTab.classList.contains('active') ? ' on' : '');
+      btn.innerHTML = (MTAB_ICONS[id] || '') + '<span></span>';
+      btn.querySelector('span').textContent = MTAB_LABELS[id] || navTab.textContent;
+      btn.addEventListener('click', function () {
+        switchTab(id, navTab);
+        Array.prototype.forEach.call(tabbar.querySelectorAll('.mtab'), function (b) { b.classList.remove('on'); });
+        btn.classList.add('on');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      tabbar.appendChild(btn);
+      criados++;
+    });
+    tabbar.style.gridTemplateColumns = 'repeat(' + criados + ',1fr)';
+    document.body.appendChild(tabbar);
+  }
+
+  // 5) trocar de faixa (girar o aparelho, redimensionar) re-renderiza a lista
+  //    para alternar entre a linha compacta do celular e a do desktop
+  var mqPhone = window.matchMedia('(max-width:767px)');
+  function onBreakpoint() { renderUnits(); syncSheetLock(); syncZoomCopy(); }
+  if (mqPhone.addEventListener) mqPhone.addEventListener('change', onBreakpoint);
+  else if (mqPhone.addListener) mqPhone.addListener(onBreakpoint);
+
+  // 6) Plantas e Galeria: envolve a grade num frame e injeta setas de navegacao.
+  //    No desktop o CSS mantem a grade como esta; so no mobile (< 768px) ela
+  //    vira carrossel com scroll-snap, e as setas (topo-esquerda) rolam 1 card.
+  var CAR_PREV_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+  var CAR_NEXT_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+  function initCarousel(grid) {
+    if (!grid || grid.dataset.carousel) return;
+    grid.dataset.carousel = '1';
+    var frame = document.createElement('div');
+    frame.className = 'carousel-frame';
+    grid.parentNode.insertBefore(frame, grid);
+    frame.appendChild(grid);
+    var arrows = document.createElement('div');
+    arrows.className = 'car-arrows';
+    arrows.innerHTML =
+      '<button type="button" class="car-arrow car-prev disabled" aria-label="Anterior">' + CAR_PREV_SVG + '</button>' +
+      '<button type="button" class="car-arrow car-next" aria-label="Próximo">' + CAR_NEXT_SVG + '</button>';
+    frame.appendChild(arrows);
+    var prevBtn = arrows.querySelector('.car-prev'), nextBtn = arrows.querySelector('.car-next');
+    function cardStep() {
+      var card = grid.children[0];
+      var gap = parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap) || 0;
+      return card ? (card.getBoundingClientRect().width + gap) : grid.clientWidth * 0.8;
+    }
+    function syncArrows() {
+      var max = grid.scrollWidth - grid.clientWidth - 2;
+      prevBtn.classList.toggle('disabled', grid.scrollLeft <= 2);
+      nextBtn.classList.toggle('disabled', grid.scrollLeft >= max);
+    }
+    prevBtn.addEventListener('click', function () { grid.scrollBy({ left: -cardStep(), behavior: 'smooth' }); });
+    nextBtn.addEventListener('click', function () { grid.scrollBy({ left: cardStep(), behavior: 'smooth' }); });
+    grid.addEventListener('scroll', syncArrows);
+    window.addEventListener('resize', syncArrows);
+    // a aba (Plantas/Galeria) comeca escondida (.section sem "active"), entao
+    // na montagem scrollWidth/clientWidth do carrossel sao 0 e as setas
+    // nasciam travadas ate o usuario arrastar manualmente (o que disparava
+    // o listener de 'scroll'). ResizeObserver acompanha o elemento e recalcula
+    // assim que a aba fica visivel e ganha largura de verdade.
+    if (window.ResizeObserver) {
+      new ResizeObserver(syncArrows).observe(grid);
+    } else {
+      requestAnimationFrame(function () { requestAnimationFrame(syncArrows); });
+    }
+  }
+  initCarousel(document.querySelector('#tab-plantas .plantas-grid'));
+  initCarousel(document.querySelector('#tab-galeria .g-grid'));
+
+  // 7) zoom por toque no mobile: o zoom por hover (initZoom, mousemove) nao
+  //    existe em tela sensivel ao toque. No celular, tocar numa imagem com
+  //    zoom (implantacao, plantas, mapa de vagas) abre ela em tela cheia.
+  var lightbox = document.createElement('div');
+  lightbox.className = 'zoom-lightbox';
+  lightbox.id = 'zoom-lightbox';
+  lightbox.innerHTML =
+    '<button type="button" class="zoom-lightbox-close" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>' +
+    '<img id="zoom-lightbox-img" src="" alt="">';
+  document.body.appendChild(lightbox);
+  var lightboxImg = document.getElementById('zoom-lightbox-img');
+  function openLightbox(img) {
+    lightboxImg.src = img.currentSrc || img.src;
+    lightboxImg.alt = img.alt || '';
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+    if (!document.querySelector('.fdd.open')) document.body.style.overflow = '';
+  }
+  lightbox.addEventListener('click', function (e) { if (e.target === lightbox) closeLightbox(); });
+  lightbox.querySelector('.zoom-lightbox-close').addEventListener('click', closeLightbox);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox(); });
+  document.querySelectorAll('.zoom-box').forEach(function (box) {
+    var img = box.querySelector('.zoom-img');
+    if (!img) return;
+    box.addEventListener('click', function (e) {
+      if (!mqPhone.matches) return;   // no desktop mantem so o zoom por hover
+      e.preventDefault();
+      openLightbox(img);
+    });
+  });
+
+  // troca "Passe o mouse..." por "Toque para ampliar..." no celular, onde o
+  // gesto de hover nao existe
+  document.querySelectorAll('.zoom-hint').forEach(function (h) { h.dataset.orig = h.textContent; });
+  var ssubPlantas = document.querySelector('#tab-plantas .ssub');
+  var ssubImpl = document.querySelector('#tab-implantacao .ssub');
+  if (ssubPlantas) ssubPlantas.dataset.orig = ssubPlantas.textContent;
+  if (ssubImpl) ssubImpl.dataset.orig = ssubImpl.textContent;
+  function syncZoomCopy() {
+    var phone = mqPhone.matches;
+    document.querySelectorAll('.zoom-hint').forEach(function (h) {
+      h.textContent = phone ? '\u{1F50D} Toque para ampliar' : h.dataset.orig;
+    });
+    if (ssubPlantas) ssubPlantas.textContent = phone ? 'Toque em cada planta para ampliar.' : ssubPlantas.dataset.orig;
+    if (ssubImpl) ssubImpl.textContent = phone ? 'Toque na imagem para ampliar.' : ssubImpl.dataset.orig;
+  }
+  syncZoomCopy();
+
   // popup "Simular Fluxo" - escolhe Tabela Direta ou Associativo
   var simOverlay = document.getElementById('sim-modal-overlay');
   window.abrirModalSimulador = function () {
