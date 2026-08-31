@@ -69,7 +69,7 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
 .fdd-chev{width:11px;height:11px;stroke:var(--muted);transition:transform .15s;flex-shrink:0}
 .fdd:hover .fdd-chev,.fdd.open .fdd-chev{transform:rotate(180deg)}
 .fdd-panel{position:absolute;top:calc(100% + 10px);left:0;min-width:220px;max-width:calc(100vw - 2rem);background:var(--white);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:6px;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .15s,transform .15s,visibility .15s}
-.fdd:hover .fdd-panel,.fdd.open .fdd-panel{opacity:1;visibility:visible;transform:translateY(0)}
+.fdd:hover .fdd-panel,.fdd.open .fdd-panel,.fdd-panel.open{opacity:1;visibility:visible;transform:translateY(0)}
 .fdd:nth-last-of-type(-n+2) .fdd-panel{left:auto;right:0}
 .fdd-opt{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:9px 10px;border:none;background:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);cursor:pointer;text-align:left}
 .fdd-opt:hover{background:var(--cream)}
@@ -377,6 +377,10 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
 .mtabbar{display:none}
 .fdd-sheet-head{display:none}
 .car-arrows{display:none}
+/* backdrop do bottom sheet (real, nao pseudo-elemento): fica direto no
+   <body> e so ganha .open no mobile (empreendimento.html) */
+.sheet-backdrop{display:none;position:fixed;inset:0;z-index:990;background:rgba(28,22,16,.55)}
+.sheet-backdrop.open{display:block}
 
 @media (max-width:767px){
   html,body{overflow-x:hidden;max-width:100%}
@@ -455,8 +459,7 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
     box-shadow:0 -8px 40px rgba(28,22,16,.22);
     transition:transform .22s cubic-bezier(.32,.72,0,1),opacity .15s,visibility .15s}
   .fdd:not(.open) .fdd-panel{opacity:0;visibility:hidden;transform:translateY(100%)}
-  .fdd.open .fdd-panel{opacity:1;visibility:visible;transform:translateY(0)}
-  .fdd.open::after{content:'';position:fixed;inset:0;background:rgba(28,22,16,.55);z-index:999}
+  .fdd.open .fdd-panel,.fdd-panel.open{opacity:1;visibility:visible;transform:translateY(0)}
   .fdd-sheet-head{display:flex;flex-direction:column;align-items:center;gap:10px;
     padding:10px 0 12px;position:sticky;top:0;background:var(--white);z-index:2}
   .fdd-grab{width:38px;height:4px;border-radius:100px;background:var(--border)}
@@ -533,12 +536,13 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
   .planta-item .zoom-img{height:220px}
   .impl-wrap,.zoom-box{max-width:100%}
 
-  /* setas no canto superior esquerdo do carrossel */
-  .car-arrows{order:1;display:flex;gap:6px;margin-bottom:8px}
-  .car-arrow{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);
+  /* setas do carrossel: alvo minimo de toque de 44px (mesmo padrao usado no
+     resto do app, ex. hero-back e mtab) */
+  .car-arrows{order:1;display:flex;gap:8px;margin-bottom:8px}
+  .car-arrow{width:44px;height:44px;border-radius:50%;border:1px solid var(--border);
     background:var(--white);color:var(--dark);box-shadow:var(--shadow);
     display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .15s}
-  .car-arrow svg{width:17px;height:17px}
+  .car-arrow svg{width:19px;height:19px}
   .car-arrow.disabled{opacity:.35;pointer-events:none}
 
   /* zoom por toque: sem hover no touch, o zoom-box vira botao e o "hint"

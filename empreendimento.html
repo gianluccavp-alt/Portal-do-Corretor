@@ -443,26 +443,13 @@
   syncNavHeight();
   window.addEventListener('resize', syncNavHeight);
 
-  // abre/fecha os dropdowns de filtro no toque (o :hover sozinho nao e confiavel em telas touch)
-  document.querySelectorAll('.fdd-btn').forEach(function (btn) {
-    btn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      var fdd = btn.parentElement;
-      var wasOpen = fdd.classList.contains('open');
-      document.querySelectorAll('.fdd.open').forEach(function (f) { f.classList.remove('open'); });
-      if (!wasOpen) fdd.classList.add('open');
-    });
-  });
-  document.addEventListener('click', function () {
-    document.querySelectorAll('.fdd.open').forEach(function (f) { f.classList.remove('open'); });
-  });
-
   /* =====================================================================
      EXPERIENCIA DE APP NO CELULAR (< 768px)
      Nada abaixo altera o desktop: o CSS correspondente vive todo dentro da
      media query (max-width:767px). Aqui so preparamos o DOM (faixa de chips,
      cabecalho dos bottom sheets e tab bar inferior) e sincronizamos estados.
      ===================================================================== */
+  var mqPhone = window.matchMedia('(max-width:767px)');
 
   // 1) agrupa os dropdowns numa faixa rolavel de chips.
   //    No desktop .fbar-chips e display:contents, entao o layout nao muda.
@@ -476,24 +463,68 @@
     });
   }
 
-  // 2) cabecalho de bottom sheet (grabber + titulo) dentro de cada painel
+  // 2) cabecalho de bottom sheet (grabber + titulo) e registro de cada painel
+  var fddList = [];
   Array.prototype.forEach.call(document.querySelectorAll('.fdd'), function (fdd) {
     var panel = fdd.querySelector('.fdd-panel');
     var lbl = fdd.querySelector('.fdd-lbl');
-    if (!panel || panel.querySelector('.fdd-sheet-head')) return;
-    var head = document.createElement('div');
-    head.className = 'fdd-sheet-head';
-    head.innerHTML = '<span class="fdd-grab"></span><strong></strong>';
-    head.querySelector('strong').textContent = lbl ? lbl.textContent : '';
-    panel.insertBefore(head, panel.firstChild);
+    if (!panel) return;
+    if (!panel.querySelector('.fdd-sheet-head')) {
+      var head = document.createElement('div');
+      head.className = 'fdd-sheet-head';
+      head.innerHTML = '<span class="fdd-grab"></span><strong></strong>';
+      head.querySelector('strong').textContent = lbl ? lbl.textContent : '';
+      panel.insertBefore(head, panel.firstChild);
+    }
+    fddList.push({ fdd: fdd, panel: panel });
   });
 
-  // 3) chip preenchido quando o filtro sai do padrao (guarda o valor inicial)
-  var chipState = [];
-  Array.prototype.forEach.call(document.querySelectorAll('.fdd'), function (fdd) {
-    var val = fdd.querySelector('.fdd-val');
-    if (val) chipState.push({ fdd: fdd, padrao: val.textContent });
+  // 2b) abre/fecha os dropdowns no toque (o :hover sozinho nao e confiavel em
+  //     telas touch). No mobile, o painel aberto (bottom sheet) e o backdrop
+  //     sao "teleportados" para dentro do <body> em vez de ficarem dentro da
+  //     .filter-bar (que e position:sticky) - no iOS real um position:fixed
+  //     descendente de um ancestral sticky nao gruda na tela de verdade (bug
+  //     conhecido do WebKit; o emulador de mobile do desktop nao reproduz).
+  //     No desktop nada disso roda: o painel nunca sai do lugar.
+  var sheetBackdrop = document.createElement('div');
+  sheetBackdrop.className = 'sheet-backdrop';
+  document.body.appendChild(sheetBackdrop);
+
+  function closeFdd(entry) {
+    entry.fdd.classList.remove('open');
+    entry.panel.classList.remove('open');
+    if (entry.panel.parentElement === document.body) entry.fdd.appendChild(entry.panel);
+  }
+  function closeAllFdd() {
+    fddList.forEach(closeFdd);
+    sheetBackdrop.classList.remove('open');
+  }
+  function openFdd(entry) {
+    closeAllFdd();
+    entry.fdd.classList.add('open');
+    if (mqPhone.matches) {
+      document.body.appendChild(entry.panel);
+      sheetBackdrop.classList.add('open');
+    }
+    entry.panel.classList.add('open');
+  }
+  fddList.forEach(function (entry) {
+    var btn = entry.fdd.querySelector('.fdd-btn');
+    if (!btn) return;
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var wasOpen = entry.fdd.classList.contains('open');
+      if (wasOpen) closeAllFdd(); else openFdd(entry);
+    });
   });
+  sheetBackdrop.addEventListener('click', closeAllFdd);
+  document.addEventListener('click', function () { closeAllFdd(); });
+
+  // 3) chip preenchido quando o filtro sai do padrao (guarda o valor inicial)
+  var chipState = fddList.map(function (entry) {
+    var val = entry.fdd.querySelector('.fdd-val');
+    return val ? { fdd: entry.fdd, padrao: val.textContent } : null;
+  }).filter(Boolean);
   function syncChips() {
     chipState.forEach(function (c) {
       var val = c.fdd.querySelector('.fdd-val');
@@ -503,7 +534,7 @@
   // trava o scroll do fundo enquanto um sheet estiver aberto
   function syncSheetLock() {
     var aberto = !!document.querySelector('.fdd.open');
-    if (window.matchMedia('(max-width:767px)').matches) {
+    if (mqPhone.matches) {
       document.body.style.overflow = aberto ? 'hidden' : '';
     } else {
       document.body.style.overflow = '';
@@ -554,9 +585,10 @@
   }
 
   // 5) trocar de faixa (girar o aparelho, redimensionar) re-renderiza a lista
-  //    para alternar entre a linha compacta do celular e a do desktop
-  var mqPhone = window.matchMedia('(max-width:767px)');
-  function onBreakpoint() { renderUnits(); syncSheetLock(); syncZoomCopy(); }
+  //    para alternar entre a linha compacta do celular e a do desktop, e
+  //    fecha qualquer sheet aberto (evita um painel teleportado ficar preso
+  //    fora do lugar se a faixa mudar de mobile pra desktop com ele aberto)
+  function onBreakpoint() { renderUnits(); closeAllFdd(); syncSheetLock(); syncZoomCopy(); }
   if (mqPhone.addEventListener) mqPhone.addEventListener('change', onBreakpoint);
   else if (mqPhone.addListener) mqPhone.addListener(onBreakpoint);
 
