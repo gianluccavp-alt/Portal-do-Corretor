@@ -523,10 +523,10 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
   /* ---- GALERIA / PLANTAS: viram carrossel horizontal com scroll-snap ----
      .carousel-frame e criado por JS (empreendimento.html) envolvendo o
      .g-grid/.plantas-grid original; no desktop e so um div sem estilo. */
-  .carousel-frame{position:relative}
+  .carousel-frame{display:flex;flex-direction:column}
   .g-grid,.plantas-grid{display:flex;flex-wrap:nowrap;gap:12px;overflow-x:auto;
     scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;
-    padding:2px 2px 4px;margin:0 -2px}
+    padding:2px 2px 4px;margin:0 -2px;order:2}
   .g-grid::-webkit-scrollbar,.plantas-grid::-webkit-scrollbar{display:none}
   .g-card,.planta-item{flex:0 0 78%;max-width:78%;scroll-snap-align:center}
   .g-img{height:180px}
@@ -534,9 +534,9 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
   .impl-wrap,.zoom-box{max-width:100%}
 
   /* setas no canto superior esquerdo do carrossel */
-  .car-arrows{position:absolute;top:10px;left:10px;z-index:5;display:flex;gap:6px}
-  .car-arrow{width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,0.18);
-    background:rgba(28,22,16,0.55);backdrop-filter:blur(6px);color:#fff;
+  .car-arrows{order:1;display:flex;gap:6px;margin-bottom:8px}
+  .car-arrow{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);
+    background:var(--white);color:var(--dark);box-shadow:var(--shadow);
     display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .15s}
   .car-arrow svg{width:17px;height:17px}
   .car-arrow.disabled{opacity:.35;pointer-events:none}
