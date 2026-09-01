@@ -1096,7 +1096,23 @@ function num(str){
   var v=parseFloat(s);
   return isFinite(v)?v:0;
 }
-function emp(){ for(var i=0;i<EMPS.length;i++) if(EMPS[i].id===S.empId) return EMPS[i]; return null; }
+/* Village Gaia é entregue em fases: a Torre 1 sai antes (out/2028) e a Torre 2
+   na data padrão do catálogo (ago/2029). A data de entrega muda todos os
+   cálculos (pré/pós-chaves, correção, comprometimento de renda), por isso ela
+   é ajustada aqui conforme a torre selecionada. Torres sem data específica
+   usam a entrega padrão do empreendimento. */
+var GAIA_ENTREGA_POR_TORRE = { 1:'2028-10-31' };
+function torreSelecionada(){ var m=/(\d+)/.exec(S.blocoId||''); return m?parseInt(m[1],10):null; }
+function emp(){
+  var base=null;
+  for(var i=0;i<EMPS.length;i++) if(EMPS[i].id===S.empId){ base=EMPS[i]; break; }
+  if(!base) return null;
+  if(base.id==='gaia'){
+    var t=torreSelecionada(), ent=t&&GAIA_ENTREGA_POR_TORRE[t];
+    if(ent){ var o={}; for(var k in base) o[k]=base[k]; o.entrega=ent; return o; }
+  }
+  return base;
+}
 function politica(){ for(var i=0;i<POLITICAS.length;i++) if(POLITICAS[i].id===S.politicaId) return POLITICAS[i]; return POLITICAS[4]; }
 
 /* datas -------------------------------------------------- */
