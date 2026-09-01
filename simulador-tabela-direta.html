@@ -902,7 +902,8 @@ var EMPS = [
 ];
 
 /* Regras da política (valem para todos os produtos) */
-var POL = { atoMin:3, entradaTotal:10, intermMax:12, mesesAntesEntrega:3, prazoPosObra:120 };
+var POL = { atoMin:3, entradaTotal:10, intermMax:12, mesesAntesEntrega:3, prazoPosObra:120,
+            intermMesesAposAto:3 };
 
 /* Fluxo Investidor: 100% no período de obra / 0% pós-obra, sem Sinal 1/2/3 -
    só Ato (mínimo 20%) + mensais até a entrega, sem correção e sem juros
@@ -984,6 +985,13 @@ function totalMeses(){
 }
 function nSinais(){ return (S.s3>0?3:(S.s2>0?2:(S.s1>0?1:0))); }
 function inicioMensais(){ return nSinais()+1; }
+/* mes mais cedo em que uma intermediaria pode cair: depois do ultimo sinal
+   lancado (Ato=0, Sinal 1=1, Sinal 2=2, Sinal 3=3), ou, quando so ha Ato
+   e nenhum sinal, alguns meses depois do proprio Ato */
+function inicioInterm(){
+  var n=nSinais();
+  return n>0 ? n+1 : POL.intermMesesAposAto;
+}
 function qtdAuto(){ return Math.max(0, totalMeses()-inicioMensais()+1); }
 function qtdMensais(){ return S.qtd===null ? qtdAuto() : Math.max(0,S.qtd); }
 
@@ -1067,6 +1075,19 @@ function validar(c){
       out.push({n:'err',c:'int',t:'<b>Intermediária muito próxima da entrega.</b> A última precisa cair até '+
         POL.mesesAntesEntrega+' meses antes da entrega &mdash; no máximo <b>'+rotuloMes(Math.max(0,limite))+'</b>.'});
     }
+
+    // 4b - intermediária antes do início permitido: depois do último sinal
+    // lançado, ou, sem sinais, alguns meses depois do Ato
+    var minInt = inicioInterm();
+    var cedo = S.interm.filter(function(r){ return r.mes<minInt; });
+    if(cedo.length){
+      var motivo = nSinais()>0
+        ? ('depois do Sinal '+nSinais())
+        : ('pelo menos '+POL.intermMesesAposAto+' meses depois do Ato');
+      out.push({n:'err',c:'int',t:'<b>Intermediária muito cedo no fluxo.</b> As intermediárias precisam começar '+motivo+
+        ' &mdash; a partir de <b>'+rotuloMes(minInt)+'</b>.'});
+    }
+
     // 7 - espaçamento semestral / anual
     var idx=S.interm.map(function(r){return r.mes;}).sort(function(a,b){return a-b;});
     if(idx.length>1){
@@ -1134,6 +1155,13 @@ function checklistAprovacao(c){
   out.push({ id:'intermPrazo', grave:true, label:'Última intermediária até '+POL.mesesAntesEntrega+' meses antes da entrega',
     ok: !foraPrazo,
     detail: S.interm.length ? ('Limite '+rotuloMes(Math.max(0,limitePrazo))+'.') : 'Sem intermediárias cadastradas.' });
+
+  var minInt = inicioInterm();
+  var cedoDemais = S.interm.some(function(r){ return r.mes<minInt; });
+  out.push({ id:'intermInicio', grave:true,
+    label:'Intermediárias começam '+(nSinais()>0 ? ('depois do Sinal '+nSinais()) : ('pelo menos '+POL.intermMesesAposAto+' meses depois do Ato')),
+    ok: !cedoDemais,
+    detail: S.interm.length ? ('A partir de '+rotuloMes(minInt)+'.') : 'Sem intermediárias cadastradas.' });
 
   var mensalOk = !(c.qtd<=0 && c.saldoObra>0.01) && !(c.qtd>0 && c.mensal<=0);
   out.push({ id:'mensal', grave:true, label:'Parcelas mensais calculadas corretamente',
@@ -1251,20 +1279,21 @@ function renderMix(){
 
 function renderInterm(){
   var T=totalMeses(), c=calc();
-  var limite=T-POL.mesesAntesEntrega;
+  var limite=T-POL.mesesAntesEntrega, minInt=inicioInterm();
   if(!S.interm.length){
     $('int-list').innerHTML='<div class="hint">Nenhuma intermediária. O fluxo segue com Ato, Sinais e mensais.</div>';
     return;
   }
   var opcoes='';
   for(var k=1;k<=T;k++){
-    opcoes+='<option value="'+k+'">'+rotuloMes(k)+(k>limite?' (fora do prazo)':'')+'</option>';
+    var fora = k>limite ? ' (fora do prazo)' : (k<minInt ? ' (muito cedo)' : '');
+    opcoes+='<option value="'+k+'">'+rotuloMes(k)+fora+'</option>';
   }
   $('int-list').innerHTML = S.interm.map(function(r,i){
     var p = c.valor>0 ? r.valor/c.valor*100 : 0;
     return '<div class="int-row">'+
       '<select data-int-mes="'+i+'">'+opcoes+'</select>'+
-      '<input type="text" inputmode="decimal" data-int-val="'+i+'" value="'+(r.valor?brl(r.valor):'')+'" placeholder="R$ 0,00"'+(r.mes>limite?' class="bad"':'')+'>'+
+      '<input type="text" inputmode="decimal" data-int-val="'+i+'" value="'+(r.valor?brl(r.valor):'')+'" placeholder="R$ 0,00"'+((r.mes>limite||r.mes<minInt)?' class="bad"':'')+'>'+
       '<input type="text" inputmode="decimal" class="pctcol" data-int-pct="'+i+'" value="'+(r.valor?p.toFixed(2).replace('.',','):'')+'" placeholder="%">'+
       '<button type="button" class="icon-btn" data-int-del="'+i+'" title="Remover">&times;</button>'+
     '</div>';
@@ -1983,18 +2012,21 @@ $('int-list').addEventListener('click', function(ev){
 });
 $('b-int-add').addEventListener('click', function(){
   var T=totalMeses(); if(T<=0) return;
-  var limite=Math.max(1,T-POL.mesesAntesEntrega);
+  var minM=inicioInterm();
+  var limite=Math.max(minM,T-POL.mesesAntesEntrega);
   var usados=S.interm.map(function(r){return r.mes;});
   var m=limite;
-  while(usados.indexOf(m)>=0 && m>1) m--;
+  while(usados.indexOf(m)>=0 && m>minM) m--;
   S.interm.push({mes:m, valor:0});
   render();
 });
 function gerar(passo){
   var T=totalMeses(); if(T<=0 || S.valor<=0) return;
+  var minM=inicioInterm();
   var limite=T-POL.mesesAntesEntrega;
+  if(limite<minM) return; // sem espaço para intermediárias nesse fluxo
   var lista=[];
-  for(var m=limite; m>=1; m-=passo) lista.push(m);
+  for(var m=limite; m>=minM; m-=passo) lista.push(m);
   if(!lista.length) return;
   var vTotal=S.valor*POL.intermMax/100;
   var v=Math.round(vTotal/lista.length*100)/100;
