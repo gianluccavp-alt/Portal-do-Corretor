@@ -10,10 +10,12 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+<script defer src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.min.js"></script>
 <!-- config.js: so para reaproveitar a classificacao de tipo/sol (tipoRule,
      tipos, solNascente) do site de produtos ao exibir os dados da unidade -->
 <script src="assets/config.js"></script>
-<!-- catalogo de empreendimentos, unidades da planilha e combobox -->
+<!-- catalogo de empreendimentos, unidades da planilha, combobox e rich text -> PDF -->
 <script src="assets/simuladores.js"></script>
 <style>
 /* ===== Identidade Grupo Direcional ===== */
@@ -24,8 +26,8 @@
   --ok:#1E8E4A; --warn:#B57200; --warn-bg:#FFF7E6; --err:#C4001C; --err-bg:#FDEEF0;
 }
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--dir-bg);font-family:'DM Sans',system-ui,sans-serif;color:var(--dir-ink);
+html{-webkit-text-size-adjust:100%;overflow-x:clip}
+body{margin:0;overflow-x:clip;background:var(--dir-bg);font-family:'DM Sans',system-ui,sans-serif;color:var(--dir-ink);
      font-size:15px;line-height:1.5}
 
 /* ---------- header ---------- */
@@ -36,7 +38,7 @@ body{margin:0;background:var(--dir-bg);font-family:'DM Sans',system-ui,sans-seri
 .hero-brand{color:var(--dir-red);font-weight:500;font-size:.86rem;letter-spacing:.06em;text-transform:uppercase}
 .hero h1{margin:.35rem 0 .4rem;font-size:2.15rem;font-weight:700;letter-spacing:-.6px;line-height:1.15}
 .hero h1 em{color:var(--dir-red);font-style:normal}
-.hero p{margin:0;color:var(--dir-grey);max-width:56ch}
+.hero p{margin:0;color:var(--dir-grey);max-width:60ch}
 @media(max-width:700px){
   .hero{padding:1.75rem 1.1rem 1.5rem}
   .hero-logo{height:34px;top:16px;right:16px}
@@ -49,7 +51,48 @@ body{margin:0;background:var(--dir-bg);font-family:'DM Sans',system-ui,sans-seri
 .step{margin-bottom:1.5rem}
 .step-label{display:flex;align-items:center;gap:.55rem;color:var(--dir-red);font-weight:500;
             font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.7rem}
-.step-label::before{content:'';width:22px;height:2px;background:var(--dir-red);border-radius:2px}
+.step-label::before{content:'';width:22px;height:2px;background:var(--dir-red);border-radius:2px;flex:0 0 auto}
+
+/* ---- acordeao dos passos (todas as larguras) ---- */
+.step{margin-bottom:.6rem}
+button.step-label{display:flex;align-items:center;gap:.8rem;width:100%;min-height:58px;margin:0;
+     padding:.8rem .95rem;font-family:inherit;font-size:.9rem;font-weight:600;letter-spacing:0;
+     text-transform:none;color:var(--dir-ink);background:#fff;border:1px solid var(--dir-line);
+     border-radius:14px;cursor:pointer;text-align:left;transition:border-color .15s}
+button.step-label:hover{border-color:#D2D6D8}
+button.step-label::before{display:none}
+.s-pre{display:none}
+.step-n{display:flex;flex:0 0 auto;width:24px;height:24px;border-radius:50%;align-items:center;
+     justify-content:center;font-size:.74rem;font-weight:700;background:var(--dir-bg);
+     border:1px solid var(--dir-line);color:var(--dir-grey);transition:.15s}
+.step-n{position:relative}
+/* concluido: check verde */
+.step.done .step-n{background:#EFF9F2;border-color:#C7E7D3;color:transparent}
+.step.done .step-n::before{content:'';position:absolute;left:50%;top:50%;width:9px;height:5px;
+     border-left:2px solid var(--ok);border-bottom:2px solid var(--ok);
+     transform:translate(-50%,-65%) rotate(-45deg)}
+/* preenchido com erro: "!" ambar (vence o concluido) */
+.step.warn .step-n{background:var(--warn-bg);border-color:#F0DCB0;color:transparent}
+.step.warn .step-n::before{content:'!';display:flex;align-items:center;justify-content:center;
+     position:absolute;inset:0;border:0;width:auto;height:auto;transform:none;
+     color:var(--warn);font-size:.92rem;font-weight:700}
+/* aberto (aba atual): numero vermelho, vence todos */
+.step.open .step-n{background:var(--dir-red);border-color:var(--dir-red);color:#fff}
+.step.open .step-n::before{content:none}
+.step-t{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.step-sum{display:block;flex:1 1 0;min-width:0;text-align:right;font-size:.8rem;font-weight:400;
+     color:var(--dir-grey);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.step-chev{display:block;flex:0 0 auto;width:17px;height:17px;color:#A8AEB1;transition:transform .18s}
+.step.open .step-chev{transform:rotate(180deg);color:var(--dir-ink)}
+.step>.card{display:none}
+.step.open>button.step-label{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.step.open>.card{display:block;margin-top:0;border-top:0;border-top-left-radius:0;border-top-right-radius:0}
+/* o rotulo "Simulacao" da aba Resultado nao entra no acordeao */
+.result{margin-bottom:0}
+.result-label{display:flex;align-items:center;gap:.55rem;min-height:0;margin:0 0 1rem;padding:0;
+     background:none;border:0;border-radius:0;color:var(--dir-red);font-size:.78rem;font-weight:500;
+     letter-spacing:.1em;text-transform:uppercase}
+.result-label::before{content:'';width:22px;height:2px;background:var(--dir-red);border-radius:2px;flex:0 0 auto}
 .card{background:#fff;border:1px solid var(--dir-line);border-radius:14px;padding:1.35rem}
 @media(max-width:700px){.card{padding:1rem}}
 
@@ -71,7 +114,7 @@ body{margin:0;background:var(--dir-bg);font-family:'DM Sans',system-ui,sans-seri
 .ui-stat:last-child{border-right:0}
 .ui-lab{font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;color:var(--dir-grey);font-weight:500}
 .ui-val{font-weight:700;font-size:.95rem;color:var(--dir-ink)}
-.ui-stat.dest{background:#EFF9F2;border:1px solid #C7E7D3;border-radius:10px;padding:.5rem .9rem;margin:-.5rem 0}
+.ui-stat.dest{background:#EFF9F2;border:1px solid #C7E7D3;border-radius:9px;padding:.5rem .9rem;margin:-.5rem 0}
 .ui-stat.dest .ui-val{color:var(--ok)}
 .ui-stat.dest .ui-lab{color:#2E7D4F}
 @media(max-width:700px){
@@ -95,46 +138,92 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--dir-red)
       box-shadow:0 0 0 3px rgba(228,3,43,.10)}
 input.bad{border-color:var(--err);background:var(--err-bg)}
 input.warn{border-color:var(--warn);background:var(--warn-bg)}
-input:disabled{background:#FAFBFB;color:#A8AEB1;cursor:not-allowed}
+input[readonly]{background:#FAFBFB;font-weight:700}
 textarea{resize:vertical;min-height:70px}
-.pair{display:flex;gap:.4rem}
+.pair{position:relative;display:flex;gap:0;border:1px solid var(--dir-line);border-radius:9px;background:#fff;overflow:hidden;transition:.15s}
+/* sufixo % do campo de percentual - o input guarda so o numero */
+.pair::after{content:'%';position:absolute;right:.55rem;top:50%;transform:translateY(-50%);
+     font-size:.86rem;color:var(--dir-grey);pointer-events:none}
+.pair:focus-within{border-color:var(--dir-red);box-shadow:0 0 0 3px rgba(228,3,43,.10)}
+.pair input{border:0;border-radius:0;background:none}
+.pair input:focus{box-shadow:none}
 .pair .money{flex:1 1 auto;min-width:0}
-.pair .pct{flex:0 0 84px;text-align:right}
+.pair .pct{flex:0 0 76px;text-align:right;padding-right:1.25rem;border-left:1px solid var(--dir-line);color:var(--dir-grey)}
+.pair:has(input.bad){border-color:var(--err);background:var(--err-bg)}
+.pair:has(input.warn){border-color:var(--warn);background:var(--warn-bg)}
+.pair input.bad,.pair input.warn{background:none}
 .hint{font-size:.74rem;color:var(--dir-grey);margin-top:.3rem}
 .hint.err{color:var(--err);font-weight:500}
 .hint.warn{color:var(--warn);font-weight:500}
-fieldset{border:0;padding:0;margin:0}
-.sub{font-weight:700;font-size:.95rem;margin:1.35rem 0 .7rem;padding-top:1.1rem;
-     border-top:1px dashed var(--dir-line)}
-.sub:first-of-type{margin-top:0;padding-top:0;border-top:0}
+.sub{display:flex;align-items:center;gap:.55rem;width:100%;min-height:50px;margin:0;padding:.9rem 0;
+     font-family:inherit;font-size:.88rem;font-weight:600;color:var(--dir-ink);text-align:left;
+     background:none;border:0;border-top:1px solid var(--dir-line);cursor:pointer}
+.sub-block:first-child .sub{border-top:0;padding-top:.15rem}
+.sub .lt{display:none}
+.sub-t{flex:0 0 auto}
+.sub-chev{display:block;flex:0 0 auto;width:15px;height:15px;color:#A8AEB1;transition:transform .18s}
+.sub-block.open .sub-chev{transform:rotate(90deg);color:var(--dir-ink)}
+.sub-sum{display:block;flex:1 1 0;min-width:0;text-align:right;font-size:.8rem;font-weight:400;
+     color:var(--dir-grey);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sub-body{display:none;padding-bottom:.4rem}
+.sub-block.open .sub-body{display:block}
+/* "Divisao do fluxo" nao e gaveta: e um rotulo com o conteudo sempre visivel.
+   Entrada, Intermediarias e Mensais abrem e fecham. */
+.sub-block[data-sub="divisao"]>.sub{min-height:0;padding:1.3rem 0 .75rem;border-top:0;cursor:default;
+     font-size:.7rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--dir-grey)}
+.sub-block[data-sub="divisao"]:first-child>.sub{padding-top:0}
+.sub-block[data-sub="divisao"]>.sub .sub-chev,
+.sub-block[data-sub="divisao"]>.sub .sub-sum{display:none}
+.sub-block[data-sub="divisao"]>.sub-body{display:block}
 
-/* ---------- split obra/pos ---------- */
-.split{display:flex;align-items:flex-end;gap:.7rem;flex-wrap:wrap}
-.split .fld{flex:0 0 150px}
-.presets{display:flex;gap:.35rem;flex-wrap:wrap;padding-bottom:.15rem}
+
+
+/* ---------- chips / politicas ---------- */
 .chip{font:inherit;font-size:.78rem;padding:.42rem .7rem;border-radius:999px;cursor:pointer;
       background:#fff;border:1px solid var(--dir-line);color:var(--dir-grey);transition:.15s}
 .chip:hover{border-color:var(--dir-red);color:var(--dir-red)}
 .chip.on{background:var(--dir-red);border-color:var(--dir-red);color:#fff}
 
-/* ---------- intermediárias ---------- */
-.int-row{display:grid;grid-template-columns:1fr 1fr 1fr 40px;gap:.5rem;align-items:center;margin-bottom:.5rem}
-@media(max-width:560px){.int-row{grid-template-columns:1fr 1fr 40px}.int-row .pctcol{grid-column:1/3}}
-.icon-btn{width:38px;height:38px;border-radius:9px;border:1px solid var(--dir-line);background:#fff;
-      color:var(--dir-grey);cursor:pointer;font-size:1.1rem;line-height:1;transition:.15s}
-.icon-btn:hover{border-color:var(--dir-red);color:var(--dir-red)}
+
 .btn{font:inherit;font-weight:500;padding:.62rem 1.05rem;border-radius:9px;cursor:pointer;transition:.15s;border:1px solid}
 .btn-ghost{background:#fff;border-color:var(--dir-line);color:var(--dir-ink)}
 .btn-ghost:hover{border-color:var(--dir-red);color:var(--dir-red)}
 .btn-primary{background:var(--dir-red);border-color:var(--dir-red);color:#fff}
 .btn-primary:hover{background:var(--dir-red-dark);border-color:var(--dir-red-dark)}
-.btn-row{display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.75rem}
+.btn-row{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin-top:.9rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;min-height:44px}
+.btn svg{flex:0 0 auto;width:16px;height:16px;stroke:currentColor}
+.btn-ico{flex:0 0 auto;width:44px;padding:0}
+.btn-ico svg{width:17px;height:17px}
+#b-parcelas{flex:1 1 auto}
+#b-pdf{flex:1 1 auto}
 
 /* ---------- resultado ---------- */
-.summary{display:grid;grid-template-columns:repeat(5,1fr);gap:.7rem;margin-bottom:1.1rem}
-@media(max-width:980px){.summary{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:560px){.summary{grid-template-columns:repeat(2,1fr)}}
-.kpi{background:#fff;border:1px solid var(--dir-line);border-radius:12px;padding:.85rem .9rem}
+.summary{display:flex;flex-direction:column;gap:.7rem;margin-bottom:.7rem}
+.kpi-hero{border-radius:14px;background:linear-gradient(135deg,var(--dir-red),var(--dir-red-dark));
+     color:#fff;padding:.95rem 1.05rem 1.05rem}
+.kpi-hero.off{background:#fff;border:1px solid var(--dir-line);color:var(--dir-ink)}
+.kh-k{font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.82)}
+.kpi-hero.off .kh-k{color:var(--dir-grey)}
+.kh-row{display:flex;align-items:baseline;gap:.65rem;margin-top:.2rem}
+.kh-v{font-size:2.1rem;font-weight:700;letter-spacing:-1.2px;line-height:1}
+.kh-lim{font-size:.8rem;color:rgba(255,255,255,.82)}
+.kpi-hero.off .kh-lim{color:var(--dir-grey)}
+.kh-bar{height:5px;border-radius:999px;background:rgba(255,255,255,.25);overflow:hidden;margin-top:.7rem}
+.kh-bar i{display:block;height:100%;border-radius:999px;background:#fff}
+.kh-sub{font-size:.74rem;color:rgba(255,255,255,.82);margin-top:.45rem}
+.kpi-hero.off .kh-sub{color:var(--dir-grey)}
+.kpi-duo{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.kpi-ok{background:#EFF9F2;border-color:#C7E7D3}
+.kpi-ok .kpi-lab{color:#2E7D4F}
+.kpi-ok .kpi-val{color:var(--ok)}
+.kpi-ok .kpi-sub{color:#2E7D4F}
+.kpi-bad{background:var(--err-bg);border-color:#F3C6CE}
+.kpi-bad .kpi-lab,.kpi-bad .kpi-sub{color:#8f0016}
+.kpi-bad .kpi-val{color:var(--err)}
+
+
+.kpi{background:#fff;border:1px solid var(--dir-line);border-radius:14px;padding:.85rem .9rem}
 .kpi.hero-kpi{background:linear-gradient(135deg,var(--dir-red),var(--dir-red-dark));
       border-color:var(--dir-red);color:#fff}
 .kpi.hero-kpi .kpi-lab,.kpi.hero-kpi .kpi-sub{color:rgba(255,255,255,.82)}
@@ -142,8 +231,38 @@ fieldset{border:0;padding:0;margin:0}
 .kpi-val{font-size:1.22rem;font-weight:700;letter-spacing:-.4px;margin-top:.18rem;line-height:1.2}
 .kpi-sub{font-size:.74rem;color:var(--dir-grey);margin-top:.1rem}
 
+
+
+/* veredito */
+.vd{background:#fff;border:1px solid var(--dir-line);border-radius:14px;overflow:hidden;margin-bottom:1.1rem}
+.vd-head{padding:.85rem 1.05rem;font-weight:700;color:#fff;display:flex;align-items:center;
+      gap:.75rem;cursor:pointer}
+.vd-head .vh-ico{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.2);
+      display:flex;align-items:center;justify-content:center}
+.vd-head .vh-ico svg{width:14px;height:14px;stroke:#fff;stroke-width:3.4}
+.vd-head .vh-txt{flex:1 1 auto;min-width:0}
+.vd-head .vh-tit{display:block;font-size:.94rem;font-weight:700;letter-spacing:-.1px}
+.vd-head .vh-sub{display:block;font-weight:400;font-size:.76rem;opacity:.88;margin-top:.05rem}
+.vd-head .vh-mais{flex:0 0 auto;opacity:.85}
+.vd-head .vh-mais svg{width:17px;height:17px;stroke:#fff;stroke-width:2}
+.vd-head.aprovado{background:linear-gradient(135deg,var(--ok),#166B39)}
+.vd-head.comite{background:linear-gradient(135deg,var(--warn),#8A5700)}
+.vd-head.reprovado{background:linear-gradient(135deg,var(--err),#8f0016)}
+.vd-item{display:flex;align-items:center;gap:.55rem;padding:.62rem 1.05rem;
+      border-top:1px solid var(--dir-line);font-size:.84rem}
+.vd-item .vi-lab{flex:1 1 auto;min-width:0;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vd-item .vi-val{flex:0 0 auto;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.vd-item .vi-lim{flex:0 0 auto;color:var(--dir-grey);font-size:.78rem;font-variant-numeric:tabular-nums;
+      white-space:nowrap}
+.vd-item .st{flex:0 0 auto;white-space:nowrap}
+.st{display:inline-block;text-align:center;font-size:.64rem;font-weight:700;letter-spacing:.02em;
+      text-transform:uppercase;padding:.2rem .5rem;border-radius:999px;border:1px solid;white-space:nowrap}
+.st.ok{background:#EFF9F2;border-color:#C7E7D3;color:var(--ok)}
+.st.comite{background:var(--warn-bg);border-color:#F0DCB0;color:var(--warn)}
+.st.rep{background:var(--err-bg);border-color:#F3C6CE;color:var(--err)}
+
 .alerts{display:flex;flex-direction:column;gap:.45rem;margin-bottom:1.1rem}
-.alert{display:flex;gap:.6rem;align-items:flex-start;padding:.65rem .85rem;border-radius:10px;
+.alert{display:flex;gap:.6rem;align-items:flex-start;padding:.65rem .85rem;border-radius:9px;
        font-size:.86rem;border:1px solid}
 .alert.err{background:var(--err-bg);border-color:#F3C6CE;color:var(--err)}
 .alert.warn{background:var(--warn-bg);border-color:#F0DCB0;color:var(--warn)}
@@ -153,36 +272,35 @@ fieldset{border:0;padding:0;margin:0}
 
 .banner{display:none;align-items:center;gap:.6rem;background:var(--err);color:#fff;font-weight:700;
         letter-spacing:.05em;text-transform:uppercase;font-size:.8rem;padding:.6rem 1rem;
-        border-radius:10px;margin-bottom:1rem}
+        border-radius:9px;margin-bottom:1rem}
 .banner.on{display:flex}
 
-.tbl-wrap{overflow-x:auto;border:1px solid var(--dir-line);border-radius:12px;background:#fff}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--dir-line);border-radius:14px;background:#fff}
 table{width:100%;border-collapse:collapse;font-size:.87rem;min-width:520px}
 thead th{background:var(--dir-ink);color:#fff;font-weight:500;font-size:.72rem;letter-spacing:.07em;
       text-transform:uppercase;text-align:left;padding:.6rem .8rem;white-space:nowrap}
-tbody td{padding:.55rem .8rem;border-top:1px solid var(--dir-line);white-space:nowrap}
+tbody td{padding:.5rem .8rem;border-top:1px solid var(--dir-line);white-space:nowrap}
 tbody tr.grp td{background:#FAFBFB;font-weight:700;font-size:.74rem;letter-spacing:.07em;
       text-transform:uppercase;color:var(--dir-grey)}
 tbody tr.tot td{background:#FFF9FA;font-weight:700;border-top:2px solid var(--dir-red)}
-td.num,th.num{text-align:right}
+tbody tr.hi td{color:var(--err);font-weight:500}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .empty{padding:2.5rem 1rem;text-align:center;color:var(--dir-grey)}
+.tbl-tools{display:flex;justify-content:flex-end;margin-bottom:.5rem}
 
 .note{font-size:.78rem;color:var(--dir-grey);margin-top:.8rem;line-height:1.55}
-.foot{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--dir-line);
-      color:var(--dir-grey);font-size:.8rem}
+.foot{background:var(--dir-bg);border-top:1px solid var(--dir-line);color:var(--dir-grey);font-size:.8rem}
+.foot-inner{max-width:1400px;margin:0 auto;padding:1.5rem 2rem 2.5rem}
 .foot a{color:var(--dir-red);text-decoration:none}
+@media(max-width:1199px){.foot-inner{max-width:1120px}}
 
-/* ---------- botao verificar simulacao ---------- */
-.btn-check{background:var(--ok);border-color:var(--ok);color:#fff;
-      display:inline-flex;align-items:center;gap:.45rem}
-.btn-check:hover{background:#166B39;border-color:#166B39}
-.btn-check svg{flex:0 0 auto}
+
 
 /* ---------- modal de verificacao ---------- */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(58,64,67,.55);
       z-index:1000;align-items:flex-start;justify-content:center;padding:5vh 1rem;overflow-y:auto}
 .modal-overlay.open{display:flex}
-.modal{background:#fff;border-radius:16px;max-width:600px;width:100%;
+.modal{background:#fff;border-radius:14px;max-width:600px;width:100%;
       box-shadow:0 24px 60px rgba(0,0,0,.25);position:relative;overflow:hidden}
 .modal-close{position:absolute;top:.7rem;right:.8rem;width:34px;height:34px;border-radius:9px;
       border:0;background:rgba(255,255,255,.18);color:#fff;font-size:1.4rem;line-height:1;
@@ -190,8 +308,9 @@ td.num,th.num{text-align:right}
 .modal-close:hover{background:rgba(255,255,255,.3)}
 .modal-banner{padding:1.6rem 1.4rem 1.3rem;text-align:center;font-weight:700;font-size:1.3rem;color:#fff}
 .modal-banner.aprovado{background:linear-gradient(135deg,var(--ok),#166B39)}
+.modal-banner.comite{background:linear-gradient(135deg,var(--warn),#8A5700)}
 .modal-banner.reprovado{background:linear-gradient(135deg,var(--err),#8f0016)}
-.modal-banner .sub{display:block;font-weight:400;font-size:.82rem;margin-top:.3rem;opacity:.9}
+.modal-banner .sub{display:block;font-weight:400;font-size:.82rem;margin-top:.3rem;color:#fff;opacity:.92}
 .modal-body{padding:1.2rem 1.4rem 1.4rem;max-height:64vh;overflow-y:auto}
 .modal-checklist{display:flex;flex-direction:column}
 .modal-item{display:flex;gap:.65rem;align-items:flex-start;padding:.65rem 0;border-bottom:1px solid var(--dir-line)}
@@ -207,7 +326,7 @@ td.num,th.num{text-align:right}
       letter-spacing:.04em;text-transform:uppercase;color:var(--dir-grey);
       border:1px solid var(--dir-line);border-radius:999px;padding:.05rem .45rem}
 .modal-item .det{font-size:.8rem;color:var(--dir-grey);margin-top:.15rem}
-.modal-renda{margin-top:.4rem;padding:.9rem 1rem;border-radius:12px;background:#FAFBFB;
+.modal-renda{margin-top:.4rem;padding:.9rem 1rem;border-radius:14px;background:#FAFBFB;
       border:1px solid var(--dir-line);display:grid;grid-template-columns:1fr 1fr;gap:.6rem .9rem}
 .modal-renda .r-lab{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--dir-grey);font-weight:500}
 .modal-renda .r-val{font-weight:700;font-size:1rem;margin-top:.1rem}
@@ -227,7 +346,7 @@ td.num,th.num{text-align:right}
 .cbx-arrow{flex:0 0 16px;width:16px;height:16px;color:var(--dir-grey);transition:.15s}
 .cbx.open .cbx-arrow{transform:rotate(180deg)}
 .cbx-pop{display:none;position:absolute;z-index:60;top:calc(100% + 4px);left:0;right:0;
-     background:#fff;border:1px solid var(--dir-line);border-radius:11px;
+     background:#fff;border:1px solid var(--dir-line);border-radius:14px;
      box-shadow:0 12px 34px rgba(58,64,67,.16);overflow:hidden}
 .cbx.open .cbx-pop{display:block}
 .cbx-busca{padding:.5rem;border-bottom:1px solid var(--dir-line)}
@@ -242,9 +361,246 @@ td.num,th.num{text-align:right}
 .cbx-opt-lab{flex:1 1 auto;min-width:0}
 .cbx-opt-sub{flex:0 0 auto;font-size:.74rem;color:var(--dir-grey)}
 .cbx-vazio{padding:.9rem .6rem;text-align:center;color:var(--dir-grey);font-size:.85rem}
+
+/* ---------- editor de observacoes ---------- */
+.obs-wrap .ql-toolbar.ql-snow{border-color:var(--dir-line);border-radius:9px 9px 0 0;
+     background:#FAFBFB;font-family:'DM Sans',system-ui,sans-serif}
+.obs-wrap .ql-container.ql-snow{border-color:var(--dir-line);border-radius:0 0 9px 9px;
+     font-family:'DM Sans',system-ui,sans-serif;font-size:.95rem}
+.obs-wrap .ql-editor{min-height:220px;resize:vertical;overflow-y:auto}
+.obs-wrap .ql-editor.ql-blank::before{color:#A8AEB1;font-style:normal;left:15px}
+.obs-wrap .ql-editor img{max-width:100%}
+.obs-wrap .ql-snow .ql-stroke{stroke:var(--dir-grey)}
+.obs-wrap .ql-snow .ql-fill{fill:var(--dir-grey)}
+.obs-wrap .ql-snow .ql-picker{color:var(--dir-grey)}
+.obs-wrap .ql-snow.ql-toolbar button:hover .ql-stroke,
+.obs-wrap .ql-snow.ql-toolbar button.ql-active .ql-stroke{stroke:var(--dir-red)}
+.obs-wrap .ql-snow.ql-toolbar button:hover .ql-fill,
+.obs-wrap .ql-snow.ql-toolbar button.ql-active .ql-fill{fill:var(--dir-red)}
+
+/* =========================================================
+   SHELL MOBILE - appbar, barra da unidade, acordeao e abas.
+   Tudo abaixo de 860px; acima disso a pagina segue igual.
+   ========================================================= */
+.appbar,.unitbar,.tabbar,.ub-strip{display:none}
+
+@media(max-width:860px){
+  .hero{display:none}
+
+  .appbar{position:sticky;top:0;z-index:300;display:flex;align-items:center;gap:.25rem;
+     height:56px;padding:0 .75rem;background:#fff;border-bottom:1px solid var(--dir-line)}
+  .appbar-back{flex:0 0 auto;width:40px;height:40px;display:flex;align-items:center;
+     justify-content:center;color:var(--dir-ink)}
+  .appbar-back svg{width:22px;height:22px}
+  .appbar-t{flex:1 1 auto;min-width:0;font-size:.98rem;font-weight:700;letter-spacing:-.2px;
+     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .appbar-logo{flex:0 0 auto;height:21px;width:auto;display:block}
+
+  .unitbar{background:#fff;border-bottom:1px solid var(--dir-line);padding:.7rem 1.1rem .8rem}
+  .unitbar.show{display:block}
+  .ub-emp{display:flex;align-items:center;gap:.45rem;margin-bottom:.3rem;font-size:.66rem;
+     font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dir-red)}
+  .ub-emp::before{content:'';flex:0 0 auto;width:16px;height:2px;border-radius:2px;background:var(--dir-red)}
+  .ub-emp span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ub-r{display:flex;align-items:baseline;justify-content:space-between;gap:.6rem}
+  .ub-r+.ub-r{margin-top:.1rem}
+  .ub-a{font-size:.94rem;font-weight:700;letter-spacing:-.2px;overflow:hidden;
+     text-overflow:ellipsis;white-space:nowrap}
+  .ub-b{flex:0 0 auto;font-size:.84rem;font-weight:700;letter-spacing:-.2px}
+  .ub-c{font-size:.76rem;color:var(--dir-grey);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ub-d{flex:0 0 auto;font-size:.76rem;color:var(--dir-grey)}
+
+  .wrap{padding:.85rem 1.1rem calc(62px + env(safe-area-inset-bottom,0px) + 1.2rem)}
+  body.tab-dados #tab-result{display:none}
+  body.tab-result #tab-dados{display:none}
+
+  .step-label,.step-t{font-size:.85rem}
+  button.step-label{gap:.7rem;min-height:56px;padding:.75rem .8rem}
+  .card{padding:.9rem .8rem}
+
+
+  /* os dados da unidade sobem para a barra fixa do topo */
+  .unid-info,.emp-info{display:none!important}
+
+  .sub{min-height:48px;padding:.85rem 0;font-size:.85rem}
+
+  /* ---- alvo de toque ---- */
+  input,select,textarea{min-height:46px}
+  .pair input{min-height:44px}
+  .cbx-btn{min-height:46px}
+  .chip{min-height:38px}
+
+  /* ---- aba resultado ---- */
+  #tab-result .note{display:none}
+  .foot{display:none}
+  .btn-row{position:sticky;bottom:calc(62px + env(safe-area-inset-bottom,0px));z-index:120;
+     display:flex;gap:.5rem;margin:1.25rem -1.1rem 0;padding:.7rem 1.1rem;background:#fff;
+     border-top:1px solid var(--dir-line)}
+  .btn-row .btn{min-height:46px;padding-left:.7rem;padding-right:.7rem;font-size:.86rem}
+  .btn-ico{width:46px;padding:0}
+
+  /* ---- abas fixas ---- */
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:400;display:flex;background:#fff;
+     border-top:1px solid var(--dir-line);padding-bottom:env(safe-area-inset-bottom,0px)}
+  .tabbtn{flex:1 1 0;position:relative;display:flex;flex-direction:column;align-items:center;
+     justify-content:center;gap:.22rem;height:62px;background:none;border:0;cursor:pointer;
+     font-family:inherit;font-size:.68rem;font-weight:600;color:var(--dir-grey)}
+  .tabbtn svg{width:21px;height:21px}
+  .tabbtn.on{color:var(--dir-red);font-weight:700}
+  .tabbtn.on::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+     width:46px;height:2px;background:var(--dir-red);border-radius:0 0 2px 2px}
+  .tabbtn-ic{position:relative;display:block;line-height:0}
+  .tabdot{display:none;position:absolute;top:-2px;right:-4px;width:9px;height:9px;
+     border-radius:50%;border:1.5px solid #fff}
+  .tabdot.ok{display:block;background:var(--ok)}
+  .tabdot.comite{display:block;background:var(--warn)}
+  .tabdot.rep{display:block;background:var(--err)}
+}
+
+/* =========================================================
+   CARNE COMPLETO - resumo por fase + folha em tela cheia
+   ========================================================= */
+
+
+.sheet{display:none;position:fixed;inset:0;z-index:900;background:rgba(58,64,67,.55)}
+.sheet.open{display:flex}
+.sheet-box{display:flex;flex-direction:column;background:#fff;overflow:hidden}
+.sheet-head{flex:0 0 auto;display:flex;align-items:center;gap:.25rem;height:56px;padding:0 .75rem;
+     border-bottom:1px solid var(--dir-line)}
+.sheet-close{flex:0 0 auto;width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+     background:none;border:0;border-radius:9px;color:var(--dir-ink);cursor:pointer}
+.sheet-close:hover{background:var(--dir-bg)}
+.sheet-close svg{width:20px;height:20px}
+.sheet-ttl{flex:1 1 auto;min-width:0}
+.sheet-t{font-size:.98rem;font-weight:700;letter-spacing:-.2px}
+.sheet-s{font-size:.74rem;color:var(--dir-grey)}
+.sheet-tools{flex:0 0 auto;padding:.8rem .9rem .85rem;border-bottom:1px solid var(--dir-line)}
+.fases{margin-top:0}
+.fase-track{display:flex;gap:2px;height:6px}
+.fase-track span{border-radius:999px;background:var(--dir-red)}
+.fase-track span.pos{background:#F3AEBB}
+.fase-legend{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-top:.45rem}
+.fase-legend i{display:block;font-size:.7rem;font-style:normal;color:var(--dir-grey)}
+.fase-legend b{display:block;margin-top:.1rem;font-size:.8rem;font-weight:700;
+     font-variant-numeric:tabular-nums}
+.fase-legend .r{text-align:right}
+.sheet-cols{flex:0 0 auto;display:flex;align-items:center;gap:.6rem;height:34px;padding:0 .9rem;
+     background:var(--dir-ink);color:#fff;font-size:.64rem;font-weight:500;letter-spacing:.07em;
+     text-transform:uppercase}
+.sheet-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sheet-foot{flex:0 0 auto;display:flex;align-items:baseline;justify-content:space-between;gap:.7rem;
+     padding:.85rem .9rem;background:#FFF9FA;border-top:2px solid var(--dir-red)}
+.sheet-foot-k{font-size:.86rem;font-weight:700}
+.sheet-foot-s{display:block;font-size:.72rem;font-weight:400;color:var(--dir-grey);margin-top:.1rem}
+.sheet-foot-v{font-size:1.1rem;font-weight:700;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+
+.sc-n,.pl-n{flex:0 0 26px}
+.sc-d,.pl-d{flex:0 0 84px}
+.sc-p,.pl-p{flex:1 1 auto;min-width:0}
+.sc-f,.pl-f{flex:0 0 44px}
+.sc-v,.pl-v{flex:0 0 84px;text-align:right}
+.pl{display:flex;align-items:center;gap:.6rem;min-height:42px;padding:.35rem .9rem;
+     border-top:1px solid var(--dir-line)}
+.pl:first-child{border-top:0}
+.pl-n{font-size:.76rem;color:#A8AEB1;font-variant-numeric:tabular-nums}
+.pl-d{font-size:.82rem;font-weight:500;font-variant-numeric:tabular-nums}
+.pl-p{font-size:.8rem;color:var(--dir-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl-f{font-size:.76rem;color:var(--dir-grey)}
+.pl-v{font-size:.86rem;font-weight:700;letter-spacing:-.2px;font-variant-numeric:tabular-nums}
+.pl.hi{background:var(--err-bg)}
+.pl.hi .pl-v{color:var(--err)}
+.pl-extra .pl-v{color:var(--warn)}
+
+/* folha em tela cheia no celular */
+@media(max-width:860px){
+  .sheet-box{width:100%;height:100%;border-radius:0}
+  .tbl-tools,.tbl-wrap{display:none}
+}
+/* folha como modal no desktop */
+@media(min-width:861px){
+  .sheet{align-items:center;justify-content:center;padding:4vh 1rem}
+  .sheet-box{width:100%;max-width:640px;max-height:92vh;border-radius:14px;
+       box-shadow:0 24px 60px rgba(0,0,0,.25)}
+}
+
+/* =========================================================
+   DESKTOP EM DUAS COLUNAS (>=1200px)
+   Formulario a esquerda, resultado grudado a direita.
+   ========================================================= */
+@media(min-width:1200px){
+  .hero{padding:2rem 2rem 1.75rem}
+  .hero h1{font-size:1.95rem}
+  .hero p{max-width:74ch}
+
+  .unitbar{display:none;background:#fff;border-bottom:1px solid var(--dir-line);padding:.85rem 2rem .95rem}
+  .unitbar.show{display:block}
+  .ub-inner{max-width:1400px;margin:0 auto}
+  .ub-compact{display:none}
+  .ub-strip{display:flex;align-items:center;flex-wrap:wrap;gap:.35rem 0}
+  .ub-i{padding:0 1.35rem;border-right:1px solid var(--dir-line)}
+  .ub-i:first-child{padding-left:0}
+  .ub-i:last-child{border-right:0}
+  .ub-k{display:block;font-size:.66rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;
+       color:var(--dir-grey)}
+  .ub-v{display:block;margin-top:.12rem;font-size:.94rem;font-weight:700;letter-spacing:-.2px}
+  .unid-info,.emp-info{display:none!important}
+
+  .wrap{max-width:1400px;display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:0 2rem;
+       align-items:start;padding:1.5rem 2rem 3rem}
+  #tab-dados{min-width:0}
+  /* coluna de resultado sem scroll proprio: rola junto com a pagina */
+  #tab-result{min-width:0}
+  #tab-result>.result{margin:0}
+  #tab-result>.btn-row{position:static;margin:1.1rem 0 0;padding:1.1rem 0 .1rem;
+       border-top:1px solid var(--dir-line)}
+
+  #tab-dados .g4{grid-template-columns:repeat(3,1fr)}
+
+  #tab-result .tbl-tools,#tab-result .tbl-wrap{display:none}
+  #tab-result .note{display:none}
+}
+
+/* =========================================================
+   BLOCOS PROPRIOS DA TABELA DIRETA
+   Divisao obra/pos-obra, presets e linhas de intermediaria.
+   ========================================================= */
+.divi{display:flex;align-items:flex-end;gap:.7rem;flex-wrap:wrap}
+.divi .fld{flex:0 0 150px}
+.presets{display:flex;gap:.35rem;flex-wrap:wrap;padding-bottom:.15rem}
+@media(max-width:560px){.divi .fld{flex:1 1 calc(50% - .35rem)}.presets{flex:1 1 100%}}
+
+/* barra proporcional obra x pos-obra, logo abaixo dos dois campos */
+.mixbar{display:flex;gap:2px;height:6px;margin-top:.7rem}
+.mixbar span{border-radius:999px;background:var(--dir-red)}
+.mixbar span.pos{background:#F3AEBB}
+.mixleg{display:flex;justify-content:space-between;gap:1rem;margin-top:.4rem;
+     font-size:.72rem;color:var(--dir-grey)}
+.mixleg b{color:var(--dir-ink);font-weight:700}
+.mixleg .r{text-align:right}
+
+.int-row{display:grid;grid-template-columns:1fr 1fr 1fr 44px;gap:.5rem;align-items:center;margin-bottom:.5rem}
+@media(max-width:560px){.int-row{grid-template-columns:1fr 1fr 44px}.int-row .pctcol{grid-column:1/3}}
+.icon-btn{display:flex;align-items:center;justify-content:center;width:44px;height:44px;font:inherit;
+     font-size:1.1rem;line-height:1;color:var(--dir-grey);background:#fff;border:1px solid var(--dir-line);
+     border-radius:9px;cursor:pointer;transition:.15s}
+.icon-btn:hover{border-color:var(--dir-red);color:var(--dir-red)}
+
+/* a folha de parcelas da tabela direta troca a coluna "fase" por "%" */
+.pl-f,.sc-f{text-align:right}
+.pl.grp{min-height:30px;background:#FAFBFB}
+.pl.grp span{font-size:.66rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dir-grey)}
+.pl-int .pl-v{color:var(--dir-red)}
 </style>
 </head>
-<body>
+<body class="tab-dados">
+
+<header class="appbar">
+  <a class="appbar-back" href="index.html" aria-label="Voltar ao portal">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  </a>
+  <div class="appbar-t">Simulador Tabela Direta</div>
+  <img class="appbar-logo" src="assets/img/logo-direcional.jpg" alt="Grupo Direcional">
+</header>
 
 <header class="hero">
   <img class="hero-logo" src="assets/img/logo-direcional.jpg" alt="Grupo Direcional">
@@ -255,11 +611,15 @@ td.num,th.num{text-align:right}
   </div>
 </header>
 
+<div class="unitbar" id="unitbar"></div>
+
 <main class="wrap">
+
+<div id="tab-dados">
 
   <!-- PASSO 1 -->
   <section class="step">
-    <div class="step-label">Passo 1 &middot; Empreendimento e unidade</div>
+    <button class="step-label" type="button" data-step="1"><span class="step-n">1</span><span class="step-t"><span class="s-pre">Passo 1 &middot; </span>Empreendimento e unidade</span><span class="step-sum" id="sum-1"></span><svg class="step-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
     <div class="card">
       <div class="grid g3">
         <div>
@@ -283,7 +643,7 @@ td.num,th.num{text-align:right}
 
   <!-- PASSO 2 -->
   <section class="step">
-    <div class="step-label">Passo 2 &middot; Proposta</div>
+    <button class="step-label" type="button" data-step="2"><span class="step-n">2</span><span class="step-t"><span class="s-pre">Passo 2 &middot; </span>Proposta</span><span class="step-sum" id="sum-2"></span><svg class="step-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
     <div class="card">
       <div class="grid g4">
         <div>
@@ -318,11 +678,11 @@ td.num,th.num{text-align:right}
 
   <!-- PASSO 3 -->
   <section class="step">
-    <div class="step-label">Passo 3 &middot; Fluxo de pagamento</div>
+    <button class="step-label" type="button" data-step="3"><span class="step-n">3</span><span class="step-t"><span class="s-pre">Passo 3 &middot; </span>Fluxo de pagamento</span><span class="step-sum" id="sum-3"></span><svg class="step-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
     <div class="card">
 
-      <div class="sub">Divisão do fluxo</div>
-      <div class="split">
+      <div class="sub-block open" data-sub="divisao"><button class="sub" type="button"><svg class="sub-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg><span class="sub-t">Divisão do fluxo</span><span class="sub-sum" id="ssum-divisao"></span></button><div class="sub-body">
+      <div class="divi">
         <div class="fld">
           <label for="f-obra">Período de obra (%)</label>
           <input id="f-obra" type="text" inputmode="decimal">
@@ -333,36 +693,39 @@ td.num,th.num{text-align:right}
         </div>
         <div class="presets" id="presets"></div>
       </div>
+      <div class="mixbar" id="mixbar"></div>
+      <div class="mixleg" id="mixleg"></div>
       <div class="hint" id="h-obra"></div>
+      </div></div>
 
-      <div class="sub">Entrada &mdash; Ato e Sinais</div>
+      <div class="sub-block" data-sub="entrada"><button class="sub" type="button"><svg class="sub-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg><span class="sub-t">Entrada &mdash; Ato e sinais</span><span class="sub-sum" id="ssum-entrada"></span></button><div class="sub-body">
       <div class="grid g4">
         <div>
           <label for="f-ato">Ato <span id="ato-min-lbl" style="text-transform:none">(min. 3%)</span></label>
           <div class="pair">
             <input class="money" id="f-ato" type="text" inputmode="decimal" placeholder="R$ 0,00">
-            <input class="pct" id="f-ato-p" type="text" inputmode="decimal" placeholder="%">
+            <input class="pct" id="f-ato-p" type="text" inputmode="decimal">
           </div>
         </div>
         <div>
           <label for="f-s1">Sinal 1</label>
           <div class="pair">
             <input class="money" id="f-s1" type="text" inputmode="decimal" placeholder="R$ 0,00">
-            <input class="pct" id="f-s1-p" type="text" inputmode="decimal" placeholder="%">
+            <input class="pct" id="f-s1-p" type="text" inputmode="decimal">
           </div>
         </div>
         <div>
           <label for="f-s2">Sinal 2</label>
           <div class="pair">
             <input class="money" id="f-s2" type="text" inputmode="decimal" placeholder="R$ 0,00">
-            <input class="pct" id="f-s2-p" type="text" inputmode="decimal" placeholder="%">
+            <input class="pct" id="f-s2-p" type="text" inputmode="decimal">
           </div>
         </div>
         <div>
           <label for="f-s3">Sinal 3</label>
           <div class="pair">
             <input class="money" id="f-s3" type="text" inputmode="decimal" placeholder="R$ 0,00">
-            <input class="pct" id="f-s3-p" type="text" inputmode="decimal" placeholder="%">
+            <input class="pct" id="f-s3-p" type="text" inputmode="decimal">
           </div>
         </div>
       </div>
@@ -371,8 +734,9 @@ td.num,th.num{text-align:right}
         <button class="btn btn-ghost" id="b-entrada10" type="button">Preencher 10% (3% + 7%)</button>
         <button class="btn btn-ghost" id="b-atoonly" type="button">Somente Ato (10%)</button>
       </div>
+      </div></div>
 
-      <div class="sub">Intermediárias <span style="font-weight:400;color:var(--dir-grey);font-size:.82rem">&mdash; máximo 12% do valor da venda, última até 3 meses antes da entrega</span></div>
+      <div class="sub-block" data-sub="interm"><button class="sub" type="button"><svg class="sub-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg><span class="sub-t">Intermediárias</span><span class="lt">&mdash; máximo 12% do valor da venda, última até 3 meses antes da entrega</span><span class="sub-sum" id="ssum-interm"></span></button><div class="sub-body">
       <div id="int-list"></div>
       <div class="btn-row">
         <button class="btn btn-ghost" id="b-int-add" type="button">+ Adicionar intermediária</button>
@@ -381,9 +745,10 @@ td.num,th.num{text-align:right}
         <button class="btn btn-ghost" id="b-int-clr" type="button">Limpar</button>
       </div>
       <div class="hint" id="h-int"></div>
+      </div></div>
 
-      <div class="sub">Mensais</div>
-      <div class="grid g3">
+      <div class="sub-block" data-sub="mensais"><button class="sub" type="button"><svg class="sub-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg><span class="sub-t">Mensais</span><span class="sub-sum" id="ssum-mensais"></span></button><div class="sub-body">
+      <div class="grid g2">
         <div>
           <label for="f-qtd">Quantidade de mensais</label>
           <input id="f-qtd" type="number" min="0" step="1">
@@ -391,46 +756,126 @@ td.num,th.num{text-align:right}
         </div>
         <div>
           <label>Valor de cada mensal</label>
-          <input id="f-mensal" type="text" readonly style="background:#FAFBFB;font-weight:700">
+          <input id="f-mensal" type="text" readonly>
           <div class="hint">Calculado: saldo do período de obra dividido pela quantidade.</div>
         </div>
-        <div>
-          <label for="f-obs">Observações</label>
-          <textarea id="f-obs" placeholder="Opcional - sai no rodapé do PDF"></textarea>
-        </div>
       </div>
+      </div></div>
 
     </div>
   </section>
 
-  <!-- RESULTADO -->
+  <!-- PASSO 4 -->
   <section class="step">
-    <div class="step-label">Simulação</div>
+    <button class="step-label" type="button" data-step="4"><span class="step-n">4</span><span class="step-t"><span class="s-pre">Passo 4 &middot; </span>Observações</span><span class="step-sum" id="sum-4"></span><svg class="step-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+    <div class="card">
+      <div class="obs-wrap">
+        <div id="obs-toolbar">
+          <span class="ql-formats">
+            <select class="ql-header"><option value="1"></option><option value="2"></option><option value="3"></option><option selected></option></select>
+          </span>
+          <span class="ql-formats">
+            <button class="ql-bold"></button><button class="ql-italic"></button>
+            <button class="ql-underline"></button><button class="ql-strike"></button>
+          </span>
+          <span class="ql-formats">
+            <select class="ql-color"></select><select class="ql-background"></select>
+          </span>
+          <span class="ql-formats">
+            <button class="ql-list" value="ordered"></button>
+            <button class="ql-list" value="bullet"></button>
+            <button class="ql-indent" value="-1"></button>
+            <button class="ql-indent" value="+1"></button>
+          </span>
+          <span class="ql-formats"><select class="ql-align"></select></span>
+          <span class="ql-formats">
+            <button class="ql-link"></button><button class="ql-image"></button>
+          </span>
+          <span class="ql-formats"><button class="ql-clean"></button></span>
+        </div>
+        <div id="obs-editor"></div>
+      </div>
+      <div class="hint" id="h-obs">Sai no PDF com a formatação e as imagens que você usar aqui.</div>
+    </div>
+  </section>
+
+</div><!-- /tab-dados -->
+
+<div id="tab-result">
+
+  <section class="result">
+    <div class="step-label result-label">Simulação</div>
     <div class="banner" id="banner"><span>&#9888;</span> Fluxo fora da política &mdash; revise os pontos em vermelho</div>
+    <div class="vd" id="vd" style="display:none"></div>
     <div class="summary" id="summary"></div>
     <div class="alerts" id="alerts"></div>
     <div class="tbl-wrap"><table id="tbl"><thead><tr>
       <th>#</th><th>Vencimento</th><th>Parcela</th><th class="num">Valor</th><th class="num">%</th>
     </tr></thead><tbody id="tbody"></tbody></table></div>
     <div class="note" id="note"></div>
-    <div class="btn-row">
-      <button class="btn btn-check" id="b-verificar" type="button">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        Verificar Simulação
-      </button>
-      <button class="btn btn-primary" id="b-pdf" type="button">Baixar PDF</button>
-      <button class="btn btn-ghost" id="b-reset" type="button">Limpar simulação</button>
-    </div>
   </section>
 
-  <div class="foot">
+  <div class="btn-row" id="acoes">
+    <button class="btn btn-ghost btn-ico" id="b-reset" type="button" title="Limpar simulação" aria-label="Limpar simulação">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+    </button>
+    <button class="btn btn-ghost" id="b-parcelas" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"></rect><line x1="8" y1="12" x2="16" y2="12"></line><line x1="8" y1="16" x2="13" y2="16"></line></svg>
+      Ver parcelas
+    </button>
+    <button class="btn btn-primary" id="b-pdf" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      Baixar PDF
+    </button>
+  </div>
+
+</div><!-- /tab-result -->
+
+</main>
+
+<div class="foot">
+  <div class="foot-inner">
     CONDIÇÕES DE PAGAMENTO: Ato e Sinais 1, 2 e 3 sem juros. Mensais, Intermediárias, Anuais e Saldo
     pós-chaves corrigidos pelo INCC durante o período de obra. Após a obra: 120 parcelas mensais
     corrigidas pelo IPCA + 1% a.m. Valores sujeitos a confirmação e aprovação da Direcional. &middot;
     <a href="index.html">Voltar ao portal</a>
   </div>
+</div>
 
-</main>
+<nav class="tabbar" id="tabbar">
+  <button type="button" class="tabbtn on" data-tab="dados">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.5"></rect><line x1="8" y1="8" x2="16" y2="8"></line><line x1="8" y1="12" x2="16" y2="12"></line><line x1="8" y1="16" x2="13" y2="16"></line></svg>
+    <span>Dados</span>
+  </button>
+  <button type="button" class="tabbtn" data-tab="result">
+    <span class="tabbtn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="20" x2="5" y2="12"></line><line x1="12" y1="20" x2="12" y2="5"></line><line x1="19" y1="20" x2="19" y2="9"></line></svg><i class="tabdot" id="tabdot"></i></span>
+    <span>Resultado</span>
+  </button>
+</nav>
+
+<!-- folha com o fluxo completo: tela cheia no mobile, modal no desktop -->
+<div class="sheet" id="sheet" aria-hidden="true">
+  <div class="sheet-box" role="dialog" aria-modal="true" aria-labelledby="sheet-t">
+    <div class="sheet-head">
+      <button class="sheet-close" id="sheet-close" type="button" aria-label="Fechar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+      <div class="sheet-ttl">
+        <div class="sheet-t" id="sheet-t">Fluxo completo</div>
+        <div class="sheet-s" id="sheet-s"></div>
+      </div>
+    </div>
+    <div class="sheet-tools">
+      <div class="fases" id="sheet-fases"></div>
+    </div>
+    <div class="sheet-cols">
+      <span class="sc-n">#</span><span class="sc-d">Vencimento</span>
+      <span class="sc-p">Parcela</span><span class="sc-f">%</span><span class="sc-v">Valor</span>
+    </div>
+    <div class="sheet-body" id="sheet-body"></div>
+    <div class="sheet-foot" id="sheet-foot"></div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
@@ -479,7 +924,8 @@ var MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','
    ESTADO
    ========================================================= */
 var S = {
-  empId:null, valor:0, metragem:0, blocoId:null, unidade:'', cliente:'', corretor:'', obs:'',
+  empId:null, valor:0, metragem:0, blocoId:null, unidade:'', cliente:'', corretor:'',
+  obs:'', obsHtml:'',   // obs = texto puro (checagem); obsHtml = o que o editor rico produz
   dataVenda:hoje(), pctObra:null, renda:0,
   ato:0, s1:0, s2:0, s3:0,
   interm:[],          // [{mes:<idx>, valor:<num>}]
@@ -791,6 +1237,18 @@ function renderPresets(){
   $('presets').innerHTML = html;
 }
 
+/* barra proporcional obra x pos-obra, logo abaixo dos dois campos de % */
+function renderMix(){
+  var c=calc();
+  if(!c.e || c.valor<=0){ $('mixbar').innerHTML=''; $('mixleg').innerHTML=''; return; }
+  $('mixbar').innerHTML =
+    '<span style="flex:'+Math.max(c.pObra,0.001)+'"></span>'+
+    '<span class="pos" style="flex:'+Math.max(c.pPos,0.001)+'"></span>';
+  $('mixleg').innerHTML =
+    '<span>Obra <b>'+brl(c.totalObra)+'</b></span>'+
+    '<span class="r">Pós-obra <b>'+brl(c.saldoPos)+'</b></span>';
+}
+
 function renderInterm(){
   var T=totalMeses(), c=calc();
   var limite=T-POL.mesesAntesEntrega;
@@ -820,18 +1278,30 @@ function renderInterm(){
 function renderResultado(){
   var c=calc(), av=validar(c), T=totalMeses();
 
-  /* KPIs */
+  /* KPIs: a mensal e o numero que o corretor negocia, entao ela vira o hero.
+     A barra do hero mostra a fatia do periodo de obra dentro do valor total. */
   var entP = c.valor>0 ? c.entrada/c.valor*100 : 0;
+  var faixa = c.qtd>0 ? ('de '+rotuloMes(inicioMensais())+' a '+rotuloMes(inicioMensais()+c.qtd-1)) : 'sem mensais';
   $('summary').innerHTML =
-    kpi('Entrada (Ato + Sinais)', brl(c.entrada), pct(entP)+' do valor') +
-    kpi('Período de obra', brl(c.totalObra), pct(c.pObra)+' &middot; '+(c.qtd)+' mensais') +
-    kpi('Valor da mensal', brl(c.mensal), c.qtd>0?('de '+rotuloMes(inicioMensais())+' a '+rotuloMes(inicioMensais()+c.qtd-1)):'sem mensais', true) +
-    kpi('Saldo pós-obra', brl(c.saldoPos), pct(c.pPos)+' &middot; '+POL.prazoPosObra+'x de '+brl(c.parcelaPos)+' + IPCA + 1% a.m.') +
-    kpi('Valor do m&sup2;', c.m2>0?brl(c.m2):'&mdash;', S.metragem>0?(S.metragem+' m&sup2;'):'informe a metragem');
+    '<div class="kpi-hero'+(c.mensal>0?'':' off')+'">'+
+      '<div class="kh-k">Valor da mensal</div>'+
+      '<div class="kh-row"><span class="kh-v">'+brl(c.mensal)+'</span>'+
+        '<span class="kh-lim">'+(c.qtd>0?(c.qtd+' mensais'):'sem mensais')+'</span></div>'+
+      '<div class="kh-bar"><i style="width:'+Math.max(0,Math.min(100,c.pObra))+'%"></i></div>'+
+      '<div class="kh-sub">'+pct(c.pObra)+' no período de obra &middot; '+faixa+'</div>'+
+    '</div>'+
+    '<div class="kpi-duo">'+
+      kpi('Entrada', brl(c.entrada), pct(entP)+' &middot; ato + sinais', entP>=POL.entradaTotal-0.001 && c.entrada>0) +
+      kpi('Período de obra', brl(c.totalObra), pct(c.pObra)+' &middot; '+c.qtd+' mensais') +
+      kpi('Saldo pós-obra', brl(c.saldoPos), pct(c.pPos)+' &middot; '+POL.prazoPosObra+'x de '+brl(c.parcelaPos)) +
+      kpi('Valor do m&sup2;', c.m2>0?brl(c.m2):'&mdash;', S.metragem>0?(S.metragem+' m&sup2; privativos'):'informe a metragem') +
+    '</div>';
 
-  /* Alertas */
-  $('alerts').innerHTML = av.map(function(a){
-    var ico = a.n==='err'?'&#10007;':(a.n==='warn'?'&#9888;':'&#10003;');
+  renderVeredito(c);
+
+  /* Alertas: so erros e avisos. O "tudo certo" ja esta no veredito. */
+  $('alerts').innerHTML = av.filter(function(a){ return a.n!=='ok'; }).map(function(a){
+    var ico = a.n==='err'?'&#10007;':'&#9888;';
     return '<div class="alert '+a.n+'"><span class="alert-ico">'+ico+'</span><span>'+a.t+'</span></div>';
   }).join('');
   $('banner').className = 'banner'+(av.some(function(a){return a.n==='err';})?' on':'');
@@ -853,7 +1323,8 @@ function renderResultado(){
   $('h-m2').innerHTML = c.m2>0 ? ('Valor do m&sup2;: <b>'+brl(c.m2)+'</b>') : '';
   $('f-mensal').value = brl(c.mensal);
 
-  /* Tabela */
+  /* Tabela (visivel so nas larguras intermediarias - no celular e na coluna
+     estreita do desktop o fluxo completo abre na folha "Ver parcelas") */
   var L=linhas(c), tb=$('tbody');
   if(!L.length){
     tb.innerHTML='<tr><td colspan="5"><div class="empty">Selecione o empreendimento e informe o valor da venda para montar o fluxo.</div></td></tr>';
@@ -882,8 +1353,91 @@ function renderResultado(){
     : '';
 }
 
-function kpi(lab,val,sub,hero){
-  return '<div class="kpi'+(hero?' hero-kpi':'')+'"><div class="kpi-lab">'+lab+'</div>'+
+/* =========================================================
+   VEREDITO
+   Faixa fixa no topo do resultado com o resultado da politica.
+   Le o mesmo checklistAprovacao() do popup, entao o card e o
+   popup nunca divergem. Clicar no cabecalho abre o detalhe.
+   ========================================================= */
+function vereditoDe(c){
+  if(!c.e || c.valor<=0) return null;
+  var itens = checklistAprovacao(c);
+  var graves = itens.filter(function(it){ return it.grave; });
+  var leves  = itens.filter(function(it){ return !it.grave; });
+  var falhaGrave = graves.filter(function(it){ return !it.ok; }).length;
+  var falhaLeve  = leves.filter(function(it){ return !it.ok; }).length;
+  var final = falhaGrave ? 'Reprovado' : (falhaLeve ? 'Comitê' : 'Aprovado');
+  return { itens:itens, graves:graves, final:final, falhaGrave:falhaGrave, falhaLeve:falhaLeve,
+           okGraves: graves.length-falhaGrave };
+}
+function classeVeredito(f){ return f==='Aprovado'?'aprovado':(f==='Comitê'?'comite':'reprovado'); }
+function classeSt(f){ return f==='Aprovado'?'ok':(f==='Comitê'?'comite':'rep'); }
+
+function renderVeredito(c){
+  var v=vereditoDe(c), el=$('vd');
+  if(!v){ el.style.display='none'; el.innerHTML=''; return; }
+
+  var tit = v.final==='Aprovado' ? 'Dentro da política'
+          : (v.final==='Comitê' ? 'Passa por comitê' : 'Fora da política');
+  var sub = v.final==='Aprovado'
+      ? v.okGraves+' de '+v.graves.length+' checagens aprovadas'+(S.renda>0?'':' &middot; informe a renda para checar o comprometimento')
+      : (v.final==='Comitê' ? 'as regras obrigatórias passam, mas há pontos que dependem de aprovação'
+                            : v.falhaGrave+' de '+v.graves.length+' checagens obrigatórias fora do limite');
+  var ico = v.final==='Aprovado'
+    ? '<polyline points="20 6 9 17 4 12"></polyline>'
+    : (v.final==='Comitê'
+        ? '<line x1="12" y1="8" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>'
+        : '<line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>');
+
+  /* no card so entram as checagens de numero, que cabem em uma linha;
+     o checklist inteiro (com o detalhe de cada item) fica no popup */
+  var linhasVd = resumoVeredito(c);
+
+  el.style.display='';
+  el.innerHTML =
+    '<div class="vd-head '+classeVeredito(v.final)+'" role="button" tabindex="0" title="Ver checklist detalhado">'+
+      '<span class="vh-ico"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">'+ico+'</svg></span>'+
+      '<span class="vh-txt"><b class="vh-tit">'+tit+'</b><span class="vh-sub">'+sub+' &middot; toque para ver o detalhe</span></span>'+
+      '<span class="vh-mais"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>'+
+    '</div>'+
+    linhasVd.map(function(it){
+      return '<div class="vd-item">'+
+        '<span class="vi-lab">'+it.lab+'</span>'+
+        '<span class="vi-val">'+it.valor+'</span>'+
+        '<span class="vi-lim">'+it.limite+'</span>'+
+        '<span class="st '+classeSt(it.st)+'">'+(it.st==='Aprovado'?'Ok':(it.st==='Comitê'?'Comitê':'Fora'))+'</span>'+
+      '</div>';
+    }).join('');
+}
+
+/* as tres a quatro linhas numericas do card de veredito */
+function resumoVeredito(c){
+  var out=[], T=totalMeses();
+  var atoMin=atoMinAtual();
+  var atoP = c.valor>0 ? S.ato/c.valor*100 : 0;
+  var entP = c.valor>0 ? c.entrada/c.valor*100 : 0;
+  var intP = c.valor>0 ? c.somaInterm/c.valor*100 : 0;
+
+  out.push({ lab:'Ato', valor:pct(atoP), limite:'mín. '+atoMin+'%',
+             st:(S.ato>0 && atoP>=atoMin-0.001)?'Aprovado':'Reprovado' });
+  out.push({ lab:'Entrada', valor:pct(entP), limite:'mín. '+POL.entradaTotal+'%',
+             st:(c.entrada>=c.valor*POL.entradaTotal/100-0.01)?'Aprovado':'Reprovado' });
+  out.push({ lab:'Intermediárias', valor:pct(intP), limite:'máx. '+POL.intermMax+'%',
+             st:(intP<=POL.intermMax+0.001)?'Aprovado':'Reprovado' });
+  out.push({ lab:'Período de obra', valor:pct(c.pObra),
+             limite:c.e?('mín. '+c.e.pctObra+'%'):'',
+             st:(!c.e || c.pObra>=c.e.pctObra-0.001)?'Aprovado':'Comitê' });
+  if(S.renda>0){
+    var fin=calcFinanciamento(c.saldoPos);
+    var cr = S.renda>0 ? fin.parcela1/S.renda*100 : 0;
+    out.push({ lab:'Compr. de renda', valor:pct(cr), limite:'máx. '+FIN.comprometimentoMax+'%',
+               st:(cr<=FIN.comprometimentoMax+0.001)?'Aprovado':'Reprovado' });
+  }
+  return out;
+}
+
+function kpi(lab,val,sub,ok){
+  return '<div class="kpi'+(ok?' kpi-ok':'')+'"><div class="kpi-lab">'+lab+'</div>'+
          '<div class="kpi-val">'+val+'</div><div class="kpi-sub">'+(sub||'')+'</div></div>';
 }
 function mark(id,bad,warn){
@@ -921,7 +1475,274 @@ function atualizaModoInvestidor(){
 
 function render(){
   atualizaModoInvestidor();
-  renderEmpInfo(); renderUnidInfo(); renderPresets(); renderInterm(); renderResultado();
+  renderEmpInfo(); renderUnidInfo(); renderPresets(); renderMix();
+  renderInterm(); renderResultado(); renderShell();
+}
+
+/* =========================================================
+   CASCA (barra da unidade, acordeao, abas)
+   So le S / calc() e escreve texto - nao altera estado nem
+   participa do calculo.
+   ========================================================= */
+function secaoDo(el){ while(el && el.nodeName!=='SECTION') el=el.parentNode; return el; }
+function setSum(n,txt,done,warn){
+  var el=$('sum-'+n); if(!el) return;
+  el.textContent = txt||'';
+  var sec=secaoDo(el); if(!sec) return;
+  sec.classList.toggle('done', !!done && !warn);
+  sec.classList.toggle('warn', !!warn);
+}
+function setSubSum(k,txt){ var el=$('ssum-'+k); if(el) el.textContent=txt||''; }
+
+function renderShell(){
+  var e=emp();
+  var d=(unidadesEmp.detalhes||{})[S.unidade];
+  var c=calc();
+  var T=totalMeses();
+
+  /* barra da unidade (fica visivel nas duas abas) */
+  var ub=$('unitbar');
+  if(ub){
+    if(e){
+      var entrega = e.entrega.split('-');
+      entrega = MESES[(+entrega[1])-1]+'/'+entrega[0];
+      var tipo = d ? (d.tipoLabel + (d.areaPriv>0 ? ' · '+d.areaPriv+' m²' : ''))
+                   : 'Escolha a torre e a unidade';
+      var valor = S.valor>0 ? brl(S.valor) : (d ? brl(d.tabelaDireta) : '');
+      function ubi(k,v){ return '<div class="ub-i"><span class="ub-k">'+k+'</span><span class="ub-v">'+v+'</span></div>'; }
+      var strip = ubi('Unidade', S.unidade || 'não escolhida');
+      if(d){
+        strip += ubi('Tipologia', d.tipoLabel)+
+                 ubi('Área privativa', d.areaPriv>0 ? d.areaPriv+' m²' : '—')+
+                 ubi('Sol', d.sol || '—')+
+                 ubi('Vagas', d.vagas!=null ? d.vagas : '—')+
+                 ubi('Tabela Direta', brl(d.tabelaDireta));
+      }
+      if(S.valor>0) strip += ubi('Valor da venda', brl(S.valor));
+      strip += ubi('Entrega', entrega);
+      ub.className='unitbar show';
+      ub.innerHTML =
+        '<div class="ub-inner">'+
+        '<div class="ub-emp"><span>'+e.nome+'</span></div>'+
+        '<div class="ub-compact">'+
+          '<div class="ub-r">'+
+            '<span class="ub-a">'+(S.unidade ? 'Unidade '+S.unidade : 'Unidade não escolhida')+'</span>'+
+            '<span class="ub-b">'+valor+'</span>'+
+          '</div>'+
+          '<div class="ub-r">'+
+            '<span class="ub-c">'+tipo+'</span>'+
+            '<span class="ub-d">Entrega '+entrega+'</span>'+
+          '</div>'+
+        '</div>'+
+        '<div class="ub-strip">'+strip+'</div>'+
+        '</div>';
+    } else { ub.className='unitbar'; ub.innerHTML=''; }
+  }
+
+  /* resumos dos passos (com estado de atencao quando ha erro no passo) */
+  var av = validar(c);
+  function erroEm(cods){
+    return av.some(function(a){ return a.n==='err' && cods.indexOf(a.c)>=0; });
+  }
+  var warn3 = erroEm(['ato','entrada','int','qtd','obra']);
+
+  setSum(1, e ? (e.nome + (S.unidade ? ' · '+S.unidade : '')) : '', !!(e && S.unidade));
+  var r2=[];
+  if(S.valor>0) r2.push(brl(S.valor));
+  if(S.metragem>0) r2.push(S.metragem+' m²');
+  if(S.cliente) r2.push(S.cliente);
+  setSum(2, r2.join(' · '), S.valor>0);
+  var r3=[];
+  if(e) r3.push(pct(c.pObra)+' / '+pct(c.pPos));
+  if(c.qtd>0) r3.push(c.qtd+'× '+brl(c.mensal));
+  setSum(3, r3.join(' · '), !!(e && S.valor>0 && c.entrada>0), warn3);
+  setSum(4, S.obs ? 'preenchidas' : '', false);
+
+  /* resumos das gavetas do passo 3 */
+  setSubSum('divisao', e ? (pct(c.pObra)+' obra / '+pct(c.pPos)+' pós-obra') : '');
+  var entP = c.valor>0 ? c.entrada/c.valor*100 : 0;
+  setSubSum('entrada', c.entrada>0 ? (brl(c.entrada)+' · '+pct(entP)) : 'não lançada');
+  setSubSum('interm', S.interm.length
+    ? (S.interm.length+' · '+brl(c.somaInterm))
+    : 'nenhuma');
+  setSubSum('mensais', c.qtd>0 ? (c.qtd+' × '+brl(c.mensal)) : 'sem mensais');
+
+  /* ponto de status na aba Resultado */
+  var dot=$('tabdot');
+  if(dot){
+    var v=vereditoDe(c), cls='tabdot';
+    if(v) cls += v.final==='Aprovado' ? ' ok' : (v.final==='Comitê' ? ' comite' : ' rep');
+    dot.className=cls;
+  }
+}
+
+/* =========================================================
+   FOLHA DO FLUXO COMPLETO
+   Substitui a tabela no celular e na coluna estreita do desktop.
+   ========================================================= */
+function renderSheet(){
+  var c=calc(), T=totalMeses(), e=emp();
+  var L=linhas(c);
+
+  if(!c.e || c.valor<=0 || !L.length){
+    $('sheet-s').textContent='';
+    $('sheet-fases').innerHTML='';
+    $('sheet-body').innerHTML='<div class="empty">Selecione o empreendimento e informe o valor da venda para montar o fluxo.</div>';
+    $('sheet-foot').innerHTML='';
+    return;
+  }
+
+  $('sheet-s').textContent = e.nome + (S.unidade ? ' · Unidade '+S.unidade : '') +
+                             ' · '+(L.length+1)+' lançamentos';
+
+  $('sheet-fases').innerHTML =
+    '<div class="fase-track">'+
+      '<span style="flex:'+Math.max(c.pObra,0.001)+'"></span>'+
+      '<span class="pos" style="flex:'+Math.max(c.pPos,0.001)+'"></span>'+
+    '</div>'+
+    '<div class="fase-legend">'+
+      '<span><i>Período de obra · '+pct(c.pObra)+'</i><b>'+brl(c.totalObra)+'</b></span>'+
+      '<span class="r"><i>Pós-obra · '+pct(c.pPos)+'</i><b>'+brl(c.saldoPos)+'</b></span>'+
+    '</div>';
+
+  var html='', somaObra=0;
+  L.forEach(function(r,i){
+    somaObra+=r.valor;
+    html += '<div class="pl'+(r.int?' pl-int':'')+'">'+
+      '<span class="pl-n">'+(i+1)+'</span>'+
+      '<span class="pl-d">'+fmtData(dataDoIndice(r.k))+'</span>'+
+      '<span class="pl-p">'+r.tipo+'</span>'+
+      '<span class="pl-f">'+(c.valor>0?pct(r.valor/c.valor*100):'—')+'</span>'+
+      '<span class="pl-v">'+brl(r.valor)+'</span>'+
+    '</div>';
+  });
+  html += '<div class="pl grp"><span>Pós-obra — saldo para financiamento / repasse</span></div>';
+  html += '<div class="pl">'+
+      '<span class="pl-n">'+(L.length+1)+'</span>'+
+      '<span class="pl-d">'+(T>0?rotuloMes(T+1):'—')+'</span>'+
+      '<span class="pl-p">Saldo pós-obra · '+POL.prazoPosObra+'x de '+brl(c.parcelaPos)+'</span>'+
+      '<span class="pl-f">'+(c.valor>0?pct(c.saldoPos/c.valor*100):'—')+'</span>'+
+      '<span class="pl-v">'+brl(c.saldoPos)+'</span>'+
+    '</div>';
+  $('sheet-body').innerHTML=html;
+
+  $('sheet-foot').innerHTML =
+    '<span class="sheet-foot-k">Total da unidade'+
+      '<span class="sheet-foot-s">obra + saldo pós-obra</span></span>'+
+    '<span class="sheet-foot-v">'+brl(somaObra+c.saldoPos)+'</span>';
+}
+
+function abreSheet(){
+  $('sheet').classList.add('open');
+  $('sheet').setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+  renderSheet();
+  $('sheet-body').scrollTop=0;
+  $('sheet-close').focus();
+}
+function fechaSheet(){
+  $('sheet').classList.remove('open');
+  $('sheet').setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+}
+$('sheet-close').addEventListener('click', fechaSheet);
+$('sheet').addEventListener('click', function(ev){ if(ev.target===this) fechaSheet(); });
+document.addEventListener('keydown', function(ev){
+  if(ev.key==='Escape' && $('sheet').classList.contains('open')) fechaSheet();
+});
+
+/* =========================================================
+   ABAS E ACORDEAO
+   ========================================================= */
+function setTab(t){
+  document.body.classList.remove('tab-dados','tab-result');
+  document.body.classList.add('tab-'+t);
+  var bs=document.querySelectorAll('.tabbtn');
+  for(var i=0;i<bs.length;i++) bs[i].classList.toggle('on', bs[i].getAttribute('data-tab')===t);
+  window.scrollTo(0,0);
+}
+
+/* acima de 860px o CSS mantem tudo aberto, entao o aria acompanha o
+   que a tela realmente mostra, nao a classe .open */
+function syncAria(){
+  var mob = window.matchMedia('(max-width:860px)').matches;
+  var i, b, bs;
+  bs=document.querySelectorAll('button.step-label');
+  for(i=0;i<bs.length;i++){ b=bs[i];
+    b.setAttribute('aria-expanded', mob ? (b.parentNode.classList.contains('open')?'true':'false') : 'true'); }
+  bs=document.querySelectorAll('.sub-block > button.sub');
+  for(i=0;i<bs.length;i++){ b=bs[i];
+    b.setAttribute('aria-expanded', mob ? (b.parentNode.classList.contains('open')?'true':'false') : 'true'); }
+}
+window.addEventListener('resize', syncAria);
+
+document.addEventListener('click', function(ev){
+  var t=ev.target; if(!t || !t.closest) return;
+  var lb=t.closest('button.step-label');
+  if(lb){
+    var sec=lb.parentNode, abrir=!sec.classList.contains('open');
+    var abertas=document.querySelectorAll('section.step.open');
+    for(var i=0;i<abertas.length;i++) abertas[i].classList.remove('open');
+    if(abrir) sec.classList.add('open');
+    syncAria(); return;
+  }
+  var sb=t.closest('.sub-block > button.sub');
+  if(sb){
+    var bloco=sb.parentNode, abrirS=!bloco.classList.contains('open');
+    var abS=document.querySelectorAll('.sub-block.open');
+    for(var j=0;j<abS.length;j++) abS[j].classList.remove('open');
+    if(abrirS) bloco.classList.add('open');
+    syncAria(); return;
+  }
+  var tb=t.closest('.tabbtn');
+  if(tb){ setTab(tb.getAttribute('data-tab')); return; }
+  if(t.closest('#b-parcelas')){ abreSheet(); return; }
+});
+
+/* passo 1 comeca aberto */
+(function(){ var s1=secaoDo($('sum-1')); if(s1) s1.classList.add('open'); syncAria(); })();
+
+/* =========================================================
+   EDITOR DE OBSERVACOES (Quill -> PDF)
+   ========================================================= */
+var quill = null;
+
+/* imagem colada em base64 pesa no PDF - avisa quando passa do razoavel */
+function avisaTamanhoObs(){
+  var h=$('h-obs'); if(!h) return;
+  var kb = S.obsHtml ? Math.round(S.obsHtml.length/1024) : 0;
+  if(kb>1200){
+    h.className='hint err';
+    h.textContent='As observações estão muito pesadas ('+kb+' KB) — remova ou reduza as imagens antes de gerar o PDF.';
+  } else if(kb>500){
+    h.className='hint warn';
+    h.textContent='Observações com '+kb+' KB de imagens — o PDF pode demorar para ser gerado.';
+  } else {
+    h.className='hint';
+    h.textContent='Sai no PDF com a formatação e as imagens que você usar aqui.';
+  }
+}
+
+function initEditor(){
+  if(typeof Quill==='undefined'){
+    /* CDN fora do ar: cai para uma caixa de texto simples */
+    $('obs-toolbar').style.display='none';
+    $('obs-editor').innerHTML='<textarea id="f-obs" style="min-height:200px" '+
+      'placeholder="Opcional - sai no rodapé do PDF"></textarea>';
+    $('f-obs').addEventListener('input', function(){ S.obs=this.value; S.obsHtml=''; renderShell(); });
+    return;
+  }
+  quill = new Quill('#obs-editor', {
+    theme:'snow',
+    placeholder:'Opcional — o que você escrever aqui sai no PDF.',
+    modules:{ toolbar:'#obs-toolbar' }
+  });
+  if(S.obsHtml) quill.root.innerHTML=S.obsHtml;
+  quill.on('text-change', function(){
+    S.obsHtml = quill.getLength()>1 || quill.root.querySelector('img') ? quill.root.innerHTML : '';
+    S.obs = SimRichPdf.texto(S.obsHtml);
+    avisaTamanhoObs(); renderShell();
+  });
 }
 
 /* =========================================================
@@ -1044,7 +1865,11 @@ function sincronizaCampos(){
   $('f-corretor').value = S.corretor;
   $('f-renda').value    = S.renda?brl(S.renda):'';
   $('f-data').value     = S.dataVenda;
-  $('f-obs').value      = S.obs;
+  /* o editor rico chega por script defer - antes disso nao ha o que sincronizar */
+  if(quill){
+    if(S.obsHtml){ if(quill.root.innerHTML!==S.obsHtml) quill.root.innerHTML=S.obsHtml; }
+    else if(quill.getLength()>1) quill.setText('');
+  } else if($('f-obs')){ $('f-obs').value = S.obs; }
   var p = S.pctObra===null ? (e?e.pctObra:'') : S.pctObra;
   $('f-obra').value = p===''?'':String(p).replace('.',',');
   $('f-pos').value  = p===''?'':String(100-p).replace('.',',');
@@ -1103,7 +1928,6 @@ $('f-renda').addEventListener('blur',  function(){
   this.value = S.renda?brl(S.renda):'';
   if(S.renda>0){ this.classList.remove('bad'); $('h-renda').style.display='none'; }
 });
-$('f-obs').addEventListener('input',     function(){ S.obs=this.value; });
 $('f-data').addEventListener('change',   function(){ S.dataVenda=this.value||hoje(); S.qtd=null; render(); });
 
 $('f-obra').addEventListener('input', function(){
@@ -1181,9 +2005,12 @@ $('b-int-anu').addEventListener('click', function(){ gerar(12); });
 $('b-int-clr').addEventListener('click', function(){ S.interm=[]; render(); });
 
 $('b-reset').addEventListener('click', function(){
-  S={ empId:null, valor:0, metragem:0, blocoId:null, unidade:'', cliente:'', corretor:'', obs:'',
+  S={ empId:null, valor:0, metragem:0, blocoId:null, unidade:'', cliente:'', corretor:'',
+      obs:'', obsHtml:'',
       dataVenda:hoje(), pctObra:null, renda:0, ato:0, s1:0, s2:0, s3:0, interm:[], qtd:null };
-  sincronizaCampos(); render();
+  if(quill) quill.setText('');
+  sincronizaCampos(); render(); avisaTamanhoObs();
+  setTab('dados');
   window.scrollTo({top:0,behavior:'smooth'});
 });
 
@@ -1204,28 +2031,31 @@ document.addEventListener('keydown', function(ev){
   if(ev.key==='Escape' && $('modal-overlay').classList.contains('open')) fecharModal();
 });
 
-$('b-verificar').addEventListener('click', function(){
+/* O botao "Verificar Simulacao" saiu: o veredito fica visivel o tempo todo
+   no topo do resultado e o checklist detalhado abre clicando no cabecalho.
+   A renda deixou de ser obrigatoria aqui - sem ela o checklist simplesmente
+   nao traz a linha de comprometimento. */
+$('vd').addEventListener('click', function(ev){
+  if(ev.target.closest('.vd-head')) abreVerificacao();
+});
+
+function abreVerificacao(){
   var c=calc();
   if(!c.e || c.valor<=0){
     alert('Selecione o empreendimento e informe o valor da venda antes de verificar a simulação.');
     return;
   }
-  if(S.renda<=0){
-    $('f-renda').classList.add('bad');
-    var h=$('h-renda'); h.style.display='block';
-    h.innerHTML='Preencha a renda do cliente para verificar a simulação.';
-    $('f-renda').scrollIntoView({behavior:'smooth',block:'center'});
-    $('f-renda').focus();
-    return;
-  }
 
   var itens = checklistAprovacao(c);
-  var aprovado = itens.filter(function(it){ return it.grave; }).every(function(it){ return it.ok; });
+  var v = vereditoDe(c);
+  var aprovado = v.final==='Aprovado', comite = v.final==='Comitê';
 
-  $('modal-banner').className = 'modal-banner '+(aprovado?'aprovado':'reprovado');
+  $('modal-banner').className = 'modal-banner '+classeVeredito(v.final);
   $('modal-banner').innerHTML = aprovado
-    ? '&#10003; Cliente Aprovado!<span class="sub">Todas as regras obrigatórias da política e a renda estão dentro do limite.</span>'
-    : '&#10007; Cliente Reprovado<span class="sub">Um ou mais itens obrigatórios estão fora da política.</span>';
+    ? '&#10003; Dentro da política<span class="sub">Todas as regras obrigatórias'+(S.renda>0?' e a renda estão':' estão')+' dentro do limite.</span>'
+    : (comite
+        ? '&#9888; Passa por comitê<span class="sub">As regras obrigatórias passam, mas há pontos que dependem de aprovação.</span>'
+        : '&#10007; Fora da política<span class="sub">Um ou mais itens obrigatórios estão fora da política.</span>');
 
   $('modal-checklist').innerHTML = itens.map(function(it){
     return '<div class="modal-item '+(it.ok?'ok':'fail')+(it.grave?'':' leve')+'">'+
@@ -1247,7 +2077,7 @@ $('b-verificar').addEventListener('click', function(){
   }
 
   abrirModal();
-});
+}
 
 /* =========================================================
    PDF
@@ -1349,16 +2179,20 @@ $('b-pdf').addEventListener('click', function(){
   });
   y=doc.lastAutoTable.finalY+6;
 
-  /* observações */
-  if(S.obs.trim()){
+  /* observações - sai com a formatação e as imagens do editor rico */
+  if(S.obsHtml || S.obs.trim()){
     if(y>250){ doc.addPage(); y=18; }
     doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(58,64,67);
     doc.text('Observações', M, y); y+=4.5;
-    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(114,122,125);
-    doc.splitTextToSize(S.obs, W-M*2).forEach(function(l){
-      if(y>282){ doc.addPage(); y=18; }
-      doc.text(l, M, y); y+=4;
-    });
+    if(S.obsHtml && window.SimRichPdf){
+      y = SimRichPdf.render(doc, S.obsHtml, { x:M, largura:W-M*2, y:y, topo:18, fundo:278 });
+    } else {
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(114,122,125);
+      doc.splitTextToSize(S.obs, W-M*2).forEach(function(l){
+        if(y>282){ doc.addPage(); y=18; }
+        doc.text(l, M, y); y+=4;
+      });
+    }
     y+=2;
   }
 
@@ -1388,6 +2222,9 @@ $('b-pdf').addEventListener('click', function(){
 initCombos();
 sincronizaCampos();
 render();
+avisaTamanhoObs();
+/* o Quill chega por script defer, ou seja, so depois do parse da pagina */
+document.addEventListener('DOMContentLoaded', initEditor);
 </script>
 </body>
 </html>
