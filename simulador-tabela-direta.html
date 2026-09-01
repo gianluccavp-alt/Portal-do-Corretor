@@ -1045,6 +1045,15 @@ function calcFinanciamento(valorFin){
   return { i:i, pmtBase:pmtBase, parcela1:parcela1 };
 }
 
+/* Rótulo da parcela do saldo pós-obra. Mostra a MESMA parcela estimada do
+   financiamento (PRICE 12% a.a. + seguros MIP/DFI) usada no comprometimento
+   de renda, no formato "120x de R$ X + IPCA" - e não mais o saldo dividido
+   linearmente por 120. */
+function labelParcelaPos(c){
+  var p = calcFinanciamento(c.saldoPos).parcela1;
+  return POL.prazoPosObra+'x de '+brl(p)+' + IPCA';
+}
+
 /* =========================================================
    VALIDACOES DA POLÍTICA
    ========================================================= */
@@ -1338,7 +1347,7 @@ function renderResultado(){
     '<div class="kpi-duo">'+
       kpi('Entrada', brl(c.entrada), pct(entP)+' &middot; ato + sinais', entP>=POL.entradaTotal-0.001 && c.entrada>0) +
       kpi('Período de obra', brl(c.totalObra), pct(c.pObra)+' &middot; '+c.qtd+' mensais') +
-      kpi('Saldo pós-obra', brl(c.saldoPos), pct(c.pPos)+' &middot; '+POL.prazoPosObra+'x de '+brl(c.parcelaPos)) +
+      kpi('Saldo pós-obra', brl(c.saldoPos), pct(c.pPos)+' &middot; '+labelParcelaPos(c)) +
       kpi('Valor do m&sup2;', c.m2>0?brl(c.m2):'&mdash;', S.metragem>0?(S.metragem+' m&sup2; privativos'):'informe a metragem') +
     '</div>';
 
@@ -1385,7 +1394,7 @@ function renderResultado(){
           '</td><td class="num">'+(c.valor>0?pct(somaObra/c.valor*100):'-')+'</td></tr>';
     html+='<tr class="grp"><td colspan="5">Pós-obra &mdash; saldo para financiamento / repasse</td></tr>';
     html+='<tr><td>'+(L.length+1)+'</td><td>a partir de '+(T>0?rotuloMes(T+1):'-')+'</td>'+
-          '<td>Saldo pós-obra ('+POL.prazoPosObra+'x de '+brl(c.parcelaPos)+' + IPCA + 1% a.m)</td>'+
+          '<td>Saldo pós-obra ('+labelParcelaPos(c)+')</td>'+
           '<td class="num">'+brl(c.saldoPos)+'</td><td class="num">'+(c.valor>0?pct(c.saldoPos/c.valor*100):'-')+'</td></tr>';
     html+='<tr class="tot"><td></td><td></td><td>Total da unidade</td><td class="num">'+brl(somaObra+c.saldoPos)+
           '</td><td class="num">'+(c.valor>0?pct((somaObra+c.saldoPos)/c.valor*100):'-')+'</td></tr>';
@@ -1394,7 +1403,7 @@ function renderResultado(){
 
   $('note').innerHTML = c.e
     ? 'Entrega do '+c.e.nome+' prevista para <b>'+rotuloMes(T)+'</b> &middot; '+T+' meses de fluxo de obra a partir da data da proposta. '+
-      'O valor da parcela do saldo pós-obra é uma referência calculada em '+POL.prazoPosObra+'x — a parcela efetiva é reajustada pelo IPCA + 1% a.m., podendo variar ao longo do contrato.'
+      'A parcela do saldo pós-obra é uma estimativa do financiamento em '+POL.prazoPosObra+'x (PRICE, '+(FIN.taxaAA*100)+'% a.a. + seguros MIP/DFI) — a mesma usada no comprometimento de renda — e ainda é reajustada pelo IPCA ao longo do contrato.'
     : '';
 }
 
@@ -1665,7 +1674,7 @@ function renderSheet(){
   html += '<div class="pl">'+
       '<span class="pl-n">'+(L.length+1)+'</span>'+
       '<span class="pl-d">'+(T>0?rotuloMes(T+1):'—')+'</span>'+
-      '<span class="pl-p">Saldo pós-obra · '+POL.prazoPosObra+'x de '+brl(c.parcelaPos)+'</span>'+
+      '<span class="pl-p">Saldo pós-obra · '+labelParcelaPos(c)+'</span>'+
       '<span class="pl-f">'+(c.valor>0?pct(c.saldoPos/c.valor*100):'—')+'</span>'+
       '<span class="pl-v">'+brl(c.saldoPos)+'</span>'+
     '</div>';
@@ -2219,7 +2228,7 @@ $('b-pdf').addEventListener('click', function(){
              {content:brl(somaObra),styles:{fontStyle:'bold',halign:'right'}},
              {content:pct(somaObra/c.valor*100),styles:{fontStyle:'bold',halign:'right'}}]);
   body.push([String(L.length+1), 'a partir de '+rotuloMes(T+1),
-             'Saldo pós-obra ('+POL.prazoPosObra+'x de '+brl(c.parcelaPos)+' + IPCA + 1% a.m)',
+             'Saldo pós-obra ('+labelParcelaPos(c)+')',
              brl(c.saldoPos), pct(c.saldoPos/c.valor*100)]);
   body.push([{content:'Total da unidade',colSpan:3,styles:{fontStyle:'bold'}},
              {content:brl(somaObra+c.saldoPos),styles:{fontStyle:'bold',halign:'right'}},
