@@ -1923,6 +1923,7 @@ $('f-corretor').addEventListener('input',function(){ S.corretor=this.value; });
 $('f-renda').addEventListener('input', function(){
   S.renda=num(this.value);
   if(S.renda>0){ this.classList.remove('bad'); $('h-renda').style.display='none'; }
+  render();
 });
 $('f-renda').addEventListener('blur',  function(){
   this.value = S.renda?brl(S.renda):'';
