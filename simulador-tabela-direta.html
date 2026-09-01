@@ -1820,7 +1820,14 @@ function initCombos(){
 
   comboBloco = SimCombo($('c-bloco'), {
     placeholder:'Torre / bloco', buscaPlaceholder:'Buscar torre...',
-    onChange: function(id){ S.blocoId=id; S.unidade=''; atualizaUnidades(); render(); }
+    onChange: function(id){
+      S.blocoId=id; S.unidade='';
+      /* a torre muda a data de entrega (ex.: Village Gaia T1 x T2), o que muda
+         o período de obra: a quantidade de mensais volta ao automático e os
+         campos visíveis são re-sincronizados na hora. */
+      S.qtd=null;
+      atualizaUnidades(); sincronizaCampos(); render();
+    }
   });
 
   comboUnid = SimCombo($('c-unid'), {
