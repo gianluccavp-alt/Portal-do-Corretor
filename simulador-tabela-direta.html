@@ -962,7 +962,23 @@ function num(str){
   var v=parseFloat(s);
   return isFinite(v)?v:0;
 }
-function emp(){ for(var i=0;i<EMPS.length;i++) if(EMPS[i].id===S.empId) return EMPS[i]; return null; }
+/* Village Gaia é entregue em fases: a Torre 1 sai antes (out/2028) e a Torre 2
+   na data padrão do catálogo (ago/2029). A data de entrega muda todos os
+   cálculos (prazo de obra, limite das intermediárias, fluxo), por isso ela é
+   ajustada aqui conforme a torre selecionada. Torres sem data específica usam
+   a entrega padrão do empreendimento. */
+var GAIA_ENTREGA_POR_TORRE = { 1:'2028-10' };
+function torreSelecionada(){ var m=/(\d+)/.exec(S.blocoId||''); return m?parseInt(m[1],10):null; }
+function emp(){
+  var base=null;
+  for(var i=0;i<EMPS.length;i++) if(EMPS[i].id===S.empId){ base=EMPS[i]; break; }
+  if(!base) return null;
+  if(base.id==='gaia'){
+    var t=torreSelecionada(), ent=t&&GAIA_ENTREGA_POR_TORRE[t];
+    if(ent){ var o={}; for(var k in base) o[k]=base[k]; o.entrega=ent; return o; }
+  }
+  return base;
+}
 function parseData(str){ var p=(str||'').split('-'); return new Date(+p[0], (+p[1])-1, +p[2]||1); }
 
 /* indice 0 = data da venda (Ato); indice k = dia 1 do mes, k meses depois */
@@ -1027,6 +1043,15 @@ function calcFinanciamento(valorFin){
   var pmtBase = valorFin>0 ? valorFin*i/(1-Math.pow(1+i,-FIN.prazo)) : 0;
   var parcela1 = pmtBase + valorFin*(FIN.seguroDFI+FIN.seguroMIP);
   return { i:i, pmtBase:pmtBase, parcela1:parcela1 };
+}
+
+/* Rótulo da parcela do saldo pós-obra. Mostra a MESMA parcela estimada do
+   financiamento (PRICE 12% a.a. + seguros MIP/DFI) usada no comprometimento
+   de renda, no formato "120x de R$ X + IPCA" - e não mais o saldo dividido
+   linearmente por 120. */
+function labelParcelaPos(c){
+  var p = calcFinanciamento(c.saldoPos).parcela1;
+  return POL.prazoPosObra+'x de '+brl(p)+' + IPCA';
 }
 
 /* =========================================================
@@ -1322,7 +1347,7 @@ function renderResultado(){
     '<div class="kpi-duo">'+
       kpi('Entrada', brl(c.entrada), pct(entP)+' &middot; ato + sinais', entP>=POL.entradaTotal-0.001 && c.entrada>0) +
       kpi('Período de obra', brl(c.totalObra), pct(c.pObra)+' &middot; '+c.qtd+' mensais') +
-      kpi('Saldo pós-obra', brl(c.saldoPos), pct(c.pPos)+' &middot; '+POL.prazoPosObra+'x de '+brl(c.parcelaPos)) +
+      kpi('Saldo pós-obra', brl(c.saldoPos), pct(c.pPos)+' &middot; '+labelParcelaPos(c)) +
       kpi('Valor do m&sup2;', c.m2>0?brl(c.m2):'&mdash;', S.metragem>0?(S.metragem+' m&sup2; privativos'):'informe a metragem') +
     '</div>';
 
@@ -1369,7 +1394,7 @@ function renderResultado(){
           '</td><td class="num">'+(c.valor>0?pct(somaObra/c.valor*100):'-')+'</td></tr>';
     html+='<tr class="grp"><td colspan="5">Pós-obra &mdash; saldo para financiamento / repasse</td></tr>';
     html+='<tr><td>'+(L.length+1)+'</td><td>a partir de '+(T>0?rotuloMes(T+1):'-')+'</td>'+
-          '<td>Saldo pós-obra ('+POL.prazoPosObra+'x de '+brl(c.parcelaPos)+' + IPCA + 1% a.m)</td>'+
+          '<td>Saldo pós-obra ('+labelParcelaPos(c)+')</td>'+
           '<td class="num">'+brl(c.saldoPos)+'</td><td class="num">'+(c.valor>0?pct(c.saldoPos/c.valor*100):'-')+'</td></tr>';
     html+='<tr class="tot"><td></td><td></td><td>Total da unidade</td><td class="num">'+brl(somaObra+c.saldoPos)+
           '</td><td class="num">'+(c.valor>0?pct((somaObra+c.saldoPos)/c.valor*100):'-')+'</td></tr>';
@@ -1378,7 +1403,7 @@ function renderResultado(){
 
   $('note').innerHTML = c.e
     ? 'Entrega do '+c.e.nome+' prevista para <b>'+rotuloMes(T)+'</b> &middot; '+T+' meses de fluxo de obra a partir da data da proposta. '+
-      'O valor da parcela do saldo pós-obra é uma referência calculada em '+POL.prazoPosObra+'x — a parcela efetiva é reajustada pelo IPCA + 1% a.m., podendo variar ao longo do contrato.'
+      'A parcela do saldo pós-obra é uma estimativa do financiamento em '+POL.prazoPosObra+'x (PRICE, '+(FIN.taxaAA*100)+'% a.a. + seguros MIP/DFI) — a mesma usada no comprometimento de renda — e ainda é reajustada pelo IPCA ao longo do contrato.'
     : '';
 }
 
@@ -1649,7 +1674,7 @@ function renderSheet(){
   html += '<div class="pl">'+
       '<span class="pl-n">'+(L.length+1)+'</span>'+
       '<span class="pl-d">'+(T>0?rotuloMes(T+1):'—')+'</span>'+
-      '<span class="pl-p">Saldo pós-obra · '+POL.prazoPosObra+'x de '+brl(c.parcelaPos)+'</span>'+
+      '<span class="pl-p">Saldo pós-obra · '+labelParcelaPos(c)+'</span>'+
       '<span class="pl-f">'+(c.valor>0?pct(c.saldoPos/c.valor*100):'—')+'</span>'+
       '<span class="pl-v">'+brl(c.saldoPos)+'</span>'+
     '</div>';
@@ -1804,7 +1829,14 @@ function initCombos(){
 
   comboBloco = SimCombo($('c-bloco'), {
     placeholder:'Torre / bloco', buscaPlaceholder:'Buscar torre...',
-    onChange: function(id){ S.blocoId=id; S.unidade=''; atualizaUnidades(); render(); }
+    onChange: function(id){
+      S.blocoId=id; S.unidade='';
+      /* a torre muda a data de entrega (ex.: Village Gaia T1 x T2), o que muda
+         o período de obra: a quantidade de mensais volta ao automático e os
+         campos visíveis são re-sincronizados na hora. */
+      S.qtd=null;
+      atualizaUnidades(); sincronizaCampos(); render();
+    }
   });
 
   comboUnid = SimCombo($('c-unid'), {
@@ -2196,7 +2228,7 @@ $('b-pdf').addEventListener('click', function(){
              {content:brl(somaObra),styles:{fontStyle:'bold',halign:'right'}},
              {content:pct(somaObra/c.valor*100),styles:{fontStyle:'bold',halign:'right'}}]);
   body.push([String(L.length+1), 'a partir de '+rotuloMes(T+1),
-             'Saldo pós-obra ('+POL.prazoPosObra+'x de '+brl(c.parcelaPos)+' + IPCA + 1% a.m)',
+             'Saldo pós-obra ('+labelParcelaPos(c)+')',
              brl(c.saldoPos), pct(c.saldoPos/c.valor*100)]);
   body.push([{content:'Total da unidade',colSpan:3,styles:{fontStyle:'bold'}},
              {content:brl(somaObra+c.saldoPos),styles:{fontStyle:'bold',halign:'right'}},
