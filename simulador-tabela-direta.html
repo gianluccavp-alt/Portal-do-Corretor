@@ -1558,17 +1558,14 @@ function renderShell(){
       entrega = MESES[(+entrega[1])-1]+'/'+entrega[0];
       var tipo = d ? (d.tipoLabel + (d.areaPriv>0 ? ' · '+d.areaPriv+' m²' : ''))
                    : 'Escolha a torre e a unidade';
-      var valor = S.valor>0 ? brl(S.valor) : (d ? brl(d.tabelaDireta) : '');
       function ubi(k,v){ return '<div class="ub-i"><span class="ub-k">'+k+'</span><span class="ub-v">'+v+'</span></div>'; }
       var strip = ubi('Unidade', S.unidade || 'não escolhida');
       if(d){
         strip += ubi('Tipologia', d.tipoLabel)+
                  ubi('Área privativa', d.areaPriv>0 ? d.areaPriv+' m²' : '—')+
                  ubi('Sol', d.sol || '—')+
-                 ubi('Vagas', d.vagas!=null ? d.vagas : '—')+
-                 ubi('Tabela Direta', brl(d.tabelaDireta));
+                 ubi('Vagas', d.vagas!=null ? d.vagas : '—');
       }
-      if(S.valor>0) strip += ubi('Valor da venda', brl(S.valor));
       strip += ubi('Entrega', entrega);
       ub.className='unitbar show';
       ub.innerHTML =
@@ -1577,7 +1574,6 @@ function renderShell(){
         '<div class="ub-compact">'+
           '<div class="ub-r">'+
             '<span class="ub-a">'+(S.unidade ? 'Unidade '+S.unidade : 'Unidade não escolhida')+'</span>'+
-            '<span class="ub-b">'+valor+'</span>'+
           '</div>'+
           '<div class="ub-r">'+
             '<span class="ub-c">'+tipo+'</span>'+
