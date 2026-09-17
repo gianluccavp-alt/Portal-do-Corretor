@@ -711,11 +711,13 @@
   var UNIT_FIELDS = [
     ['Valor de Avaliação Bancária', 'avaliacao'],
     ['Valor de Tabela', 'valorFinal'],
-    ['Bônus Adimplência', 'bonusAdimplencia'],
+    ['Bônus Adimplência', 'bonusAdimplencia', true],
     ['Desconto Volta ao Caixa', 'folgaVoltaCx'],
     ['Desconto Associativo', 'folgaTabela'],
     ['Desconto Campanha G', 'folgaCampG']
   ];
+  // valor cheio (com centavos), sem arredondar - usado quando a coluna pede o valor exato
+  function fmtFull(v) { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
   window.abrirUnidadeModal = function (idx) {
     var list = window.CURRENT_UNITS_LIST || [];
     var u = list[idx];
@@ -725,8 +727,8 @@
     document.getElementById('unit-modal-sub').innerHTML = d.apLabel;
     var rows = '';
     for (var i = 0; i < UNIT_FIELDS.length; i++) {
-      var lbl = UNIT_FIELDS[i][0], val = u[UNIT_FIELDS[i][1]] || 0;
-      rows += '<tr><td class="unit-modal-k">' + lbl + '</td><td class="unit-modal-v">' + fmt(val) + '</td></tr>';
+      var lbl = UNIT_FIELDS[i][0], val = u[UNIT_FIELDS[i][1]] || 0, full = UNIT_FIELDS[i][2];
+      rows += '<tr><td class="unit-modal-k">' + lbl + '</td><td class="unit-modal-v">' + (full ? fmtFull(val) : fmt(val)) + '</td></tr>';
     }
     document.getElementById('unit-modal-table').innerHTML = rows;
     unitOverlay.classList.add('open');
