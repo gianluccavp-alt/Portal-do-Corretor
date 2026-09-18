@@ -30,7 +30,8 @@ window.EMP_COLUMN = 'Nome do Empreendimento';
    - PROMO_SENHA: senha compartilhada para abrir a pagina /promocionais.
      OBS: e apenas uma barreira contra corretores no navegador, NAO e
      seguranca real (fica visivel neste arquivo). */
-window.PROMO_CSV_URL = ''; // TODO: colar a URL do CSV publicado da aba "Promocionais"
+window.PROMO_CSV_URL =
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vQKPXibEcKPcr8LyrMPahUiRHfTa2-xWf5EV76Te8b1dz9RhrDsHEAPU33YsKdyxFcpKuZHD1zwYcoC/pub?gid=602736806&single=true&output=csv';
 window.PROMO_APPS_SCRIPT_URL =
   'https://script.google.com/macros/s/AKfycbzpxZHO9xVgbqFQk_AHZgyFLJGA7fidyraI-G365oJ_b0o760gYDsk2CZmkkh_JNg4/exec';
 window.PROMO_SENHA = '3815Comercial!';
