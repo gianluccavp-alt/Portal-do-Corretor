@@ -85,15 +85,19 @@ function isPromo(u) {
   return u.vcm > 0 && u.vcm < u.associativo;
 }
 
-/* Le a lista de promocionais. Sem PROMO_APPS_SCRIPT_URL configurada, cai no
+/* Le a lista de promocionais. Sem PROMO_CSV_URL configurada, cai no
    modo dev (localStorage), que permite testar o fluxo inteiro em localhost. */
 var PROMO_DEV_KEY = 'promo_dev_list';
 
 /* O Apps Script /exec responde todo request com um 302 para
    script.googleusercontent.com/macros/echo, que falha de forma intermitente e
-   devolve um HTML de erro 404 em vez do JSON. Aqui tentamos algumas vezes,
-   com pequeno intervalo, e so consideramos sucesso quando a resposta e JSON
-   valido. Retorna uma Promise que resolve com o objeto ou rejeita. */
+   devolve um HTML de erro 404 em vez do JSON. So e usado hoje para GRAVAR
+   (fluxo raro/interno de /promocionais) - a leitura, que roda a cada visita
+   ao site, saiu do Apps Script e passou a usar o CSV publicado (ver
+   fetchPromocionais abaixo), o mesmo mecanismo ja estavel da planilha
+   principal. Aqui tentamos o POST algumas vezes, com pequeno intervalo, e so
+   consideramos sucesso quando a resposta e JSON valido. Retorna uma Promise
+   que resolve com o objeto ou rejeita. */
 function promoFetchJson(url, opts, tentativas) {
   tentativas = tentativas || 3;
   var TIMEOUT_MS = 8000;   // o redirect do Google as vezes trava sem responder
@@ -121,22 +125,32 @@ function promoFetchJson(url, opts, tentativas) {
   return uma(tentativas);
 }
 
+/* Le a aba "Promocionais" publicada como CSV (mesmo fetchSheetCsv + fallback
+   de proxies que a planilha principal usa) e devolve no mesmo formato que o
+   Apps Script devolvia ({ identificadores, atualizadoEm }), para nao precisar
+   mexer em mais nada (isPromo, loadPromocionais, promocionais.html). */
 function fetchPromocionais(onOk, onErr) {
-  var url = window.PROMO_APPS_SCRIPT_URL;
+  var url = window.PROMO_CSV_URL;
   if (!url) {
     var raw = null;
     try { raw = localStorage.getItem(PROMO_DEV_KEY); } catch (e) { raw = null; }
-    var dev = { identificadores: [], atualizadoEm: null, por: null };
+    var dev = { identificadores: [], atualizadoEm: null };
     if (raw) { try { dev = JSON.parse(raw) || dev; } catch (e2) { /* ignora */ } }
     onOk(dev);
     return;
   }
-  promoFetchJson(url, undefined, 3)
-    .then(function (data) {
-      if (data && data.identificadores) onOk(data);
-      else if (onErr) onErr();
-    })
-    .catch(function () { if (onErr) onErr(); });
+  fetchSheetCsv(function (text) {
+    var rows = parseCSV(text) || [];
+    var ids = [], atualizadoEm = null;
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var emp = r['Empreendimento'], ident = r['Identificador'];
+      if (!emp || !ident) continue;
+      ids.push(chavePromo(emp, ident));
+      if (r['AtualizadoEm']) atualizadoEm = r['AtualizadoEm'];
+    }
+    onOk({ identificadores: ids, atualizadoEm: atualizadoEm });
+  }, function () { if (onErr) onErr(); });
 }
 
 /* Carrega a lista e re-renderiza. So roda em Ribeirao Preto - nos demais

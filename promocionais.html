@@ -350,9 +350,29 @@
   function atualizaContador() { countEl.textContent = idsMarcados().length; }
 
   /* ---------- salvar ---------- */
+  // Unidades marcadas com os valores do momento (associativo/tabela direta),
+  // para a aba "Promocionais" guardar um retrato de quando foi marcado -
+  // isso e so historico: o site sempre exibe o valor AO VIVO a partir do VCM
+  // atual da planilha principal, isso aqui nao muda esse comportamento.
+  function unidadesMarcadas() {
+    var out = [];
+    for (var i = 0; i < TODAS.length; i++) {
+      var u = TODAS[i];
+      if (!MARCADAS[u.promoKey]) continue;
+      out.push({
+        emp: u._empNome,
+        identificador: u.identificador,
+        associativo: u.vcm,
+        tabelaDireta: u.vcm + u.folgaTabela
+      });
+    }
+    return out;
+  }
+
   function salvar() {
     var btn = document.getElementById('promo-salvar');
     var ids = idsMarcados();
+    var unidades = unidadesMarcadas();
     btn.disabled = true;
     toastEl.className = 'promo-toast';
     toastEl.textContent = 'Salvando...';
@@ -360,7 +380,7 @@
     function ok() {
       btn.disabled = false;
       toastEl.className = 'promo-toast ok';
-      toastEl.textContent = ids.length + ' unidade(s) salva(s). O site atualiza no próximo carregamento.';
+      toastEl.textContent = ids.length + ' unidade(s) salva(s). Pode levar alguns minutos para aparecer no site (o CSV publicado da planilha demora um pouco para atualizar).';
     }
     function erro(msg) {
       btn.disabled = false;
@@ -379,51 +399,23 @@
       return;
     }
 
-    // text/plain evita o preflight CORS; o Apps Script le e.postData.contents igual
+    // text/plain evita o preflight CORS; o Apps Script le e.postData.contents igual.
+    // A leitura (site + esta pagina ao abrir) nao depende mais do Apps Script,
+    // entao aqui so importa se o POST em si deu certo - sem precisar reler
+    // pra "confirmar" (o CSV publicado tem alguns minutos de defasagem e nao
+    // serviria pra confirmar na hora mesmo).
     var opts = {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ senha: window.PROMO_SENHA, identificadores: ids })
+      body: JSON.stringify({ senha: window.PROMO_SENHA, unidades: unidades })
     };
-    var alvo = ids.slice().sort().join('|');
-    var CONFIRMA_MSG = 'não deu pra confirmar o salvamento — recarregue a página e verifique antes de salvar de novo';
-
-    // Confere no servidor se a lista salva bate com o que foi enviado. O redirect
-    // do Apps Script falha de forma intermitente (devolve HTML, ou trava), entao
-    // tentamos a leitura algumas vezes antes de desistir.
-    function confirmar(tentativas) {
-      return promoFetchJson(url, undefined, 2).then(function (data) {
-        var atual = (data && data.identificadores || [])
-          .map(function (s) { return ('' + s).trim(); }).sort().join('|');
-        if (atual === alvo) return true;
-        if (tentativas <= 1) return false;
-        return new Promise(function (r) { setTimeout(r, 1500); })
-          .then(function () { return confirmar(tentativas - 1); });
-      }, function () {
-        if (tentativas <= 1) return false;
-        return new Promise(function (r) { setTimeout(r, 1500); })
-          .then(function () { return confirmar(tentativas - 1); });
-      });
-    }
-
-    // O POST quase sempre executa no servidor mesmo quando a resposta chega
-    // corrompida. Trata a senha errada na hora; para qualquer outro desfecho,
-    // decide pelo que REALMENTE ficou salvo.
     promoFetchJson(url, opts, 2)
       .then(function (res) {
-        if (res && res.erro === 'senha') return 'senha';
-        if (res && res.ok) return true;
-        return null;   // resposta estranha -> confirma no servidor
-      }, function () {
-        return null;   // POST falhou/travou -> confirma no servidor
+        if (res && res.erro === 'senha') { erro('senha do Apps Script não confere'); return; }
+        if (res && res.ok) { ok(); return; }
+        erro('resposta inesperada do Apps Script');
       })
-      .then(function (estado) {
-        if (estado === 'senha') { erro('senha do Apps Script não confere'); return; }
-        if (estado === true) { ok(); return; }
-        toastEl.textContent = 'Confirmando no servidor...';
-        return confirmar(3).then(function (bateu) { bateu ? ok() : erro(CONFIRMA_MSG); });
-      })
-      .catch(function () { erro(CONFIRMA_MSG); });
+      .catch(function () { erro('não foi possível contatar o Apps Script'); });
   }
 
   /* Por ultimo: se a sessao ja passou pelo gate, entra direto.

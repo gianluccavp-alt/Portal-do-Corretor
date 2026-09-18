@@ -17,13 +17,20 @@ window.EMP_COLUMN = 'Nome do Empreendimento';
 
 /* ---------- Unidades promocionais (Ribeirao Preto) ----------
    A pagina /promocionais (uso interno do comercial) marca unidades como
-   promocionais. A lista de "Identificador" marcados fica guardada num Web App
-   do Google Apps Script (ver docs/apps-script-promocionais.gs).
-   - PROMO_APPS_SCRIPT_URL: URL .../exec da implantacao do Web App.
-     Vazio = modo dev: a lista e lida/gravada em localStorage['promo_dev_list'].
+   promocionais. A lista fica guardada numa aba "Promocionais" da planilha
+   principal (ver docs/apps-script-promocionais.gs para o script completo).
+   - LEITURA (site publico + a propria pagina /promocionais ao carregar):
+     PROMO_CSV_URL = URL do CSV publicado dessa aba (Arquivo > Compartilhar >
+     Publicar na Web > aba "Promocionais" > CSV > marcar "republicar
+     automaticamente"). Mesmo mecanismo estavel usado por SHEET_CSV_URL.
+     Vazio = modo dev: a lista e lida em localStorage['promo_dev_list'].
+   - ESCRITA (so quando alguem salva em /promocionais, uso raro):
+     PROMO_APPS_SCRIPT_URL = URL .../exec da implantacao do Web App, que
+     grava as linhas na aba "Promocionais".
    - PROMO_SENHA: senha compartilhada para abrir a pagina /promocionais.
      OBS: e apenas uma barreira contra corretores no navegador, NAO e
      seguranca real (fica visivel neste arquivo). */
+window.PROMO_CSV_URL = ''; // TODO: colar a URL do CSV publicado da aba "Promocionais"
 window.PROMO_APPS_SCRIPT_URL =
   'https://script.google.com/macros/s/AKfycbzpxZHO9xVgbqFQk_AHZgyFLJGA7fidyraI-G365oJ_b0o760gYDsk2CZmkkh_JNg4/exec';
 window.PROMO_SENHA = '3815Comercial!';
