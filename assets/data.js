@@ -88,6 +88,39 @@ function isPromo(u) {
 /* Le a lista de promocionais. Sem PROMO_APPS_SCRIPT_URL configurada, cai no
    modo dev (localStorage), que permite testar o fluxo inteiro em localhost. */
 var PROMO_DEV_KEY = 'promo_dev_list';
+
+/* O Apps Script /exec responde todo request com um 302 para
+   script.googleusercontent.com/macros/echo, que falha de forma intermitente e
+   devolve um HTML de erro 404 em vez do JSON. Aqui tentamos algumas vezes,
+   com pequeno intervalo, e so consideramos sucesso quando a resposta e JSON
+   valido. Retorna uma Promise que resolve com o objeto ou rejeita. */
+function promoFetchJson(url, opts, tentativas) {
+  tentativas = tentativas || 3;
+  var TIMEOUT_MS = 8000;   // o redirect do Google as vezes trava sem responder
+  function uma(n) {
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, TIMEOUT_MS) : null;
+    var o = opts ? Object.assign({}, opts) : {};
+    if (ctrl) o.signal = ctrl.signal;
+    return fetch(url, o)
+      .then(function (r) { return r.text(); })
+      .then(function (txt) {
+        if (timer) clearTimeout(timer);
+        var data;
+        try { data = JSON.parse(txt); }
+        catch (e) { throw new Error('resposta nao-JSON do Apps Script'); }
+        return data;
+      })
+      .catch(function (err) {
+        if (timer) clearTimeout(timer);
+        if (n <= 1) throw err;
+        return new Promise(function (res) { setTimeout(res, 700); })
+          .then(function () { return uma(n - 1); });
+      });
+  }
+  return uma(tentativas);
+}
+
 function fetchPromocionais(onOk, onErr) {
   var url = window.PROMO_APPS_SCRIPT_URL;
   if (!url) {
@@ -98,8 +131,7 @@ function fetchPromocionais(onOk, onErr) {
     onOk(dev);
     return;
   }
-  fetch(url)
-    .then(function (r) { return r.ok ? r.json() : null; })
+  promoFetchJson(url, undefined, 3)
     .then(function (data) {
       if (data && data.identificadores) onOk(data);
       else if (onErr) onErr();
