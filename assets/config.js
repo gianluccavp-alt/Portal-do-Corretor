@@ -25,7 +25,7 @@ window.EMP_COLUMN = 'Nome do Empreendimento';
      OBS: e apenas uma barreira contra corretores no navegador, NAO e
      seguranca real (fica visivel neste arquivo). */
 window.PROMO_APPS_SCRIPT_URL =
-  'https://script.google.com/macros/s/AKfycbzdIPLNZvTUFJdmgPirOdF3zJzq2Y9mZlsxfw5qOW7I35Afm8Grdj4LPqwIhwMKJAg/exec';
+  'https://script.google.com/macros/s/AKfycbzpxZHO9xVgbqFQk_AHZgyFLJGA7fidyraI-G365oJ_b0o760gYDsk2CZmkkh_JNg4/exec';
 window.PROMO_SENHA = '3815Comercial!';
 
 /* Empreendimentos.
