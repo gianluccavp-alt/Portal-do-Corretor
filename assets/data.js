@@ -139,7 +139,7 @@ function fetchPromocionais(onOk, onErr) {
     onOk(dev);
     return;
   }
-  fetchSheetCsv(function (text) {
+  fetchSheetCsv(url, function (text) {
     var rows = parseCSV(text) || [];
     var ids = [], atualizadoEm = null;
     for (var i = 0; i < rows.length; i++) {
@@ -838,11 +838,14 @@ function initZoom() {
   })(zoomables[i]);
 }
 
-/* ---------- fetch da planilha ----------
+/* ---------- fetch de CSV publicado ----------
    Tenta a URL direta e, se falhar (CORS/erro), dois proxies publicos.
-   Compartilhado entre a pagina de empreendimento e /promocionais. */
-function fetchSheetCsv(onText, onErr) {
-  var CSV_URL = window.SHEET_CSV_URL;
+   Compartilhado entre a pagina de empreendimento, /promocionais e a leitura
+   da aba "Promocionais". Sem o parametro csvUrl, usa SHEET_CSV_URL (uso
+   historico da funcao, antes dela aceitar URL). */
+function fetchSheetCsv(csvUrl, onText, onErr) {
+  if (typeof csvUrl === 'function') { onErr = onText; onText = csvUrl; csvUrl = window.SHEET_CSV_URL; }
+  var CSV_URL = csvUrl;
   function tryUrl(url, nextFn) {
     fetch(url)
       .then(function (r) { if (!r.ok) { nextFn(); return; } return r.text(); })
