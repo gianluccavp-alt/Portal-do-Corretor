@@ -373,8 +373,6 @@ function rowsToUnits(rows, empSheetName) {
 
     var valorFinal   = parseBR(findFirst(r, [['valor', 'final', 'com', 'kit'], ['valor', 'final', 'kit'], ['valor', 'final']]));
     var ba           = parseBR(findFirst(r, [['ba', 'unidade'], ['b', 'a', 'da', 'unidade'], ['ba'], ['b', 'a']]));
-    // "Bonus Adimplencia" e "B.A. da Unidade" sao colunas distintas na planilha (ver aba de unidades)
-    var bonusAdimplencia = parseBR(findFirst(r, [['bonus', 'adimplencia']]));
     var folgaCampG   = parseBR(findFirst(r, [['folga', 'campanha', 'g'], ['folga', 'campanha']]));
     var folgaTabela  = parseBR(findFirst(r, [['folga', 'de', 'tabela'], ['folga', 'tabela']]));
     var folgaVoltaCx = parseBR(findFirst(r, [['folga', 'volta', 'caixa'], ['folga', 'volta']]));
@@ -420,8 +418,7 @@ function rowsToUnits(rows, empSheetName) {
       vcm: vcm, identificador: identificador,
       promoKey: isRibeiraoPreto ? chavePromo(empSheetName, identificador) : '',
       avaliacao: avaliacao, vagas: vagas,
-      valorFinal: valorFinal, ba: ba, folgaCampG: folgaCampG,
-      bonusAdimplencia: bonusAdimplencia
+      valorFinal: valorFinal, ba: ba, folgaCampG: folgaCampG
     });
   }
   return result;
