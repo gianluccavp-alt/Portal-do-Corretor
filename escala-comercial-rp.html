@@ -178,7 +178,7 @@
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   transition:opacity .15s;
 }
-.pill .p-nome{display:none}
+.pill .p-curto,.pill .p-nome{display:none}
 .pill.g{color:var(--esc-gab);background:var(--esc-gab-bg);border-color:var(--esc-gab-line)}
 .pill.j{color:var(--esc-ju);background:var(--esc-ju-bg);border-color:var(--esc-ju-line)}
 .pill.v{color:var(--esc-vitor);background:var(--esc-vitor-bg);border-color:var(--esc-vitor-line)}
@@ -241,14 +241,16 @@
 @media(min-width:460px){
   .pill{font-size:.7rem;max-width:64px}
   .pill .p-ini{display:none}
-  .pill .p-nome{display:inline}
+  .pill .p-curto{display:inline}
   .cal-cell{min-height:82px;padding:.4rem .3rem}
 }
 @media(min-width:760px){
   .esc-hero{padding:2.75rem 0 2.25rem}
   .cal-cell{min-height:98px;gap:.26rem}
   .cal-head span{font-size:.72rem;padding:.7rem .2rem}
-  .pill{font-size:.76rem;max-width:88px;padding:.22rem .3rem;border-radius:7px}
+  .pill{font-size:.76rem;max-width:96px;padding:.22rem .3rem;border-radius:7px}
+  .pill .p-curto{display:none}
+  .pill .p-nome{display:inline}
   .mes-nome{font-size:1.2rem}
 }
 @media(prefers-reduced-motion:reduce){
@@ -413,20 +415,34 @@
   /* ============================================================
      Regra da escala
 
-     Ciclo dos dias úteis: base ['Ju','Vitor','Gab'].
-     A semana começa num índice que avança 1 a cada semana e os
-     cinco dias seguem o padrão X, Y, Z, X, Y.
-
      Fim de semana: base ['Vitor','Ju','Gab'].
      - folga (sábado + domingo livres) avança 1 por semana;
-     - o plantão de domingo avança 1 por semana, uma posição atrás.
+     - o plantão de domingo avança 1 por semana, uma posição atrás
+       (quem folgou na semana anterior pega o fim de semana completo);
      No sábado ficam os dois que não estão de folga.
+
+     Dias úteis, a partir de 28/09/2026: definidos pelo papel de cada
+     um no fim de semana daquela semana —
+
+       Seg: folga · Ter: só sábado · Qua: fim de semana completo
+       Qui: só sábado · Sex: folga
+
+     Como os papéis giram toda semana, a cada 3 semanas cada um faz
+     1 plantão em cada dia útil, 2 sábados e 1 domingo (8 no total),
+     ninguém emenda dias seguidos além do sábado + domingo, e quem
+     fez sábado + domingo nunca abre a segunda seguinte (vira "só
+     sábado", que não trabalha segunda).
+
+     Antes de 28/09 vale a regra antiga (ciclo ['Ju','Vitor','Gab'],
+     padrão X, Y, Z, X, Y, com os dois ajustes de 07/09 a 27/09),
+     para não mudar as semanas que já aconteceram.
 
      Âncora: segunda-feira 31/08/2026 — dias úteis começando em
      Vitor, folga da Juliana e domingo do Vitor.
      ============================================================ */
   var DIA = 86400000;
   var ANCORA = Date.UTC(2026, 7, 31);
+  var N_RODIZIO = 4;   /* semana de 28/09/2026: início da regra por papéis */
   var CICLO_UTEIS = ['J', 'V', 'G'];
   var CICLO_FDS   = ['V', 'J', 'G'];
   var PADRAO_UTEIS = [0, 1, 2, 0, 1];
@@ -468,9 +484,15 @@
     var seg = segundaDa(ts);
     var n = Math.round((seg - ANCORA) / (7 * DIA));
 
+    var folga = CICLO_FDS[mod(1 + n, 3)];
+    var domingo = CICLO_FDS[mod(n, 3)];
+    var soSabado = TODOS.filter(function (p) { return p !== folga && p !== domingo; })[0];
+
     var inicio = mod(1 + n, 3);
     var uteis;
-    if (inicio === 1 && n >= 1) {
+    if (n >= N_RODIZIO) {
+      uteis = [folga, soSabado, domingo, soSabado, folga];
+    } else if (inicio === 1 && n >= 1) {
       uteis = UTEIS_FOLGA_JU;
     } else if (inicio === 0 && n >= 1) {
       uteis = UTEIS_FOLGA_VITOR;
@@ -478,8 +500,6 @@
       uteis = PADRAO_UTEIS.map(function (off) { return CICLO_UTEIS[(inicio + off) % 3]; });
     }
 
-    var folga = CICLO_FDS[mod(1 + n, 3)];
-    var domingo = CICLO_FDS[mod(n, 3)];
     var sabado = TODOS.filter(function (p) { return p !== folga; })
                       .sort(function (a, b) {
                         return (a === domingo ? 1 : 0) - (b === domingo ? 1 : 0);
@@ -536,12 +556,13 @@
     var p = PESSOA[k];
     return '<span class="pill ' + p.cls + '" data-p="' + k + '" title="' + p.nome + '">' +
              '<span class="p-ini">' + p.ini + '</span>' +
-             '<span class="p-nome">' + p.curto + '</span>' +
+             '<span class="p-curto">' + p.curto + '</span>' +
+             '<span class="p-nome">' + p.nome + '</span>' +
            '</span>';
   }
   function tag(k) {
     var p = PESSOA[k];
-    return '<span class="tag ' + p.cls + '">' + p.curto + '</span>';
+    return '<span class="tag ' + p.cls + '">' + p.nome + '</span>';
   }
 
   function renderHoje() {
