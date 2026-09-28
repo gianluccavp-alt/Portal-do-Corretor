@@ -715,11 +715,34 @@
     $('btn-atualizar').addEventListener('click', atualizarSalesforce);
   }
 
+  /* ---------- filtros no celular (folha inferior) ----------
+     Os MESMOS elementos de filtro mudam de lugar: vao para a folha ao abrir
+     e voltam para o card ao fechar (nada duplicado, nada a sincronizar). */
+  function abrirFolhaFiltros() {
+    var corpo = $('folha-corpo');
+    corpo.appendChild($('filtros-grid'));
+    corpo.appendChild($('filtros-extra'));
+    $('folha-filtros').showModal();
+  }
+  function devolverFiltros() {
+    $('filtros-topo').insertBefore($('filtros-grid'), $('btn-filtros'));
+    $('filtros-pend').appendChild($('filtros-extra'));
+  }
+  function iniciarFolhaFiltros() {
+    var folha = $('folha-filtros');
+    $('btn-filtros').addEventListener('click', abrirFolhaFiltros);
+    $('folha-fechar').addEventListener('click', function () { folha.close(); });
+    $('folha-aplicar').addEventListener('click', function () { folha.close(); });
+    folha.addEventListener('click', function (ev) { if (ev.target === folha) folha.close(); });
+    folha.addEventListener('close', devolverFiltros);
+  }
+
   /* ---------- inicio ---------- */
   function iniciar() {
     iniciarGate();
     iniciarFiltros();
     iniciarPainel();
+    iniciarFolhaFiltros();
     $('btn-sair').addEventListener('click', function () { sair(); });
     $('erro-lista-tentar').addEventListener('click', carregar);
     var salva = null;
