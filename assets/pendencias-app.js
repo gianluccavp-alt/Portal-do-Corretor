@@ -201,6 +201,12 @@
     renderCabecalho();
     mostrarEstadoLista('ok');
     render();
+    /* painel aberto durante um "Atualizar": troca pela versao nova da venda */
+    if (estado.aberta) {
+      var fresca = vendaPorId(estado.aberta.id);
+      if (fresca) { var sujo = painelSujo(); estado.aberta = fresca; preencherPainel(fresca, !sujo); }
+      else fecharPainel(true);
+    }
   }
   function vendaPorId(id) {
     return estado.vendas.filter(function (v) { return v.id === id; })[0] || null;
@@ -467,10 +473,253 @@
     $('lista').hidden = lista.length === 0;
   }
 
+  /* ---------- avisos (toast) ----------
+     popover="manual": entra na top layer DEPOIS do dialogo modal aberto,
+     entao aparece por cima dele. Sem suporte a popover, so a classe. */
+  var toastTimer;
+  function esconderToast() {
+    var t = $('toast');
+    t.classList.remove('visivel');
+    if (t.hidePopover && t.matches(':popover-open')) t.hidePopover();
+  }
+  function toast(msg, opcoes) {
+    opcoes = opcoes || {};
+    var t = $('toast');
+    esconderToast();
+    t.textContent = '';
+    t.className = 'toast' + (opcoes.erro ? ' erro' : '');
+    t.appendChild(icone(opcoes.erro ? 'alerta' : 'check', 18));
+    t.appendChild(el('span', null, msg));
+    if (opcoes.acao) {
+      var b = el('button', 'toast-acao', opcoes.acao.rotulo);
+      b.type = 'button';
+      b.addEventListener('click', function () { esconderToast(); opcoes.acao.fn(); });
+      t.appendChild(b);
+    }
+    t.classList.add('visivel');
+    if (t.showPopover) t.showPopover();
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(esconderToast, opcoes.acao ? 8000 : 5000);
+  }
+
+  function tratarFalhaAcao(f) {
+    if (f.codigo === 'senha') { sair(MSG_SENHA); return; }
+    if (f.codigo === 'nao_encontrada') {
+      toast(f.mensagem || 'Essa venda não está mais no relatório.', { erro: true });
+      fecharPainel(true);
+      carregar();
+      return;
+    }
+    toast(f.mensagem || 'Não deu para salvar. Tente de novo.', { erro: true });
+  }
+  function exigirLivre() {
+    if (!estado.atualizando) return true;
+    toast('Aguarde a atualização do Salesforce terminar.', { erro: true });
+    return false;
+  }
+
+  /* ---------- painel de detalhe (spec 6) ---------- */
+  function painelSujo() {
+    var v = estado.aberta;
+    if (!v) return false;
+    return $('dt-obs').value !== (v.observacao || '') || $('dt-ret').value !== (v.retorno || '');
+  }
+  function atualizarBotoesPainel() {
+    var sujo = painelSujo();
+    $('dt-salvar').disabled = !sujo || estado.atualizando;
+    $('dt-descartar').disabled = !sujo;
+    $('dt-cancelar').disabled = estado.atualizando;
+  }
+  function preencherPainel(v, resetarCampos) {
+    var hoje = new Date();
+    $('dt-op').textContent = v.id;
+    $('dt-nome').textContent = P.titleCase(v.cliente);
+    $('dt-sub').textContent = [
+      v.empreendimento, v.identificador ? 'Unidade ' + v.identificador : '', P.formatarEquipe(v.imobiliaria)
+    ].filter(Boolean).join(' · ');
+    var tags = $('dt-tags');
+    tags.textContent = '';
+    [v.fase, v.vendaFacilitada ? 'Venda facilitada' : 'Venda comercial', v.ranking ? 'Ranking ' + P.rankingRotulo(v.ranking) : '']
+      .filter(Boolean)
+      .forEach(function (t) { tags.appendChild(el('span', 'chip c-neu', t)); });
+    if (v.cancelada) tags.appendChild(el('span', 'chip c-err', 'Cancelada'));
+
+    $('dt-data').textContent = v.dataVenda || '—';
+    var d = diasDaVenda(v, hoje);
+    $('dt-dias').textContent = d.texto;
+    $('dt-dias-cel').classList.toggle('alerta', d.alerta);
+    $('dt-valor').textContent = P.formatarValor(v.valorReal, true);
+    $('dt-fid').textContent = String(v.fid || '').trim() || '—';
+
+    var itens = P.checklist(v);
+    var faltam = itens.filter(function (i) { return !i.ok; }).length;
+    $('dt-faltam').textContent = faltam ? faltam + ' de ' + itens.length + ' itens pendentes' : 'Nada pendente';
+    var ul = $('dt-checklist');
+    ul.textContent = '';
+    itens.forEach(function (it) {
+      var li = el('li', 'ck' + (it.ok ? ' ok' : ''));
+      var bola = el('span', 'ci ci-' + it.estilo);
+      bola.appendChild(icone(it.ok ? 'check' : (it.estilo === 'err' ? 'x' : 'alerta'), 14));
+      var txt = el('div');
+      txt.appendChild(el('div', 'ck-t', it.titulo));
+      txt.appendChild(el('div', 'sub', it.detalhe));
+      li.appendChild(bola);
+      li.appendChild(txt);
+      ul.appendChild(li);
+    });
+
+    $('dt-just').textContent = P.justificativaExibida(v.justificativa);
+    if (resetarCampos) {
+      $('dt-obs').value = v.observacao || '';
+      $('dt-ret').value = v.retorno || '';
+    }
+    $('dt-cancelar-txt').textContent = v.cancelada ? 'Reativar venda' : 'Marcar como cancelada';
+    $('dt-cancelar').classList.toggle('btn-d', !v.cancelada);
+    atualizarBotoesPainel();
+  }
+  function abrirPainel(id) {
+    var v = vendaPorId(id);
+    if (!v) return;
+    estado.aberta = v;
+    preencherPainel(v, true);
+    if (!$('painel').open) $('painel').showModal();
+  }
+  function fecharPainel(forcar) {
+    var d = $('painel');
+    if (!d.open) return true;
+    if (!forcar && painelSujo() && !window.confirm('Descartar as alterações em Observação e Retorno?')) return false;
+    d.close();
+    return true;
+  }
+  /* devolve o foco para a linha/cartao visivel da venda que estava aberta */
+  function focarOrigem(id) {
+    var alvos = document.querySelectorAll('[data-abrir]');
+    for (var i = 0; i < alvos.length; i++) {
+      var a = alvos[i];
+      if (a.getAttribute('data-abrir') !== id || a.offsetParent === null) continue;
+      (a.tagName === 'TR' ? a.querySelector('button') : a).focus();
+      return;
+    }
+  }
+
+  function salvar() {
+    if (!exigirLivre()) return;
+    var v = estado.aberta;
+    var b = $('dt-salvar');
+    b.disabled = true;
+    b.textContent = 'Salvando…';
+    chamar('editar', { id: v.id, observacao: $('dt-obs').value, retorno: $('dt-ret').value })
+      .then(function (res) {
+        estado.aberta = res.venda;
+        substituirVenda(res.venda);
+        preencherPainel(res.venda, true);
+        toast('Alterações salvas na planilha');
+      })
+      .catch(tratarFalhaAcao)
+      .then(function () { b.textContent = 'Salvar alterações'; atualizarBotoesPainel(); });
+  }
+
+  function mudarCancelamento(id, acao) {
+    var b = $('dt-cancelar');
+    b.disabled = true;
+    return chamar(acao, { id: id }).then(function (res) {
+      substituirVenda(res.venda);
+      if (estado.aberta && estado.aberta.id === id) {
+        estado.aberta = res.venda;
+        preencherPainel(res.venda, false);
+      }
+      if (acao === 'cancelar') {
+        fecharPainel(true);
+        toast('Venda ' + id + ' cancelada', {
+          acao: { rotulo: 'Desfazer', fn: function () { mudarCancelamento(id, 'reativar'); } }
+        });
+      } else {
+        toast('Venda ' + id + ' reativada');
+      }
+    }).catch(tratarFalhaAcao).then(function () { atualizarBotoesPainel(); });
+  }
+  function clicarCancelar() {
+    if (!exigirLivre()) return;
+    var v = estado.aberta;
+    if (v.cancelada) { mudarCancelamento(v.id, 'reativar'); return; }
+    if (painelSujo()) {
+      toast('Salve ou descarte as alterações antes de cancelar a venda.', { erro: true });
+      return;
+    }
+    $('cx-nome').textContent = P.titleCase(v.cliente);
+    $('cx-meta').textContent = [v.id, v.empreendimento, v.identificador].filter(Boolean).join(' · ');
+    $('cx-valor').textContent = P.formatarValor(v.valorReal, false);
+    $('dlg-cancelar').showModal();
+  }
+
+  function copiarOp() {
+    var id = estado.aberta && estado.aberta.id;
+    if (!id) return;
+    var p = navigator.clipboard ? navigator.clipboard.writeText(id) : Promise.reject();
+    p.then(function () { toast('OP ' + id + ' copiada'); }, function () { toast('Não deu para copiar. OP: ' + id, { erro: true }); });
+  }
+
+  /* ---------- atualizar do Salesforce (spec 4.4) ---------- */
+  function atualizarSalesforce() {
+    if (estado.atualizando) return;
+    estado.atualizando = true;
+    var b = $('btn-atualizar');
+    b.disabled = true;
+    $('btn-atualizar-txt').textContent = 'Atualizando…';
+    $('faixa-atualizando').hidden = false;
+    atualizarBotoesPainel();
+    chamar('atualizar', null, TIMEOUT_ATUALIZAR)
+      .then(function (res) { receberLista(res); toast('Relatório atualizado do Salesforce'); })
+      .catch(function (f) {
+        if (f.codigo === 'rede') f.mensagem = 'A atualização não terminou a tempo. Rode "Atualizar Relatório" pelo menu Salesforce da planilha.';
+        tratarFalhaAcao(f);
+      })
+      .then(function () {
+        estado.atualizando = false;
+        b.disabled = false;
+        $('btn-atualizar-txt').textContent = 'Atualizar do Salesforce';
+        $('faixa-atualizando').hidden = true;
+        atualizarBotoesPainel();
+      });
+  }
+
+  function iniciarPainel() {
+    function abrirPorClique(ev) {
+      var alvo = ev.target.closest('[data-abrir]');
+      if (alvo) abrirPainel(alvo.getAttribute('data-abrir'));
+    }
+    $('tabela-corpo').addEventListener('click', abrirPorClique);
+    $('cartoes').addEventListener('click', abrirPorClique);
+
+    var painel = $('painel');
+    painel.addEventListener('cancel', function (ev) { ev.preventDefault(); fecharPainel(false); });
+    painel.addEventListener('click', function (ev) { if (ev.target === painel) fecharPainel(false); });
+    painel.addEventListener('close', function () {
+      var id = estado.aberta && estado.aberta.id;
+      estado.aberta = null;
+      if (id) focarOrigem(id);
+    });
+    $('dt-fechar').addEventListener('click', function () { fecharPainel(false); });
+    $('dt-obs').addEventListener('input', atualizarBotoesPainel);
+    $('dt-ret').addEventListener('input', atualizarBotoesPainel);
+    $('dt-descartar').addEventListener('click', function () { preencherPainel(estado.aberta, true); });
+    $('dt-salvar').addEventListener('click', salvar);
+    $('dt-cancelar').addEventListener('click', clicarCancelar);
+    $('dt-copiar').addEventListener('click', copiarOp);
+
+    $('cx-voltar').addEventListener('click', function () { $('dlg-cancelar').close(); });
+    $('cx-confirmar').addEventListener('click', function () {
+      $('dlg-cancelar').close();
+      if (estado.aberta) mudarCancelamento(estado.aberta.id, 'cancelar');
+    });
+    $('btn-atualizar').addEventListener('click', atualizarSalesforce);
+  }
+
   /* ---------- inicio ---------- */
   function iniciar() {
     iniciarGate();
     iniciarFiltros();
+    iniciarPainel();
     $('btn-sair').addEventListener('click', function () { sair(); });
     $('erro-lista-tentar').addEventListener('click', carregar);
     var salva = null;
