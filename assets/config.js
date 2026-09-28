@@ -547,3 +547,11 @@ window.findEmpreendimento = function (empId) {
   }
   return null;
 };
+
+/* ---------- Pendencias de Vendas (/pendencias-vendas) ----------
+   URL .../exec do Web App do Apps Script da planilha de vendas
+   (docs/apps-script-pendencias.gs). A SENHA NAO FICA AQUI: fica so no
+   Apps Script (Script Property PENDENCIAS_SENHA).
+   Vazio = modo demonstracao (dados ficticios de tests/fixtures/vendas.json,
+   nada e gravado). Com URL preenchida, ?demo=1 na pagina forca o modo demo. */
+window.PENDENCIAS_APPS_SCRIPT_URL = '';
