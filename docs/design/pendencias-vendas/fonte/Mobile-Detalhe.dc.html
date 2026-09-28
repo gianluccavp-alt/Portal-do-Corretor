@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Pendências de Vendas · Venda no celular</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'DM Sans',system-ui,sans-serif;color:#3A4043;background:#F5F6F7;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+.lab{font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:#727A7D}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 16px;border-radius:9px;border:1px solid #E7E9EA;background:#FFFFFF;color:#3A4043;font:500 15px/1 'DM Sans',system-ui,sans-serif;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn-p{background:#E4032B;border-color:#E4032B;color:#FFFFFF}
+.btn-d{color:#C4001C}
+.chip{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:500;border:1px solid;white-space:nowrap}
+.c-neu{background:#FFFFFF;color:#5E666A;border-color:#E7E9EA}
+.sub{font-size:12.5px;color:#727A7D;line-height:1.4}
+.num{font-variant-numeric:tabular-nums}
+.card{background:#FFFFFF;border:1px solid #E7E9EA;border-radius:14px;padding:16px}
+.ck{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px dashed #E7E9EA}
+.ck:last-child{border-bottom:0;padding-bottom:0}
+.ck:first-child{padding-top:0}
+.ci{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ci-x{background:#FDEEF0;color:#C4001C}
+.ci-w{background:#FFF7E6;color:#8A5700}
+.ci-ok{background:#EFF9F2;color:#1B7A40}
+.ms{padding:12px 14px;display:flex;flex-direction:column;gap:5px}
+.mv{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.inp{width:100%;border:1px solid #E7E9EA;border-radius:9px;background:#FFFFFF;padding:11px 12px;font:400 15px/1.5 'DM Sans',system-ui,sans-serif;color:#3A4043;outline:none;resize:vertical}
+.inp:focus{border-color:#E4032B;box-shadow:0 0 0 3px rgba(228,3,43,.10)}
+</style>
+</helmet>
+<div style="width: 390px; height: 1500px; background: #F5F6F7; display: flex; flex-direction: column; position: relative">
+  <div style="position: sticky; top: 0; z-index: 2; background: #FFFFFF; border-bottom: 1px solid #E7E9EA; height: 56px; display: flex; align-items: center; padding: 0 6px">
+    <a class="btn" href="Mobile-Lista.dc.html" style="border-color: transparent; min-height: 44px; padding: 0 10px; font-size: 14.5px">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"></path></svg>
+      Voltar
+    </a>
+    <span class="num lab" style="margin-left: auto; padding-right: 12px; color: #5E666A">OP-006812044</span>
+  </div>
+
+  <main style="padding: 18px 16px 110px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; flex-direction: column; gap: 8px; padding: 0 2px">
+      <h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.4px; line-height: 1.15">Mariana Alves Pereira</h1>
+      <div style="font-size: 14px; color: #5E666A; line-height: 1.45">Village Gaia · Unidade BL02-0104<br>Equipe Leonardo Donizete</div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap">
+        <span class="chip c-neu">Proposta Aprovada</span>
+        <span class="chip c-neu">Comercial</span>
+        <span class="chip c-neu">Ouro</span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: #FFFFFF; border: 1px solid #E7E9EA; border-radius: 12px; overflow: hidden">
+      <div class="ms" style="border-right: 1px solid #E7E9EA; border-bottom: 1px solid #E7E9EA"><span class="lab">Data da venda</span><span class="mv">09/09/2026</span></div>
+      <div class="ms" style="border-bottom: 1px solid #E7E9EA; background: #FFF7E6"><span class="lab" style="color: #8A5700">Em aberto há</span><span class="mv" style="color: #8A5700">19 dias</span></div>
+      <div class="ms" style="border-right: 1px solid #E7E9EA"><span class="lab">Valor real</span><span class="mv">R$ 214.900</span></div>
+      <div class="ms"><span class="lab">FID</span><span class="mv" style="color: #727A7D">—</span></div>
+    </div>
+
+    <section class="card">
+      <h2 style="margin: 0 0 12px; font-size: 15px; font-weight: 700">O que falta <span style="font-weight: 400; color: #727A7D; font-size: 13px">· 3 de 4</span></h2>
+      <div class="ck">
+        <span class="ci ci-x"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg></span>
+        <div><div style="font-size: 14px; font-weight: 700">AC reprovada</div><div class="sub">Análise reprovada</div></div>
+      </div>
+      <div class="ck">
+        <span class="ci ci-w"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 7v6M12 17h.01"></path></svg></span>
+        <div><div style="font-size: 14px; font-weight: 700">Sem FID</div><div class="sub">Nenhum FID registrado</div></div>
+      </div>
+      <div class="ck">
+        <span class="ci ci-w"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 7v6M12 17h.01"></path></svg></span>
+        <div><div style="font-size: 14px; font-weight: 700">Ato não pago</div><div class="sub">Boleto/PIX: Não · Cartão: Não</div></div>
+      </div>
+      <div class="ck">
+        <span class="ci ci-ok"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span>
+        <div><div style="font-size: 14px; font-weight: 700; color: #5E666A">PCV assinado</div><div class="sub">10/09/2026 às 17:22</div></div>
+      </div>
+    </section>
+
+    <section class="card" style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h2 style="margin: 0; font-size: 15px; font-weight: 700">Justificativa da AC</h2>
+        <span class="sub">só leitura</span>
+      </div>
+      <div style="background: #FAFBFB; border: 1px solid #E7E9EA; border-radius: 9px; padding: 12px; font-size: 13.5px; line-height: 1.6; white-space: pre-line">PENDENTE HOLERITE MÊS 08/2026
+PENDENTE CERTIDÃO DE CASAMENTO
+PENDENTE COMPROVANTE DE ENDEREÇO
+PENDENTE CTPS DE AMBOS OS PROPONENTES</div>
+    </section>
+
+    <section class="card" style="display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label class="lab" for="md-obs">Observação</label>
+        <textarea class="inp" id="md-obs" rows="2">Cliente com Bacen, verificar se segue como venda facilitada.</textarea>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label class="lab" for="md-ret">Retorno</label>
+        <textarea class="inp" id="md-ret" rows="2">Falta baixa Bacen, rever em 30/09.</textarea>
+      </div>
+    </section>
+
+    <button class="btn btn-d" type="button" style="width: 100%">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="m5.7 5.7 12.6 12.6"></path></svg>
+      Marcar como cancelada
+    </button>
+  </main>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px 20px; background: #FFFFFF; border-top: 1px solid #E7E9EA; box-shadow: 0 -2px 16px rgba(28,22,16,.09)">
+    <button class="btn btn-p" type="button" style="width: 100%">Salvar alterações</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

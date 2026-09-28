@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Pendências de Vendas · Dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'DM Sans',system-ui,sans-serif;color:#3A4043;background:#F5F6F7;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+.hero{background:#FFFFFF url(/_blob/7404797d9bc48a73f9083e77a6dbca8b) center/cover no-repeat;border-bottom:1px solid #E7E9EA}
+.step{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#E4032B}
+.step::before{content:"";width:22px;height:2px;border-radius:2px;background:#E4032B}
+.lab{font-size:11.5px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:#727A7D}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 17px;border-radius:9px;border:1px solid #E7E9EA;background:#FFFFFF;color:#3A4043;font:500 14px/1 'DM Sans',system-ui,sans-serif;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:hover{border-color:#E4032B;color:#E4032B}
+.btn-p{background:#E4032B;border-color:#E4032B;color:#FFFFFF}
+.btn-p:hover{background:#B8001F;border-color:#B8001F;color:#FFFFFF}
+.btn-i{width:44px;padding:0}
+.chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:500;border:1px solid;white-space:nowrap}
+.c-err{background:#FDEEF0;color:#C4001C;border-color:#F6C9D0}
+.c-warn{background:#FFF7E6;color:#8A5700;border-color:#F1DCAE}
+.c-ok{background:#EFF9F2;color:#1B7A40;border-color:#C7E7D3}
+.c-neu{background:#FFFFFF;color:#5E666A;border-color:#E7E9EA}
+.fchip{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 15px;border-radius:999px;border:1px solid #E7E9EA;background:#FFFFFF;color:#5E666A;font:500 13px/1 'DM Sans',system-ui,sans-serif;cursor:pointer;transition:all .15s}
+.fchip:hover{border-color:#E4032B;color:#E4032B}
+.fchip .n{font-size:12px;color:#727A7D;font-variant-numeric:tabular-nums}
+.fchip.on{background:#E4032B;border-color:#E4032B;color:#FFFFFF}
+.fchip.on .n{color:#FFFFFF}
+.field{display:flex;flex-direction:column;gap:6px;position:relative;min-width:0}
+.inp{width:100%;height:44px;border:1px solid #E7E9EA;border-radius:9px;background:#FFFFFF;padding:0 12px;font:400 14px 'DM Sans',system-ui,sans-serif;color:#3A4043;-webkit-appearance:none;appearance:none;outline:none;transition:border-color .15s,box-shadow .15s}
+.inp:focus{border-color:#E4032B;box-shadow:0 0 0 3px rgba(228,3,43,.10)}
+.inp::placeholder{color:#727A7D}
+select.inp{padding-right:34px;cursor:pointer;text-overflow:ellipsis}
+.field .ico{position:absolute;bottom:13px;pointer-events:none;color:#727A7D}
+.card{background:#FFFFFF;border:1px solid #E7E9EA;border-radius:14px}
+.stat{background:none;border:0;border-right:1px solid #E7E9EA;padding:20px 22px;text-align:left;font-family:inherit;color:inherit;cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:background .15s}
+.stat:hover{background:#FAFBFB}
+.stat:hover .v{color:#E4032B}
+.v{font-size:30px;font-weight:700;letter-spacing:-.6px;line-height:1;font-variant-numeric:tabular-nums;color:#3A4043;transition:color .15s}
+.sub{font-size:12.5px;color:#727A7D;line-height:1.35}
+.t{width:100%;border-collapse:collapse}
+.t th{text-align:left;padding:12px 16px;border-bottom:1px solid #E7E9EA;background:#FAFBFB;font-size:11.5px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:#727A7D;white-space:nowrap}
+.t td{padding:16px;border-bottom:1px solid #E7E9EA;vertical-align:top;font-size:14px;line-height:1.4}
+.t tbody tr{cursor:pointer}
+.t tbody tr:hover td{background:#FAFBFB}
+.t tbody tr:last-child td{border-bottom:0}
+.num{font-variant-numeric:tabular-nums}
+.old{color:#8A5700;font-weight:500}
+.sw{display:inline-flex;align-items:center;gap:10px;font-size:13.5px;color:#3A4043;cursor:pointer;min-height:44px;position:relative}
+.sw input{position:absolute;opacity:0;width:1px;height:1px}
+.sw .tr{width:38px;height:22px;border-radius:999px;background:#CDD2D4;position:relative;transition:background .15s;flex-shrink:0}
+.sw .tr::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#FFFFFF;transition:transform .15s}
+.sw input:checked + .tr{background:#E4032B}
+.sw input:checked + .tr::after{transform:translateX(16px)}
+.sw input:focus-visible + .tr{box-shadow:0 0 0 3px rgba(228,3,43,.18)}
+.lnk{background:none;border:0;padding:0 4px;min-height:44px;font:500 13.5px 'DM Sans',system-ui,sans-serif;color:#5E666A;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.lnk:hover{color:#E4032B}
+.dot{width:8px;height:8px;border-radius:50%;background:#1E8E4A;box-shadow:0 0 0 3px #EFF9F2;flex-shrink:0}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1600px; background: #F5F6F7; display: flex; flex-direction: column">
+
+  <header class="hero" style="position: relative; padding: 36px 80px 30px">
+    <img src="/_blob/28f1e65b058cf079cbd0420de29761a1" alt="Direcional" style="position: absolute; top: 30px; right: 80px; height: 42px">
+    <div style="display: flex; flex-direction: column; gap: 12px; max-width: 760px">
+      <div class="step">Comercial · Área interna</div>
+      <h1 style="margin: 0; font-size: 38px; font-weight: 700; letter-spacing: -0.8px; line-height: 1.1">Pendências de Vendas</h1>
+      <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #5E666A; max-width: 60ch">Vendas em Proposta Aprovada, Pró Soluto e SAFI que ainda têm algo travando o fechamento. Clique numa venda para ver o que falta e registrar o retorno.</p>
+    </div>
+    <div style="position: absolute; right: 80px; bottom: 30px; display: flex; align-items: center; gap: 12px">
+      <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #5E666A; padding-right: 6px">
+        <span class="dot"></span>
+        <span>Atualizado hoje às 14:32</span>
+      </div>
+      <button class="btn" type="button">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg>
+        Atualizar do Salesforce
+      </button>
+      <button class="btn btn-i" type="button" aria-label="Sair">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"></path><path d="M10 17l-5-5 5-5"></path><path d="M5 12h11"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <main style="padding: 28px 80px 64px; display: flex; flex-direction: column; gap: 20px">
+
+    <section class="card" aria-label="Resumo das pendências" style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); overflow: hidden">
+      <button class="stat" type="button">
+        <span class="lab">Vendas com pendência</span>
+        <span class="v">52</span>
+        <span class="sub">61 canceladas ocultas</span>
+      </button>
+      <button class="stat" type="button">
+        <span class="lab">AC não aprovada</span>
+        <span class="v">45</span>
+        <span class="sub">35 reprovadas · 10 sem retorno</span>
+      </button>
+      <button class="stat" type="button">
+        <span class="lab">Sem FID</span>
+        <span class="v">49</span>
+        <span class="sub">94% das vendas</span>
+      </button>
+      <button class="stat" type="button">
+        <span class="lab">Ato não pago</span>
+        <span class="v">25</span>
+        <span class="sub">Nem boleto/PIX nem cartão</span>
+      </button>
+      <button class="stat" type="button">
+        <span class="lab">PCV não assinado</span>
+        <span class="v">10</span>
+        <span class="sub">Cliente ainda não assinou</span>
+      </button>
+      <div style="padding: 20px 22px; display: flex; flex-direction: column; gap: 8px; background: #FAFBFB">
+        <span class="lab">VGV pendente</span>
+        <span class="v">R$ 8,49 mi</span>
+        <span class="sub">Soma do valor real de venda</span>
+      </div>
+    </section>
+
+    <section class="card" aria-label="Filtros" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px; align-items: end">
+        <div class="field" style="grid-column: span 2">
+          <label class="lab" for="f-busca">Buscar</label>
+          <input class="inp" id="f-busca" type="search" placeholder="Cliente, OP ou unidade" style="padding-left: 40px">
+          <svg class="ico" style="left: 13px" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        </div>
+        <div class="field">
+          <label class="lab" for="f-emp">Empreendimento</label>
+          <select class="inp" id="f-emp"><option>Todos</option></select>
+          <svg class="ico" style="right: 11px" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </div>
+        <div class="field">
+          <label class="lab" for="f-eq">Imobiliária / equipe</label>
+          <select class="inp" id="f-eq"><option>Todas</option></select>
+          <svg class="ico" style="right: 11px" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </div>
+        <div class="field">
+          <label class="lab" for="f-fase">Fase</label>
+          <select class="inp" id="f-fase" style="border-color: #E4032B; color: #3A4043"><option>4 fases (padrão)</option></select>
+          <svg class="ico" style="right: 11px" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </div>
+        <div class="field">
+          <label class="lab" for="f-per">Data da venda</label>
+          <select class="inp" id="f-per"><option>Todo o período</option></select>
+          <svg class="ico" style="right: 11px" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </div>
+        <div class="field">
+          <label class="lab" for="f-rank">Ranking</label>
+          <select class="inp" id="f-rank"><option>Todos</option></select>
+          <svg class="ico" style="right: 11px" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </div>
+        <div class="field">
+          <label class="lab" for="f-tipo">Tipo de venda</label>
+          <select class="inp" id="f-tipo"><option>Comercial e facilitada</option></select>
+          <svg class="ico" style="right: 11px" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </div>
+      </div>
+      <div style="border-top: 1px dashed #E7E9EA; padding-top: 14px; display: flex; align-items: center; gap: 16px">
+        <span class="lab" style="flex-shrink: 0">Pendência</span>
+        <div role="group" aria-label="Tipo de pendência" style="display: flex; gap: 8px; flex-wrap: wrap; flex-grow: 1">
+          <button class="fchip on" type="button" aria-pressed="true">Todas <span class="n">52</span></button>
+          <button class="fchip" type="button" aria-pressed="false">AC não aprovada <span class="n">45</span></button>
+          <button class="fchip" type="button" aria-pressed="false">Sem FID <span class="n">49</span></button>
+          <button class="fchip" type="button" aria-pressed="false">Ato não pago <span class="n">25</span></button>
+          <button class="fchip" type="button" aria-pressed="false">PCV não assinado <span class="n">10</span></button>
+        </div>
+        <label class="sw">
+          <input type="checkbox">
+          <span class="tr"></span>
+          Mostrar canceladas <span style="color: #727A7D">(61)</span>
+        </label>
+        <button class="lnk" type="button">Limpar filtros</button>
+      </div>
+    </section>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 2px 0">
+      <div style="font-size: 15px"><strong style="font-weight: 700">52 vendas</strong> <span style="color: #727A7D">· as mais antigas primeiro</span></div>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <label class="lab" for="f-ord">Ordenar</label>
+        <div class="field" style="width: 220px">
+          <select class="inp" id="f-ord"><option>Mais antigas primeiro</option></select>
+          <svg class="ico" style="right: 11px" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+        </div>
+      </div>
+    </div>
+
+    <section class="card" style="overflow: hidden">
+      <table class="t">
+        <thead>
+          <tr>
+            <th style="width: 118px">Venda</th>
+            <th style="width: 270px">Cliente</th>
+            <th style="width: 230px">Empreendimento</th>
+            <th style="width: 180px">Equipe</th>
+            <th>O que falta</th>
+            <th style="width: 118px">Status AC</th>
+            <th style="width: 124px; text-align: right">Valor real</th>
+            <th style="width: 60px"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Abrir</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="10">
+            <tr>
+              <td>
+                <div class="num">{{r.data}}</div>
+                <div class="{{r.diasCls}}" style="display: flex; align-items: center; gap: 5px; font-size: 12.5px; margin-top: 3px">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                  {{r.dias}}
+                </div>
+              </td>
+              <td>
+                <div style="font-weight: 700">{{r.cliente}}</div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-top: 3px">
+                  <span class="num" style="font-size: 12.5px; color: #727A7D">{{r.op}}</span>
+                  <sc-if value="{{r.vf}}" hint-placeholder-val="{{false}}">
+                    <span class="chip c-neu" style="height: 20px; padding: 0 7px; font-size: 11px">Facilitada</span>
+                  </sc-if>
+                </div>
+                <sc-if value="{{r.temNota}}" hint-placeholder-val="{{false}}">
+                  <div style="display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12.5px; color: #5E666A; max-width: 250px">
+                    <svg style="flex-shrink: 0" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v10l-5 5H4z"></path><path d="M15 20v-5h5"></path></svg>
+                    <span class="ell">{{r.nota}}</span>
+                  </div>
+                </sc-if>
+              </td>
+              <td>
+                <div>{{r.emp}}</div>
+                <div class="num" style="font-size: 12.5px; color: #727A7D; margin-top: 3px">Unidade {{r.unid}}</div>
+              </td>
+              <td style="font-size: 13.5px">{{r.equipe}}</td>
+              <td>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px">
+                  <sc-for list="{{r.chips}}" as="c" hint-placeholder-count="2">
+                    <span class="{{c.cls}}">{{c.t}}</span>
+                  </sc-for>
+                </div>
+              </td>
+              <td><span class="{{r.acCls}}">{{r.ac}}</span></td>
+              <td class="num" style="text-align: right; font-weight: 500">{{r.valor}}</td>
+              <td style="padding: 8px 12px 8px 0; vertical-align: middle">
+                <button class="btn btn-i" type="button" aria-label="Abrir venda {{r.op}}" style="border-color: transparent; background: transparent">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg>
+                </button>
+              </td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-top: 1px solid #E7E9EA; background: #FAFBFB">
+        <span class="sub">Mostrando 10 de 52 vendas</span>
+        <button class="btn" type="button">Mostrar mais 42</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var E = 'chip c-err', W = 'chip c-warn';
+    var acR = { ac: 'Reprovada', acCls: 'chip c-err' };
+    var acA = { ac: 'Aprovada', acCls: 'chip c-ok' };
+    function row(o, ac) { return Object.assign({ vf: false, temNota: !!o.nota, diasCls: o.d >= 15 ? 'old' : 'sub', dias: o.d + ' dias' }, ac, o); }
+    return {
+      rows: [
+        row({ d: 19, data: '09/09/2026', cliente: 'Mariana Alves Pereira', op: 'OP-006812044', emp: 'Village Gaia', unid: 'BL02-0104', equipe: 'Equipe Leonardo Donizete', valor: 'R$ 214.900', nota: 'Retorno: falta baixa Bacen, rever em 30/09', chips: [{ t: 'AC reprovada', cls: E }, { t: 'Sem FID', cls: W }, { t: 'Ato não pago', cls: W }] }, acR),
+        row({ d: 18, data: '10/09/2026', cliente: 'Rafael Souza Nogueira', op: 'OP-006815310', emp: 'Conquista Clube Ipiranga', unid: 'BL03-0302', equipe: 'Equipe Débora Pimenta', valor: 'R$ 236.900', nota: 'Obs.: resolvendo embasamento de renda', chips: [{ t: 'AC reprovada', cls: E }, { t: 'Sem FID', cls: W }] }, acR),
+        row({ d: 17, data: '11/09/2026', cliente: 'Camila Rodrigues Duarte', op: 'OP-006817782', vf: true, emp: 'Reserva Jardim Botânico', unid: 'BL01-0801', equipe: 'Equipe Otávio Yudi', valor: 'R$ 301.900', chips: [{ t: 'Sem FID', cls: W }, { t: 'PCV não assinado', cls: W }] }, acA),
+        row({ d: 16, data: '12/09/2026', cliente: 'Bruno Henrique Matos', op: 'OP-006819905', emp: 'Village Park', unid: 'BL05-0203', equipe: 'Canal PJ · Carolina Cristina', valor: 'R$ 195.900', chips: [{ t: 'AC não enviada', cls: E }, { t: 'Sem FID', cls: W }, { t: 'Ato não pago', cls: W }] }, { ac: 'Sem análise', acCls: 'chip c-neu' }),
+        row({ d: 13, data: '15/09/2026', cliente: 'Letícia Fernandes Rocha', op: 'OP-006822417', emp: 'Village Gaia', unid: 'BL01-0309', equipe: 'Equipe Sabrina da Silva', valor: 'R$ 217.990', nota: 'Retorno: resolve FID segunda-feira 29/09', chips: [{ t: 'AC reprovada', cls: E }, { t: 'Sem FID', cls: W }] }, acR),
+        row({ d: 11, data: '17/09/2026', cliente: 'Gustavo Lima Teixeira', op: 'OP-006825530', vf: true, emp: 'Conquista Clube Ipiranga', unid: 'BL04-1102', equipe: 'Equipe Leonardo Donizete', valor: 'R$ 234.900', chips: [{ t: 'AC em análise', cls: W }, { t: 'Sem FID', cls: W }] }, { ac: 'Em análise', acCls: 'chip c-neu' }),
+        row({ d: 9, data: '19/09/2026', cliente: 'Ana Beatriz Monteiro', op: 'OP-006829014', emp: 'Conquista Clube Ipiranga', unid: 'BL02-0605', equipe: 'Equipe Otávio Yudi', valor: 'Não informado', chips: [{ t: 'AC reprovada', cls: E }, { t: 'Sem FID', cls: W }, { t: 'Ato não pago', cls: W }, { t: 'PCV não assinado', cls: W }] }, acR),
+        row({ d: 6, data: '22/09/2026', cliente: 'Pedro Henrique Carvalho', op: 'OP-006833871', emp: 'Village Gaia', unid: 'BL03-0710', equipe: 'Equipe Débora Pimenta', valor: 'R$ 186.900', nota: 'Obs.: pagou R$ 1.000 dos R$ 1.500 do ato', chips: [{ t: 'AC reprovada', cls: E }, { t: 'Sem FID', cls: W }] }, acR),
+        row({ d: 4, data: '24/09/2026', cliente: 'Juliana Martins Silva', op: 'OP-006838256', emp: 'Reserva Jardim Botânico', unid: 'BL02-0402', equipe: 'Equipe Gian Turioni', valor: 'R$ 439.900', chips: [{ t: 'AC reprovada', cls: E }, { t: 'Sem FID', cls: W }, { t: 'Ato não pago', cls: W }] }, acR),
+        row({ d: 2, data: '26/09/2026', cliente: 'João Vitor Ramos', op: 'OP-006848108', emp: 'Conquista Clube Ipiranga', unid: 'BL01-0205', equipe: 'Equipe Leonardo Donizete', valor: 'R$ 229.900', chips: [{ t: 'Sem FID', cls: W }, { t: 'Ato não pago', cls: W }] }, acA)
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
