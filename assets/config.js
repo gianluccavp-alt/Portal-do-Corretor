@@ -554,4 +554,4 @@ window.findEmpreendimento = function (empId) {
    Apps Script (Script Property PENDENCIAS_SENHA).
    Vazio = modo demonstracao (dados ficticios de tests/fixtures/vendas.json,
    nada e gravado). Com URL preenchida, ?demo=1 na pagina forca o modo demo. */
-window.PENDENCIAS_APPS_SCRIPT_URL = '';
+window.PENDENCIAS_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7Y6xNjbQV21lpqvP1IpX2m1LDqyo0okxD_DKqj8ajbVVuXNUhu9bkWQMo37eEMpRy/exec';
