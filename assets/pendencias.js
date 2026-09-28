@@ -105,6 +105,58 @@
   function rankingRotulo(ranking) { return RANKINGS[rankingChave(ranking)] || String(ranking || '').trim(); }
 
   /* ---------- pendencias ---------- */
+  function vazio(v) { return String(v === null || v === undefined ? '' : v).trim() === ''; }
+
+  function statusAcBadge(venda) {
+    var s = normalizar(venda.statusAC);
+    if (s === 'analise aprovada') return { rotulo: 'Aprovada', estilo: 'ok' };
+    if (s === 'analise reprovada') return { rotulo: 'Reprovada', estilo: 'err' };
+    if (s === 'enviado para analise') return { rotulo: 'Em análise', estilo: 'neu' };
+    if (s === 'rascunho') return { rotulo: 'Rascunho', estilo: 'neu' };
+    if (s === '') return { rotulo: 'Sem análise', estilo: 'neu' };
+    return { rotulo: String(venda.statusAC).trim(), estilo: 'neu' };
+  }
+
+  function pendenciaAc(venda) {
+    var s = normalizar(venda.statusAC);
+    if (s === 'analise aprovada') return null;
+    if (s === 'analise reprovada') return { chave: 'ac', rotulo: 'AC reprovada', estilo: 'err' };
+    if (s === 'enviado para analise') return { chave: 'ac', rotulo: 'AC em análise', estilo: 'warn' };
+    if (s === '' || s === 'rascunho') return { chave: 'ac', rotulo: 'AC não enviada', estilo: 'err' };
+    return { chave: 'ac', rotulo: String(venda.statusAC).trim(), estilo: 'warn' };
+  }
+
+  function derivarPendencias(venda) {
+    var itens = [];
+    var ac = pendenciaAc(venda);
+    if (ac) itens.push(ac);
+    if (vazio(venda.fid)) itens.push({ chave: 'fid', rotulo: 'Sem FID', estilo: 'warn' });
+    if (!venda.boletoPago && !venda.cartaoPago) itens.push({ chave: 'ato', rotulo: 'Ato não pago', estilo: 'warn' });
+    if (vazio(venda.pcvAssinadoEm)) itens.push({ chave: 'pcv', rotulo: 'PCV não assinado', estilo: 'warn' });
+    return itens;
+  }
+
+  function simNao(b) { return b ? 'Sim' : 'Não'; }
+
+  function checklist(venda) {
+    var ac = pendenciaAc(venda);
+    var pagamentos = 'Boleto/PIX: ' + simNao(venda.boletoPago) + ' · Cartão: ' + simNao(venda.cartaoPago);
+    return [
+      ac
+        ? { chave: 'ac', ok: false, estilo: ac.estilo, titulo: ac.rotulo,
+            detalhe: 'Status AC: ' + (vazio(venda.statusAC) ? 'sem análise' : String(venda.statusAC).trim()) }
+        : { chave: 'ac', ok: true, estilo: 'ok', titulo: 'AC aprovada', detalhe: 'Status AC: Análise aprovada' },
+      vazio(venda.fid)
+        ? { chave: 'fid', ok: false, estilo: 'warn', titulo: 'Sem FID', detalhe: 'Nenhum FID registrado no Salesforce' }
+        : { chave: 'fid', ok: true, estilo: 'ok', titulo: 'FID ' + String(venda.fid).trim(), detalhe: 'Registrado no Salesforce' },
+      !venda.boletoPago && !venda.cartaoPago
+        ? { chave: 'ato', ok: false, estilo: 'warn', titulo: 'Ato não pago', detalhe: pagamentos }
+        : { chave: 'ato', ok: true, estilo: 'ok', titulo: 'Ato pago', detalhe: pagamentos },
+      vazio(venda.pcvAssinadoEm)
+        ? { chave: 'pcv', ok: false, estilo: 'warn', titulo: 'PCV não assinado', detalhe: 'Cliente ainda não assinou' }
+        : { chave: 'pcv', ok: true, estilo: 'ok', titulo: 'PCV assinado', detalhe: 'Cliente assinou em ' + String(venda.pcvAssinadoEm).trim() }
+    ];
+  }
 
   /* ---------- filtros ---------- */
 
@@ -126,7 +178,10 @@
     justificativaExibida: justificativaExibida,
     notaDaLinha: notaDaLinha,
     rankingChave: rankingChave,
-    rankingRotulo: rankingRotulo
+    rankingRotulo: rankingRotulo,
+    statusAcBadge: statusAcBadge,
+    derivarPendencias: derivarPendencias,
+    checklist: checklist
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
