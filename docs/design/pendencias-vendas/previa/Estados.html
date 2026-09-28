@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pendências de Vendas · Estados</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'DM Sans',system-ui,sans-serif;color:#3A4043;background:#F5F6F7;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+.step{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#E4032B}
+.step::before{content:"";width:22px;height:2px;border-radius:2px;background:#E4032B}
+.lab{font-size:11.5px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:#727A7D}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 17px;border-radius:9px;border:1px solid #E7E9EA;background:#FFFFFF;color:#3A4043;font:500 14px/1 'DM Sans',system-ui,sans-serif;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:hover{border-color:#E4032B;color:#E4032B}
+.btn-p{background:#E4032B;border-color:#E4032B;color:#FFFFFF}
+.btn-p:hover{background:#B8001F;border-color:#B8001F;color:#FFFFFF}
+.btn[disabled]{color:#727A7D;background:#FAFBFB;cursor:default;border-color:#E7E9EA}
+.chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:500;border:1px solid;white-space:nowrap}
+.c-err{background:#FDEEF0;color:#C4001C;border-color:#F6C9D0}
+.c-warn{background:#FFF7E6;color:#8A5700;border-color:#F1DCAE}
+.c-neu{background:#FFFFFF;color:#5E666A;border-color:#E7E9EA}
+.panel{display:flex;flex-direction:column;gap:12px}
+.stage{flex-grow:1;background:#FFFFFF;border:1px solid #E7E9EA;border-radius:14px;padding:26px;display:flex;flex-direction:column;justify-content:center;gap:16px}
+.sub{font-size:12.5px;color:#727A7D;line-height:1.45}
+.num{font-variant-numeric:tabular-nums}
+.inp{width:100%;height:48px;border:1px solid #E7E9EA;border-radius:9px;background:#FFFFFF;padding:0 14px;font:400 15px 'DM Sans',system-ui,sans-serif;color:#3A4043;outline:none}
+</style>
+</head>
+<body>
+<div style="width: 1440px; height: 860px; padding: 56px 80px; display: flex; flex-direction: column; gap: 32px; background: #F5F6F7">
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <div class="step">Estados da tela</div>
+    <h1 style="margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.6px">Carregando, salvando, erro e vazio</h1>
+  </div>
+  <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 24px">
+
+    <div class="panel">
+      <span class="lab">1 · Atualizando do Salesforce</span>
+      <div class="stage">
+        <div role="status" style="border: 1px solid #E7E9EA; border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; background: #FAFBFB">
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 14.5px; font-weight: 700">
+            <svg style="color: #E4032B" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"></path></svg>
+            Atualizando do Salesforce…
+          </div>
+          <div style="height: 4px; border-radius: 999px; background: #ECEEEF; overflow: hidden"><div style="width: 42%; height: 100%; background: #E4032B; border-radius: 999px"></div></div>
+          <div class="sub">Rodando o relatório na planilha. Leva cerca de 1 minuto. Edições ficam pausadas até terminar.</div>
+        </div>
+        <button class="btn" type="button" disabled style="align-self: flex-start">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg>
+          Atualizando…
+        </button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <span class="lab">2 · Alteração salva</span>
+      <div class="stage" style="align-items: center">
+        <div role="status" style="background: #3A4043; color: #FFFFFF; border-radius: 12px; padding: 12px 12px 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 12px 30px rgba(28,32,34,.22); font-size: 14px">
+          <svg style="color: #7FD6A0; flex-shrink: 0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+          <span>Venda <span class="num">OP-006812044</span> cancelada</span>
+          <button type="button" style="margin-left: 6px; min-height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.28); background: transparent; color: #FFFFFF; font: 500 13.5px 'DM Sans', system-ui, sans-serif; cursor: pointer">Desfazer</button>
+        </div>
+        <div role="status" style="background: #3A4043; color: #FFFFFF; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 12px 30px rgba(28,32,34,.22); font-size: 14px">
+          <svg style="color: #7FD6A0; flex-shrink: 0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+          Retorno salvo na planilha
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <span class="lab">3 · Senha incorreta</span>
+      <div class="stage">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <label class="lab" for="st-senha">Senha</label>
+          <input class="inp" id="st-senha" type="password" value="comercial" aria-invalid="true" aria-describedby="st-senha-e" style="border-color: #C4001C; background: #FDEEF0">
+          <span id="st-senha-e" style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: #C4001C">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path></svg>
+            Senha incorreta. Confira maiúsculas e tente de novo.
+          </span>
+        </div>
+        <button class="btn btn-p" type="button" style="width: 100%; min-height: 48px">Entrar</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <span class="lab">4 · Nenhum resultado</span>
+      <div class="stage" style="align-items: center; text-align: center">
+        <div style="width: 48px; height: 48px; border-radius: 14px; background: #F5F6F7; border: 1px solid #E7E9EA; display: flex; align-items: center; justify-content: center; color: #727A7D">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        </div>
+        <div>
+          <div style="font-size: 16px; font-weight: 700">Nenhuma venda com esses filtros</div>
+          <div class="sub" style="margin-top: 4px">Tente outro empreendimento ou tipo de pendência.</div>
+        </div>
+        <button class="btn" type="button">Limpar filtros</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <span class="lab">5 · Falha ao falar com a planilha</span>
+      <div class="stage">
+        <div role="alert" style="border: 1px solid #F6C9D0; background: #FDEEF0; border-radius: 12px; padding: 16px 18px; display: flex; gap: 12px">
+          <svg style="color: #C4001C; flex-shrink: 0; margin-top: 1px" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path></svg>
+          <div>
+            <div style="font-size: 14.5px; font-weight: 700; color: #C4001C">Não deu para carregar as vendas</div>
+            <div style="font-size: 13px; color: #5E666A; margin-top: 4px; line-height: 1.5">A planilha não respondeu. Pode ser a conexão ou uma atualização em andamento. Nada que você editou foi perdido.</div>
+          </div>
+        </div>
+        <button class="btn btn-p" type="button" style="align-self: flex-start">Tentar de novo</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <span class="lab">6 · Venda cancelada (com “Mostrar canceladas”)</span>
+      <div class="stage">
+        <div style="border: 1px solid #E7E9EA; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; background: #FAFBFB">
+          <div style="flex-grow: 1; min-width: 0">
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span style="font-size: 14px; font-weight: 700; color: #727A7D; text-decoration: line-through">Pedro Henrique Carvalho</span>
+              <span class="chip c-err" style="height: 22px; font-size: 11.5px">Cancelada</span>
+            </div>
+            <div class="num" style="font-size: 12.5px; color: #727A7D; margin-top: 3px; text-decoration: line-through">OP-006833871 · Village Gaia · BL03-0710</div>
+          </div>
+          <button class="btn" type="button">Reativar</button>
+        </div>
+        <div class="sub">Canceladas aparecem no fim da lista, esmaecidas e tachadas, igual à planilha.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,329 @@
+/* ============================================================
+   PENDENCIAS DE VENDAS - regras de negocio
+   ------------------------------------------------------------
+   Funcoes puras (sem DOM, sem rede). Usadas pela pagina
+   /pendencias-vendas via window.Pendencias e pelos testes
+   (node --test tests/*.test.js).
+   Spec: docs/superpowers/specs/2026-09-28-pendencias-vendas-design.md
+   ============================================================ */
+(function (raiz) {
+  'use strict';
+
+  var FASES_PADRAO = ['Aprovado Pró Soluto', 'Proposta Aprovada', 'Aprovado SAFI', 'Análise SAFI'];
+  var DIAS_ALERTA = 15;
+  var DIA_MS = 86400000;
+  /* separador da coluna Imobiliaria: "-", "–", "—" ou o "?" que aparece
+     quando o travessao chega corrompido do Salesforce */
+  var SEP = '\\s*[-\u2013\u2014?\uFFFD]\\s*';
+
+  /* ---------- texto ---------- */
+  function normalizar(valor) {
+    if (valor === null || valor === undefined) return '';
+    return String(valor).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  var CONECTIVOS = { da: 1, de: 1, di: 1, 'do': 1, dos: 1, das: 1, e: 1 };
+  function titleCase(texto) {
+    return String(texto || '').trim().toLowerCase().split(/\s+/).filter(Boolean)
+      .map(function (p, i) { return i > 0 && CONECTIVOS[p] ? p : p.charAt(0).toUpperCase() + p.slice(1); })
+      .join(' ');
+  }
+
+  function formatarEquipe(imobiliaria) {
+    var t = String(imobiliaria || '').trim();
+    if (!t) return '—';
+    var sufixo = '';
+    var inativo = t.match(new RegExp(SEP + 'inativo\\s*$', 'i'));
+    if (inativo) { sufixo = ' - Inativo'; t = t.slice(0, inativo.index); }
+    var pj = t.match(new RegExp('^SPI' + SEP + 'CANAL IMOB PJ' + SEP + '(.+)$', 'i'));
+    if (pj) return 'Canal PJ · ' + titleCase(pj[1]) + sufixo;
+    t = t.replace(new RegExp('^DIRECIONAL VENDAS SPI' + SEP, 'i'), '');
+    return titleCase(t) + sufixo;
+  }
+
+  function formatarValor(valor, comCentavos) {
+    if (valor === null || valor === undefined || valor === '' || isNaN(Number(valor))) return 'Não informado';
+    var casas = comCentavos ? 2 : 0;
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency', currency: 'BRL', minimumFractionDigits: casas, maximumFractionDigits: casas
+    }).format(Number(valor)).replace(/\u00a0/g, ' ');
+  }
+
+  function formatarMi(valor) {
+    var n = Number(valor) || 0;
+    if (n >= 1e6) return 'R$ ' + (n / 1e6).toFixed(2).replace('.', ',') + ' mi';
+    return formatarValor(n, false);
+  }
+
+  /* ---------- datas ---------- */
+  function parseData(texto) {
+    var m = String(texto || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (!m) return null;
+    var d = new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0));
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function inicioDoDia(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  /* Math.round absorve a hora a mais/a menos do horario de verao */
+  function diasEntre(de, ate) { return Math.round((inicioDoDia(ate) - inicioDoDia(de)) / DIA_MS); }
+  function diasEmAberto(dataVenda, hoje) {
+    var d = parseData(dataVenda);
+    return d ? diasEntre(d, hoje) : null;
+  }
+  function textoDias(dias) {
+    if (dias === null || dias === undefined) return '—';
+    if (dias === 0) return 'hoje';
+    return dias + (dias === 1 ? ' dia' : ' dias');
+  }
+  function isoParaData(iso) {
+    var m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+  }
+  function doisDigitos(n) { return (n < 10 ? '0' : '') + n; }
+  function formatarAtualizacao(iso, agora) {
+    var d = iso ? new Date(iso) : null;
+    if (!d || isNaN(d.getTime())) return 'Última atualização do Salesforce desconhecida';
+    var hora = doisDigitos(d.getHours()) + ':' + doisDigitos(d.getMinutes());
+    if (diasEntre(d, agora) === 0) return 'Salesforce atualizado hoje às ' + hora;
+    return 'Salesforce atualizado em ' + doisDigitos(d.getDate()) + '/' + doisDigitos(d.getMonth() + 1) +
+      '/' + d.getFullYear() + ' às ' + hora;
+  }
+
+  /* ---------- exibicao ---------- */
+  function justificativaExibida(texto) {
+    var t = String(texto || '').trim();
+    return t === '' || t === '.' ? 'Sem justificativa registrada' : t;
+  }
+  function notaDaLinha(venda) {
+    var r = String(venda.retorno || '').trim();
+    if (r) return 'Retorno: ' + r;
+    var o = String(venda.observacao || '').trim();
+    if (o) return 'Obs.: ' + o;
+    return '';
+  }
+  var RANKINGS = { diamante: 'Diamante', ouro: 'Ouro', prata: 'Prata', bronze: 'Bronze', aco: 'Aço' };
+  function rankingChave(ranking) { return normalizar(ranking).replace(/[^a-z]/g, ''); }
+  function rankingRotulo(ranking) { return RANKINGS[rankingChave(ranking)] || String(ranking || '').trim(); }
+
+  /* ---------- pendencias ---------- */
+  function vazio(v) { return String(v === null || v === undefined ? '' : v).trim() === ''; }
+
+  function statusAcBadge(venda) {
+    var s = normalizar(venda.statusAC);
+    if (s === 'analise aprovada') return { rotulo: 'Aprovada', estilo: 'ok' };
+    if (s === 'analise reprovada') return { rotulo: 'Reprovada', estilo: 'err' };
+    if (s === 'enviado para analise') return { rotulo: 'Em análise', estilo: 'neu' };
+    if (s === 'rascunho') return { rotulo: 'Rascunho', estilo: 'neu' };
+    if (s === '') return { rotulo: 'Sem análise', estilo: 'neu' };
+    return { rotulo: String(venda.statusAC).trim(), estilo: 'neu' };
+  }
+
+  function pendenciaAc(venda) {
+    var s = normalizar(venda.statusAC);
+    if (s === 'analise aprovada') return null;
+    if (s === 'analise reprovada') return { chave: 'ac', rotulo: 'AC reprovada', estilo: 'err' };
+    if (s === 'enviado para analise') return { chave: 'ac', rotulo: 'AC em análise', estilo: 'warn' };
+    if (s === '' || s === 'rascunho') return { chave: 'ac', rotulo: 'AC não enviada', estilo: 'err' };
+    return { chave: 'ac', rotulo: String(venda.statusAC).trim(), estilo: 'warn' };
+  }
+
+  function derivarPendencias(venda) {
+    var itens = [];
+    var ac = pendenciaAc(venda);
+    if (ac) itens.push(ac);
+    if (vazio(venda.fid)) itens.push({ chave: 'fid', rotulo: 'Sem FID', estilo: 'warn' });
+    if (!venda.boletoPago && !venda.cartaoPago) itens.push({ chave: 'ato', rotulo: 'Ato não pago', estilo: 'warn' });
+    if (vazio(venda.pcvAssinadoEm)) itens.push({ chave: 'pcv', rotulo: 'PCV não assinado', estilo: 'warn' });
+    return itens;
+  }
+
+  function simNao(b) { return b ? 'Sim' : 'Não'; }
+
+  function checklist(venda) {
+    var ac = pendenciaAc(venda);
+    var pagamentos = 'Boleto/PIX: ' + simNao(venda.boletoPago) + ' · Cartão: ' + simNao(venda.cartaoPago);
+    return [
+      ac
+        ? { chave: 'ac', ok: false, estilo: ac.estilo, titulo: ac.rotulo,
+            detalhe: 'Status AC: ' + (vazio(venda.statusAC) ? 'sem análise' : String(venda.statusAC).trim()) }
+        : { chave: 'ac', ok: true, estilo: 'ok', titulo: 'AC aprovada', detalhe: 'Status AC: Análise aprovada' },
+      vazio(venda.fid)
+        ? { chave: 'fid', ok: false, estilo: 'warn', titulo: 'Sem FID', detalhe: 'Nenhum FID registrado no Salesforce' }
+        : { chave: 'fid', ok: true, estilo: 'ok', titulo: 'FID ' + String(venda.fid).trim(), detalhe: 'Registrado no Salesforce' },
+      !venda.boletoPago && !venda.cartaoPago
+        ? { chave: 'ato', ok: false, estilo: 'warn', titulo: 'Ato não pago', detalhe: pagamentos }
+        : { chave: 'ato', ok: true, estilo: 'ok', titulo: 'Ato pago', detalhe: pagamentos },
+      vazio(venda.pcvAssinadoEm)
+        ? { chave: 'pcv', ok: false, estilo: 'warn', titulo: 'PCV não assinado', detalhe: 'Cliente ainda não assinou' }
+        : { chave: 'pcv', ok: true, estilo: 'ok', titulo: 'PCV assinado', detalhe: 'Cliente assinou em ' + String(venda.pcvAssinadoEm).trim() }
+    ];
+  }
+
+  /* ---------- filtros ---------- */
+  function filtrosPadrao() {
+    return {
+      busca: '', empreendimento: '', equipe: '', fases: FASES_PADRAO.slice(),
+      periodo: 'todo', de: '', ate: '', ranking: '', tipo: 'todas',
+      pendencia: 'todas', mostrarCanceladas: false
+    };
+  }
+
+  function dentroDoPeriodo(venda, f, hoje) {
+    if (!f.periodo || f.periodo === 'todo') return true;
+    var d = parseData(venda.dataVenda);
+    if (!d) return false;
+    var h = inicioDoDia(hoje);
+    if (f.periodo === 'mes') return d.getFullYear() === h.getFullYear() && d.getMonth() === h.getMonth();
+    if (f.periodo === 'mes_passado') {
+      var p = new Date(h.getFullYear(), h.getMonth() - 1, 1);
+      return d.getFullYear() === p.getFullYear() && d.getMonth() === p.getMonth();
+    }
+    if (f.periodo === '30d') { var n = diasEntre(d, h); return n >= 0 && n <= 30; }
+    if (f.periodo === 'intervalo') {
+      var de = isoParaData(f.de), ate = isoParaData(f.ate), dia = inicioDoDia(d);
+      return (!de || dia >= de) && (!ate || dia <= ate);
+    }
+    return true;
+  }
+
+  function passaFiltros(venda, f, hoje, ignorarPendencia) {
+    if (venda.cancelada && !f.mostrarCanceladas) return false;
+    if (f.busca) {
+      var alvo = normalizar([venda.cliente, venda.id, venda.identificador].join(' '));
+      if (alvo.indexOf(normalizar(f.busca)) === -1) return false;
+    }
+    if (f.empreendimento && String(venda.empreendimento || '').trim() !== f.empreendimento) return false;
+    if (f.equipe && String(venda.imobiliaria || '').trim() !== f.equipe) return false;
+    if (f.fases && f.fases.length && f.fases.map(normalizar).indexOf(normalizar(venda.fase)) === -1) return false;
+    if (!dentroDoPeriodo(venda, f, hoje)) return false;
+    if (f.ranking && rankingChave(venda.ranking) !== f.ranking) return false;
+    if (f.tipo === 'comercial' && venda.vendaFacilitada) return false;
+    if (f.tipo === 'facilitada' && !venda.vendaFacilitada) return false;
+    if (!ignorarPendencia && f.pendencia && f.pendencia !== 'todas') {
+      var tem = derivarPendencias(venda).some(function (p) { return p.chave === f.pendencia; });
+      if (!tem) return false;
+    }
+    return true;
+  }
+
+  function aplicarFiltros(vendas, f, hoje) {
+    return vendas.filter(function (v) { return passaFiltros(v, f, hoje, false); });
+  }
+
+  /* KPIs: todos os filtros menos o de pendencia, sem canceladas (spec 5.5) */
+  function calcularKpis(vendas, f, hoje) {
+    var comCanceladas = Object.assign({}, f, { mostrarCanceladas: true });
+    var k = { total: 0, ac: 0, acReprovadas: 0, acOutras: 0, fid: 0, fidPct: 0, ato: 0, pcv: 0, vgv: 0, base: 0, canceladasOcultas: 0 };
+    vendas.forEach(function (v) {
+      if (!passaFiltros(v, comCanceladas, hoje, true)) return;
+      if (v.cancelada) { k.canceladasOcultas++; return; }
+      k.base++;
+      var chaves = derivarPendencias(v).map(function (p) { return p.chave; });
+      if (chaves.length) k.total++;
+      if (chaves.indexOf('ac') !== -1) {
+        k.ac++;
+        if (normalizar(v.statusAC) === 'analise reprovada') k.acReprovadas++; else k.acOutras++;
+      }
+      if (chaves.indexOf('fid') !== -1) k.fid++;
+      if (chaves.indexOf('ato') !== -1) k.ato++;
+      if (chaves.indexOf('pcv') !== -1) k.pcv++;
+      if (typeof v.valorReal === 'number') k.vgv += v.valorReal;
+    });
+    k.fidPct = k.base ? Math.round(k.fid / k.base * 100) : 0;
+    return k;
+  }
+
+  function tempoDaVenda(v) { var d = parseData(v.dataVenda); return d ? d.getTime() : null; }
+  /* nulos sempre por ultimo, nos dois sentidos */
+  function compararNulosPorUltimo(a, b, crescente) {
+    if (a === null && b === null) return 0;
+    if (a === null) return 1;
+    if (b === null) return -1;
+    return crescente ? a - b : b - a;
+  }
+  function comparar(a, b, criterio) {
+    if (criterio === 'recentes') return compararNulosPorUltimo(tempoDaVenda(a), tempoDaVenda(b), false);
+    if (criterio === 'valor') {
+      var va = typeof a.valorReal === 'number' ? a.valorReal : null;
+      var vb = typeof b.valorReal === 'number' ? b.valorReal : null;
+      return compararNulosPorUltimo(va, vb, false);
+    }
+    if (criterio === 'pendencias') return derivarPendencias(b).length - derivarPendencias(a).length;
+    return compararNulosPorUltimo(tempoDaVenda(a), tempoDaVenda(b), true);
+  }
+  function ordenar(vendas, criterio) {
+    return vendas.map(function (v, i) { return { v: v, i: i }; })
+      .sort(function (a, b) {
+        if (!!a.v.cancelada !== !!b.v.cancelada) return a.v.cancelada ? 1 : -1;
+        return comparar(a.v, b.v, criterio) || a.i - b.i;
+      })
+      .map(function (x) { return x.v; });
+  }
+
+  function unicos(lista) {
+    var vistos = {};
+    return lista.filter(function (x) { if (!x || vistos[x]) return false; vistos[x] = 1; return true; });
+  }
+  function porTexto(a, b) { return a.localeCompare(b, 'pt-BR'); }
+  function opcoesDeFiltro(vendas) {
+    function campo(nome) { return vendas.map(function (v) { return String(v[nome] || '').trim(); }); }
+    return {
+      empreendimentos: unicos(campo('empreendimento')).sort(porTexto),
+      equipes: unicos(campo('imobiliaria'))
+        .map(function (valor) { return { valor: valor, rotulo: formatarEquipe(valor) }; })
+        .sort(function (a, b) { return porTexto(a.rotulo, b.rotulo); }),
+      fases: unicos(campo('fase')).sort(porTexto)
+    };
+  }
+
+  function mesmasFases(a, b) {
+    function chave(l) { return l.map(normalizar).sort().join('|'); }
+    return chave(a || []) === chave(b || []);
+  }
+  /* quantos filtros "de gaveta" estao fora do padrao (botao Filtros no celular) */
+  function contarFiltrosAtivos(f) {
+    var n = 0;
+    if (f.empreendimento) n++;
+    if (f.equipe) n++;
+    if (!mesmasFases(f.fases, FASES_PADRAO)) n++;
+    if (f.periodo && f.periodo !== 'todo') n++;
+    if (f.ranking) n++;
+    if (f.tipo && f.tipo !== 'todas') n++;
+    if (f.mostrarCanceladas) n++;
+    return n;
+  }
+
+  var api = {
+    FASES_PADRAO: FASES_PADRAO,
+    DIAS_ALERTA: DIAS_ALERTA,
+    normalizar: normalizar,
+    titleCase: titleCase,
+    formatarEquipe: formatarEquipe,
+    formatarValor: formatarValor,
+    formatarMi: formatarMi,
+    parseData: parseData,
+    inicioDoDia: inicioDoDia,
+    diasEntre: diasEntre,
+    diasEmAberto: diasEmAberto,
+    textoDias: textoDias,
+    isoParaData: isoParaData,
+    formatarAtualizacao: formatarAtualizacao,
+    justificativaExibida: justificativaExibida,
+    notaDaLinha: notaDaLinha,
+    rankingChave: rankingChave,
+    rankingRotulo: rankingRotulo,
+    statusAcBadge: statusAcBadge,
+    derivarPendencias: derivarPendencias,
+    checklist: checklist,
+    filtrosPadrao: filtrosPadrao,
+    passaFiltros: passaFiltros,
+    aplicarFiltros: aplicarFiltros,
+    calcularKpis: calcularKpis,
+    ordenar: ordenar,
+    opcoesDeFiltro: opcoesDeFiltro,
+    mesmasFases: mesmasFases,
+    contarFiltrosAtivos: contarFiltrosAtivos
+  };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else raiz.Pendencias = api;
+})(this);

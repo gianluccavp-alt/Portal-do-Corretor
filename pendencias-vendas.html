@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Pendências de Vendas · Comercial</title>
+<link rel="icon" type="image/webp" href="assets/img/favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<!-- Pagina interna do comercial. Spec: docs/superpowers/specs/2026-09-28-pendencias-vendas-design.md
+     Telas: docs/design/pendencias-vendas/telas/ -->
+<style>
+:root{
+  --red:#E4032B;--red-deep:#B8001F;--ink:#3A4043;--slate:#727A7D;--slate-2:#5E666A;
+  --hair:#E7E9EA;--bg:#F5F6F7;--surface:#FFFFFF;--muted:#FAFBFB;
+  --ok:#1B7A40;--ok-bg:#EFF9F2;--ok-line:#C7E7D3;
+  --warn:#8A5700;--warn-bg:#FFF7E6;--warn-line:#F1DCAE;
+  --err:#C4001C;--err-bg:#FDEEF0;--err-line:#F6C9D0;
+  --foco:0 0 0 3px rgba(228,3,43,.10);--foco-forte:0 0 0 3px rgba(228,3,43,.25)
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+[hidden]{display:none!important}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,p{margin:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.num{font-variant-numeric:tabular-nums}
+.lab{font-size:11.5px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--slate)}
+.sub{font-size:12.5px;color:var(--slate);line-height:1.4}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.alerta{color:var(--warn);font-weight:500}
+.step{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
+.step::before{content:"";width:22px;height:2px;border-radius:2px;background:var(--red)}
+.hero{background:var(--surface) url(assets/img/hero-bg.png) center/cover no-repeat;border-bottom:1px solid var(--hair)}
+.gira{animation:gira .9s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+
+/* ---------- botoes ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 17px;border-radius:9px;border:1px solid var(--hair);background:var(--surface);color:var(--ink);font-weight:500;font-size:14px;line-height:1;cursor:pointer;transition:border-color .15s,color .15s,background .15s;white-space:nowrap}
+.btn:hover:not(:disabled){border-color:var(--red);color:var(--red)}
+.btn:disabled{color:var(--slate);background:var(--muted);cursor:default}
+.btn-p{background:var(--red);border-color:var(--red);color:#fff}
+.btn-p:hover:not(:disabled){background:var(--red-deep);border-color:var(--red-deep);color:#fff}
+.btn-p:disabled{background:#F2A3B1;border-color:#F2A3B1;color:#fff}
+.btn-i{width:44px;padding:0}
+.btn-fantasma{border-color:transparent;background:transparent}
+.btn-mini{width:36px;min-height:36px;color:var(--slate)}
+.btn-d{color:var(--err)}
+.btn-d:hover:not(:disabled){border-color:var(--err);color:var(--err);background:var(--err-bg)}
+.btn-g{width:100%;min-height:48px;font-size:15px}
+.lnk{background:none;border:0;padding:0 4px;min-height:44px;font-weight:500;font-size:13.5px;color:var(--slate-2);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.lnk:hover{color:var(--red)}
+.btn:focus-visible,.lnk:focus-visible,.fchip:focus-visible,.kpi:focus-visible,.vc:focus-visible,.olho:focus-visible,.toast-acao:focus-visible,.multi summary:focus-visible{outline:none;box-shadow:var(--foco-forte)}
+
+/* ---------- chips ---------- */
+.chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:500;border:1px solid;white-space:nowrap}
+.chip-p{height:20px;padding:0 7px;font-size:11px}
+.c-err{background:var(--err-bg);color:var(--err);border-color:var(--err-line)}
+.c-warn{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-line)}
+.c-ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok-line)}
+.c-neu{background:var(--surface);color:var(--slate-2);border-color:var(--hair)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+
+/* ---------- campos ---------- */
+.campo{display:flex;flex-direction:column;gap:6px;min-width:0;position:relative}
+.inp{width:100%;min-height:44px;border:1px solid var(--hair);border-radius:9px;background:var(--surface);padding:0 12px;font-size:14px;color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s}
+textarea.inp{padding:11px 12px;line-height:1.5;resize:vertical}
+.inp:focus,.multi summary:focus{border-color:var(--red);box-shadow:var(--foco)}
+.inp::placeholder{color:var(--slate)}
+.inp.ativo{border-color:var(--red)}
+.inp[aria-invalid="true"]{border-color:var(--err);background:var(--err-bg)}
+.sel{position:relative}
+.sel select{-webkit-appearance:none;appearance:none;padding-right:34px;cursor:pointer;text-overflow:ellipsis}
+.sel > svg,.multi summary > svg{position:absolute;right:11px;top:50%;margin-top:-8px;pointer-events:none;color:var(--slate)}
+.com-ico{position:relative}
+.com-ico .inp{padding-left:40px}
+.ico-esq{position:absolute;left:13px;top:50%;margin-top:-9px;color:var(--slate);pointer-events:none}
+.msg-erro{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--err)}
+.multi{position:relative}
+.multi summary{list-style:none;display:flex;align-items:center;padding-right:34px;cursor:pointer;position:relative}
+.multi summary::-webkit-details-marker{display:none}
+.multi-lista{position:absolute;z-index:5;top:calc(100% + 6px);left:0;min-width:240px;background:var(--surface);border:1px solid var(--hair);border-radius:12px;box-shadow:0 12px 30px rgba(28,32,34,.14);padding:6px}
+.multi-op{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 10px;border-radius:8px;font-size:14px;cursor:pointer}
+.multi-op:hover{background:var(--muted)}
+.multi-op input{width:16px;height:16px;accent-color:var(--red)}
+.sw{display:inline-flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer;min-height:44px;position:relative}
+.sw input{position:absolute;opacity:0;width:1px;height:1px}
+.sw .tr{width:38px;height:22px;border-radius:999px;background:#CDD2D4;position:relative;transition:background .15s;flex-shrink:0}
+.sw .tr::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s}
+.sw input:checked + .tr{background:var(--red)}
+.sw input:checked + .tr::after{transform:translateX(16px)}
+.sw input:focus-visible + .tr{box-shadow:var(--foco-forte)}
+
+/* ---------- senha ---------- */
+.gate{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:28px 16px;border-bottom:0}
+.gate-card{width:100%;max-width:440px;background:var(--surface);border:1px solid var(--hair);border-radius:18px;padding:40px 40px 36px;display:flex;flex-direction:column;gap:26px}
+.gate-logo{height:36px;align-self:flex-start}
+.gate-titulo{display:flex;flex-direction:column;gap:10px}
+.gate-titulo h1{font-size:30px;font-weight:700;letter-spacing:-.6px;line-height:1.15}
+.gate-titulo p{font-size:14.5px;line-height:1.55;color:var(--slate-2)}
+.gate-form{display:flex;flex-direction:column;gap:16px}
+.senha-box{position:relative}
+.senha-box .inp{min-height:48px;padding:0 48px 0 42px;font-size:15px}
+.senha-ico{position:absolute;left:14px;top:15px;color:var(--slate);pointer-events:none}
+.olho{position:absolute;right:2px;top:2px;width:44px;height:44px;border:0;border-radius:8px;background:none;color:var(--slate);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.olho:hover{color:var(--red)}
+
+/* ---------- topo ---------- */
+.topo{position:relative;max-width:1440px;margin:0 auto;padding:36px 80px 30px;min-height:200px}
+.topo-logo{position:absolute;top:30px;right:80px;height:42px}
+.topo-textos{display:flex;flex-direction:column;gap:12px;max-width:760px}
+.topo h1{font-size:38px;font-weight:700;letter-spacing:-.8px;line-height:1.1}
+.topo p{font-size:15px;color:var(--slate-2);max-width:60ch}
+.topo-acoes{position:absolute;right:80px;bottom:30px;display:flex;align-items:center;gap:12px}
+.atualizacao{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--slate-2);padding-right:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:#1E8E4A;box-shadow:0 0 0 3px var(--ok-bg);flex-shrink:0}
+
+/* ---------- conteudo ---------- */
+.conteudo{max-width:1440px;margin:0 auto;padding:28px 80px 64px;display:flex;flex-direction:column;gap:20px}
+#conteudo-lista{display:flex;flex-direction:column;gap:20px}
+.card{background:var(--surface);border:1px solid var(--hair);border-radius:14px}
+.aviso-demo{padding:12px 16px;border:1px dashed var(--warn-line);background:var(--warn-bg);color:var(--warn);border-radius:12px;font-size:13.5px}
+.estado{padding:28px;display:flex;align-items:center;gap:12px;color:var(--slate-2)}
+.faixa{border:1px solid var(--hair);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;background:var(--surface)}
+.faixa-t{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14.5px}
+.faixa-t svg{color:var(--red)}
+.barra{height:4px;border-radius:999px;background:#ECEEEF;overflow:hidden;position:relative}
+.barra span{position:absolute;top:0;bottom:0;left:-40%;width:40%;background:var(--red);border-radius:999px;animation:barra 1.4s ease-in-out infinite}
+@keyframes barra{to{left:100%}}
+@media (prefers-reduced-motion:reduce){.gira,.barra span{animation:none}.barra span{left:0;width:100%;opacity:.35}}
+.alerta-erro{display:flex;align-items:flex-start;gap:12px;padding:16px 18px;border:1px solid var(--err-line);background:var(--err-bg);border-radius:12px}
+.alerta-erro > svg{color:var(--err);flex-shrink:0;margin-top:1px}
+.alerta-erro > div{flex:1}
+.alerta-erro-t{font-weight:700;font-size:14.5px;color:var(--err)}
+#erro-lista-txt{font-size:13px;color:var(--slate-2);margin-top:4px}
+
+/* ---------- KPIs ---------- */
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));overflow:hidden}
+.kpi{background:none;border:0;border-right:1px solid var(--hair);padding:20px 22px;text-align:left;display:flex;flex-direction:column;gap:8px;cursor:pointer;transition:background .15s}
+.kpi:last-child{border-right:0}
+button.kpi:hover{background:var(--muted)}
+button.kpi:hover .kpi-v{color:var(--red)}
+.kpi.on{box-shadow:inset 0 -2px 0 var(--red)}
+.kpi-fixo{background:var(--muted);cursor:default}
+.kpi-v{font-size:30px;font-weight:700;letter-spacing:-.6px;line-height:1;transition:color .15s}
+
+/* ---------- filtros ---------- */
+.filtros-card{padding:20px 22px;display:flex;flex-direction:column;gap:16px}
+.filtros-topo{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,6fr);gap:12px;align-items:end}
+.filtros-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;align-items:end}
+.intervalo{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.filtros-pend{border-top:1px dashed var(--hair);padding-top:14px;display:flex;align-items:center;gap:16px}
+.fchips{display:flex;gap:8px;flex-wrap:wrap;flex-grow:1}
+.fchip{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 15px;border-radius:999px;border:1px solid var(--hair);background:var(--surface);color:var(--slate-2);font-weight:500;font-size:13px;line-height:1;cursor:pointer;transition:all .15s;flex-shrink:0}
+.fchip:hover{border-color:var(--red);color:var(--red)}
+.fchip .n{font-size:12px;color:var(--slate);font-variant-numeric:tabular-nums}
+.fchip.on{background:var(--red);border-color:var(--red);color:#fff}
+.fchip.on .n{color:#fff}
+.filtros-extra{display:flex;align-items:center;gap:12px}
+
+/* ---------- lista ---------- */
+.resultado{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 2px 0}
+.resultado-t{font-size:15px}
+.sub-i{color:var(--slate)}
+.campo-ordem{display:flex;align-items:center;gap:10px}
+.campo-ordem .sel{width:240px}
+.tabela-card{overflow:hidden}
+.tabela-scroll{overflow-x:auto;position:relative}
+.t{width:100%;min-width:1120px;border-collapse:collapse}
+.t th{text-align:left;padding:12px 16px;border-bottom:1px solid var(--hair);background:var(--muted);font-size:11.5px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--slate);white-space:nowrap}
+.t td{padding:16px;border-bottom:1px solid var(--hair);vertical-align:top;font-size:14px;line-height:1.4}
+.t tbody tr{cursor:pointer}
+.t tbody tr:hover td{background:var(--muted)}
+.t tbody tr:last-child td{border-bottom:0}
+.c-venda{width:118px}.c-cliente{width:270px}.c-emp{width:230px}.c-eq{width:180px}.c-ac{width:120px}.c-valor{width:124px;text-align:right!important}.c-abrir{width:60px}
+.t td.valor{text-align:right;font-weight:500}
+.t td.equipe{font-size:13.5px}
+.t td.abrir{padding:8px 12px 8px 0;vertical-align:middle}
+.nome{font-weight:700}
+.meta{display:flex;align-items:center;gap:8px;margin-top:3px;font-size:12.5px;color:var(--slate)}
+.nota{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12.5px;color:var(--slate-2);max-width:250px}
+.nota svg{flex-shrink:0}
+.dias{display:flex;align-items:center;gap:5px;font-size:12.5px;margin-top:3px;color:var(--slate)}
+.dias.alerta{color:var(--warn)}
+tr.cancelada td{background:var(--muted)}
+.cancelada .nome,.cancelada .meta > .num{text-decoration:line-through;color:var(--slate)}
+.cartoes{display:none;flex-direction:column;gap:12px}
+.vc{display:flex;flex-direction:column;width:100%;text-align:left;background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:15px 16px;cursor:pointer}
+.vc.cancelada{background:var(--muted)}
+.vc-topo{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.vc-topo > svg{flex-shrink:0;color:var(--slate);margin-top:2px}
+.vc-id{display:flex;flex-direction:column;gap:2px;min-width:0}
+.vc .nome{font-size:15px}
+.vc .chips{margin-top:11px}
+.vc-nota{display:block;font-size:12.5px;color:var(--slate-2);margin-top:10px}
+.vc-rodape{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:11px;border-top:1px dashed var(--hair);font-size:12.5px}
+.vc .valor{font-size:13.5px;font-weight:500}
+.vazio{padding:40px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:16px}
+.vazio-ico{width:48px;height:48px;border-radius:14px;background:var(--bg);border:1px solid var(--hair);display:flex;align-items:center;justify-content:center;color:var(--slate)}
+.vazio-t{font-size:16px;font-weight:700}
+
+/* ---------- dialogos ---------- */
+dialog{border:0;padding:0;color:var(--ink);background:var(--surface)}
+dialog::backdrop{background:rgba(40,44,46,.42)}
+.painel{position:fixed;top:0;right:0;bottom:0;left:auto;margin:0;width:min(620px,100vw);height:100%;max-width:100vw;max-height:100%;border-left:1px solid var(--hair);box-shadow:-12px 0 40px rgba(28,32,34,.16)}
+.painel-in{display:flex;flex-direction:column;height:100%}
+.painel-cab{padding:22px 28px 20px;border-bottom:1px solid var(--hair);display:flex;flex-direction:column;gap:10px}
+.painel-linha{display:flex;align-items:center;justify-content:space-between}
+.painel-op{display:flex;align-items:center;gap:4px}
+.painel-op .lab{color:var(--slate-2)}
+.painel h2{font-size:26px;font-weight:700;letter-spacing:-.5px;line-height:1.15}
+.painel-sub{font-size:14px;color:var(--slate-2)}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.painel-corpo{flex:1;overflow:auto;padding:22px 28px 28px;display:flex;flex-direction:column;gap:26px}
+.painel-corpo > *{flex-shrink:0}
+.mini{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--hair);border-radius:10px;overflow:hidden}
+.ms{padding:14px 16px;border-right:1px solid var(--hair);display:flex;flex-direction:column;gap:6px}
+.ms:last-child{border-right:0}
+.ms.alerta{background:var(--warn-bg)}
+.ms.alerta .lab{color:var(--warn)}
+.mv{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.bloco{display:flex;flex-direction:column;gap:10px}
+.bloco-cab{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.bloco h3{font-size:15px;font-weight:700}
+.checklist{list-style:none;margin:0;padding:0}
+.ck{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px dashed var(--hair)}
+.ck:last-child{border-bottom:0}
+.ck-t{font-size:14px;font-weight:700}
+.ck.ok .ck-t{color:var(--slate-2)}
+.ci{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ci-err{background:var(--err-bg);color:var(--err)}
+.ci-warn{background:var(--warn-bg);color:var(--warn)}
+.ci-ok{background:var(--ok-bg);color:var(--ok)}
+.just{background:var(--muted);border:1px solid var(--hair);border-radius:9px;padding:13px 14px;font-size:13.5px;line-height:1.6;white-space:pre-line;overflow-wrap:anywhere}
+.bloco-campos{gap:16px}
+.painel-rodape{padding:16px 28px;border-top:1px solid var(--hair);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.painel-rodape-dir{display:flex;gap:10px}
+.dlg{width:min(500px,calc(100vw - 32px));border:1px solid var(--hair);border-radius:18px;box-shadow:0 24px 60px rgba(28,32,34,.22);padding:28px}
+.dlg[open]{display:flex;flex-direction:column;gap:18px}
+.dlg-ico{width:44px;height:44px;border-radius:12px;background:var(--err-bg);color:var(--err);display:flex;align-items:center;justify-content:center}
+.dlg h2{font-size:21px;font-weight:700;letter-spacing:-.3px}
+.dlg p{font-size:14.5px;line-height:1.55;color:var(--slate-2)}
+.cx-resumo{background:var(--muted);border:1px solid var(--hair);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.cx-nome{font-size:14px;font-weight:700}
+.dlg-acoes{display:flex;justify-content:flex-end;gap:10px;padding-top:4px}
+.folha{position:fixed;left:0;right:0;bottom:0;top:auto;margin:0;width:100%;max-width:100%;max-height:88dvh;border-radius:18px 18px 0 0}
+.folha[open]{display:flex;flex-direction:column}
+.folha-cab{display:flex;align-items:center;justify-content:space-between;padding:12px 12px 12px 20px;border-bottom:1px solid var(--hair)}
+.folha-cab h2{font-size:18px;font-weight:700}
+.folha-corpo{overflow:auto;padding:16px 20px;display:flex;flex-direction:column;gap:16px}
+.folha-corpo .filtros-grid{grid-template-columns:minmax(0,1fr)}
+.folha-corpo .intervalo{grid-template-columns:repeat(2,minmax(0,1fr))}
+.folha-corpo .filtros-extra{justify-content:space-between}
+.folha-corpo .multi-lista{position:static;box-shadow:none;margin-top:6px}
+.folha-rodape{padding:12px 20px 20px;border-top:1px solid var(--hair)}
+
+/* ---------- toast (popover: fica acima dos dialogos modais) ---------- */
+.toast{display:none;position:fixed;inset:auto auto 24px 50%;transform:translateX(-50%);margin:0;border:0;background:var(--ink);color:#fff;border-radius:12px;padding:12px 16px;align-items:center;gap:12px;box-shadow:0 12px 30px rgba(28,32,34,.22);font-size:14px;max-width:calc(100vw - 32px);z-index:50}
+.toast.visivel{display:flex}
+.toast.erro{background:var(--err)}
+.toast > svg{flex-shrink:0;color:#7FD6A0}
+.toast.erro > svg{color:#fff}
+.toast-acao{min-height:36px;padding:0 12px;border-radius:8px;border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;font-weight:500;font-size:13.5px;cursor:pointer}
+
+/* ---------- utilitarios de tela (depois de .btn para vencer) ---------- */
+.so-mobile{display:none}
+
+@media (max-width:1100px){
+  .topo{padding:28px 32px 24px;min-height:0}
+  .topo-logo{top:24px;right:32px;height:36px}
+  .topo-acoes{position:static;margin-top:18px;justify-content:flex-end}
+  .conteudo{padding:24px 32px 56px}
+  .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .kpi:nth-child(3n){border-right:0}
+  .kpi:nth-child(-n+3){border-bottom:1px solid var(--hair)}
+  .filtros-topo{grid-template-columns:minmax(0,1fr)}
+  .filtros-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .intervalo{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:820px){
+  .so-desktop{display:none}
+  .so-mobile{display:inline-flex}
+  .topo{padding:20px 16px 18px}
+  .topo-logo{top:18px;right:16px;height:26px}
+  .topo-textos{gap:10px}
+  .topo .step{font-size:11.5px}
+  .topo h1{font-size:26px;letter-spacing:-.5px}
+  .topo-acoes{margin-top:10px;justify-content:space-between}
+  .atualizacao{font-size:12.5px}
+  .conteudo{padding:16px 16px 40px;gap:14px}
+  #conteudo-lista{gap:14px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;background:none;border:0;overflow:visible}
+  .kpi,.kpi:nth-child(n){border:1px solid var(--hair);border-radius:12px;padding:13px 14px;gap:6px;background:var(--surface)}
+  .kpi-fixo{background:var(--muted)}
+  .kpi .sub{display:none}
+  .kpi-v{font-size:24px;letter-spacing:-.5px}
+  .filtros-card{background:none;border:0;padding:0;gap:12px}
+  .filtros-topo{display:flex;gap:8px;align-items:flex-end}
+  .campo-busca{flex:1}
+  .campo-busca .lab{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .filtros-card #filtros-grid,.filtros-card #filtros-extra{display:none}
+  #btn-filtros.ativo{border-color:var(--red);color:var(--red)}
+  .filtros-pend{border:0;padding:0}
+  .fchips{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px 2px}
+  .resultado .sub-i{display:none}
+  .campo-ordem .lab{display:none}
+  .campo-ordem .sel{width:auto}
+  .tabela-card{display:none}
+  .cartoes{display:flex}
+  .painel{width:100vw;border-left:0}
+  .painel-cab{padding:14px 16px 16px}
+  .painel h2{font-size:24px}
+  .painel-corpo{padding:18px 16px 24px;gap:20px}
+  .mini{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ms:nth-child(2){border-right:0}
+  .ms:nth-child(-n+2){border-bottom:1px solid var(--hair)}
+  .painel-rodape{flex-direction:column-reverse;align-items:stretch;padding:12px 16px 20px}
+  .painel-rodape-dir .btn{flex:1}
+  .gate-card{padding:26px 22px}
+  .gate-titulo h1{font-size:26px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ tela de senha (spec 3) ============ -->
+<div id="gate" class="gate hero" hidden>
+  <main class="gate-card">
+    <img class="gate-logo" src="assets/img/logo-direcional-header.png" alt="Direcional">
+    <div class="gate-titulo">
+      <div class="step">Comercial · Área interna</div>
+      <h1>Pendências de Vendas</h1>
+      <p>Acesso restrito ao time comercial. Digite a senha para ver as vendas com pendência.</p>
+    </div>
+    <form id="gate-form" class="gate-form" novalidate>
+      <div class="campo">
+        <label class="lab" for="gate-senha">Senha</label>
+        <div class="senha-box">
+          <svg class="senha-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          <input class="inp" id="gate-senha" type="password" placeholder="Senha do comercial" autocomplete="current-password" enterkeyhint="go" aria-describedby="gate-erro">
+          <button class="olho" id="gate-olho" type="button" aria-label="Mostrar senha" aria-pressed="false">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <p class="msg-erro" id="gate-erro" hidden>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+          <span id="gate-erro-txt"></span>
+        </p>
+      </div>
+      <button class="btn btn-p btn-g" id="gate-entrar" type="submit">Entrar</button>
+      <p class="sub" id="gate-demo" hidden>Modo demonstração: qualquer senha entra e os dados são fictícios.</p>
+    </form>
+  </main>
+  <p class="sub">Grupo Direcional · SPI Campinas e Ribeirão Preto</p>
+</div>
+
+<!-- ============ dashboard ============ -->
+<div id="app" hidden>
+  <header class="hero">
+    <div class="topo">
+      <img class="topo-logo" src="assets/img/logo-direcional-header.png" alt="Direcional">
+      <div class="topo-textos">
+        <div class="step">Comercial<span class="so-desktop"> · Área interna</span></div>
+        <h1>Pendências de Vendas</h1>
+        <p class="so-desktop">Vendas em Proposta Aprovada, Pró Soluto e SAFI que ainda têm algo travando o fechamento. Clique numa venda para ver o que falta e registrar o retorno.</p>
+      </div>
+      <div class="topo-acoes">
+        <div class="atualizacao"><span class="dot" id="hdr-dot" hidden></span><span id="hdr-atualizacao">Carregando…</span></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn" id="btn-atualizar" type="button" aria-label="Atualizar do Salesforce">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+            <span id="btn-atualizar-txt" class="so-desktop">Atualizar do Salesforce</span>
+          </button>
+          <button class="btn btn-i" id="btn-sair" type="button" aria-label="Sair">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5"/><path d="M5 12h11"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="conteudo">
+    <p class="aviso-demo" id="aviso-demo" hidden>Modo demonstração: dados fictícios, nada é gravado na planilha.</p>
+
+    <div class="faixa" id="faixa-atualizando" role="status" hidden>
+      <div class="faixa-t">
+        <svg class="gira" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"/></svg>
+        Atualizando do Salesforce…
+      </div>
+      <div class="barra"><span></span></div>
+      <div class="sub">Rodando o relatório na planilha. Pode levar alguns minutos. Edições ficam pausadas até terminar.</div>
+    </div>
+
+    <div class="card estado" id="carregando" role="status">
+      <svg class="gira" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"/></svg>
+      Carregando vendas…
+    </div>
+
+    <div class="alerta-erro" id="erro-lista" role="alert" hidden>
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      <div>
+        <div class="alerta-erro-t">Não deu para carregar as vendas</div>
+        <div id="erro-lista-txt"></div>
+      </div>
+      <button class="btn btn-p" id="erro-lista-tentar" type="button">Tentar de novo</button>
+    </div>
+
+    <div id="conteudo-lista" hidden>
+      <section class="card kpis" aria-label="Resumo das pendências">
+        <button class="kpi" type="button" data-pendencia="todas"><span class="lab">Vendas com pendência</span><span class="kpi-v num" id="kpi-total">0</span><span class="sub" id="kpi-total-sub"></span></button>
+        <button class="kpi" type="button" data-pendencia="ac"><span class="lab">AC não aprovada</span><span class="kpi-v num" id="kpi-ac">0</span><span class="sub" id="kpi-ac-sub"></span></button>
+        <button class="kpi" type="button" data-pendencia="fid"><span class="lab">Sem FID</span><span class="kpi-v num" id="kpi-fid">0</span><span class="sub" id="kpi-fid-sub"></span></button>
+        <button class="kpi" type="button" data-pendencia="ato"><span class="lab">Ato não pago</span><span class="kpi-v num" id="kpi-ato">0</span><span class="sub">Nem boleto/PIX nem cartão</span></button>
+        <button class="kpi" type="button" data-pendencia="pcv"><span class="lab">PCV não assinado</span><span class="kpi-v num" id="kpi-pcv">0</span><span class="sub">Cliente ainda não assinou</span></button>
+        <div class="kpi kpi-fixo"><span class="lab">VGV pendente</span><span class="kpi-v num" id="kpi-vgv">R$ 0</span><span class="sub">Soma do valor real de venda</span></div>
+      </section>
+
+      <section class="card filtros-card" aria-label="Filtros">
+        <div class="filtros-topo" id="filtros-topo">
+          <div class="campo campo-busca">
+            <label class="lab" for="f-busca">Buscar</label>
+            <div class="com-ico">
+              <svg class="ico-esq" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input class="inp" id="f-busca" type="search" placeholder="Cliente, OP ou unidade" autocomplete="off">
+            </div>
+          </div>
+          <div class="filtros-grid" id="filtros-grid">
+            <div class="campo">
+              <label class="lab" for="f-emp">Empreendimento</label>
+              <div class="sel"><select class="inp" id="f-emp"><option value="">Todos</option></select><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div>
+            </div>
+            <div class="campo">
+              <label class="lab" for="f-eq">Imobiliária / equipe</label>
+              <div class="sel"><select class="inp" id="f-eq"><option value="">Todas</option></select><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div>
+            </div>
+            <div class="campo">
+              <span class="lab" id="lbl-fase">Fase</span>
+              <details class="multi" id="f-fase">
+                <summary class="inp" id="f-fase-resumo" aria-labelledby="lbl-fase f-fase-resumo-txt"><span class="ell" id="f-fase-resumo-txt">4 fases (padrão)</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+                <div class="multi-lista" id="f-fase-lista" role="group" aria-labelledby="lbl-fase"></div>
+              </details>
+            </div>
+            <div class="campo">
+              <label class="lab" for="f-per">Data da venda</label>
+              <div class="sel">
+                <select class="inp" id="f-per">
+                  <option value="todo">Todo o período</option>
+                  <option value="mes">Este mês</option>
+                  <option value="mes_passado">Mês passado</option>
+                  <option value="30d">Últimos 30 dias</option>
+                  <option value="intervalo">Intervalo…</option>
+                </select>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+            <div class="campo">
+              <label class="lab" for="f-rank">Ranking</label>
+              <div class="sel">
+                <select class="inp" id="f-rank">
+                  <option value="">Todos</option>
+                  <option value="diamante">Diamante</option>
+                  <option value="ouro">Ouro</option>
+                  <option value="prata">Prata</option>
+                  <option value="bronze">Bronze</option>
+                  <option value="aco">Aço</option>
+                </select>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+            <div class="campo">
+              <label class="lab" for="f-tipo">Tipo de venda</label>
+              <div class="sel">
+                <select class="inp" id="f-tipo">
+                  <option value="todas">Comercial e facilitada</option>
+                  <option value="comercial">Só comercial</option>
+                  <option value="facilitada">Só facilitada</option>
+                </select>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+            <div class="intervalo" id="intervalo" hidden>
+              <div class="campo"><label class="lab" for="f-de">De</label><input class="inp" id="f-de" type="date"></div>
+              <div class="campo"><label class="lab" for="f-ate">Até</label><input class="inp" id="f-ate" type="date"></div>
+            </div>
+          </div>
+          <button class="btn so-mobile" id="btn-filtros" type="button" aria-haspopup="dialog">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+            <span id="btn-filtros-txt">Filtros</span>
+          </button>
+        </div>
+        <div class="filtros-pend" id="filtros-pend">
+          <span class="lab so-desktop">Pendência</span>
+          <div class="fchips" role="group" aria-label="Tipo de pendência">
+            <button class="fchip" type="button" data-pendencia="todas">Todas <span class="n" id="chip-n-todas">0</span></button>
+            <button class="fchip" type="button" data-pendencia="ac">AC não aprovada <span class="n" id="chip-n-ac">0</span></button>
+            <button class="fchip" type="button" data-pendencia="fid">Sem FID <span class="n" id="chip-n-fid">0</span></button>
+            <button class="fchip" type="button" data-pendencia="ato">Ato não pago <span class="n" id="chip-n-ato">0</span></button>
+            <button class="fchip" type="button" data-pendencia="pcv">PCV não assinado <span class="n" id="chip-n-pcv">0</span></button>
+          </div>
+          <div class="filtros-extra" id="filtros-extra">
+            <label class="sw"><input type="checkbox" id="f-canceladas"><span class="tr" aria-hidden="true"></span>Mostrar canceladas <span class="sub" id="canceladas-n">(0)</span></label>
+            <button class="lnk" id="limpar-filtros" type="button">Limpar filtros</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="resultado">
+        <p class="resultado-t" aria-live="polite"><strong id="contagem">0 vendas</strong><span class="sub-i" id="contagem-ordem"></span></p>
+        <div class="campo-ordem">
+          <label class="lab" for="f-ord">Ordenar</label>
+          <div class="sel">
+            <select class="inp" id="f-ord">
+              <option value="antigas">Mais antigas primeiro</option>
+              <option value="recentes">Mais recentes primeiro</option>
+              <option value="valor">Maior valor</option>
+              <option value="pendencias">Mais pendências</option>
+            </select>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div id="lista">
+        <section class="card tabela-card">
+          <div class="tabela-scroll">
+            <table class="t">
+              <thead>
+                <tr>
+                  <th scope="col" class="c-venda">Venda</th>
+                  <th scope="col" class="c-cliente">Cliente</th>
+                  <th scope="col" class="c-emp">Empreendimento</th>
+                  <th scope="col" class="c-eq">Equipe</th>
+                  <th scope="col">O que falta</th>
+                  <th scope="col" class="c-ac">Status AC</th>
+                  <th scope="col" class="c-valor">Valor real</th>
+                  <th scope="col" class="c-abrir"><span class="sr">Abrir</span></th>
+                </tr>
+              </thead>
+              <tbody id="tabela-corpo"></tbody>
+            </table>
+          </div>
+        </section>
+        <div class="cartoes" id="cartoes"></div>
+      </div>
+
+      <div class="card vazio" id="vazio" hidden>
+        <div class="vazio-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+        <div><div class="vazio-t">Nenhuma venda com esses filtros</div><div class="sub">Tente outro empreendimento ou tipo de pendência.</div></div>
+        <button class="btn" id="vazio-limpar" type="button">Limpar filtros</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ============ detalhe da venda ============ -->
+<dialog class="painel" id="painel" aria-labelledby="dt-nome">
+  <div class="painel-in">
+    <div class="painel-cab">
+      <div class="painel-linha">
+        <div class="painel-op">
+          <span class="lab num" id="dt-op"></span>
+          <button class="btn btn-i btn-fantasma btn-mini" id="dt-copiar" type="button" aria-label="Copiar número da OP">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
+          </button>
+        </div>
+        <button class="btn btn-i" id="dt-fechar" type="button" aria-label="Fechar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <h2 id="dt-nome"></h2>
+      <div class="painel-sub" id="dt-sub"></div>
+      <div class="tags" id="dt-tags"></div>
+    </div>
+    <div class="painel-corpo">
+      <div class="mini">
+        <div class="ms"><span class="lab">Data da venda</span><span class="mv" id="dt-data"></span></div>
+        <div class="ms" id="dt-dias-cel"><span class="lab">Em aberto há</span><span class="mv" id="dt-dias"></span></div>
+        <div class="ms"><span class="lab">Valor real</span><span class="mv" id="dt-valor"></span></div>
+        <div class="ms"><span class="lab">FID</span><span class="mv" id="dt-fid"></span></div>
+      </div>
+      <section class="bloco">
+        <div class="bloco-cab"><h3>O que falta</h3><span class="sub" id="dt-faltam"></span></div>
+        <ul class="checklist" id="dt-checklist"></ul>
+      </section>
+      <section class="bloco">
+        <div class="bloco-cab"><h3>Justificativa da AC</h3><span class="sub">Vem da aba OP X AC · só leitura</span></div>
+        <div class="just" id="dt-just"></div>
+      </section>
+      <section class="bloco bloco-campos">
+        <div class="campo"><label class="lab" for="dt-obs">Observação</label><textarea class="inp" id="dt-obs" rows="3" maxlength="5000"></textarea></div>
+        <div class="campo">
+          <label class="lab" for="dt-ret">Retorno</label>
+          <textarea class="inp" id="dt-ret" rows="3" maxlength="5000"></textarea>
+          <span class="sub">Grava direto nas colunas Observação e Retorno do RELATÓRIO.</span>
+        </div>
+      </section>
+    </div>
+    <div class="painel-rodape">
+      <button class="btn btn-d" id="dt-cancelar" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m5.7 5.7 12.6 12.6"/></svg>
+        <span id="dt-cancelar-txt">Marcar como cancelada</span>
+      </button>
+      <div class="painel-rodape-dir">
+        <button class="btn" id="dt-descartar" type="button">Descartar</button>
+        <button class="btn btn-p" id="dt-salvar" type="button">Salvar alterações</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- ============ confirmar cancelamento ============ -->
+<dialog class="dlg" id="dlg-cancelar" role="alertdialog" aria-labelledby="cx-t" aria-describedby="cx-d">
+  <div class="dlg-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m5.7 5.7 12.6 12.6"/></svg></div>
+  <h2 id="cx-t">Cancelar esta venda?</h2>
+  <p id="cx-d">A linha fica vermelha e tachada no RELATÓRIO e a venda sai da lista de pendências. Dá para reativar depois ligando "Mostrar canceladas".</p>
+  <div class="cx-resumo">
+    <div><div class="cx-nome" id="cx-nome"></div><div class="sub num" id="cx-meta"></div></div>
+    <span class="num" id="cx-valor"></span>
+  </div>
+  <div class="dlg-acoes">
+    <button class="btn" id="cx-voltar" type="button">Voltar</button>
+    <button class="btn btn-p" id="cx-confirmar" type="button">Cancelar venda</button>
+  </div>
+</dialog>
+
+<!-- ============ filtros no celular ============ -->
+<dialog class="folha" id="folha-filtros" aria-labelledby="folha-t">
+  <div class="folha-cab">
+    <h2 id="folha-t">Filtros</h2>
+    <button class="btn btn-i btn-fantasma" id="folha-fechar" type="button" aria-label="Fechar filtros"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="folha-corpo" id="folha-corpo"></div>
+  <div class="folha-rodape"><button class="btn btn-p btn-g" id="folha-aplicar" type="button">Ver vendas</button></div>
+</dialog>
+
+<div class="toast" id="toast" role="status" popover="manual"></div>
+
+<script src="assets/config.js"></script>
+<script src="assets/pendencias.js"></script>
+<script src="assets/pendencias-app.js"></script>
+</body>
+</html>

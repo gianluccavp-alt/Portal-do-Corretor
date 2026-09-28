@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Pendências de Vendas · Lista no celular</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'DM Sans',system-ui,sans-serif;color:#3A4043;background:#F5F6F7;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+.hero{background:#FFFFFF url(/_blob/7404797d9bc48a73f9083e77a6dbca8b) center/cover no-repeat;border-bottom:1px solid #E7E9EA}
+.step{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#E4032B}
+.step::before{content:"";width:18px;height:2px;border-radius:2px;background:#E4032B}
+.lab{font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:#727A7D}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 15px;border-radius:9px;border:1px solid #E7E9EA;background:#FFFFFF;color:#3A4043;font:500 14px/1 'DM Sans',system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+.btn-i{width:44px;padding:0}
+.chip{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:500;border:1px solid;white-space:nowrap}
+.c-err{background:#FDEEF0;color:#C4001C;border-color:#F6C9D0}
+.c-warn{background:#FFF7E6;color:#8A5700;border-color:#F1DCAE}
+.c-neu{background:#FFFFFF;color:#5E666A;border-color:#E7E9EA}
+.fchip{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 14px;border-radius:999px;border:1px solid #E7E9EA;background:#FFFFFF;color:#5E666A;font:500 13px/1 'DM Sans',system-ui,sans-serif;cursor:pointer;flex-shrink:0}
+.fchip .n{font-size:12px;color:#727A7D}
+.fchip.on{background:#E4032B;border-color:#E4032B;color:#FFFFFF}
+.fchip.on .n{color:#FFFFFF}
+.tile{background:#FFFFFF;border:1px solid #E7E9EA;border-radius:12px;padding:13px 14px;display:flex;flex-direction:column;gap:6px;text-align:left;font-family:inherit;color:inherit;cursor:pointer}
+.tv{font-size:24px;font-weight:700;letter-spacing:-.5px;line-height:1;font-variant-numeric:tabular-nums}
+.inp{width:100%;height:44px;border:1px solid #E7E9EA;border-radius:9px;background:#FFFFFF;padding:0 12px 0 40px;font:400 15px 'DM Sans',system-ui,sans-serif;color:#3A4043;outline:none}
+.inp::placeholder{color:#727A7D}
+.vc{display:block;background:#FFFFFF;border:1px solid #E7E9EA;border-radius:14px;padding:15px 16px;text-decoration:none;color:inherit}
+.sub{font-size:12.5px;color:#727A7D;line-height:1.4}
+.num{font-variant-numeric:tabular-nums}
+.old{color:#8A5700;font-weight:500}
+.ell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+</helmet>
+<div style="width: 390px; height: 1780px; background: #F5F6F7; display: flex; flex-direction: column">
+  <header class="hero" style="position: relative; padding: 20px 16px 18px; display: flex; flex-direction: column; gap: 10px">
+    <img src="/_blob/28f1e65b058cf079cbd0420de29761a1" alt="Direcional" style="position: absolute; top: 18px; right: 16px; height: 26px">
+    <div class="step">Comercial</div>
+    <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.15">Pendências de Vendas</h1>
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 2px">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #5E666A">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: #1E8E4A; box-shadow: 0 0 0 3px #EFF9F2"></span>
+        Atualizado às 14:32
+      </div>
+      <div style="display: flex; gap: 8px">
+        <button class="btn btn-i" type="button" aria-label="Atualizar do Salesforce">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg>
+        </button>
+        <button class="btn btn-i" type="button" aria-label="Sair">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"></path><path d="M10 17l-5-5 5-5"></path><path d="M5 12h11"></path></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main style="padding: 16px; display: flex; flex-direction: column; gap: 14px">
+    <section aria-label="Resumo" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+      <button class="tile" type="button"><span class="lab">Com pendência</span><span class="tv">52</span></button>
+      <button class="tile" type="button"><span class="lab">AC não aprovada</span><span class="tv">45</span></button>
+      <button class="tile" type="button"><span class="lab">Sem FID</span><span class="tv">49</span></button>
+      <button class="tile" type="button"><span class="lab">Ato não pago</span><span class="tv">25</span></button>
+      <button class="tile" type="button"><span class="lab">PCV não assinado</span><span class="tv">10</span></button>
+      <div class="tile" style="background: #FAFBFB; cursor: default"><span class="lab">VGV pendente</span><span class="tv" style="font-size: 21px">R$ 8,49 mi</span></div>
+    </section>
+
+    <div style="display: flex; gap: 8px">
+      <div style="position: relative; flex-grow: 1">
+        <label for="m-busca" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar</label>
+        <svg style="position: absolute; left: 13px; top: 13px; color: #727A7D; pointer-events: none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input class="inp" id="m-busca" type="search" placeholder="Cliente, OP ou unidade">
+      </div>
+      <button class="btn" type="button" style="border-color: #E4032B; color: #E4032B">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>
+        Filtros · 1
+      </button>
+    </div>
+
+    <div role="group" aria-label="Tipo de pendência" style="display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 0 16px 2px">
+      <button class="fchip on" type="button" aria-pressed="true">Todas <span class="n">52</span></button>
+      <button class="fchip" type="button" aria-pressed="false">AC não aprovada <span class="n">45</span></button>
+      <button class="fchip" type="button" aria-pressed="false">Sem FID <span class="n">49</span></button>
+      <button class="fchip" type="button" aria-pressed="false">Ato não pago <span class="n">25</span></button>
+      <button class="fchip" type="button" aria-pressed="false">PCV <span class="n">10</span></button>
+    </div>
+
+    <div style="font-size: 14px; padding-top: 2px"><strong>52 vendas</strong> <span style="color: #727A7D">· mais antigas primeiro</span></div>
+
+    <sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+      <a class="vc" href="Mobile-Detalhe.dc.html">
+        <div style="display: flex; justify-content: space-between; gap: 10px; align-items: flex-start">
+          <div style="min-width: 0">
+            <div style="font-size: 15px; font-weight: 700">{{r.cliente}}</div>
+            <div class="num sub" style="margin-top: 2px">{{r.op}} · {{r.emp}} · {{r.unid}}</div>
+          </div>
+          <svg style="flex-shrink: 0; color: #727A7D; margin-top: 2px" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px">
+          <sc-for list="{{r.chips}}" as="c" hint-placeholder-count="2">
+            <span class="{{c.cls}}">{{c.t}}</span>
+          </sc-for>
+        </div>
+        <sc-if value="{{r.temNota}}" hint-placeholder-val="{{false}}">
+          <div class="ell" style="font-size: 12.5px; color: #5E666A; margin-top: 10px">{{r.nota}}</div>
+        </sc-if>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 11px; border-top: 1px dashed #E7E9EA; font-size: 12.5px">
+          <span class="num"><span style="color: #727A7D">{{r.data}} · </span><span class="{{r.diasCls}}">{{r.dias}}</span></span>
+          <span class="num" style="font-size: 13.5px; font-weight: 500">{{r.valor}}</span>
+        </div>
+      </a>
+    </sc-for>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1780}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var E = 'chip c-err', W = 'chip c-warn';
+    function row(o) { return Object.assign({ temNota: !!o.nota, diasCls: o.d >= 15 ? 'old' : '', dias: o.d + ' dias' }, o); }
+    return {
+      rows: [
+        row({ d: 19, data: '09/09', cliente: 'Mariana Alves Pereira', op: 'OP-006812044', emp: 'Village Gaia', unid: 'BL02-0104', valor: 'R$ 214.900', nota: 'Retorno: falta baixa Bacen, rever em 30/09', chips: [{ t: 'AC reprovada', cls: E }, { t: 'Sem FID', cls: W }, { t: 'Ato não pago', cls: W }] }),
+        row({ d: 18, data: '10/09', cliente: 'Rafael Souza Nogueira', op: 'OP-006815310', emp: 'Clube Ipiranga', unid: 'BL03-0302', valor: 'R$ 236.900', nota: 'Obs.: resolvendo embasamento de renda', chips: [{ t: 'AC reprovada', cls: E }, { t: 'Sem FID', cls: W }] }),
+        row({ d: 17, data: '11/09', cliente: 'Camila Rodrigues Duarte', op: 'OP-006817782', emp: 'Jardim Botânico', unid: 'BL01-0801', valor: 'R$ 301.900', chips: [{ t: 'Sem FID', cls: W }, { t: 'PCV não assinado', cls: W }] }),
+        row({ d: 16, data: '12/09', cliente: 'Bruno Henrique Matos', op: 'OP-006819905', emp: 'Village Park', unid: 'BL05-0203', valor: 'R$ 195.900', chips: [{ t: 'AC não enviada', cls: E }, { t: 'Sem FID', cls: W }, { t: 'Ato não pago', cls: W }] }),
+        row({ d: 13, data: '15/09', cliente: 'Letícia Fernandes Rocha', op: 'OP-006822417', emp: 'Village Gaia', unid: 'BL01-0309', valor: 'R$ 217.990', nota: 'Retorno: resolve FID segunda-feira 29/09', chips: [{ t: 'AC reprovada', cls: E }, { t: 'Sem FID', cls: W }] }),
+        row({ d: 11, data: '17/09', cliente: 'Gustavo Lima Teixeira', op: 'OP-006825530', emp: 'Clube Ipiranga', unid: 'BL04-1102', valor: 'R$ 234.900', chips: [{ t: 'AC em análise', cls: W }, { t: 'Sem FID', cls: W }] })
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

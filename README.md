@@ -11,10 +11,17 @@ lidos **ao vivo no navegador** a partir de uma planilha do Google Sheets publica
 ```
 index.html              Home: escolhe cidade -> escolhe empreendimento
 empreendimento.html     Página de detalhe (?e=<id> na URL)
+pendencias-vendas.html  Pendências de Vendas (interno, comercial, com senha)
 assets/
-  config.js             Cidades, empreendimentos e URL da planilha  <-- EDITAR AQUI
+  config.js             Cidades, empreendimentos e URLs das planilhas  <-- EDITAR AQUI
   data.js               Motor: busca CSV, filtra por empreendimento, renderiza unidades
+  pendencias.js         Regras da página de pendências (puras, testadas)
+  pendencias-app.js     Interface da página de pendências
   styles.css            Estilos compartilhados
+docs/
+  apps-script-pendencias.gs   Web App da página de pendências
+  design/pendencias-vendas/   Telas aprovadas (PNG + prévias HTML)
+tests/                  Testes das regras (node --test)
 vercel.json             Configuração de deploy estático
 ```
 
@@ -58,6 +65,24 @@ implantacao: { img: 'URL', legenda: ['Portaria','Piscina', ...] },
 vagasImg: 'URL'
 ```
 Enquanto os campos estiverem vazios, o site mostra um placeholder "Imagens em breve".
+
+## Pendências de Vendas (`/pendencias-vendas`)
+
+Página interna do comercial para cobrar pendências das vendas da aba
+`RELATÓRIO` (planilha de vendas). A página conversa **só** com o Web App do
+Apps Script da planilha (`docs/apps-script-pendencias.gs`, instruções de
+implantação no cabeçalho). A senha fica no Apps Script, não no site.
+
+- `window.PENDENCIAS_APPS_SCRIPT_URL` em `assets/config.js` = URL `/exec` do Web App.
+- Vazio (ou `?demo=1` na URL) = **modo demonstração** com os dados fictícios de
+  `tests/fixtures/vendas.json`. Nada é gravado.
+- Regras de negócio em `assets/pendencias.js`. Testes:
+
+```bash
+node --test tests/*.test.js
+```
+
+Spec: `docs/superpowers/specs/2026-09-28-pendencias-vendas-design.md`.
 
 ## Rodar localmente
 
