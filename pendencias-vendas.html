@@ -168,7 +168,7 @@ button.kpi:hover .kpi-v{color:var(--red)}
 .campo-ordem{display:flex;align-items:center;gap:10px}
 .campo-ordem .sel{width:240px}
 .tabela-card{overflow:hidden}
-.tabela-scroll{overflow-x:auto}
+.tabela-scroll{overflow-x:auto;position:relative}
 .t{width:100%;min-width:1120px;border-collapse:collapse}
 .t th{text-align:left;padding:12px 16px;border-bottom:1px solid var(--hair);background:var(--muted);font-size:11.5px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--slate);white-space:nowrap}
 .t td{padding:16px;border-bottom:1px solid var(--hair);vertical-align:top;font-size:14px;line-height:1.4}
@@ -215,6 +215,7 @@ dialog::backdrop{background:rgba(40,44,46,.42)}
 .painel-sub{font-size:14px;color:var(--slate-2)}
 .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
 .painel-corpo{flex:1;overflow:auto;padding:22px 28px 28px;display:flex;flex-direction:column;gap:26px}
+.painel-corpo > *{flex-shrink:0}
 .mini{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--hair);border-radius:10px;overflow:hidden}
 .ms{padding:14px 16px;border-right:1px solid var(--hair);display:flex;flex-direction:column;gap:6px}
 .ms:last-child{border-right:0}

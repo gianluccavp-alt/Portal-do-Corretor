@@ -621,7 +621,7 @@
 
   function mudarCancelamento(id, acao) {
     var b = $('dt-cancelar');
-    b.disabled = true;
+    if (estado.aberta && estado.aberta.id === id) b.disabled = true;
     return chamar(acao, { id: id }).then(function (res) {
       substituirVenda(res.venda);
       if (estado.aberta && estado.aberta.id === id) {
