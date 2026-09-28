@@ -17,12 +17,17 @@
       adicione:
         PropertiesService.getScriptProperties()
           .setProperty('PENDENCIAS_ULTIMA_ATUALIZACAO', new Date().toISOString());
-   4. Selecione a funcao configurarSenhaPendencias > Executar (autorize).
-   5. Selecione testePendencias > Executar > confira o log.
-   6. Implantar > Nova implantacao > Tipo: App da Web
+   4. No onOpen() do script do relatório, troque
+        .addItem("Atualizar Relatório", "atualizarRelatorioSalesforce")
+      por
+        .addItem("Atualizar Relatório", "atualizarRelatorioComTrava"),
+      para a execução pelo menu esperar as gravações da página.
+   5. Selecione a funcao configurarSenhaPendencias > Executar (autorize).
+   6. Selecione testePendencias > Executar > confira o log.
+   7. Implantar > Nova implantacao > Tipo: App da Web
         Executar como: Eu
         Quem tem acesso: Qualquer pessoa
-   7. Copie a URL que termina em /exec e cole em
+   8. Copie a URL que termina em /exec e cole em
       window.PENDENCIAS_APPS_SCRIPT_URL (assets/config.js).
 
    Mudou o codigo depois? Implantar > Gerenciar implantacoes > editar >
@@ -88,9 +93,17 @@ function pendComLock_(fn) {
   try { return fn(); } finally { lock.releaseLock(); }
 }
 
+/* Use no menu da planilha no lugar de atualizarRelatorioSalesforce:
+   espera as gravacoes da pagina terminarem antes de reordenar a aba. */
+function atualizarRelatorioComTrava() {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(300000);
+  try { atualizarRelatorioSalesforce(); } finally { lock.releaseLock(); }
+}
+
 function pendNormalizar_(v) {
   if (v === null || v === undefined) return '';
-  return String(v).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  return String(v).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 function pendLerAba_() {
@@ -204,16 +217,27 @@ function pendListar_() {
 function pendAcharLinha_(t, id) {
   var alvo = String(id || '').trim();
   var cId = t.indice['ID'];
+  /* ID repetido: vale a primeira linha (o relatorio nao deveria ter OP duplicada) */
   if (alvo) {
     for (var i = 0; i < t.n; i++) if (String(t.exibidos[i][cId]).trim() === alvo) return i;
   }
   throw new PendFalha('nao_encontrada', 'Essa venda não está mais no relatório.');
 }
 
+/* a linha ainda e da mesma OP? (o relatorio pode ter sido reordenado pelo
+   menu da planilha entre a leitura e a escrita) */
+function pendConferirLinha_(t, linha, id) {
+  var atual = String(t.aba.getRange(linha, t.indice['ID'] + 1).getDisplayValue()).trim();
+  if (atual !== String(id || '').trim()) {
+    throw new PendFalha('ocupado', 'O relatório está sendo atualizado, tente em instantes.');
+  }
+}
+
 function pendPintar_(id, cancelar) {
   var t = pendLerAba_();
   var i = pendAcharLinha_(t, id);
   var linha = PEND_LINHA_CABECALHO + 1 + i;
+  pendConferirLinha_(t, linha, id);
   t.aba.getRange(linha, 1, 1, t.ultimaColunaDados)
     .setFontColor(cancelar ? '#ff0000' : '#000000')
     .setFontLine(cancelar ? 'line-through' : 'none');
@@ -225,16 +249,17 @@ function pendPintar_(id, cancelar) {
   return { ok: true, venda: venda };
 }
 
-/* texto livre nunca vira formula na planilha */
+/* texto livre nunca vira formula, data ou numero na planilha */
 function pendTextoSeguro_(v) {
   var s = String(v === null || v === undefined ? '' : v).slice(0, PEND_MAX_TEXTO);
-  return /^[=+\-@]/.test(s) ? "'" + s : s;
+  return s ? "'" + s : '';
 }
 
 function pendEditar_(id, observacao, retorno) {
   var t = pendLerAba_();
   var i = pendAcharLinha_(t, id);
   var linha = PEND_LINHA_CABECALHO + 1 + i;
+  pendConferirLinha_(t, linha, id);
   var obs = pendTextoSeguro_(observacao);
   var ret = pendTextoSeguro_(retorno);
   t.aba.getRange(linha, t.indice['Observação'] + 1).setValue(obs);

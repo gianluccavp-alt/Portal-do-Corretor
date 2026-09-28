@@ -14,7 +14,7 @@
   var MODO_DEMO = !URL_API || /[?&]demo=1(&|$)/.test(window.location.search);
   var CHAVE_SESSAO = 'pendencias_senha';
   var TIMEOUT_PADRAO = 60000;
-  var TIMEOUT_ATUALIZAR = 360000;
+  var TIMEOUT_ATUALIZAR = 380000;
   var MSG_SENHA = 'Senha incorreta. Confira maiúsculas e tente de novo.';
   var ROTULOS_ORDEM = {
     antigas: 'as mais antigas primeiro',
@@ -610,10 +610,12 @@
     b.textContent = 'Salvando…';
     chamar('editar', { id: v.id, observacao: $('dt-obs').value, retorno: $('dt-ret').value })
       .then(function (res) {
-        estado.aberta = res.venda;
         substituirVenda(res.venda);
-        preencherPainel(res.venda, true);
         toast('Alterações salvas na planilha');
+        if ($('painel').open && estado.aberta && estado.aberta.id === res.venda.id) {
+          estado.aberta = res.venda;
+          preencherPainel(res.venda, true);
+        }
       })
       .catch(tratarFalhaAcao)
       .then(function () { b.textContent = 'Salvar alterações'; atualizarBotoesPainel(); });
@@ -633,6 +635,8 @@
         toast('Venda ' + id + ' cancelada', {
           acao: { rotulo: 'Desfazer', fn: function () { mudarCancelamento(id, 'reativar'); } }
         });
+        var desfazer = $('toast').querySelector('.toast-acao');
+        if (desfazer) desfazer.focus();
       } else {
         toast('Venda ' + id + ' reativada');
       }

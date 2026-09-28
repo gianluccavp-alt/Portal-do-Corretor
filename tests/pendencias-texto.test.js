@@ -17,11 +17,11 @@ test('titleCase mantém conectivos em minúscula, menos no começo', () => {
 });
 
 test('formatarEquipe cobre os formatos reais da planilha', () => {
-  assert.equal(P.formatarEquipe('DIRECIONAL VENDAS SPI – EQUIPE LEONARDO DONIZETE'), 'Equipe Leonardo Donizete');
-  assert.equal(P.formatarEquipe('DIRECIONAL VENDAS SPI - EQUIPE SABRINA DA SILVA - Inativo'), 'Equipe Sabrina da Silva - Inativo');
-  assert.equal(P.formatarEquipe('DIRECIONAL VENDAS SPI ? EQUIPE GIAN TURIONI - Inativo'), 'Equipe Gian Turioni - Inativo');
-  assert.equal(P.formatarEquipe('SPI - CANAL IMOB PJ – CAROLINA CRISTINA'), 'Canal PJ · Carolina Cristina');
-  assert.equal(P.formatarEquipe('SPI - CANAL IMOB PJ - MARIA CECILIA - Inativo'), 'Canal PJ · Maria Cecilia - Inativo');
+  assert.equal(P.formatarEquipe('DIRECIONAL VENDAS SPI – EQUIPE MARCOS TAVARES'), 'Equipe Marcos Tavares');
+  assert.equal(P.formatarEquipe('DIRECIONAL VENDAS SPI - EQUIPE LUANA DA COSTA - Inativo'), 'Equipe Luana da Costa - Inativo');
+  assert.equal(P.formatarEquipe('DIRECIONAL VENDAS SPI ? EQUIPE DIEGO FARIAS - Inativo'), 'Equipe Diego Farias - Inativo');
+  assert.equal(P.formatarEquipe('SPI - CANAL IMOB PJ – RENATA MOURA'), 'Canal PJ · Renata Moura');
+  assert.equal(P.formatarEquipe('SPI - CANAL IMOB PJ - BEATRIZ NUNES - Inativo'), 'Canal PJ · Beatriz Nunes - Inativo');
   assert.equal(P.formatarEquipe(''), '—');
   assert.equal(P.formatarEquipe(null), '—');
 });

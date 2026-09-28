@@ -39,7 +39,7 @@ test('busca em cliente, OP e unidade, sem acento', () => {
 
 test('empreendimento e equipe', () => {
   assert.deepEqual(filtrar({ empreendimento: 'Village Gaia' }), op(1, 5, 13));
-  assert.deepEqual(filtrar({ equipe: 'DIRECIONAL VENDAS SPI – EQUIPE LEONARDO DONIZETE' }), op(1, 6, 10));
+  assert.deepEqual(filtrar({ equipe: 'DIRECIONAL VENDAS SPI – EQUIPE MARCOS TAVARES' }), op(1, 6, 10));
 });
 
 test('período', () => {
@@ -98,10 +98,10 @@ test('opcoesDeFiltro', () => {
   assert.deepEqual(o.empreendimentos, ['Conquista Araraquara', 'Direcional Conquista Clube Ipiranga', 'Reserva Direcional Jardim Botânico', 'Village Gaia', 'Village Park']);
   assert.deepEqual(o.fases, ['Análise SAFI', 'Aprovado Pró Soluto', 'Aprovado SAFI', 'Fechado e ganho', 'Proposta Aprovada']);
   assert.deepEqual(o.equipes.map((e) => e.rotulo), [
-    'Canal PJ · Carolina Cristina', 'Equipe Debora Pimenta', 'Equipe Gian Turioni',
-    'Equipe Leonardo Donizete', 'Equipe Otavio Yudi', 'Equipe Sabrina da Silva - Inativo'
+    'Canal PJ · Renata Moura', 'Equipe Diego Farias', 'Equipe Henrique Sato',
+    'Equipe Luana da Costa - Inativo', 'Equipe Marcos Tavares', 'Equipe Patricia Lopes'
   ]);
-  assert.equal(o.equipes[0].valor, 'SPI - CANAL IMOB PJ – CAROLINA CRISTINA');
+  assert.equal(o.equipes[0].valor, 'SPI - CANAL IMOB PJ – RENATA MOURA');
 });
 
 test('mesmasFases e contarFiltrosAtivos', () => {
