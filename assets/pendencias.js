@@ -159,6 +159,138 @@
   }
 
   /* ---------- filtros ---------- */
+  function filtrosPadrao() {
+    return {
+      busca: '', empreendimento: '', equipe: '', fases: FASES_PADRAO.slice(),
+      periodo: 'todo', de: '', ate: '', ranking: '', tipo: 'todas',
+      pendencia: 'todas', mostrarCanceladas: false
+    };
+  }
+
+  function dentroDoPeriodo(venda, f, hoje) {
+    if (!f.periodo || f.periodo === 'todo') return true;
+    var d = parseData(venda.dataVenda);
+    if (!d) return false;
+    var h = inicioDoDia(hoje);
+    if (f.periodo === 'mes') return d.getFullYear() === h.getFullYear() && d.getMonth() === h.getMonth();
+    if (f.periodo === 'mes_passado') {
+      var p = new Date(h.getFullYear(), h.getMonth() - 1, 1);
+      return d.getFullYear() === p.getFullYear() && d.getMonth() === p.getMonth();
+    }
+    if (f.periodo === '30d') { var n = diasEntre(d, h); return n >= 0 && n <= 30; }
+    if (f.periodo === 'intervalo') {
+      var de = isoParaData(f.de), ate = isoParaData(f.ate), dia = inicioDoDia(d);
+      return (!de || dia >= de) && (!ate || dia <= ate);
+    }
+    return true;
+  }
+
+  function passaFiltros(venda, f, hoje, ignorarPendencia) {
+    if (venda.cancelada && !f.mostrarCanceladas) return false;
+    if (f.busca) {
+      var alvo = normalizar([venda.cliente, venda.id, venda.identificador].join(' '));
+      if (alvo.indexOf(normalizar(f.busca)) === -1) return false;
+    }
+    if (f.empreendimento && String(venda.empreendimento || '').trim() !== f.empreendimento) return false;
+    if (f.equipe && String(venda.imobiliaria || '').trim() !== f.equipe) return false;
+    if (f.fases && f.fases.length && f.fases.map(normalizar).indexOf(normalizar(venda.fase)) === -1) return false;
+    if (!dentroDoPeriodo(venda, f, hoje)) return false;
+    if (f.ranking && rankingChave(venda.ranking) !== f.ranking) return false;
+    if (f.tipo === 'comercial' && venda.vendaFacilitada) return false;
+    if (f.tipo === 'facilitada' && !venda.vendaFacilitada) return false;
+    if (!ignorarPendencia && f.pendencia && f.pendencia !== 'todas') {
+      var tem = derivarPendencias(venda).some(function (p) { return p.chave === f.pendencia; });
+      if (!tem) return false;
+    }
+    return true;
+  }
+
+  function aplicarFiltros(vendas, f, hoje) {
+    return vendas.filter(function (v) { return passaFiltros(v, f, hoje, false); });
+  }
+
+  /* KPIs: todos os filtros menos o de pendencia, sem canceladas (spec 5.5) */
+  function calcularKpis(vendas, f, hoje) {
+    var comCanceladas = Object.assign({}, f, { mostrarCanceladas: true });
+    var k = { total: 0, ac: 0, acReprovadas: 0, acOutras: 0, fid: 0, fidPct: 0, ato: 0, pcv: 0, vgv: 0, base: 0, canceladasOcultas: 0 };
+    vendas.forEach(function (v) {
+      if (!passaFiltros(v, comCanceladas, hoje, true)) return;
+      if (v.cancelada) { k.canceladasOcultas++; return; }
+      k.base++;
+      var chaves = derivarPendencias(v).map(function (p) { return p.chave; });
+      if (chaves.length) k.total++;
+      if (chaves.indexOf('ac') !== -1) {
+        k.ac++;
+        if (normalizar(v.statusAC) === 'analise reprovada') k.acReprovadas++; else k.acOutras++;
+      }
+      if (chaves.indexOf('fid') !== -1) k.fid++;
+      if (chaves.indexOf('ato') !== -1) k.ato++;
+      if (chaves.indexOf('pcv') !== -1) k.pcv++;
+      if (typeof v.valorReal === 'number') k.vgv += v.valorReal;
+    });
+    k.fidPct = k.base ? Math.round(k.fid / k.base * 100) : 0;
+    return k;
+  }
+
+  function tempoDaVenda(v) { var d = parseData(v.dataVenda); return d ? d.getTime() : null; }
+  /* nulos sempre por ultimo, nos dois sentidos */
+  function compararNulosPorUltimo(a, b, crescente) {
+    if (a === null && b === null) return 0;
+    if (a === null) return 1;
+    if (b === null) return -1;
+    return crescente ? a - b : b - a;
+  }
+  function comparar(a, b, criterio) {
+    if (criterio === 'recentes') return compararNulosPorUltimo(tempoDaVenda(a), tempoDaVenda(b), false);
+    if (criterio === 'valor') {
+      var va = typeof a.valorReal === 'number' ? a.valorReal : null;
+      var vb = typeof b.valorReal === 'number' ? b.valorReal : null;
+      return compararNulosPorUltimo(va, vb, false);
+    }
+    if (criterio === 'pendencias') return derivarPendencias(b).length - derivarPendencias(a).length;
+    return compararNulosPorUltimo(tempoDaVenda(a), tempoDaVenda(b), true);
+  }
+  function ordenar(vendas, criterio) {
+    return vendas.map(function (v, i) { return { v: v, i: i }; })
+      .sort(function (a, b) {
+        if (!!a.v.cancelada !== !!b.v.cancelada) return a.v.cancelada ? 1 : -1;
+        return comparar(a.v, b.v, criterio) || a.i - b.i;
+      })
+      .map(function (x) { return x.v; });
+  }
+
+  function unicos(lista) {
+    var vistos = {};
+    return lista.filter(function (x) { if (!x || vistos[x]) return false; vistos[x] = 1; return true; });
+  }
+  function porTexto(a, b) { return a.localeCompare(b, 'pt-BR'); }
+  function opcoesDeFiltro(vendas) {
+    function campo(nome) { return vendas.map(function (v) { return String(v[nome] || '').trim(); }); }
+    return {
+      empreendimentos: unicos(campo('empreendimento')).sort(porTexto),
+      equipes: unicos(campo('imobiliaria'))
+        .map(function (valor) { return { valor: valor, rotulo: formatarEquipe(valor) }; })
+        .sort(function (a, b) { return porTexto(a.rotulo, b.rotulo); }),
+      fases: unicos(campo('fase')).sort(porTexto)
+    };
+  }
+
+  function mesmasFases(a, b) {
+    function chave(l) { return l.map(normalizar).sort().join('|'); }
+    return chave(a || []) === chave(b || []);
+  }
+  /* quantos filtros "de gaveta" estao fora do padrao (botao Filtros no celular) */
+  function contarFiltrosAtivos(f) {
+    var n = 0;
+    if (f.empreendimento) n++;
+    if (f.equipe) n++;
+    if (!mesmasFases(f.fases, FASES_PADRAO)) n++;
+    if (f.periodo && f.periodo !== 'todo') n++;
+    if (f.ranking) n++;
+    if (f.tipo && f.tipo !== 'todas') n++;
+    if (f.mostrarCanceladas) n++;
+    return n;
+  }
 
   var api = {
     FASES_PADRAO: FASES_PADRAO,
@@ -181,7 +313,15 @@
     rankingRotulo: rankingRotulo,
     statusAcBadge: statusAcBadge,
     derivarPendencias: derivarPendencias,
-    checklist: checklist
+    checklist: checklist,
+    filtrosPadrao: filtrosPadrao,
+    passaFiltros: passaFiltros,
+    aplicarFiltros: aplicarFiltros,
+    calcularKpis: calcularKpis,
+    ordenar: ordenar,
+    opcoesDeFiltro: opcoesDeFiltro,
+    mesmasFases: mesmasFases,
+    contarFiltrosAtivos: contarFiltrosAtivos
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
