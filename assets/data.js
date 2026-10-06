@@ -175,7 +175,9 @@ function promoBadgeHtml(u) {
     '<span class="u-tooltip">Unidades promocionais n&atilde;o podem ser vendidas com Pr&ecirc;mio.</span></span>';
 }
 function getSolIcon(u) { return unitNascente(u) ? '&#9728;' : '&#9790;'; }
-function fmt(v) { return v.toLocaleString('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits:0 }); }
+/* Valores monetarios sempre com centavos, exatamente como vem da planilha.
+   NUNCA arredondar para inteiro: B.A., Folga de Tabela, Campanha G etc. tem centavos. */
+function fmt(v) { return v.toLocaleString('pt-BR', { style:'currency', currency:'BRL', minimumFractionDigits:2, maximumFractionDigits:2 }); }
 
 function parseBR(s) {
   if (!s) return 0;
