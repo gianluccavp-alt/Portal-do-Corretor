@@ -171,6 +171,25 @@
   }
   function recentes(visitas, n) { return ordenarPorTempo(visitas, true).slice(0, n); }
 
+  /* ---------- CSV (spec 6.2) ---------- */
+  var CSV_COLUNAS = ['Data', 'Horário', 'Empreendimento', 'Cidade', 'Tipo', 'Corretor house', 'Imobiliária', 'Corretor imobiliária'];
+  function celulaCSV(valor) {
+    var t = neutralizarFormula(valor);
+    return /[;"\r\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+  }
+  function gerarCSV(visitas) {
+    var linhas = [CSV_COLUNAS.join(';')];
+    ordenarPorTempo(visitas, false).forEach(function (v) {
+      linhas.push([
+        dataBr(v.data), v.hora, v.empreendimento, v.cidade, TIPOS[v.tipo] ? TIPOS[v.tipo].nome : v.tipo,
+        v.corretorHouse, v.imobiliaria, v.corretorImob
+      ].map(celulaCSV).join(';'));
+    });
+    /* BOM para o Excel abrir o UTF-8 com acentos certos */
+    return '﻿' + linhas.join('\r\n') + '\r\n';
+  }
+  function nomeArquivoCSV(de, ate) { return 'visitas-' + de + '-a-' + ate + '.csv'; }
+
   var api = {
     TIPOS: TIPOS,
     ORDEM_TIPOS: ORDEM_TIPOS,
@@ -196,7 +215,9 @@
     porEmpreendimento: porEmpreendimento,
     rankingImobiliarias: rankingImobiliarias,
     ordenarPorTempo: ordenarPorTempo,
-    recentes: recentes
+    recentes: recentes,
+    gerarCSV: gerarCSV,
+    nomeArquivoCSV: nomeArquivoCSV
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
