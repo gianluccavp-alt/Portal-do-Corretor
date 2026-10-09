@@ -128,8 +128,12 @@
       }).then(function (texto) {
         var json;
         try { json = JSON.parse(texto); } catch (e) { throw falha('formato'); }
+        if (!json || typeof json !== 'object') throw falha('formato');
         if (!json.ok) throw falha(json.erro || 'interno', json.mensagem, json.campo);
         return json;
+      }).catch(function (e) {
+        if (e && e.codigo) throw e;
+        throw falha('rede');
       }).finally(function () { clearTimeout(timer); });
     }
 
