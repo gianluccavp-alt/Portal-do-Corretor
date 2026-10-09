@@ -106,6 +106,8 @@
     $('faixa-texto').textContent = texto;
     $('faixa-desfazer').hidden = !comDesfazer;
     $('faixa').hidden = false;
+    /* no celular a faixa fica no topo do formulario: traz para a tela */
+    try { $('faixa').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { /* navegador antigo */ }
     if (tipo === 'ok') estado.timerFaixa = setTimeout(esconderFaixa, 8000);
   }
   function esconderFaixa() {
@@ -132,6 +134,8 @@
     }, function (f) {
       marcarInvalido(f.campo);
       mostrarFaixa('err', 'A visita não foi registrada', f.mensagem, false);
+      /* foco no campo citado; preventScroll para a faixa continuar visivel */
+      if (CAMPO_ID[f.campo]) $(CAMPO_ID[f.campo]).focus({ preventScroll: true });
     }).then(function () {
       estado.enviando = false;
       atualizarBotao();
@@ -265,6 +269,11 @@
     $('data').addEventListener('change', function () { carregarDia(); atualizarBotao(); });
     ['hora', 'imob', 'corretor-house', 'corretor-imob'].forEach(function (id) {
       $(id).addEventListener('input', atualizarBotao);
+    });
+    /* campo corrigido deixa de ficar marcado como invalido */
+    ['emp', 'data', 'hora', 'imob'].forEach(function (id) {
+      $(id).addEventListener('input', function () { $(id).setAttribute('aria-invalid', 'false'); });
+      $(id).addEventListener('change', function () { $(id).setAttribute('aria-invalid', 'false'); });
     });
     $('registrar').addEventListener('click', registrar);
     $('faixa-desfazer').addEventListener('click', desfazer);
