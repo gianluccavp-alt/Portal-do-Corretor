@@ -102,7 +102,7 @@
   }
 
   function porDia(visitas, de, ate) {
-    var n = diasEntre(de, ate), indice = {}, out = [];
+    var n = diasEntre(de, ate), indice = Object.create(null), out = [];
     for (var i = 0; i < n; i++) {
       var linha = vazioTipos();
       linha.data = somarDias(de, i);
@@ -125,7 +125,7 @@
   }
 
   function porEmpreendimento(visitas, lista) {
-    var indice = {};
+    var indice = Object.create(null);
     var out = lista.map(function (e) {
       var linha = vazioTipos();
       linha.nome = e.nome;
@@ -139,11 +139,11 @@
 
   /* agrupa nomes sem caixa/acento; o nome exibido e a grafia mais frequente */
   function agruparNomes(nomes) {
-    var grupos = {}, ordem = [];
+    var grupos = Object.create(null), ordem = [];
     nomes.forEach(function (bruto) {
       var nome = normalizarTexto(bruto), k = chaveNome(nome);
       if (!k) return;
-      if (!grupos[k]) { grupos[k] = { qtd: 0, grafias: {} }; ordem.push(k); }
+      if (!grupos[k]) { grupos[k] = { qtd: 0, grafias: Object.create(null) }; ordem.push(k); }
       grupos[k].qtd++;
       grupos[k].grafias[nome] = (grupos[k].grafias[nome] || 0) + 1;
     });

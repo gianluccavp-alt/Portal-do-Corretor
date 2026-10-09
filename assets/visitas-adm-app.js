@@ -70,9 +70,10 @@
       render();
     }).finally(function () { $('atualizar').disabled = false; });
   }
+  var MSG_ERRO = 'Erro na planilha de visitas. Avise o comercial.';
   function tratarErro(f) {
-    if (f.codigo === 'senha') { sair('Senha incorreta.'); return; }
-    $('aviso-erro-txt').textContent = f.mensagem;
+    if (f && f.codigo === 'senha') { sair('Senha incorreta.'); return; }
+    $('aviso-erro-txt').textContent = (f && f.mensagem) || MSG_ERRO;
     $('aviso-erro').hidden = false;
   }
   function entrar(ev) {
@@ -87,7 +88,7 @@
       mostrarApp();
     }, function (f) {
       estado.senha = '';
-      mostrarGate(f.codigo === 'senha' ? 'Senha incorreta.' : f.mensagem);
+      mostrarGate(f && f.codigo === 'senha' ? 'Senha incorreta.' : (f && f.mensagem) || MSG_ERRO);
     });
   }
 
@@ -268,7 +269,7 @@
     a.download = V.nomeArquivoCSV(f.iv.de, f.iv.ate);
     document.body.appendChild(a);
     a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
   }
 
   /* ---------- inicio ---------- */

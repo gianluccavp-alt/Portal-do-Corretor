@@ -89,3 +89,21 @@ test('gerarCSV vazio tem só o cabeçalho', () => {
 test('nomeArquivoCSV', () => {
   assert.equal(V.nomeArquivoCSV('2026-10-03', '2026-10-09'), 'visitas-2026-10-03-a-2026-10-09.csv');
 });
+
+test('nomes que coincidem com chaves de Object.prototype nao quebram nem poluem', () => {
+  const nomes = ['constructor', 'Constructor', '__proto__'];
+  const visitas = nomes.map((n, i) => ({
+    id: 'P' + i, data: '2026-10-09', hora: '10:00', empreendimento: n, cidade: 'Campinas', tipo: 'imob', imobiliaria: n
+  }));
+  const rank = V.rankingImobiliarias(visitas, 10);
+  assert.equal(rank.reduce((s, r) => s + r.qtd, 0), 3);
+  assert.equal(rank.find((r) => r.nome.toLowerCase() === 'constructor').qtd, 2);
+  assert.equal(rank.find((r) => r.nome === '__proto__').qtd, 1);
+  const emp = V.porEmpreendimento(visitas, nomes.map((n) => ({ nome: n, cidade: 'X' })));
+  assert.equal(emp.find((l) => l.nome === 'constructor').total, 1);
+  assert.equal(emp.find((l) => l.nome === '__proto__').total, 1);
+  const dias = V.porDia([{ data: 'constructor', tipo: 'imob' }], '2026-10-09', '2026-10-09');
+  assert.equal(dias[0].total, 0);
+  assert.equal(({}).qtd, undefined);
+  assert.equal(({}).total, undefined);
+});

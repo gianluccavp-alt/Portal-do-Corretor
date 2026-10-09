@@ -97,3 +97,10 @@ test('visSugestoes_ agrupa, ignora excluídas e antigas, ordena', () => {
   ];
   assert.deepEqual(plano(gs.visSugestoes_(linhas, indice(), '2026-07-11')), ['Beta Imóveis', 'Imobiliária Ápice']);
 });
+
+test('visSugestoes_ trata constructor e __proto__ como nomes normais', () => {
+  const linhas = ['constructor', '__proto__', 'Beta'].map((n) =>
+    linha({ 'Registrado em': '09/10/2026 09:00:00', 'Imobiliária': n, 'Excluída': '0' }));
+  assert.deepEqual(plano(gs.visSugestoes_(linhas, indice(), '2026-07-11')).sort(), ['Beta', '__proto__', 'constructor']);
+  assert.equal(({}).constructor, Object);
+});

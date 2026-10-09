@@ -78,7 +78,8 @@ function doPost(e) {
   } catch (err) {
     resposta = err instanceof VisFalha
       ? { ok: false, erro: err.codigo, mensagem: err.message, campo: err.campo }
-      : { ok: false, erro: 'interno', mensagem: String((err && err.message) || err) };
+      : { ok: false, erro: 'interno', mensagem: 'Erro interno.' };
+    if (!(err instanceof VisFalha)) Logger.log('visitas: ' + String((err && err.message) || err) + (err && err.stack ? '\n' + err.stack : ''));
   }
   return visJson_(resposta);
 }
@@ -105,7 +106,7 @@ function visConferirSenha_(enviada) {
 
 function visComLock_(fn) {
   var lock = LockService.getScriptLock();
-  if (!lock.tryLock(30000)) throw new VisFalha('ocupado', 'Muitos lançamentos ao mesmo tempo, tente de novo.');
+  if (!lock.tryLock(10000)) throw new VisFalha('ocupado', 'Muitos lançamentos ao mesmo tempo, tente de novo.');
   try { return fn(); } finally { lock.releaseLock(); }
 }
 
@@ -192,13 +193,13 @@ function visDeLinha_(l, ix) {
 
 /* nomes distintos (sem caixa/acento), grafia mais frequente, ordem alfabetica */
 function visSugestoes_(linhas, ix, desde) {
-  var grupos = {}, ordem = [];
+  var grupos = Object.create(null), ordem = [];
   linhas.forEach(function (l) {
     if (!visAtiva_(l, ix)) return;
     if (visBrParaIso_(l[ix['Registrado em']]) < desde) return;
     var nome = visTexto_(l[ix['Imobiliária']]), k = visChave_(nome);
     if (!k) return;
-    if (!grupos[k]) { grupos[k] = {}; ordem.push(k); }
+    if (!grupos[k]) { grupos[k] = Object.create(null); ordem.push(k); }
     grupos[k][nome] = (grupos[k][nome] || 0) + 1;
   });
   return ordem.map(function (k) {
