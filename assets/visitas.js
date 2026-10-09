@@ -82,6 +82,95 @@
     return out;
   }
 
+  /* ---------- agregacoes do dashboard (spec 6.2) ---------- */
+  function vazioTipos() { return { esp: 0, house: 0, imob: 0, total: 0 }; }
+  function somar(acc, v) {
+    if (tipoValido(v.tipo)) { acc[v.tipo]++; acc.total++; }
+    return acc;
+  }
+  function totaisPorTipo(visitas) { return visitas.reduce(somar, vazioTipos()); }
+
+  function filtrar(visitas, f) {
+    f = f || {};
+    return visitas.filter(function (v) {
+      if (f.de && v.data < f.de) return false;
+      if (f.ate && v.data > f.ate) return false;
+      if (f.cidade && f.cidade !== 'Todas' && v.cidade !== f.cidade) return false;
+      if (f.empreendimento && f.empreendimento !== 'Todos' && v.empreendimento !== f.empreendimento) return false;
+      return true;
+    });
+  }
+
+  function porDia(visitas, de, ate) {
+    var n = diasEntre(de, ate), indice = {}, out = [];
+    for (var i = 0; i < n; i++) {
+      var linha = vazioTipos();
+      linha.data = somarDias(de, i);
+      indice[linha.data] = linha;
+      out.push(linha);
+    }
+    visitas.forEach(function (v) { if (indice[v.data]) somar(indice[v.data], v); });
+    return out;
+  }
+
+  function porHora(visitas, ini, fim) {
+    var out = [];
+    for (var h = ini; h <= fim; h++) { var linha = vazioTipos(); linha.hora = h; out.push(linha); }
+    visitas.forEach(function (v) {
+      var hora = parseInt(String(v.hora).slice(0, 2), 10);
+      if (isNaN(hora)) return;
+      somar(out[Math.min(Math.max(hora, ini), fim) - ini], v);
+    });
+    return out;
+  }
+
+  function porEmpreendimento(visitas, lista) {
+    var indice = {};
+    var out = lista.map(function (e) {
+      var linha = vazioTipos();
+      linha.nome = e.nome;
+      linha.cidade = e.cidade;
+      indice[e.nome] = linha;
+      return linha;
+    });
+    visitas.forEach(function (v) { if (indice[v.empreendimento]) somar(indice[v.empreendimento], v); });
+    return out.sort(function (a, b) { return b.total - a.total || a.nome.localeCompare(b.nome, 'pt-BR'); });
+  }
+
+  /* agrupa nomes sem caixa/acento; o nome exibido e a grafia mais frequente */
+  function agruparNomes(nomes) {
+    var grupos = {}, ordem = [];
+    nomes.forEach(function (bruto) {
+      var nome = normalizarTexto(bruto), k = chaveNome(nome);
+      if (!k) return;
+      if (!grupos[k]) { grupos[k] = { qtd: 0, grafias: {} }; ordem.push(k); }
+      grupos[k].qtd++;
+      grupos[k].grafias[nome] = (grupos[k].grafias[nome] || 0) + 1;
+    });
+    return ordem.map(function (k) {
+      var g = grupos[k], melhor = null;
+      Object.keys(g.grafias).forEach(function (n) { if (melhor === null || g.grafias[n] > g.grafias[melhor]) melhor = n; });
+      return { nome: melhor, qtd: g.qtd };
+    });
+  }
+
+  function rankingImobiliarias(visitas, n) {
+    var nomes = visitas.filter(function (v) { return v.tipo === 'imob'; }).map(function (v) { return v.imobiliaria; });
+    return agruparNomes(nomes)
+      .sort(function (a, b) { return b.qtd - a.qtd || a.nome.localeCompare(b.nome, 'pt-BR'); })
+      .slice(0, n);
+  }
+
+  function chaveTempo(v) { return v.data + ' ' + v.hora; }
+  function ordenarPorTempo(visitas, desc) {
+    return visitas.slice().sort(function (a, b) {
+      var ka = chaveTempo(a), kb = chaveTempo(b);
+      var c = ka < kb ? -1 : ka > kb ? 1 : 0;
+      return desc ? -c : c;
+    });
+  }
+  function recentes(visitas, n) { return ordenarPorTempo(visitas, true).slice(0, n); }
+
   var api = {
     TIPOS: TIPOS,
     ORDEM_TIPOS: ORDEM_TIPOS,
@@ -99,7 +188,15 @@
     rotuloDia: rotuloDia,
     intervalo: intervalo,
     validarFormulario: validarFormulario,
-    listaEmpreendimentos: listaEmpreendimentos
+    listaEmpreendimentos: listaEmpreendimentos,
+    filtrar: filtrar,
+    totaisPorTipo: totaisPorTipo,
+    porDia: porDia,
+    porHora: porHora,
+    porEmpreendimento: porEmpreendimento,
+    rankingImobiliarias: rankingImobiliarias,
+    ordenarPorTempo: ordenarPorTempo,
+    recentes: recentes
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

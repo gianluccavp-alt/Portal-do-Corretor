@@ -1,0 +1,10 @@
+[
+  { "id": "V1", "data": "2026-10-07", "hora": "09:10", "empreendimento": "Alta Vista Mangará", "cidade": "Campinas", "tipo": "esp", "corretorHouse": "", "imobiliaria": "", "corretorImob": "" },
+  { "id": "V2", "data": "2026-10-07", "hora": "10:05", "empreendimento": "Alta Vista Mangará", "cidade": "Campinas", "tipo": "imob", "corretorHouse": "", "imobiliaria": "Imobiliária Ápice", "corretorImob": "Corretor Teste" },
+  { "id": "V3", "data": "2026-10-07", "hora": "21:30", "empreendimento": "Village Park", "cidade": "Ribeirão Preto", "tipo": "house", "corretorHouse": "Corretor House Teste", "imobiliaria": "", "corretorImob": "" },
+  { "id": "V4", "data": "2026-10-08", "hora": "07:45", "empreendimento": "Village Park", "cidade": "Ribeirão Preto", "tipo": "imob", "corretorHouse": "", "imobiliaria": "imobiliaria apice ", "corretorImob": "" },
+  { "id": "V5", "data": "2026-10-08", "hora": "14:00", "empreendimento": "Alta Vista Mangará", "cidade": "Campinas", "tipo": "imob", "corretorHouse": "", "imobiliaria": "Imobiliária Ápice", "corretorImob": "" },
+  { "id": "V6", "data": "2026-10-09", "hora": "11:20", "empreendimento": "Alta Vista Mangará", "cidade": "Campinas", "tipo": "imob", "corretorHouse": "", "imobiliaria": "Imóveis Beta", "corretorImob": "" },
+  { "id": "V7", "data": "2026-10-09", "hora": "11:50", "empreendimento": "Conquista Vila da Mata", "cidade": "Sorocaba", "tipo": "esp", "corretorHouse": "", "imobiliaria": "", "corretorImob": "" },
+  { "id": "V8", "data": "2026-10-09", "hora": "15:15", "empreendimento": "Alta Vista Mangará", "cidade": "Campinas", "tipo": "house", "corretorHouse": "", "imobiliaria": "", "corretorImob": "" }
+]
