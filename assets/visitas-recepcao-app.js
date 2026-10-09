@@ -248,11 +248,30 @@
   }
 
   /* ---------- inicio ---------- */
+  /* virada do dia: tablet aberto de um dia pro outro nao pode gravar na data antiga */
+  var hojeAplicado = '';
+  function aplicarHoje() {
+    var h = hoje();
+    if (h === hojeAplicado) return false;
+    var anterior = hojeAplicado;
+    hojeAplicado = h;
+    $('data').max = h;
+    $('data').min = V.somarDias(h, -7);
+    if (!anterior || $('data').value === anterior) {
+      $('data').value = h;
+      $('hora').value = V.horaLocal(new Date());
+    }
+    return !!anterior;
+  }
+  function checarVirada() {
+    if (document.visibilityState !== 'visible') return;
+    if (aplicarHoje()) atualizarBotao();
+    carregarDia();
+  }
+
   function iniciar() {
     montarEmpreendimentos();
-    $('data').value = hoje();
-    $('data').max = hoje();
-    $('data').min = V.somarDias(hoje(), -7);
+    aplicarHoje();
     $('hora').value = V.horaLocal(new Date());
     $('aviso-demo').hidden = !api.demo;
 
@@ -278,10 +297,8 @@
     $('registrar').addEventListener('click', registrar);
     $('faixa-desfazer').addEventListener('click', desfazer);
     /* soma lancamentos de outro aparelho no mesmo stand */
-    document.addEventListener('visibilitychange', function () {
-      if (document.visibilityState === 'visible') carregarDia();
-    });
-    setInterval(function () { if (document.visibilityState === 'visible') carregarDia(); }, INTERVALO_DIA);
+    document.addEventListener('visibilitychange', checarVirada);
+    setInterval(checarVirada, INTERVALO_DIA);
 
     escolherTipo(null);
     carregarDia();
