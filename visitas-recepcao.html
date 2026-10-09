@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Registro de visitas · Recepção | Portal do Corretor</title>
+<link rel="icon" type="image/webp" href="assets/img/favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<!-- Lancamento de visitas no stand (publica). Spec: docs/superpowers/specs/2026-10-09-visitas-recepcao-design.md
+     Telas: canvas "Visitas Recepcao", quadros Main e RecepcaoCelular -->
+<style>
+:root{
+  --red:#E4032B;--red-deep:#B8001F;--ink:#3A4043;--slate:#727A7D;--hair:#E7E9EA;--bg:#F5F6F7;--surface:#FFFFFF;
+  --ok:#1B7A40;--ok-bg:#EFF9F2;--ok-line:#C7E7D3;--err:#C4001C;--err-bg:#FDEEF0;--err-line:#F6C9D0;
+  --warn:#8A5700;--warn-bg:#FFF7E6;--warn-line:#F1DCAE;
+  --foco:0 0 0 3px rgba(228,3,43,.10);--foco-forte:0 0 0 3px rgba(228,3,43,.25)
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+[hidden]{display:none!important}
+button,input,select{font:inherit;color:inherit}
+h1,h2,p{margin:0}
+.num{font-variant-numeric:tabular-nums}
+.lab{font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--slate)}
+.opc{text-transform:none;letter-spacing:normal;font-weight:400}
+.dica{font-size:13px;color:var(--slate)}
+.step{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
+.step::before{content:"";width:22px;height:2px;border-radius:2px;background:var(--red)}
+
+.hero{background:var(--surface) url(assets/img/hero-bg.png) center/cover no-repeat;border-bottom:1px solid var(--hair);padding:2.25rem 1.25rem 1.75rem}
+.hero-in{max-width:1120px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:18px}
+.hero-txt{display:flex;flex-direction:column;gap:6px;flex:1 1 320px;min-width:0}
+.hero h1{font-size:2.15rem;font-weight:700;line-height:1.15;letter-spacing:-.6px}
+.hero p{color:var(--slate);max-width:56ch}
+.hero img{height:44px;width:auto}
+
+.wrap{max-width:1120px;margin:0 auto;padding:1.75rem 1.25rem 4rem;display:flex;flex-wrap:wrap;align-items:flex-start;gap:22px}
+.col-form{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:18px}
+.col-cont{flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:18px}
+.card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:1.35rem;display:flex;flex-direction:column;gap:14px}
+.linha{display:flex;flex-wrap:wrap;gap:14px}
+.campo{display:flex;flex-direction:column;gap:6px;min-width:0}
+.inp{width:100%;min-height:46px;border:1px solid var(--hair);border-radius:9px;background:var(--surface);padding:0 12px;outline:none;transition:border-color .15s,box-shadow .15s}
+.inp:focus{border-color:var(--red);box-shadow:var(--foco)}
+.inp[aria-invalid="true"]{border-color:var(--err);background:var(--err-bg)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 14px;border-radius:9px;border:1px solid var(--hair);background:var(--surface);font-weight:500;font-size:14px;cursor:pointer;white-space:nowrap;transition:border-color .15s,color .15s,background .15s}
+.btn:hover:not(:disabled){border-color:var(--red);color:var(--red)}
+.btn:focus-visible,.tipo:focus-visible{outline:none;box-shadow:var(--foco-forte)}
+.btn-p{width:100%;min-height:56px;font-size:1.05rem;font-weight:700;background:var(--red);border-color:var(--red);color:#fff}
+.btn-p:hover:not(:disabled){background:var(--red-deep);border-color:var(--red-deep);color:#fff}
+.btn-p:disabled{background:var(--hair);border-color:var(--hair);color:var(--slate);cursor:not-allowed}
+.btn-i{width:44px;min-height:44px;padding:0;color:var(--slate);flex:none}
+.btn-i:hover:not(:disabled){border-color:var(--err);color:var(--err)}
+
+.tipos{display:flex;flex-wrap:wrap;gap:12px}
+.tipo{flex:1 1 220px;min-width:0;display:flex;gap:12px;align-items:center;text-align:left;padding:14px;min-height:84px;border-radius:14px;border:1px solid var(--hair);background:var(--surface);cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.tipo:hover{border-color:var(--red)}
+.tipo[aria-checked="true"]{border-color:var(--red);box-shadow:var(--foco)}
+.tipo-ico{flex:none;width:44px;height:44px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+.tipo-nome{display:block;font-weight:700;font-size:.95rem}
+.tipo-desc{display:block;font-size:13px;color:var(--slate);line-height:1.35}
+.extra{display:flex;flex-wrap:wrap;gap:14px;padding-top:14px;border-top:1px dashed var(--hair)}
+.extra .campo{flex:1 1 220px}
+
+.faixa{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:1px solid}
+.faixa.ok{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok)}
+.faixa.err{background:var(--err-bg);border-color:var(--err-line);color:var(--err)}
+.faixa-txt{flex:1 1 200px;min-width:0}
+.faixa-txt strong{display:block}
+.faixa-txt span{font-size:14px}
+.faixa .btn{min-height:44px;border-color:currentColor;color:inherit}
+.aviso-demo{padding:12px 16px;border:1px dashed var(--warn-line);background:var(--warn-bg);color:var(--warn);border-radius:12px;font-size:13.5px}
+
+.total{display:flex;align-items:baseline;gap:10px;padding-bottom:16px;border-bottom:1px dashed var(--hair)}
+.total-n{font-size:4rem;font-weight:700;line-height:1;letter-spacing:-2px}
+.total-lab{color:var(--slate)}
+.barras{display:flex;flex-direction:column;gap:12px}
+.barra-top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px}
+.barra-trilho{height:8px;border-radius:999px;background:var(--bg);overflow:hidden;margin-top:6px}
+.barra-trilho div{height:100%;border-radius:999px;width:0;transition:width .3s}
+.ponto{display:inline-block;width:9px;height:9px;border-radius:999px;flex:none}
+.rotulo-tipo{display:flex;align-items:center;gap:8px}
+.lista-cab{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lista-cab strong{font-size:.95rem}
+.lista{list-style:none;margin:0;padding:0}
+.lista li{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px dashed var(--hair)}
+.lista-hora{width:46px;flex:none;font-weight:700}
+.lista-txt{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
+.lista-tipo{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:500}
+.lista-det{font-size:12.5px;color:var(--slate);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vazio{padding:18px 0;text-align:center;color:var(--slate);font-size:14px}
+.erro-txt{color:var(--err);font-size:13.5px;font-weight:500}
+
+@media (max-width:700px){
+  .hero{padding:1.5rem 1rem 1.25rem}.hero h1{font-size:1.5rem}.hero img{height:30px}
+  .wrap{padding:1.25rem 1rem 3rem}.card{padding:1rem}
+}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-in">
+    <div class="hero-txt">
+      <span class="step">Portal do Corretor · Recepção</span>
+      <h1>Registro de visitas</h1>
+      <p>Registre cada cliente que entrar no stand: escolha o tipo de visita e toque em registrar.</p>
+    </div>
+    <img src="assets/img/logo-direcional-header.png" alt="Direcional">
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="col-form" aria-label="Nova visita">
+    <p class="aviso-demo" id="aviso-demo" hidden>Modo demonstração: dados fictícios, nada é gravado na planilha.</p>
+
+    <div class="faixa" id="faixa" role="status" aria-live="polite" hidden>
+      <svg id="faixa-ico-ok" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+      <svg id="faixa-ico-err" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 7v6M12 16.5v.5"/></svg>
+      <div class="faixa-txt"><strong id="faixa-titulo"></strong><span id="faixa-texto"></span></div>
+      <button type="button" class="btn" id="faixa-desfazer">Desfazer</button>
+    </div>
+
+    <div class="card">
+      <span class="step">Passo 1 · Stand, data e horário</span>
+      <div class="linha">
+        <label class="campo" style="flex:2 1 260px">
+          <span class="lab">Empreendimento</span>
+          <select class="inp" id="emp"></select>
+        </label>
+        <label class="campo" style="flex:1 1 150px">
+          <span class="lab">Data</span>
+          <input class="inp" id="data" type="date">
+        </label>
+        <div class="campo" style="flex:1 1 170px">
+          <label class="lab" for="hora">Horário</label>
+          <div style="display:flex;gap:8px">
+            <input class="inp" id="hora" type="time" style="flex:1 1 auto;min-width:0">
+            <button type="button" class="btn" id="agora">Agora</button>
+          </div>
+        </div>
+      </div>
+      <p class="dica">Data e horário vêm preenchidos com o momento atual. Só altere se estiver lançando uma visita que já passou.</p>
+    </div>
+
+    <div class="card">
+      <span class="step">Passo 2 · Como o cliente chegou?</span>
+      <div class="tipos" role="radiogroup" aria-label="Tipo de visita">
+        <button type="button" class="tipo" role="radio" aria-checked="false" data-tipo="esp">
+          <span class="tipo-ico" style="background:#F5F6F7;color:#3A4043">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M6 21V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v17"/><path d="M12.5 12h.01"/><path d="M16 9l4 3-4 3"/></svg>
+          </span>
+          <span><span class="tipo-nome">Espontânea</span><span class="tipo-desc">Chegou ao stand sem agendamento</span></span>
+        </button>
+        <button type="button" class="tipo" role="radio" aria-checked="false" data-tipo="house">
+          <span class="tipo-ico" style="background:#FDEEF0;color:#E4032B">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M9 15.5l2 2 4-4"/></svg>
+          </span>
+          <span><span class="tipo-nome">Agendada · Corretor house</span><span class="tipo-desc">Agendada por um corretor da Direcional</span></span>
+        </button>
+        <button type="button" class="tipo" role="radio" aria-checked="false" data-tipo="imob">
+          <span class="tipo-ico" style="background:#EEF0F1;color:#5B6366">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/></svg>
+          </span>
+          <span><span class="tipo-nome">Imobiliária parceira</span><span class="tipo-desc">Trazido por corretor de imobiliária</span></span>
+        </button>
+      </div>
+
+      <div class="extra" id="extra-house" hidden>
+        <label class="campo">
+          <span class="lab">Corretor house que agendou <span class="opc">(opcional)</span></span>
+          <input class="inp" id="corretor-house" type="text" maxlength="80" autocomplete="off" placeholder="Nome do corretor">
+        </label>
+      </div>
+
+      <div class="extra" id="extra-imob" hidden>
+        <label class="campo">
+          <span class="lab">Imobiliária</span>
+          <input class="inp" id="imob" type="text" maxlength="80" autocomplete="off" list="lista-imob" placeholder="Digite ou escolha">
+          <datalist id="lista-imob"></datalist>
+        </label>
+        <label class="campo">
+          <span class="lab">Corretor da imobiliária <span class="opc">(opcional)</span></span>
+          <input class="inp" id="corretor-imob" type="text" maxlength="80" autocomplete="off" placeholder="Nome do corretor">
+        </label>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-p" id="registrar" disabled>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      <span id="registrar-txt">Escolha o tipo de visita</span>
+    </button>
+  </section>
+
+  <aside class="col-cont" aria-label="Visitas do dia">
+    <div class="card">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <span class="lab" id="cont-titulo">Visitas hoje</span>
+        <strong id="cont-emp" style="font-size:.95rem"></strong>
+      </div>
+      <div class="total">
+        <span class="total-n num" id="cont-total">0</span>
+        <span class="total-lab" id="cont-total-lab">visitas registradas</span>
+      </div>
+      <div class="barras">
+        <div>
+          <div class="barra-top"><span class="rotulo-tipo"><span class="ponto" style="background:#3A4043"></span>Espontânea</span><strong class="num" id="q-esp">0</strong></div>
+          <div class="barra-trilho"><div id="b-esp" style="background:#3A4043"></div></div>
+        </div>
+        <div>
+          <div class="barra-top"><span class="rotulo-tipo"><span class="ponto" style="background:#E4032B"></span>Corretor house</span><strong class="num" id="q-house">0</strong></div>
+          <div class="barra-trilho"><div id="b-house" style="background:#E4032B"></div></div>
+        </div>
+        <div>
+          <div class="barra-top"><span class="rotulo-tipo"><span class="ponto" style="background:#A3ABAE"></span>Imobiliária</span><strong class="num" id="q-imob">0</strong></div>
+          <div class="barra-trilho"><div id="b-imob" style="background:#A3ABAE"></div></div>
+        </div>
+      </div>
+      <p class="erro-txt" id="cont-erro" role="alert" hidden></p>
+    </div>
+
+    <div class="card" style="gap:10px">
+      <div class="lista-cab"><strong>Últimos lançamentos</strong><span class="dica">deste stand</span></div>
+      <p class="vazio" id="vazio" hidden></p>
+      <ul class="lista" id="ultimos"></ul>
+    </div>
+  </aside>
+</main>
+
+<script src="assets/config.js"></script>
+<script src="assets/visitas.js"></script>
+<script src="assets/visitas-api.js"></script>
+<script src="assets/visitas-recepcao-app.js"></script>
+</body>
+</html>
