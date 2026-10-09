@@ -555,3 +555,11 @@ window.findEmpreendimento = function (empId) {
    Vazio = modo demonstracao (dados ficticios de tests/fixtures/vendas.json,
    nada e gravado). Com URL preenchida, ?demo=1 na pagina forca o modo demo. */
 window.PENDENCIAS_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7Y6xNjbQV21lpqvP1IpX2m1LDqyo0okxD_DKqj8ajbVVuXNUhu9bkWQMo37eEMpRy/exec';
+
+/* ---------- Visitas da Recepcao (/visitas-recepcao e /visitas-recepcao-adm) ----------
+   URL .../exec do Web App do Apps Script da planilha de visitas
+   (docs/apps-script-visitas.gs). A SENHA DO DASHBOARD NAO FICA AQUI:
+   fica so no Apps Script (Script Property VISITAS_SENHA).
+   Vazio = modo demonstracao (dados ficticios na memoria da aba, nada e
+   gravado). Com URL preenchida, ?demo=1 na pagina forca o modo demo. */
+window.VISITAS_APPS_SCRIPT_URL = '';
