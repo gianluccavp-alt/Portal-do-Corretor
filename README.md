@@ -12,14 +12,21 @@ lidos **ao vivo no navegador** a partir de uma planilha do Google Sheets publica
 index.html              Home: escolhe cidade -> escolhe empreendimento
 empreendimento.html     Página de detalhe (?e=<id> na URL)
 pendencias-vendas.html  Pendências de Vendas (interno, comercial, com senha)
+visitas-recepcao.html   Lançamento de visitas no stand (recepção, pública)
+visitas-recepcao-adm.html  Dashboard de visitas (interno, com senha)
 assets/
   config.js             Cidades, empreendimentos e URLs das planilhas  <-- EDITAR AQUI
   data.js               Motor: busca CSV, filtra por empreendimento, renderiza unidades
   pendencias.js         Regras da página de pendências (puras, testadas)
   pendencias-app.js     Interface da página de pendências
+  visitas.js            Regras das páginas de visitas (puras, testadas)
+  visitas-api.js        Cliente do Web App de visitas + modo demonstração
+  visitas-recepcao-app.js  Interface da recepção
+  visitas-adm-app.js    Interface do dashboard de visitas
   styles.css            Estilos compartilhados
 docs/
   apps-script-pendencias.gs   Web App da página de pendências
+  apps-script-visitas.gs      Web App das páginas de visitas
   design/pendencias-vendas/   Telas aprovadas (PNG + prévias HTML)
 tests/                  Testes das regras (node --test)
 vercel.json             Configuração de deploy estático
@@ -83,6 +90,22 @@ node --test tests/*.test.js
 ```
 
 Spec: `docs/superpowers/specs/2026-09-28-pendencias-vendas-design.md`.
+
+## Visitas da recepção
+
+- `/visitas-recepcao`: a recepcionista lança cada visita do stand (espontânea,
+  agendada por corretor house ou trazida por imobiliária) e vê o total do dia.
+  Página pública, sem senha.
+- `/visitas-recepcao-adm`: dashboard do comercial, com senha (Script Property
+  `VISITAS_SENHA` no Apps Script; a senha não fica no repositório).
+- Dados na aba `VISITAS` da planilha de visitas, via Web App
+  (`docs/apps-script-visitas.gs`, instruções de implantação no cabeçalho).
+- `window.VISITAS_APPS_SCRIPT_URL` em `assets/config.js` = URL `/exec` do Web App.
+  Vazio (ou `?demo=1`) = **modo demonstração** com dados fictícios na memória da aba.
+- Empreendimento novo no `config.js` também precisa entrar em
+  `VISITAS_EMPREENDIMENTOS` no `.gs`. O teste de paridade avisa se esquecer.
+
+Spec: `docs/superpowers/specs/2026-10-09-visitas-recepcao-design.md`.
 
 ## Rodar localmente
 
