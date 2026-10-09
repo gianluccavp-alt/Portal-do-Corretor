@@ -1,7 +1,8 @@
 # Visitas da Recepção — design
 
 **Data:** 09/10/2026
-**Status:** aprovado no brainstorm, aguardando revisão da spec
+**Status:** v1 implementada na branch `feat/visitas-recepcao` (não publicada). **v2 (§13, dados do
+cliente em popup) aguardando revisão. Onde a §13 diverge das seções 1–12, vale a §13.**
 **Páginas:**
 - `https://produtosdirecional.vercel.app/visitas-recepcao` (lançamento, pública)
 - `https://produtosdirecional.vercel.app/visitas-recepcao-adm` (dashboard, com senha)
@@ -316,3 +317,130 @@ Funções testáveis, sem DOM nem rede:
   pelo agrupamento sem caixa/acento; variações maiores ("Imob X" vs "X Imóveis")
   continuam separadas.
 - **Lista de empreendimentos desatualizada no `.gs`.** Pega pelo teste de paridade.
+
+## 13. Revisão v2 — dados do cliente em popup (10/10/2026)
+
+Pedido do comercial depois da v1: cada visita passa a registrar quem é o cliente e quem o
+atendeu. **Esta seção substitui as partes das seções 1–12 que ela contradiz.** A v1 ainda
+não foi publicada, então a aba `VISITAS` nasce direto no formato novo (sem migração).
+
+Telas: canvas "Visitas Recepção", quadros `Main` (Passo 1 + cards), `PopupImobiliaria`,
+`PopupCelular` (erros) e `Admin` (tabela de lançamentos com dados do cliente).
+
+### 13.1 O que muda para a recepcionista
+
+- **Passo 1 · Stand:** só o empreendimento (stand), lembrado no aparelho. Data e horário
+  saem do Passo 1.
+- **Passo 2:** tocar em um dos 3 cards **abre um popup** "Registrar visita", com o tipo e o
+  stand no topo. Não há mais seleção de card nem botão "Registrar" fora do popup.
+- Campos do popup, iguais para os 3 tipos:
+
+| Campo | Obrigatório | Regra |
+|---|---|---|
+| Nome do cliente | sim | texto, até 80 caracteres |
+| CPF | sim | máscara `000.000.000-00`; 11 dígitos com dígitos verificadores válidos; recusa sequências repetidas (`111.111.111-11`) |
+| Telefone | sim | máscara `(00) 00000-0000` ou `(00) 0000-0000`; 10 ou 11 dígitos; DDD entre 11 e 99 |
+| Data | sim | hoje ao abrir o popup; entre hoje − 7 dias e hoje |
+| Horário | sim | agora ao abrir o popup; botão "Agora"; não pode passar de agora + 5 min se a data for hoje |
+| Imobiliária | sim, **só no tipo Imobiliária** | texto livre com sugestões (`<datalist>`) |
+| Nome do corretor | sim | texto livre com sugestões. Rótulo: "Corretor que atendeu" (espontânea), "Corretor house que agendou" (house), "Corretor da imobiliária" (imobiliária) |
+| Gerente de vendas | não | texto livre com sugestões |
+
+- Não existe mais "Empreendimento de interesse": o empreendimento é sempre o stand do Passo 1.
+- **Validação:** ao tocar em "Registrar visita" com campos inválidos, o popup não fecha, cada
+  campo inválido fica vermelho com a mensagem logo abaixo e o foco vai para o primeiro inválido.
+  Corrigir o campo limpa o erro dele. O servidor revalida tudo; um `invalido` do servidor
+  marca o campo citado da mesma forma.
+- **Popup:** `<dialog>` nativo aberto com `showModal()` (foco preso, Esc fecha). "Cancelar",
+  o botão de fechar e Esc descartam o que foi digitado. No celular (≤ 600 px) ocupa a tela
+  inteira, com rodapé de botões fixo.
+- **Ao registrar com sucesso:** o popup fecha, a faixa verde aparece com "Desfazer"
+  (`hora · tipo · primeiro nome`) e o contador recarrega.
+- **CPF repetido:** se o mesmo CPF já tem visita ativa **no mesmo stand e na mesma data**, a
+  visita é registrada mesmo assim e a faixa fica amarela: "Visita registrada. Atenção: este
+  CPF já tinha visita hoje neste stand." (com "Desfazer"). Não existe consulta de CPF antes
+  de registrar, para a página pública não virar um verificador de CPF.
+- **Últimos lançamentos:** cada item mostra horário, **primeiro nome** do cliente, tipo e
+  detalhe (`corretor` ou `imobiliária · corretor`). Nome completo, CPF e telefone nunca
+  aparecem na página pública.
+- A virada de dia da v1 continua valendo; como data e horário agora estão no popup, eles são
+  recalculados a cada abertura.
+
+### 13.2 Planilha — aba `VISITAS` (substitui a tabela da §3)
+
+`ID · Registrado em · Data · Horário · Empreendimento · Cidade · Tipo · Nome do cliente · CPF ·
+Telefone · Imobiliária · Corretor · Gerente de vendas · Excluída · Token`
+
+- `CPF` e `Telefone` gravados **só com os dígitos**, como texto (`@`), para não perder zero à
+  esquerda nem virar número.
+- As colunas `Corretor house` e `Corretor imobiliária` da v1 deixam de existir; o corretor de
+  qualquer tipo fica em `Corretor`.
+- Neutralização de fórmula vale para todos os textos livres.
+
+### 13.3 Web App (substitui o que diverge na §4)
+
+- **Visita completa** (só no `listar`, com senha):
+  `{ id, data, hora, empreendimento, cidade, tipo, cliente, cpf /* 11 dígitos */, telefone /* dígitos */, imobiliaria, corretor, gerente }`
+- **Visita resumida** (respostas públicas `registrar` e `dia`):
+  `{ id, data, hora, empreendimento, tipo, primeiroNome, imobiliaria, corretor }`.
+  `primeiroNome` = primeira palavra do nome do cliente. O servidor monta o resumo; CPF,
+  telefone, nome completo e gerente **nunca** saem nas respostas públicas.
+- `registrar { empreendimento, data, hora, tipo, cliente, cpf, telefone, imobiliaria?, corretor, gerente? }`
+  → `{ visita /* resumida */, token, cpfRepetido: boolean }`.
+  - `cpfRepetido` é calculado dentro do lock, antes de gravar: existe linha ativa com o mesmo
+    CPF, o mesmo empreendimento e a mesma data.
+- `dia { empreendimento, data }` → `{ visitas /* resumidas */, sugestoes: { imobiliarias, corretores, gerentes } }`.
+  As três listas seguem a regra de `sugestoesImob` da §4.1 (últimos 90 dias, agrupadas sem
+  caixa/acento, até 200, ordem alfabética) e não dependem do stand.
+- Validação no servidor (§4.2 continua valendo para empreendimento, tipo, data e hora), mais:
+  - `cliente`: obrigatório, normalizado, até 80 → `campo:'cliente'`;
+  - `cpf`: só dígitos após remover máscara; 11 dígitos, dígitos verificadores válidos, não
+    pode ser sequência repetida → `campo:'cpf'`;
+  - `telefone`: só dígitos; 10 ou 11; DDD 11–99 → `campo:'telefone'`;
+  - `corretor`: obrigatório → `campo:'corretor'`;
+  - `imobiliaria`: obrigatório só no tipo `imob`, vazio nos outros → `campo:'imobiliaria'`;
+  - `gerente`: opcional, normalizado, até 80.
+- CPF e telefone nunca vão para `Logger.log`.
+
+### 13.4 Dashboard (substitui o que diverge na §6)
+
+- "Últimos lançamentos" ganha as colunas **Cliente, CPF, Telefone, Imobiliária, Corretor e
+  Gerente**, com CPF e telefone completos e formatados (`000.000.000-00`, `(00) 00000-0000`).
+- CSV: `Data;Horário;Empreendimento;Cidade;Tipo;Cliente;CPF;Telefone;Imobiliária;Corretor;Gerente de vendas`,
+  com CPF e telefone formatados e a mesma neutralização de fórmula.
+- Ao lado do botão "Exportar CSV": aviso curto "Contém dados pessoais (CPF e telefone)."
+- Ranking de imobiliárias continua igual.
+
+### 13.5 Segurança e privacidade (complementa a §9)
+
+- O dashboard passa a guardar dado pessoal (LGPD). **Senha forte é requisito para publicar:**
+  `configurarSenhaVisitas()` recusa senha com menos de 12 caracteres. `Comercial123` não
+  será usada.
+- Respostas públicas só com a visita resumida (§13.3).
+- A página pública continua sem senha: alguém com o link pode registrar uma visita com dados
+  de terceiros. **Risco aceito**, mitigado pela validação; o comercial pode excluir linhas
+  direto na planilha.
+- Retenção e exclusão de dados a pedido do titular: feitas manualmente na planilha; política
+  formal fora de escopo desta versão.
+
+### 13.6 Regras puras e testes (complementa §7 e §10)
+
+- `assets/visitas.js` ganha: `soDigitos`, `cpfValido`, `telefoneValido`, `mascaraCpf`,
+  `mascaraTelefone`, `formatarCpf`, `formatarTelefone`, `primeiroNome`, e
+  `validarVisita(dados) → { ok, erros: { campo: mensagem } }` (substitui `validarFormulario`).
+  `detalhe(v)` passa a usar `corretor`.
+- O `.gs` tem as mesmas regras de CPF/telefone em funções próprias, testadas no Node via `vm`
+  com os mesmos casos (inclusive paridade de resultado entre cliente e servidor para uma
+  lista de CPFs válidos e inválidos).
+- Testes novos: CPF válido/inválido/sequência/máscara; telefone 10/11/DDD inválido; máscaras
+  digitando parcial; `primeiroNome`; resumo do servidor sem CPF/telefone/nome completo;
+  `cpfRepetido` (mesmo CPF+stand+data, outro stand, outra data, linha excluída); CSV com as
+  colunas novas.
+- Fixture fictícia atualizada com cliente, CPF (válidos gerados, não reais), telefone,
+  corretor e gerente.
+
+### 13.7 Fora de escopo (substitui o item "Dados do cliente" da §1)
+
+- Histórico do cliente entre stands ou "primeira visita vs retorno" no dashboard.
+- Consulta de CPF antes de registrar.
+- Ranking de corretores ou gerentes no dashboard.
