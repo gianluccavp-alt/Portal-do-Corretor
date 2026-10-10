@@ -688,7 +688,7 @@ Todas são puras e testadas no Node via `vm`, com `Utilities` e `CacheService` f
 
 **Testes novos:**
 - token: válido, vencido, assinatura alterada, outro usuário, hash da senha trocado;
-- meia-noite: antes e depois das 21h UTC;
+- meia-noite: logo antes e logo depois das 03h UTC (meia-noite em Brasília);
 - hash: o mesmo sal e a mesma senha dão o mesmo hash, e outro sal dá outro;
 - usuário e senha: casos de borda;
 - senha temporária: formato e sem caracteres ambíguos;
