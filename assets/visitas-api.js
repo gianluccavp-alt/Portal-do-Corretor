@@ -28,6 +28,14 @@
 
   /* ---------- modo demonstracao ---------- */
   var IMOBS_DEMO = ['Imobiliária Exemplo A', 'Imobiliária Exemplo B', 'Imobiliária Exemplo C', 'Imobiliária Exemplo D'];
+  var CORRETORES_DEMO = ['Corretor Exemplo 1', 'Corretor Exemplo 2', 'Corretor Exemplo 3'];
+  var GERENTES_DEMO = ['Gerente Exemplo 1', 'Gerente Exemplo 2'];
+  var CLIENTES_DEMO = [
+    ['Cliente Exemplo Ana', '52998224725', '19998765432'],
+    ['Cliente Exemplo Bruno', '11144477735', '1932458890'],
+    ['Cliente Exemplo Carla', '12345678909', '16998112233'],
+    ['Cliente Exemplo Diego', '98765432100', '15998765432']
+  ];
   var memoria = null;
   var tokensDemo = {};
 
@@ -35,6 +43,7 @@
     var x = Math.sin(a * 127.1 + b * 311.7 + c * 74.7) * 43758.5453;
     return x - Math.floor(x);
   }
+  function escolher(lista, r) { return lista[Math.floor(r * lista.length)]; }
   function gerarDemo(hoje, emps) {
     var out = [], seq = 0;
     for (var d = 0; d < 30; d++) {
@@ -45,13 +54,15 @@
           var r = rnd(ei, d, 10 + k);
           var tipo = r < 0.4 ? 'esp' : r < 0.65 ? 'house' : 'imob';
           var min = 8 * 60 + Math.floor(rnd(ei, d, 30 + k) * 11 * 60);
+          var cli = escolher(CLIENTES_DEMO, rnd(ei, d, 70 + k));
           seq++;
           out.push({
             id: 'D' + seq, data: data, hora: pad(Math.floor(min / 60)) + ':' + pad(min % 60),
             empreendimento: e.nome, cidade: e.cidade, tipo: tipo,
-            corretorHouse: tipo === 'house' ? 'Corretor Exemplo' : '',
-            imobiliaria: tipo === 'imob' ? IMOBS_DEMO[Math.floor(rnd(ei, d, 50 + k) * IMOBS_DEMO.length)] : '',
-            corretorImob: ''
+            cliente: cli[0], cpf: cli[1], telefone: cli[2],
+            imobiliaria: tipo === 'imob' ? escolher(IMOBS_DEMO, rnd(ei, d, 50 + k)) : '',
+            corretor: escolher(CORRETORES_DEMO, rnd(ei, d, 90 + k)),
+            gerente: rnd(ei, d, 110 + k) < 0.6 ? escolher(GERENTES_DEMO, rnd(ei, d, 130 + k)) : ''
           });
         }
       });
@@ -67,26 +78,28 @@
     var lista = memoriaDemo();
     return new Promise(function (ok) { setTimeout(ok, 300); }).then(function () {
       if (acao === 'registrar') {
-        var f = V.validarFormulario(p);
-        if (!f.ok) throw falha('invalido', 'Preencha o campo ' + f.faltando + '.', f.faltando);
+        var f = V.validarVisita(p);
+        if (!f.ok) throw falha('invalido', f.erros[f.primeiro], f.primeiro);
         var emp = V.listaEmpreendimentos(raiz.CITIES || []).filter(function (e) { return e.nome === p.empreendimento; })[0];
         var v = {
           id: 'D' + Date.now(), data: p.data, hora: p.hora, empreendimento: p.empreendimento,
           cidade: emp ? emp.cidade : '', tipo: p.tipo,
-          corretorHouse: p.tipo === 'house' ? V.normalizarTexto(p.corretorHouse) : '',
+          cliente: V.normalizarTexto(p.cliente), cpf: V.soDigitos(p.cpf), telefone: V.soDigitos(p.telefone),
           imobiliaria: p.tipo === 'imob' ? V.normalizarTexto(p.imobiliaria) : '',
-          corretorImob: p.tipo === 'imob' ? V.normalizarTexto(p.corretorImob) : ''
+          corretor: V.normalizarTexto(p.corretor), gerente: V.normalizarTexto(p.gerente)
         };
+        var repetido = lista.some(function (x) { return x.cpf === v.cpf && x.empreendimento === v.empreendimento && x.data === v.data; });
         var token = 'demo-' + Math.random().toString(36).slice(2);
         lista.push(v);
         tokensDemo[v.id] = token;
-        return { ok: true, visita: copia(v), token: token };
+        return { ok: true, visita: V.resumirVisita(v), token: token, cpfRepetido: repetido };
       }
       if (acao === 'dia') {
         return {
           ok: true,
-          visitas: copia(lista.filter(function (v) { return v.empreendimento === p.empreendimento && v.data === p.data; })),
-          sugestoesImob: IMOBS_DEMO.slice()
+          visitas: lista.filter(function (v) { return v.empreendimento === p.empreendimento && v.data === p.data; })
+            .map(V.resumirVisita),
+          sugestoes: { imobiliarias: IMOBS_DEMO.slice(), corretores: CORRETORES_DEMO.slice(), gerentes: GERENTES_DEMO.slice() }
         };
       }
       if (acao === 'excluir') {
