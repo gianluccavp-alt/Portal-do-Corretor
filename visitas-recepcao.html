@@ -118,7 +118,7 @@ h1,h2,p{margin:0}
 .pdvs{display:flex;flex-wrap:wrap;gap:12px}
 .pdv{flex:1 1 180px;min-height:56px;border-radius:12px;border:1px solid var(--hair);background:var(--surface);font-weight:700;font-size:1rem;cursor:pointer;transition:border-color .15s,box-shadow .15s}
 .pdv:hover{border-color:var(--red)}
-.pdv[aria-checked="true"]{border-color:var(--red);background:#FDEEF0;color:var(--red);box-shadow:var(--foco)}
+.pdv[aria-pressed="true"]{border-color:var(--red);background:#FDEEF0;color:var(--red);box-shadow:var(--foco)}
 .pdv:focus-visible{outline:none;box-shadow:var(--foco-forte)}
 .tipo:disabled{opacity:.5;cursor:not-allowed}
 .tipo:disabled:hover{border-color:var(--hair)}
@@ -259,9 +259,9 @@ h1,h2,p{margin:0}
 
     <div class="card">
       <span class="step">Passo 1 · PDV</span>
-      <div class="pdvs" role="radiogroup" aria-label="PDV">
-        <button type="button" class="pdv" role="radio" aria-checked="false" data-pdv="Zona Sul RP">Zona Sul RP</button>
-        <button type="button" class="pdv" role="radio" aria-checked="false" data-pdv="Centro RP">Centro RP</button>
+      <div class="pdvs" role="group" aria-label="PDV">
+        <button type="button" class="pdv" aria-pressed="false" data-pdv="Zona Sul RP">Zona Sul RP</button>
+        <button type="button" class="pdv" aria-pressed="false" data-pdv="Centro RP">Centro RP</button>
       </div>
       <p class="dica">Fica salvo neste aparelho. Só troque se mudar de stand.</p>
     </div>

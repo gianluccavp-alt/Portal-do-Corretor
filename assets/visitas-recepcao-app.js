@@ -181,7 +181,7 @@
 
   /* ---------- PDV (spec 14.3) ---------- */
   function renderPdv() {
-    cada('.pdv', function (b) { b.setAttribute('aria-checked', b.getAttribute('data-pdv') === estado.pdv ? 'true' : 'false'); });
+    cada('.pdv', function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-pdv') === estado.pdv ? 'true' : 'false'); });
     cada('.tipo', function (b) { b.disabled = !estado.pdv; });
     $('tipo-dica').textContent = estado.pdv ? 'Toque no tipo para abrir o cadastro da visita.' : 'Escolha o PDV primeiro.';
   }
