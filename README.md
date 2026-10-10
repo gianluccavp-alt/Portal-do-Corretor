@@ -105,6 +105,8 @@ Spec: `docs/superpowers/specs/2026-09-28-pendencias-vendas-design.md`.
   (`docs/apps-script-visitas.gs`, instruções de implantação no cabeçalho).
 - `window.VISITAS_APPS_SCRIPT_URL` em `assets/config.js` = URL `/exec` do Web App.
   Vazio (ou `?demo=1`) = **modo demonstração** com dados fictícios na memória da aba.
+- Se já existir uma aba `VISITAS` da versão anterior (v1), apague ou renomeie antes de
+  publicar: a v2 cria a aba nova com o cabeçalho certo.
 - Empreendimento novo no `config.js` também precisa entrar em
   `VISITAS_EMPREENDIMENTOS` no `.gs`. O teste de paridade avisa se esquecer.
 

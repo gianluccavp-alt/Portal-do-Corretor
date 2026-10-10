@@ -153,7 +153,7 @@ O servidor é a autoridade. Ele não confia em nada do cliente:
 ### 4.4 Senha do admin
 
 - Script Property `VISITAS_SENHA`, gravada uma vez por `configurarSenhaVisitas()`.
-  Valor inicial: `Comercial123`.
+  A senha é definida no deploy, tem no mínimo 12 caracteres e nunca é escrita no repositório (ver §13.5).
 - Sem a Script Property configurada, `listar` responde `erro:'interno'` (nunca libera sem senha).
 
 ### 4.5 Lista oficial de empreendimentos

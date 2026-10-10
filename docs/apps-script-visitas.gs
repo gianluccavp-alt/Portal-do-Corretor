@@ -12,11 +12,12 @@
         var VIS_SENHA_INICIAL = '';
       por a senha do dashboard (minimo de 12 caracteres), selecione configurarSenhaVisitas >
       Executar (autorize) e depois volte a linha para ''.
-   4. Selecione testeVisitas > Executar > confira o log.
-   5. Implantar > Nova implantacao > Tipo: App da Web
+   4. Se ja existir uma aba VISITAS da versao anterior (v1), apague ou renomeie antes: a v2 cria a aba nova com o cabecalho certo.
+   5. Selecione testeVisitas > Executar > confira o log.
+   6. Implantar > Nova implantacao > Tipo: App da Web
         Executar como: Eu
         Quem tem acesso: Qualquer pessoa
-   6. Copie a URL que termina em /exec e cole em
+   7. Copie a URL que termina em /exec e cole em
       window.VISITAS_APPS_SCRIPT_URL no assets/config.js.
    Ao alterar o codigo: Implantar > Gerenciar implantacoes > editar >
    Nova versao (a URL /exec continua a mesma).
@@ -56,7 +57,8 @@ var VISITAS_EMPREENDIMENTOS = [
 function configurarSenhaVisitas() {
   if (!VIS_SENHA_INICIAL) throw new Error('Preencha VIS_SENHA_INICIAL so no editor antes de executar.');
   /* spec 13.5: o dashboard guarda dado pessoal, a senha precisa ser forte */
-  if (VIS_SENHA_INICIAL.length < VIS_MIN_SENHA) throw new Error('A senha precisa ter pelo menos ' + VIS_MIN_SENHA + ' caracteres.');
+  if (String(VIS_SENHA_INICIAL).trim().length < VIS_MIN_SENHA) throw new Error('A senha precisa ter pelo menos ' + VIS_MIN_SENHA + ' caracteres.');
+  if (/^comercial123$/i.test(String(VIS_SENHA_INICIAL).trim())) throw new Error('Essa senha e conhecida e fraca demais: escolha outra.');
   PropertiesService.getScriptProperties().setProperty(VIS_PROP_SENHA, VIS_SENHA_INICIAL);
   Logger.log('Senha do /visitas-recepcao-adm configurada. Volte VIS_SENHA_INICIAL para \'\'.');
 }
@@ -82,7 +84,7 @@ function doPost(e) {
     resposta = err instanceof VisFalha
       ? { ok: false, erro: err.codigo, mensagem: err.message, campo: err.campo }
       : { ok: false, erro: 'interno', mensagem: 'Erro interno.' };
-    if (!(err instanceof VisFalha)) Logger.log('visitas: ' + String((err && err.message) || err) + (err && err.stack ? '\n' + err.stack : ''));
+    if (!(err instanceof VisFalha)) Logger.log('visitas: ' + String((err && err.name) || 'Error') + (err && err.stack ? '\n' + err.stack : ''));
   }
   return visJson_(resposta);
 }
