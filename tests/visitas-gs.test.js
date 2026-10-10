@@ -68,8 +68,27 @@ test('visValidar_ exige imobiliária só no tipo imob', () => {
 });
 
 test('mensagens de erro de CPF e telefone não repetem o valor digitado', () => {
-  try { gs.visValidar_({ ...base, cpf: '529.982.247-24' }, HOJE, AGORA); } catch (e) { assert.ok(!/529/.test(e.message)); }
-  try { gs.visValidar_({ ...base, telefone: '98765-4321' }, HOJE, AGORA); } catch (e) { assert.ok(!/98765/.test(e.message)); }
+  assert.throws(
+    () => gs.visValidar_({ ...base, cpf: '529.982.247-24' }, HOJE, AGORA),
+    (e) => e.codigo === 'invalido' && !/529/.test(e.message)
+  );
+  assert.throws(
+    () => gs.visValidar_({ ...base, telefone: '98765-4321' }, HOJE, AGORA),
+    (e) => e.codigo === 'invalido' && !/98765/.test(e.message)
+  );
+});
+
+test('visValidar_ limita cliente, gerente e corretor a 80 caracteres', () => {
+  const longo = 'a'.repeat(120);
+  const v = gs.visValidar_({ ...base, cliente: longo, gerente: longo, corretor: longo }, HOJE, AGORA);
+  assert.equal(v.cliente.length, 80);
+  assert.equal(v.gerente.length, 80);
+  assert.equal(v.corretor.length, 80);
+});
+
+test('visValidar_ recusa hora sem zero à esquerda e aceita qualquer hora em data passada', () => {
+  assert.throws(() => gs.visValidar_({ ...base, hora: '9:5' }, HOJE, AGORA), recusa('hora'));
+  assert.equal(gs.visValidar_({ ...base, data: '2026-10-08', hora: '23:00' }, HOJE, AGORA).hora, '23:00');
 });
 
 test('CPF e telefone: mesmo resultado no cliente (visitas.js) e no servidor (.gs)', () => {
@@ -85,6 +104,8 @@ test('visNeutralizar_ e helpers de data', () => {
   assert.equal(gs.visSomarDias_('2026-10-01', -1), '2026-09-30');
   assert.equal(gs.visBrParaIso_('09/10/2026 14:35:00'), '2026-10-09');
   assert.equal(gs.visDataValida_('2026-02-29'), false);
+  assert.equal(gs.visDataValida_('2026-02-28'), true);
+  assert.equal(gs.visBrParaIso_(''), '');
 });
 
 function indice() { const ix = {}; gs.VIS_COLUNAS.forEach((n, i) => { ix[n] = i; }); return ix; }
