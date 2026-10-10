@@ -310,3 +310,15 @@ test('bloqueio: 5 falhas bloqueiam, login certo limpa', () => {
   gs.visLimparFalhas_(cache, 'ana');
   assert.equal(gs.visBloqueado_(cache, 'ana'), false);
 });
+
+test('roteador: ações do comercial exigem a senha antes de qualquer leitura', () => {
+  const props = { getProperty: () => 'senha-forte-123' };
+  const ctx = carregar('docs/apps-script-visitas.gs', {
+    Utilities: UtilitiesFalso,
+    PropertiesService: { getScriptProperties: () => props },
+    SpreadsheetApp: { getActiveSpreadsheet: () => { throw new Error('não devia ler a planilha'); } }
+  });
+  ['listar', 'contas', 'aprovar', 'recusar', 'desativar', 'reativar', 'redefinirSenha'].forEach((acao) => {
+    assert.throws(() => ctx.visRoteador_({ acao, senha: 'errada', usuario: 'ana' }), (e) => e.codigo === 'senha', acao);
+  });
+});

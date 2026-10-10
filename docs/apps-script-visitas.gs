@@ -114,10 +114,23 @@ function visJson_(obj) {
 
 function visRoteador_(req) {
   switch (req.acao) {
+    case 'entrar': return visEntrar_(req);
+    case 'cadastrar': return visCadastrar_(req);
+    case 'trocarSenha': return visTrocarSenha_(req);
     case 'registrar': return visRegistrar_(req);
     case 'dia': return visDia_(req);
     case 'excluir': return visExcluir_(req);
-    case 'listar': visConferirSenha_(req.senha); return visListar_(req);
+  }
+  /* daqui para baixo: so com a senha do dashboard */
+  visConferirSenha_(req.senha);
+  switch (req.acao) {
+    case 'listar': return visListar_(req);
+    case 'contas': return visContas_();
+    case 'aprovar': return visMudarSituacao_(req, 'pendente', 'ativa');
+    case 'recusar': return visRecusar_(req);
+    case 'desativar': return visMudarSituacao_(req, 'ativa', 'desativada');
+    case 'reativar': return visMudarSituacao_(req, 'desativada', 'ativa');
+    case 'redefinirSenha': return visRedefinirSenha_(req);
     default: throw new VisFalha('interno', 'Ação desconhecida.');
   }
 }
@@ -278,30 +291,30 @@ function visSugestoes_(linhas, ix, desde, coluna) {
 }
 
 /* ---------- planilha ---------- */
-function visAba_() {
+function visGarantirAba_(nome, colunas) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var aba = ss.getSheetByName(VIS_ABA) || ss.insertSheet(VIS_ABA);
+  var aba = ss.getSheetByName(nome) || ss.insertSheet(nome);
   if (aba.getLastRow() === 0) {
-    aba.getRange(1, 1, 1, VIS_COLUNAS.length).setValues([VIS_COLUNAS]).setFontWeight('bold');
+    aba.getRange(1, 1, 1, colunas.length).setValues([colunas]).setFontWeight('bold');
     aba.setFrozenRows(1);
   }
   return aba;
 }
 
-function visCabecalho_(aba) {
+function visCabecalho_(aba, colunas, nome) {
   var largura = aba.getLastColumn();
   var cab = aba.getRange(1, 1, 1, largura).getDisplayValues()[0].map(function (c) { return String(c).trim(); });
   var ix = {};
   cab.forEach(function (n, i) { if (n && !(n in ix)) ix[n] = i; });
-  VIS_COLUNAS.forEach(function (n) {
-    if (!(n in ix)) throw new VisFalha('coluna', 'Coluna "' + n + '" não encontrada na aba ' + VIS_ABA + '.');
+  colunas.forEach(function (n) {
+    if (!(n in ix)) throw new VisFalha('coluna', 'Coluna "' + n + '" não encontrada na aba ' + nome + '.');
   });
   return { indice: ix, largura: largura };
 }
 
-function visLer_() {
-  var aba = visAba_();
-  var cab = visCabecalho_(aba);
+function visLerAba_(nome, colunas) {
+  var aba = visGarantirAba_(nome, colunas);
+  var cab = visCabecalho_(aba, colunas, nome);
   var n = Math.max(aba.getLastRow() - 1, 0);
   return {
     aba: aba,
@@ -309,6 +322,40 @@ function visLer_() {
     largura: cab.largura,
     linhas: n ? aba.getRange(2, 1, n, cab.largura).getDisplayValues() : []
   };
+}
+function visLer_() { return visLerAba_(VIS_ABA, VIS_COLUNAS); }
+function visLerContas_() { return visLerAba_(VIS_ABA_CONTAS, VIS_COLUNAS_CONTAS); }
+
+/* formato texto: a planilha nao converte data/hora/CPF e mantem o valor exato */
+function visAnexar_(t, valores) {
+  var linha = [];
+  for (var i = 0; i < t.largura; i++) linha.push('');
+  Object.keys(valores).forEach(function (nome) { linha[t.indice[nome]] = visNeutralizar_(valores[nome]); });
+  var faixa = t.aba.getRange(t.aba.getLastRow() + 1, 1, 1, t.largura);
+  faixa.setNumberFormat('@');
+  faixa.setValues([linha]);
+}
+function visAtualizarLinha_(t, i, valores) {
+  Object.keys(valores).forEach(function (nome) {
+    t.aba.getRange(i + 2, t.indice[nome] + 1).setNumberFormat('@').setValue(visNeutralizar_(valores[nome]));
+  });
+}
+function visAcharConta_(t, usuario) {
+  for (var i = 0; i < t.linhas.length; i++) {
+    if (String(t.linhas[i][t.indice['Usuário']]).trim() === usuario) return { i: i, conta: visContaDeLinha_(t.linhas[i], t.indice) };
+  }
+  return null;
+}
+function visAgoraBr_() { return Utilities.formatDate(new Date(), VIS_FUSO, 'dd/MM/yyyy HH:mm:ss'); }
+/* gerado na primeira vez; nunca sai do servidor */
+function visSegredo_() {
+  var props = PropertiesService.getScriptProperties();
+  var s = props.getProperty(VIS_PROP_SEGREDO);
+  if (!s) {
+    s = Utilities.getUuid() + Utilities.getUuid();
+    props.setProperty(VIS_PROP_SEGREDO, s);
+  }
+  return s;
 }
 
 function visHoje_() { return Utilities.formatDate(new Date(), VIS_FUSO, 'yyyy-MM-dd'); }
@@ -449,13 +496,7 @@ function visRegistrar_(req) {
   var repetido = visComLock_(function () {
     var t = visLer_();
     var achou = visCpfRepetido_(t.linhas, t.indice, v);
-    var linha = [];
-    for (var i = 0; i < t.largura; i++) linha.push('');
-    Object.keys(valores).forEach(function (nome) { linha[t.indice[nome]] = visNeutralizar_(valores[nome]); });
-    /* formato texto: a planilha nao converte data/hora/CPF e mantem o valor exato */
-    var faixa = t.aba.getRange(t.aba.getLastRow() + 1, 1, 1, t.largura);
-    faixa.setNumberFormat('@');
-    faixa.setValues([linha]);
+    visAnexar_(t, valores);
     return achou;
   });
   return { visita: visResumo_(v), token: token, cpfRepetido: repetido };
@@ -514,6 +555,125 @@ function visListar_(req) {
     if (v.data >= de && v.data <= ate) visitas.push(v);
   });
   return { visitas: visitas };
+}
+
+/* ---------- contas (spec 14.2 e 14.5) ---------- */
+function visResultadoSessao_(conta, hash) {
+  var tk = visCriarToken_(conta.usuario, hash, Date.now(), visSegredo_());
+  return { sessao: tk.token, expira: tk.expira, nome: conta.nome, usuario: conta.usuario, trocarSenha: !!conta.temporaria };
+}
+
+function visSessao_(req, permitirTemporaria) {
+  var p = visLerToken_(req.sessao);
+  if (!p) throw new VisFalha('sessao', VIS_MSG_SESSAO);
+  var a = visAcharConta_(visLerContas_(), p.usuario);
+  if (!a || !visSessaoOk_(String(req.sessao), a.conta, Date.now(), visSegredo_(), permitirTemporaria)) {
+    throw new VisFalha('sessao', VIS_MSG_SESSAO);
+  }
+  return a.conta;
+}
+
+function visEntrar_(req) {
+  var usuario = visNormUsuario_(req.usuario), senha = String(req.senha === null || req.senha === undefined ? '' : req.senha);
+  var falhou = function () { throw new VisFalha('credenciais', 'Usuário ou senha incorretos.'); };
+  if (!visUsuarioValido_(usuario)) { visHashSenha_(senha, 'sem-conta'); falhou(); }
+  var cache = CacheService.getScriptCache();
+  if (visBloqueado_(cache, usuario)) throw new VisFalha('bloqueado', 'Muitas tentativas. Tente de novo em 15 minutos.');
+  var a = visAcharConta_(visLerContas_(), usuario);
+  /* conta inexistente tambem calcula o hash: mesma demora */
+  var hash = visHashSenha_(senha, a ? a.conta.sal : 'sem-conta');
+  if (!a || !visIguais_(hash, a.conta.hash)) {
+    if (visRegistrarFalha_(cache, usuario) >= VIS_MAX_FALHAS) {
+      throw new VisFalha('bloqueado', 'Muitas tentativas. Tente de novo em 15 minutos.');
+    }
+    falhou();
+  }
+  visLimparFalhas_(cache, usuario);
+  if (a.conta.situacao === 'pendente') throw new VisFalha('pendente', 'Seu cadastro está aguardando aprovação do comercial.');
+  if (a.conta.situacao !== 'ativa') throw new VisFalha('desativada', 'Seu acesso foi desativado. Fale com o comercial.');
+  visComLock_(function () {
+    var t = visLerContas_(), achou = visAcharConta_(t, usuario);
+    if (achou) visAtualizarLinha_(t, achou.i, { 'Último acesso': visAgoraBr_() });
+  });
+  return visResultadoSessao_(a.conta, a.conta.hash);
+}
+
+function visCadastrar_(req) {
+  var d = visValidarCadastro_(req);
+  var sal = Utilities.getUuid(), hash = visHashSenha_(d.senha, sal);
+  return visComLock_(function () {
+    var t = visLerContas_();
+    if (visAcharConta_(t, d.usuario)) throw new VisFalha('invalido', 'Esse usuário já existe.', 'usuario');
+    if (visContarPendentes_(t.linhas, t.indice) >= VIS_MAX_PENDENTES) {
+      throw new VisFalha('limite', 'Muitos cadastros aguardando aprovação. Fale com o comercial.');
+    }
+    visAnexar_(t, {
+      'Usuário': d.usuario, 'Nome': d.nome, 'Situação': 'pendente', 'Hash': hash, 'Sal': sal,
+      'Temporária': 'não', 'Criado em': visAgoraBr_(), 'Aprovado em': '', 'Último acesso': ''
+    });
+    return { ok: true };
+  });
+}
+
+function visTrocarSenha_(req) {
+  var conta = visSessao_(req, true);
+  var nova = String(req.novaSenha === null || req.novaSenha === undefined ? '' : req.novaSenha);
+  var msg = visValidarSenha_(nova, conta.usuario);
+  if (msg) throw new VisFalha('invalido', msg, 'novaSenha');
+  if (visIguais_(visHashSenha_(nova, conta.sal), conta.hash)) {
+    throw new VisFalha('invalido', 'A nova senha precisa ser diferente da atual.', 'novaSenha');
+  }
+  var sal = Utilities.getUuid(), hash = visHashSenha_(nova, sal);
+  visComLock_(function () {
+    var t = visLerContas_(), a = visAcharConta_(t, conta.usuario);
+    if (!a) throw new VisFalha('sessao', VIS_MSG_SESSAO);
+    visAtualizarLinha_(t, a.i, { 'Hash': hash, 'Sal': sal, 'Temporária': 'não' });
+  });
+  conta.temporaria = false;
+  return visResultadoSessao_(conta, hash);
+}
+
+/* ---------- acoes do comercial sobre as contas (spec 14.5) ---------- */
+function visNaoEncontrada_() { return new VisFalha('nao_encontrada', 'Recepcionista não encontrada.'); }
+
+function visContas_() {
+  var t = visLerContas_();
+  return { contas: t.linhas.map(function (l) { return visContaPublica_(visContaDeLinha_(l, t.indice), 0); }) };
+}
+
+function visMudarSituacao_(req, de, para) {
+  var usuario = visNormUsuario_(req.usuario);
+  return visComLock_(function () {
+    var t = visLerContas_(), a = visAcharConta_(t, usuario);
+    if (!a || a.conta.situacao !== de) throw visNaoEncontrada_();
+    var valores = { 'Situação': para };
+    if (de === 'pendente') valores['Aprovado em'] = visAgoraBr_();
+    visAtualizarLinha_(t, a.i, valores);
+    return { usuario: usuario, situacao: para };
+  });
+}
+
+function visRecusar_(req) {
+  var usuario = visNormUsuario_(req.usuario);
+  return visComLock_(function () {
+    var t = visLerContas_(), a = visAcharConta_(t, usuario);
+    if (!a || a.conta.situacao !== 'pendente') throw visNaoEncontrada_();
+    t.aba.deleteRow(a.i + 2);
+    return { usuario: usuario, situacao: 'recusada' };
+  });
+}
+
+function visRedefinirSenha_(req) {
+  var usuario = visNormUsuario_(req.usuario);
+  var bytes = [];
+  for (var i = 0; i < 9; i++) bytes.push(parseInt(Utilities.getUuid().slice(0, 2), 16));
+  var temp = visSenhaTemporaria_(bytes), sal = Utilities.getUuid(), hash = visHashSenha_(temp, sal);
+  return visComLock_(function () {
+    var t = visLerContas_(), a = visAcharConta_(t, usuario);
+    if (!a || a.conta.situacao === 'pendente') throw visNaoEncontrada_();
+    visAtualizarLinha_(t, a.i, { 'Hash': hash, 'Sal': sal, 'Temporária': 'sim' });
+    return { usuario: usuario, senhaTemporaria: temp };
+  });
 }
 
 /* ---------- conferencia manual (spec 4.6) ---------- */
