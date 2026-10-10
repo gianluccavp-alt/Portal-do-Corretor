@@ -95,9 +95,42 @@
   function formatarTelefone(d) { d = soDigitos(d); return d.length === 10 || d.length === 11 ? mascaraTelefone(d) : d; }
   function primeiroNome(s) { return normalizarTexto(s).split(' ')[0] || ''; }
 
+  /* ---------- v3: so Ribeirao Preto, PDV e contas (spec 14) ---------- */
+  var PDVS = ['Zona Sul RP', 'Centro RP'];
+  var CIDADE_VISITAS = 'Ribeirão Preto';
+  function normalizarUsuario(s) { return String(s === null || s === undefined ? '' : s).trim().toLowerCase(); }
+  function usuarioValido(s) { return /^[a-z0-9][a-z0-9._-]{2,29}$/.test(String(s === null || s === undefined ? '' : s)); }
+  function validarSenha(senha, usuario) {
+    var s = String(senha === null || senha === undefined ? '' : senha);
+    if (s.length < 8 || s.length > 72) return 'A senha precisa ter de 8 a 72 caracteres.';
+    if (s.toLowerCase() === normalizarUsuario(usuario)) return 'A senha não pode ser igual ao usuário.';
+    return '';
+  }
+  var ORDEM_CADASTRO = ['nome', 'usuario', 'senha', 'confirmacao'];
+  function validarCadastro(d) {
+    var usuario = normalizarUsuario(d.usuario);
+    var msgs = {
+      nome: normalizarTexto(d.nome) ? '' : 'Informe seu nome completo.',
+      usuario: usuarioValido(usuario) ? '' : 'Use de 3 a 30 letras minúsculas, números, ponto, hífen ou sublinhado.',
+      senha: validarSenha(d.senha, usuario),
+      confirmacao: String(d.confirmacao || '') === String(d.senha || '') ? '' : 'As senhas não conferem.'
+    };
+    var erros = {}, primeiro = null;
+    ORDEM_CADASTRO.forEach(function (c) {
+      if (!msgs[c]) return;
+      erros[c] = msgs[c];
+      if (!primeiro) primeiro = c;
+    });
+    return { ok: !primeiro, erros: erros, primeiro: primeiro };
+  }
+  function sessaoValida(s, agoraMs) {
+    return !!(s && typeof s.token === 'string' && s.token && typeof s.expira === 'number' && agoraMs < s.expira);
+  }
+
   /* ---------- popup da recepcao (spec 13.1) ---------- */
-  var ORDEM_CAMPOS = ['empreendimento', 'tipo', 'cliente', 'cpf', 'telefone', 'data', 'hora', 'imobiliaria', 'corretor'];
+  var ORDEM_CAMPOS = ['pdv', 'empreendimento', 'tipo', 'cliente', 'cpf', 'telefone', 'data', 'hora', 'imobiliaria', 'corretor'];
   var MENSAGENS_CAMPO = {
+    pdv: 'Escolha o PDV.',
     empreendimento: 'Escolha o empreendimento.',
     tipo: 'Escolha o tipo de visita.',
     cliente: 'Informe o nome do cliente.',
@@ -110,6 +143,7 @@
   };
   function validarVisita(d) {
     var falha = {
+      pdv: PDVS.indexOf(d.pdv) < 0,
       empreendimento: !normalizarTexto(d.empreendimento),
       tipo: !tipoValido(d.tipo),
       cliente: !normalizarTexto(d.cliente),
@@ -128,11 +162,12 @@
     });
     return { ok: !primeiro, erros: erros, primeiro: primeiro };
   }
-  /* o que pode sair para a pagina publica: sem CPF, telefone, nome completo e gerente */
-  function resumirVisita(v) {
+  /* o que pode sair para a recepcao: sem CPF, telefone, nome completo, gerente e usuario */
+  function resumirVisita(v, usuario) {
     return {
-      id: v.id, data: v.data, hora: v.hora, empreendimento: v.empreendimento, tipo: v.tipo,
-      primeiroNome: primeiroNome(v.cliente), imobiliaria: v.imobiliaria || '', corretor: v.corretor || ''
+      id: v.id, data: v.data, hora: v.hora, pdv: v.pdv || '', empreendimento: v.empreendimento, tipo: v.tipo,
+      primeiroNome: primeiroNome(v.cliente), imobiliaria: v.imobiliaria || '', corretor: v.corretor || '',
+      minha: !!usuario && v.lancadoPor === usuario
     };
   }
 
@@ -142,6 +177,9 @@
       (c.empreendimentos || []).forEach(function (e) { out.push({ nome: e.nome, cidade: c.name }); });
     });
     return out;
+  }
+  function empreendimentosVisitas(cidades) {
+    return listaEmpreendimentos(cidades).filter(function (e) { return e.cidade === CIDADE_VISITAS; });
   }
 
   /* ---------- agregacoes do dashboard (spec 6.2) ---------- */
@@ -157,7 +195,7 @@
     return visitas.filter(function (v) {
       if (f.de && v.data < f.de) return false;
       if (f.ate && v.data > f.ate) return false;
-      if (f.cidade && f.cidade !== 'Todas' && v.cidade !== f.cidade) return false;
+      if (f.pdv && f.pdv !== 'Todos' && v.pdv !== f.pdv) return false;
       if (f.empreendimento && f.empreendimento !== 'Todos' && v.empreendimento !== f.empreendimento) return false;
       return true;
     });
@@ -234,7 +272,7 @@
   function recentes(visitas, n) { return ordenarPorTempo(visitas, true).slice(0, n); }
 
   /* ---------- CSV (spec 6.2) ---------- */
-  var CSV_COLUNAS = ['Data', 'Horário', 'Empreendimento', 'Cidade', 'Tipo', 'Cliente', 'CPF', 'Telefone', 'Imobiliária', 'Corretor', 'Gerente de vendas'];
+  var CSV_COLUNAS = ['Data', 'Horário', 'PDV', 'Empreendimento', 'Tipo', 'Cliente', 'CPF', 'Telefone', 'Imobiliária', 'Corretor', 'Gerente de vendas', 'Lançado por'];
   function celulaCSV(valor) {
     var t = neutralizarFormula(valor);
     return /[;"\r\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
@@ -243,8 +281,8 @@
     var linhas = [CSV_COLUNAS.join(';')];
     ordenarPorTempo(visitas, false).forEach(function (v) {
       linhas.push([
-        dataBr(v.data), v.hora, v.empreendimento, v.cidade, TIPOS[v.tipo] ? TIPOS[v.tipo].nome : v.tipo,
-        v.cliente, formatarCpf(v.cpf), formatarTelefone(v.telefone), v.imobiliaria, v.corretor, v.gerente
+        dataBr(v.data), v.hora, v.pdv, v.empreendimento, TIPOS[v.tipo] ? TIPOS[v.tipo].nome : v.tipo,
+        v.cliente, formatarCpf(v.cpf), formatarTelefone(v.telefone), v.imobiliaria, v.corretor, v.gerente, v.lancadoPor
       ].map(celulaCSV).join(';'));
     });
     /* BOM para o Excel abrir o UTF-8 com acentos certos */
@@ -279,6 +317,14 @@
     validarVisita: validarVisita,
     resumirVisita: resumirVisita,
     listaEmpreendimentos: listaEmpreendimentos,
+    empreendimentosVisitas: empreendimentosVisitas,
+    PDVS: PDVS,
+    CIDADE_VISITAS: CIDADE_VISITAS,
+    normalizarUsuario: normalizarUsuario,
+    usuarioValido: usuarioValido,
+    validarSenha: validarSenha,
+    validarCadastro: validarCadastro,
+    sessaoValida: sessaoValida,
     filtrar: filtrar,
     totaisPorTipo: totaisPorTipo,
     porDia: porDia,

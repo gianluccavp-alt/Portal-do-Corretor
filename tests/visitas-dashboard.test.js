@@ -5,12 +5,13 @@ const FIX = require('./fixtures/visitas.json');
 
 const ids = (lista) => lista.map((v) => v.id);
 const semData = ({ esp, house, imob, total }) => ({ esp, house, imob, total });
-const CABECALHO_CSV = 'Data;Horário;Empreendimento;Cidade;Tipo;Cliente;CPF;Telefone;Imobiliária;Corretor;Gerente de vendas';
+const CABECALHO_CSV = 'Data;Horário;PDV;Empreendimento;Tipo;Cliente;CPF;Telefone;Imobiliária;Corretor;Gerente de vendas;Lançado por';
 
-test('filtrar por período, cidade e empreendimento', () => {
+test('filtrar por período, PDV e empreendimento', () => {
   assert.equal(V.filtrar(FIX, {}).length, 8);
-  assert.equal(V.filtrar(FIX, { cidade: 'Todas', empreendimento: 'Todos' }).length, 8);
-  assert.deepEqual(ids(V.filtrar(FIX, { cidade: 'Campinas' })), ['V1', 'V2', 'V5', 'V6', 'V8']);
+  assert.equal(V.filtrar(FIX, { pdv: 'Todos', empreendimento: 'Todos' }).length, 8);
+  assert.deepEqual(ids(V.filtrar(FIX, { pdv: 'Zona Sul RP' })), ['V1', 'V2', 'V5', 'V6', 'V8']);
+  assert.deepEqual(ids(V.filtrar(FIX, { pdv: 'Centro RP' })), ['V3', 'V4', 'V7']);
   assert.deepEqual(ids(V.filtrar(FIX, { de: '2026-10-09' })), ['V6', 'V7', 'V8']);
   assert.deepEqual(ids(V.filtrar(FIX, { empreendimento: 'Village Park', ate: '2026-10-07' })), ['V3']);
 });
@@ -71,14 +72,14 @@ test('recentes ordena por data e hora, mais novo primeiro', () => {
   assert.equal(FIX[0].id, 'V1'); /* nao muta a entrada */
 });
 
-test('gerarCSV: BOM, separador ;, ordem cronológica, aspas, neutralização e CPF/telefone formatados', () => {
+test('gerarCSV: BOM, separador ;, ordem cronológica, aspas, neutralização, PDV e lançado por', () => {
   const visitas = [
-    { data: '2026-10-09', hora: '11:50', empreendimento: 'Conquista Vila da Mata', cidade: 'Sorocaba', tipo: 'esp', cliente: 'Ana Lima', cpf: '52998224725', telefone: '15998765432', imobiliaria: '', corretor: 'Rui', gerente: '' },
-    { data: '2026-10-08', hora: '14:00', empreendimento: 'Alta Vista Mangará', cidade: 'Campinas', tipo: 'imob', cliente: '=HYPERLINK("x")', cpf: '11144477735', telefone: '1932458890', imobiliaria: 'Imob; Centro', corretor: 'Bia', gerente: 'Gil' }
+    { data: '2026-10-09', hora: '11:50', pdv: 'Centro RP', empreendimento: 'Village Gaia', cidade: 'Ribeirão Preto', tipo: 'esp', cliente: 'Ana Lima', cpf: '52998224725', telefone: '15998765432', imobiliaria: '', corretor: 'Rui', gerente: '', lancadoPor: 'Recepcionista Um' },
+    { data: '2026-10-08', hora: '14:00', pdv: 'Zona Sul RP', empreendimento: 'Village Park', cidade: 'Ribeirão Preto', tipo: 'imob', cliente: '=HYPERLINK("x")', cpf: '11144477735', telefone: '1932458890', imobiliaria: 'Imob; Centro', corretor: 'Bia', gerente: 'Gil', lancadoPor: 'Recepcionista Dois' }
   ];
-  const esperado = '\uFEFF' + CABECALHO_CSV + '\r\n' +
-    '08/10/2026;14:00;Alta Vista Mangará;Campinas;Imobiliária;"\'=HYPERLINK(""x"")";111.444.777-35;(19) 3245-8890;"Imob; Centro";Bia;Gil\r\n' +
-    '09/10/2026;11:50;Conquista Vila da Mata;Sorocaba;Espontânea;Ana Lima;529.982.247-25;(15) 99876-5432;;Rui;\r\n';
+  const esperado = '﻿' + CABECALHO_CSV + '\r\n' +
+    '08/10/2026;14:00;Zona Sul RP;Village Park;Imobiliária;"\'=HYPERLINK(""x"")";111.444.777-35;(19) 3245-8890;"Imob; Centro";Bia;Gil;Recepcionista Dois\r\n' +
+    '09/10/2026;11:50;Centro RP;Village Gaia;Espontânea;Ana Lima;529.982.247-25;(15) 99876-5432;;Rui;;Recepcionista Um\r\n';
   assert.equal(V.gerarCSV(visitas), esperado);
 });
 

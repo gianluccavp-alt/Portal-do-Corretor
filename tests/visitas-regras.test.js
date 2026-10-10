@@ -107,9 +107,9 @@ test('primeiroNome', () => {
   assert.equal(V.primeiroNome(undefined), '');
 });
 
-test('validarVisita lista todos os erros e aponta o primeiro', () => {
+test('validarVisita exige PDV e empreendimento, lista todos os erros e aponta o primeiro', () => {
   const ok = {
-    empreendimento: 'Alta Vista Mangará', tipo: 'esp', cliente: 'Mariana Souza', cpf: '529.982.247-25',
+    pdv: 'Zona Sul RP', empreendimento: 'Village Park', tipo: 'esp', cliente: 'Mariana Souza', cpf: '529.982.247-25',
     telefone: '(19) 98765-4321', data: '2026-10-09', hora: '14:35', corretor: 'Rui', gerente: ''
   };
   assert.deepEqual(V.validarVisita(ok), { ok: true, erros: {}, primeiro: null });
@@ -118,6 +118,9 @@ test('validarVisita lista todos os erros e aponta o primeiro', () => {
   assert.equal(r.primeiro, 'cliente');
   assert.deepEqual(Object.keys(r.erros), ['cliente', 'cpf', 'corretor']);
   assert.equal(r.erros.cpf, 'CPF inválido. Confira os números.');
+  assert.equal(V.validarVisita({ ...ok, pdv: '' }).primeiro, 'pdv');
+  assert.equal(V.validarVisita({ ...ok, pdv: 'Outro' }).erros.pdv, 'Escolha o PDV.');
+  assert.equal(V.validarVisita({ ...ok, empreendimento: '' }).primeiro, 'empreendimento');
   assert.equal(V.validarVisita({ ...ok, tipo: 'imob' }).primeiro, 'imobiliaria');
   assert.equal(V.validarVisita({ ...ok, tipo: 'imob', imobiliaria: 'Imob Ápice' }).ok, true);
   assert.equal(V.validarVisita({ ...ok, tipo: 'house', imobiliaria: '' }).ok, true);
@@ -126,13 +129,71 @@ test('validarVisita lista todos os erros e aponta o primeiro', () => {
   assert.equal(V.validarVisita({ ...ok, hora: '9:5' }).primeiro, 'hora');
 });
 
-test('resumirVisita não leva CPF, telefone, nome completo nem gerente', () => {
-  const r = V.resumirVisita({
-    id: 'V1', data: '2026-10-09', hora: '14:35', empreendimento: 'Alta Vista Mangará', cidade: 'Campinas', tipo: 'imob',
-    cliente: 'Mariana Souza Lima', cpf: '52998224725', telefone: '19987654321', imobiliaria: 'Imob Ápice', corretor: 'Rui', gerente: 'Gil'
+const VISITA = {
+  id: 'V1', data: '2026-10-09', hora: '14:35', pdv: 'Centro RP', empreendimento: 'Village Park', cidade: 'Ribeirão Preto',
+  tipo: 'imob', cliente: 'Mariana Souza Lima', cpf: '52998224725', telefone: '19987654321', imobiliaria: 'Imob Ápice',
+  corretor: 'Rui', gerente: 'Gil', lancadoPor: 'recep.um'
+};
+
+test('resumirVisita leva PDV e "minha", sem CPF, telefone, nome completo, gerente nem usuário', () => {
+  assert.deepEqual(V.resumirVisita(VISITA, 'recep.um'), {
+    id: 'V1', data: '2026-10-09', hora: '14:35', pdv: 'Centro RP', empreendimento: 'Village Park', tipo: 'imob',
+    primeiroNome: 'Mariana', imobiliaria: 'Imob Ápice', corretor: 'Rui', minha: true
   });
-  assert.deepEqual(r, {
-    id: 'V1', data: '2026-10-09', hora: '14:35', empreendimento: 'Alta Vista Mangará', tipo: 'imob',
-    primeiroNome: 'Mariana', imobiliaria: 'Imob Ápice', corretor: 'Rui'
-  });
+  assert.equal(V.resumirVisita(VISITA, 'recep.dois').minha, false);
+  assert.equal(V.resumirVisita(VISITA).minha, false);
+  assert.equal(V.resumirVisita({ ...VISITA, lancadoPor: '' }, '').minha, false);
+  const texto = JSON.stringify(V.resumirVisita(VISITA, 'recep.dois'));
+  ['52998224725', '19987654321', 'Souza', 'Gil', 'recep.um'].forEach((s) => assert.ok(!texto.includes(s), s));
+});
+
+test('PDVS e empreendimentosVisitas (só Ribeirão Preto)', () => {
+  assert.deepEqual(V.PDVS, ['Zona Sul RP', 'Centro RP']);
+  const cidades = [
+    { name: 'Campinas', empreendimentos: [{ nome: 'A' }] },
+    { name: 'Ribeirão Preto', empreendimentos: [{ nome: 'B' }, { nome: 'C' }] }
+  ];
+  assert.deepEqual(V.empreendimentosVisitas(cidades), [
+    { nome: 'B', cidade: 'Ribeirão Preto' }, { nome: 'C', cidade: 'Ribeirão Preto' }
+  ]);
+  assert.deepEqual(V.empreendimentosVisitas(undefined), []);
+});
+
+test('normalizarUsuario e usuarioValido', () => {
+  assert.equal(V.normalizarUsuario('  Maria.Silva '), 'maria.silva');
+  assert.equal(V.normalizarUsuario(null), '');
+  ['ana', 'maria.silva', 'recep_2', 'a-b', '3ab', 'a'.repeat(30)].forEach((u) => assert.equal(V.usuarioValido(u), true, u));
+  ['ab', 'a'.repeat(31), '-abc', '.abc', '_abc', 'joão', 'maria silva', 'Maria', '', null, 'a=b'].forEach((u) =>
+    assert.equal(V.usuarioValido(u), false, String(u)));
+});
+
+test('validarSenha: 8 a 72 caracteres e diferente do usuário', () => {
+  assert.equal(V.validarSenha('12345678', 'ana'), '');
+  assert.equal(V.validarSenha('1234567', 'ana'), 'A senha precisa ter de 8 a 72 caracteres.');
+  assert.equal(V.validarSenha('x'.repeat(73), 'ana'), 'A senha precisa ter de 8 a 72 caracteres.');
+  assert.equal(V.validarSenha('x'.repeat(72), 'ana'), '');
+  assert.equal(V.validarSenha('Maria.Silva', 'maria.silva'), 'A senha não pode ser igual ao usuário.');
+  assert.equal(V.validarSenha(undefined, 'ana'), 'A senha precisa ter de 8 a 72 caracteres.');
+});
+
+test('validarCadastro aponta o primeiro erro na ordem nome, usuario, senha, confirmacao', () => {
+  const ok = { nome: ' Maria  Silva ', usuario: 'Maria.Silva', senha: 'segredo123', confirmacao: 'segredo123' };
+  assert.deepEqual(V.validarCadastro(ok), { ok: true, erros: {}, primeiro: null });
+  const r = V.validarCadastro({ nome: '', usuario: 'ab', senha: '123', confirmacao: 'x' });
+  assert.deepEqual(Object.keys(r.erros), ['nome', 'usuario', 'senha', 'confirmacao']);
+  assert.equal(r.primeiro, 'nome');
+  assert.equal(r.erros.nome, 'Informe seu nome completo.');
+  assert.equal(r.erros.usuario, 'Use de 3 a 30 letras minúsculas, números, ponto, hífen ou sublinhado.');
+  assert.equal(r.erros.confirmacao, 'As senhas não conferem.');
+  assert.equal(V.validarCadastro({ ...ok, senha: 'maria.silva', confirmacao: 'maria.silva' }).erros.senha,
+    'A senha não pode ser igual ao usuário.');
+});
+
+test('sessaoValida confere token e validade', () => {
+  const agora = Date.UTC(2026, 9, 10, 15, 0);
+  assert.equal(V.sessaoValida({ token: 'a.1.b', expira: agora + 1 }, agora), true);
+  assert.equal(V.sessaoValida({ token: 'a.1.b', expira: agora }, agora), false);
+  assert.equal(V.sessaoValida({ token: '', expira: agora + 1 }, agora), false);
+  assert.equal(V.sessaoValida({ token: 'a.1.b', expira: String(agora + 1) }, agora), false);
+  assert.equal(V.sessaoValida(null, agora), false);
 });
