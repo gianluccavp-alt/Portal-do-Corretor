@@ -80,6 +80,9 @@
   }
   function atualizarBotao() {
     $('p-registrar').disabled = estado.enviando;
+    /* enviando: nao deixa fechar o popup nem perder a resposta */
+    $('p-cancelar').disabled = estado.enviando;
+    $('p-fechar').disabled = estado.enviando;
     $('p-registrar-txt').textContent = estado.enviando ? 'Registrando…' : 'Registrar visita';
   }
   function aplicarLimitesData(h) {
@@ -88,6 +91,7 @@
   }
 
   function abrirPopup(tipo) {
+    if (estado.enviando) return;
     estado.tipo = tipo;
     $('p-tipo').textContent = TITULO_TIPO[tipo];
     $('p-ponto').style.background = V.TIPOS[tipo].cor;
@@ -100,12 +104,12 @@
     $('f-data').value = h;
     $('f-hora').value = V.horaLocal(new Date());
     limparErros();
-    estado.enviando = false;
     atualizarBotao();
     $('popup').showModal();
     $('f-cliente').focus();
   }
   function fecharPopup() {
+    if (estado.enviando) return;
     if ($('popup').open) $('popup').close();
   }
 
@@ -126,7 +130,10 @@
     var r = V.validarVisita(dados);
     limparErros();
     if (!r.ok) {
-      Object.keys(r.erros).forEach(function (c) { mostrarErro(c, r.erros[c]); });
+      Object.keys(r.erros).forEach(function (c) {
+        /* campo sem input no popup (ex: empreendimento) vai para a mensagem geral */
+        if (!mostrarErro(c, r.erros[c])) { $('p-erro').textContent = r.erros[c]; $('p-erro').hidden = false; }
+      });
       if (CAMPOS[r.primeiro]) $(CAMPOS[r.primeiro]).focus();
       return;
     }
@@ -134,6 +141,8 @@
     atualizarBotao();
     api.chamar('registrar', dados).then(function (resp) {
       guardarToken(resp.visita.id, resp.token);
+      estado.enviando = false;
+      atualizarBotao();
       fecharPopup();
       var texto = [resp.visita.hora, V.TIPOS[resp.visita.tipo].nome, resp.visita.primeiroNome].join(' · ');
       if (resp.cpfRepetido) {
@@ -318,6 +327,7 @@
     $('p-form').addEventListener('submit', registrar);
     $('p-cancelar').addEventListener('click', fecharPopup);
     $('p-fechar').addEventListener('click', fecharPopup);
+    $('popup').addEventListener('cancel', function (ev) { if (estado.enviando) ev.preventDefault(); });
     $('popup').addEventListener('close', function () { estado.tipo = null; });
     $('f-agora').addEventListener('click', function () { $('f-hora').value = V.horaLocal(new Date()); limparErro('f-hora'); });
     $('f-cpf').addEventListener('input', function () { $('f-cpf').value = V.mascaraCpf($('f-cpf').value); });
