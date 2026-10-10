@@ -497,7 +497,7 @@ recepção ao Web App exige a sessão.
 | Campo | Regra |
 |---|---|
 | Nome completo | obrigatório, normalizado, até 80 caracteres |
-| Usuário | obrigatório; 3 a 30 caracteres; letras minúsculas sem acento, números, `.`, `-` e `_`; o que for digitado é convertido para minúsculas; único |
+| Usuário | obrigatório; 3 a 30 caracteres; letras minúsculas sem acento, números, `.`, `-` e `_`, começando por letra ou número; o que for digitado é convertido para minúsculas; único |
 | Senha | 8 a 72 caracteres; não pode ser igual ao usuário |
 | Confirmar senha | igual à senha (só no navegador) |
 
@@ -550,7 +550,7 @@ recepção ao Web App exige a sessão.
 
 - `Situação`: `pendente`, `ativa` ou `desativada`.
 - A senha **nunca** é gravada. `Hash` guarda SHA-256 iterado 1.000 vezes sobre
-  `sal + senha`, em base64. `Sal` é aleatório por conta (`Utilities.getUuid()`).
+  `sal + senha`, em hexadecimal. `Sal` é aleatório por conta (`Utilities.getUuid()`).
   - O Apps Script não tem bcrypt/scrypt; a iteração encarece tentativas em massa se a planilha
     vazar. **Risco aceito**, já que a planilha é privada.
 - `Temporária`: `sim` quando a senha foi gerada pelo comercial e precisa ser trocada.
