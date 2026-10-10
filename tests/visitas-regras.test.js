@@ -48,27 +48,12 @@ test('intervalo dos períodos do dashboard', () => {
   assert.deepEqual(V.intervalo('30', '2026-10-09'), { de: '2026-09-10', ate: '2026-10-09', dias: 30 });
 });
 
-test('validarFormulario aponta o primeiro campo que falta', () => {
-  const base = { empreendimento: 'Alta Vista Mangará', data: '2026-10-09', hora: '14:35', tipo: 'esp' };
-  assert.deepEqual(V.validarFormulario(base), { ok: true, faltando: null });
-  assert.equal(V.validarFormulario({ ...base, empreendimento: '' }).faltando, 'empreendimento');
-  assert.equal(V.validarFormulario({ ...base, data: '' }).faltando, 'data');
-  assert.equal(V.validarFormulario({ ...base, hora: '9:5' }).faltando, 'hora');
-  assert.equal(V.validarFormulario({ ...base, tipo: null }).faltando, 'tipo');
-  assert.equal(V.validarFormulario({ ...base, tipo: 'total' }).faltando, 'tipo');
-  assert.equal(V.validarFormulario({ ...base, tipo: 'imob' }).faltando, 'imobiliaria');
-  assert.equal(V.validarFormulario({ ...base, tipo: 'imob', imobiliaria: '   ' }).faltando, 'imobiliaria');
-  assert.equal(V.validarFormulario({ ...base, tipo: 'imob', imobiliaria: 'Imob Ápice' }).ok, true);
-  assert.equal(V.validarFormulario({ ...base, tipo: 'house' }).ok, true);
-  assert.equal(V.validarFormulario({ ...base, empreendimento: '', tipo: null }).faltando, 'empreendimento');
-});
-
 test('detalhe de cada tipo para as listas', () => {
-  assert.equal(V.detalhe({ tipo: 'esp' }), 'Sem agendamento');
-  assert.equal(V.detalhe({ tipo: 'house', corretorHouse: '' }), 'Corretor não informado');
-  assert.equal(V.detalhe({ tipo: 'house', corretorHouse: 'Ana' }), 'Ana');
-  assert.equal(V.detalhe({ tipo: 'imob', imobiliaria: 'Imob Ápice', corretorImob: '' }), 'Imob Ápice');
-  assert.equal(V.detalhe({ tipo: 'imob', imobiliaria: 'Imob Ápice', corretorImob: 'Rui' }), 'Imob Ápice · Rui');
+  assert.equal(V.detalhe({ tipo: 'esp', corretor: 'Rui' }), 'Rui');
+  assert.equal(V.detalhe({ tipo: 'house', corretor: '' }), 'Corretor não informado');
+  assert.equal(V.detalhe({ tipo: 'house', corretor: 'Ana' }), 'Ana');
+  assert.equal(V.detalhe({ tipo: 'imob', imobiliaria: 'Imob Ápice', corretor: '' }), 'Imob Ápice');
+  assert.equal(V.detalhe({ tipo: 'imob', imobiliaria: 'Imob Ápice', corretor: 'Rui' }), 'Imob Ápice · Rui');
 });
 
 test('listaEmpreendimentos achata window.CITIES', () => {
@@ -80,4 +65,74 @@ test('listaEmpreendimentos achata window.CITIES', () => {
     { nome: 'A', cidade: 'Campinas' }, { nome: 'B', cidade: 'Campinas' }, { nome: 'C', cidade: 'Sorocaba' }
   ]);
   assert.deepEqual(V.listaEmpreendimentos(undefined), []);
+});
+
+test('cpfValido confere dígitos verificadores e recusa sequências', () => {
+  ['52998224725', '529.982.247-25', '11144477735', '12345678909', '98765432100'].forEach((c) => assert.equal(V.cpfValido(c), true, c));
+  ['52998224724', '11111111111', '000.000.000-00', '1234567890', '123456789012', '', null, 'abc'].forEach((c) => assert.equal(V.cpfValido(c), false, String(c)));
+});
+
+test('telefoneValido exige DDD e 10 ou 11 dígitos', () => {
+  ['(19) 98765-4321', '19987654321', '(19) 3245-8890', '1932458890'].forEach((t) => assert.equal(V.telefoneValido(t), true, t));
+  ['987654321', '199876543210', '(09) 98765-4321', '', null].forEach((t) => assert.equal(V.telefoneValido(t), false, String(t)));
+});
+
+test('máscaras de CPF e telefone enquanto digita', () => {
+  assert.equal(V.mascaraCpf('529'), '529');
+  assert.equal(V.mascaraCpf('5299'), '529.9');
+  assert.equal(V.mascaraCpf('5299822'), '529.982.2');
+  assert.equal(V.mascaraCpf('5299822472'), '529.982.247-2');
+  assert.equal(V.mascaraCpf('52998224725999'), '529.982.247-25');
+  assert.equal(V.mascaraCpf('529.982.247-25'), '529.982.247-25');
+  assert.equal(V.mascaraTelefone(''), '');
+  assert.equal(V.mascaraTelefone('1'), '(1');
+  assert.equal(V.mascaraTelefone('199'), '(19) 9');
+  assert.equal(V.mascaraTelefone('1932458890'), '(19) 3245-8890');
+  assert.equal(V.mascaraTelefone('19987654321'), '(19) 98765-4321');
+  assert.equal(V.mascaraTelefone('199876543219'), '(19) 98765-4321');
+});
+
+test('formatarCpf e formatarTelefone só mascaram números completos', () => {
+  assert.equal(V.formatarCpf('52998224725'), '529.982.247-25');
+  assert.equal(V.formatarCpf('5299'), '5299');
+  assert.equal(V.formatarTelefone('1932458890'), '(19) 3245-8890');
+  assert.equal(V.formatarTelefone('19987654321'), '(19) 98765-4321');
+  assert.equal(V.formatarTelefone('123'), '123');
+  assert.equal(V.formatarTelefone(undefined), '');
+});
+
+test('primeiroNome', () => {
+  assert.equal(V.primeiroNome('  Mariana   Souza Lima '), 'Mariana');
+  assert.equal(V.primeiroNome(''), '');
+  assert.equal(V.primeiroNome(undefined), '');
+});
+
+test('validarVisita lista todos os erros e aponta o primeiro', () => {
+  const ok = {
+    empreendimento: 'Alta Vista Mangará', tipo: 'esp', cliente: 'Mariana Souza', cpf: '529.982.247-25',
+    telefone: '(19) 98765-4321', data: '2026-10-09', hora: '14:35', corretor: 'Rui', gerente: ''
+  };
+  assert.deepEqual(V.validarVisita(ok), { ok: true, erros: {}, primeiro: null });
+  const r = V.validarVisita({ ...ok, cliente: ' ', cpf: '529.982.247-2', corretor: '' });
+  assert.equal(r.ok, false);
+  assert.equal(r.primeiro, 'cliente');
+  assert.deepEqual(Object.keys(r.erros), ['cliente', 'cpf', 'corretor']);
+  assert.equal(r.erros.cpf, 'CPF inválido. Confira os números.');
+  assert.equal(V.validarVisita({ ...ok, tipo: 'imob' }).primeiro, 'imobiliaria');
+  assert.equal(V.validarVisita({ ...ok, tipo: 'imob', imobiliaria: 'Imob Ápice' }).ok, true);
+  assert.equal(V.validarVisita({ ...ok, tipo: 'house', imobiliaria: '' }).ok, true);
+  assert.equal(V.validarVisita({ ...ok, telefone: '98765-4321' }).primeiro, 'telefone');
+  assert.equal(V.validarVisita({ ...ok, tipo: 'xyz' }).primeiro, 'tipo');
+  assert.equal(V.validarVisita({ ...ok, hora: '9:5' }).primeiro, 'hora');
+});
+
+test('resumirVisita não leva CPF, telefone, nome completo nem gerente', () => {
+  const r = V.resumirVisita({
+    id: 'V1', data: '2026-10-09', hora: '14:35', empreendimento: 'Alta Vista Mangará', cidade: 'Campinas', tipo: 'imob',
+    cliente: 'Mariana Souza Lima', cpf: '52998224725', telefone: '19987654321', imobiliaria: 'Imob Ápice', corretor: 'Rui', gerente: 'Gil'
+  });
+  assert.deepEqual(r, {
+    id: 'V1', data: '2026-10-09', hora: '14:35', empreendimento: 'Alta Vista Mangará', tipo: 'imob',
+    primeiroNome: 'Mariana', imobiliaria: 'Imob Ápice', corretor: 'Rui'
+  });
 });

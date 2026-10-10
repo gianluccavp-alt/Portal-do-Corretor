@@ -28,7 +28,7 @@
     return String(s).replace(/\s+/g, ' ').trim().slice(0, MAX_TEXTO);
   }
   function chaveNome(s) {
-    return normalizarTexto(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    return normalizarTexto(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   }
   /* evita que a planilha/Excel interprete o texto como formula */
   function neutralizarFormula(s) {
@@ -36,9 +36,8 @@
     return /^[=+\-@\t\r]/.test(t) ? "'" + t : t;
   }
   function detalhe(v) {
-    if (v.tipo === 'house') return v.corretorHouse || 'Corretor não informado';
-    if (v.tipo === 'imob') return v.imobiliaria + (v.corretorImob ? ' · ' + v.corretorImob : '');
-    return 'Sem agendamento';
+    if (v.tipo === 'imob') return v.imobiliaria + (v.corretor ? ' · ' + v.corretor : '');
+    return v.corretor || 'Corretor não informado';
   }
 
   /* ---------- datas (ISO yyyy-MM-dd, sem fuso) ---------- */
@@ -59,19 +58,82 @@
     return { de: somarDias(hoje, -(n - 1)), ate: hoje, dias: n };
   }
 
-  /* ---------- formulario da recepcao (spec 5.1) ---------- */
-  function validarFormulario(d) {
-    var regras = [
-      ['empreendimento', !normalizarTexto(d.empreendimento)],
-      ['data', !/^\d{4}-\d{2}-\d{2}$/.test(d.data || '')],
-      ['hora', !/^\d{2}:\d{2}$/.test(d.hora || '')],
-      ['tipo', !tipoValido(d.tipo)],
-      ['imobiliaria', d.tipo === 'imob' && !normalizarTexto(d.imobiliaria)]
-    ];
-    for (var i = 0; i < regras.length; i++) {
-      if (regras[i][1]) return { ok: false, faltando: regras[i][0] };
+  /* ---------- cliente: CPF, telefone, nome (spec 13.1) ---------- */
+  function soDigitos(s) { return String(s === null || s === undefined ? '' : s).replace(/\D/g, ''); }
+  function cpfValido(s) {
+    var d = soDigitos(s);
+    if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+    for (var t = 9; t < 11; t++) {
+      var soma = 0;
+      for (var i = 0; i < t; i++) soma += Number(d.charAt(i)) * (t + 1 - i);
+      if (((soma * 10) % 11) % 10 !== Number(d.charAt(t))) return false;
     }
-    return { ok: true, faltando: null };
+    return true;
+  }
+  function telefoneValido(s) {
+    var d = soDigitos(s);
+    return (d.length === 10 || d.length === 11) && Number(d.slice(0, 2)) >= 11;
+  }
+  function mascaraCpf(s) {
+    var d = soDigitos(s).slice(0, 11), out = '';
+    for (var i = 0; i < d.length; i++) {
+      if (i === 3 || i === 6) out += '.';
+      if (i === 9) out += '-';
+      out += d.charAt(i);
+    }
+    return out;
+  }
+  function mascaraTelefone(s) {
+    var d = soDigitos(s).slice(0, 11);
+    if (!d) return '';
+    if (d.length <= 2) return '(' + d;
+    var resto = d.slice(2), corte = d.length === 11 ? 5 : 4;
+    if (resto.length <= corte) return '(' + d.slice(0, 2) + ') ' + resto;
+    return '(' + d.slice(0, 2) + ') ' + resto.slice(0, corte) + '-' + resto.slice(corte);
+  }
+  function formatarCpf(d) { d = soDigitos(d); return d.length === 11 ? mascaraCpf(d) : d; }
+  function formatarTelefone(d) { d = soDigitos(d); return d.length === 10 || d.length === 11 ? mascaraTelefone(d) : d; }
+  function primeiroNome(s) { return normalizarTexto(s).split(' ')[0] || ''; }
+
+  /* ---------- popup da recepcao (spec 13.1) ---------- */
+  var ORDEM_CAMPOS = ['empreendimento', 'tipo', 'cliente', 'cpf', 'telefone', 'data', 'hora', 'imobiliaria', 'corretor'];
+  var MENSAGENS_CAMPO = {
+    empreendimento: 'Escolha o empreendimento.',
+    tipo: 'Escolha o tipo de visita.',
+    cliente: 'Informe o nome do cliente.',
+    cpf: 'CPF inválido. Confira os números.',
+    telefone: 'Telefone com DDD, 10 ou 11 números.',
+    data: 'Informe a data.',
+    hora: 'Informe o horário.',
+    imobiliaria: 'Informe a imobiliária.',
+    corretor: 'Informe o nome do corretor.'
+  };
+  function validarVisita(d) {
+    var falha = {
+      empreendimento: !normalizarTexto(d.empreendimento),
+      tipo: !tipoValido(d.tipo),
+      cliente: !normalizarTexto(d.cliente),
+      cpf: !cpfValido(d.cpf),
+      telefone: !telefoneValido(d.telefone),
+      data: !/^\d{4}-\d{2}-\d{2}$/.test(d.data || ''),
+      hora: !/^\d{2}:\d{2}$/.test(d.hora || ''),
+      imobiliaria: d.tipo === 'imob' && !normalizarTexto(d.imobiliaria),
+      corretor: !normalizarTexto(d.corretor)
+    };
+    var erros = {}, primeiro = null;
+    ORDEM_CAMPOS.forEach(function (c) {
+      if (!falha[c]) return;
+      erros[c] = MENSAGENS_CAMPO[c];
+      if (!primeiro) primeiro = c;
+    });
+    return { ok: !primeiro, erros: erros, primeiro: primeiro };
+  }
+  /* o que pode sair para a pagina publica: sem CPF, telefone, nome completo e gerente */
+  function resumirVisita(v) {
+    return {
+      id: v.id, data: v.data, hora: v.hora, empreendimento: v.empreendimento, tipo: v.tipo,
+      primeiroNome: primeiroNome(v.cliente), imobiliaria: v.imobiliaria || '', corretor: v.corretor || ''
+    };
   }
 
   function listaEmpreendimentos(cidades) {
@@ -172,7 +234,7 @@
   function recentes(visitas, n) { return ordenarPorTempo(visitas, true).slice(0, n); }
 
   /* ---------- CSV (spec 6.2) ---------- */
-  var CSV_COLUNAS = ['Data', 'Horário', 'Empreendimento', 'Cidade', 'Tipo', 'Corretor house', 'Imobiliária', 'Corretor imobiliária'];
+  var CSV_COLUNAS = ['Data', 'Horário', 'Empreendimento', 'Cidade', 'Tipo', 'Cliente', 'CPF', 'Telefone', 'Imobiliária', 'Corretor', 'Gerente de vendas'];
   function celulaCSV(valor) {
     var t = neutralizarFormula(valor);
     return /[;"\r\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
@@ -182,11 +244,11 @@
     ordenarPorTempo(visitas, false).forEach(function (v) {
       linhas.push([
         dataBr(v.data), v.hora, v.empreendimento, v.cidade, TIPOS[v.tipo] ? TIPOS[v.tipo].nome : v.tipo,
-        v.corretorHouse, v.imobiliaria, v.corretorImob
+        v.cliente, formatarCpf(v.cpf), formatarTelefone(v.telefone), v.imobiliaria, v.corretor, v.gerente
       ].map(celulaCSV).join(';'));
     });
     /* BOM para o Excel abrir o UTF-8 com acentos certos */
-    return '﻿' + linhas.join('\r\n') + '\r\n';
+    return '\uFEFF' + linhas.join('\r\n') + '\r\n';
   }
   function nomeArquivoCSV(de, ate) { return 'visitas-' + de + '-a-' + ate + '.csv'; }
 
@@ -206,7 +268,16 @@
     dataBr: dataBr,
     rotuloDia: rotuloDia,
     intervalo: intervalo,
-    validarFormulario: validarFormulario,
+    soDigitos: soDigitos,
+    cpfValido: cpfValido,
+    telefoneValido: telefoneValido,
+    mascaraCpf: mascaraCpf,
+    mascaraTelefone: mascaraTelefone,
+    formatarCpf: formatarCpf,
+    formatarTelefone: formatarTelefone,
+    primeiroNome: primeiroNome,
+    validarVisita: validarVisita,
+    resumirVisita: resumirVisita,
     listaEmpreendimentos: listaEmpreendimentos,
     filtrar: filtrar,
     totaisPorTipo: totaisPorTipo,

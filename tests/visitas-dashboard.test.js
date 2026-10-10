@@ -5,6 +5,7 @@ const FIX = require('./fixtures/visitas.json');
 
 const ids = (lista) => lista.map((v) => v.id);
 const semData = ({ esp, house, imob, total }) => ({ esp, house, imob, total });
+const CABECALHO_CSV = 'Data;Horário;Empreendimento;Cidade;Tipo;Cliente;CPF;Telefone;Imobiliária;Corretor;Gerente de vendas';
 
 test('filtrar por período, cidade e empreendimento', () => {
   assert.equal(V.filtrar(FIX, {}).length, 8);
@@ -70,20 +71,19 @@ test('recentes ordena por data e hora, mais novo primeiro', () => {
   assert.equal(FIX[0].id, 'V1'); /* nao muta a entrada */
 });
 
-test('gerarCSV: BOM, separador ;, ordem cronológica, aspas e neutralização', () => {
+test('gerarCSV: BOM, separador ;, ordem cronológica, aspas, neutralização e CPF/telefone formatados', () => {
   const visitas = [
-    { data: '2026-10-09', hora: '11:50', empreendimento: 'Conquista Vila da Mata', cidade: 'Sorocaba', tipo: 'esp', corretorHouse: '', imobiliaria: '', corretorImob: '' },
-    { data: '2026-10-08', hora: '14:00', empreendimento: 'Alta Vista Mangará', cidade: 'Campinas', tipo: 'imob', corretorHouse: '', imobiliaria: 'Imob; Centro', corretorImob: '=HYPERLINK("x")' }
+    { data: '2026-10-09', hora: '11:50', empreendimento: 'Conquista Vila da Mata', cidade: 'Sorocaba', tipo: 'esp', cliente: 'Ana Lima', cpf: '52998224725', telefone: '15998765432', imobiliaria: '', corretor: 'Rui', gerente: '' },
+    { data: '2026-10-08', hora: '14:00', empreendimento: 'Alta Vista Mangará', cidade: 'Campinas', tipo: 'imob', cliente: '=HYPERLINK("x")', cpf: '11144477735', telefone: '1932458890', imobiliaria: 'Imob; Centro', corretor: 'Bia', gerente: 'Gil' }
   ];
-  const esperado = '﻿' +
-    'Data;Horário;Empreendimento;Cidade;Tipo;Corretor house;Imobiliária;Corretor imobiliária\r\n' +
-    '08/10/2026;14:00;Alta Vista Mangará;Campinas;Imobiliária;;"Imob; Centro";"\'=HYPERLINK(""x"")"\r\n' +
-    '09/10/2026;11:50;Conquista Vila da Mata;Sorocaba;Espontânea;;;\r\n';
+  const esperado = '\uFEFF' + CABECALHO_CSV + '\r\n' +
+    '08/10/2026;14:00;Alta Vista Mangará;Campinas;Imobiliária;"\'=HYPERLINK(""x"")";111.444.777-35;(19) 3245-8890;"Imob; Centro";Bia;Gil\r\n' +
+    '09/10/2026;11:50;Conquista Vila da Mata;Sorocaba;Espontânea;Ana Lima;529.982.247-25;(15) 99876-5432;;Rui;\r\n';
   assert.equal(V.gerarCSV(visitas), esperado);
 });
 
 test('gerarCSV vazio tem só o cabeçalho', () => {
-  assert.equal(V.gerarCSV([]), '﻿Data;Horário;Empreendimento;Cidade;Tipo;Corretor house;Imobiliária;Corretor imobiliária\r\n');
+  assert.equal(V.gerarCSV([]), '\uFEFF' + CABECALHO_CSV + '\r\n');
 });
 
 test('nomeArquivoCSV', () => {
