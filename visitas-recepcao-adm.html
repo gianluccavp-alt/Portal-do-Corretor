@@ -116,6 +116,27 @@ tbody tr:hover td{background:var(--muted)}
 .suave{color:var(--slate)}
 .badge{display:inline-flex;align-items:center;gap:7px;padding:2px 10px;border:1px solid var(--hair);border-radius:999px;font-size:12.5px;font-weight:500;white-space:nowrap}
 
+/* ---------- abas e recepcionistas (spec 14.6) ---------- */
+.abas{display:flex;gap:4px;border-bottom:1px solid var(--hair)}
+.aba{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:0;border-bottom:2px solid transparent;background:none;color:var(--slate);font-weight:500;font-size:.92rem;cursor:pointer}
+.aba[aria-current="page"]{color:var(--ink);font-weight:700;border-bottom-color:var(--red)}
+.aba:focus-visible{outline:none;box-shadow:var(--foco-forte)}
+.selo{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--red);color:#fff;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.aba-corpo{display:flex;flex-direction:column;gap:18px}
+.faixa-senha{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn)}
+.faixa-senha-txt{flex:1 1 260px;min-width:0;display:flex;flex-direction:column;font-size:.86rem}
+.faixa-senha code{font-family:ui-monospace,Menlo,monospace;font-size:1.05rem;font-weight:700;padding:8px 12px;background:#fff;border:1px solid var(--warn-line);border-radius:9px;color:var(--ink)}
+.pendentes{list-style:none;margin:0;padding:0}
+.pendentes li{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 0;border-top:1px dashed var(--hair)}
+.pend-txt{flex:1 1 240px;min-width:0;display:flex;flex-direction:column}
+.pendentes .btn-p{width:auto;min-height:44px;padding:0 18px}
+.badge-ok{background:#EFF9F2;border-color:#C7E7D3;color:#1B7A40}
+.badge-off{background:var(--bg);color:#5B6366}
+.badge-temp{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn);margin-left:6px}
+.acoes-conta{white-space:nowrap}
+.acoes-conta .btn{min-height:36px;font-size:13px;padding:0 12px}
+.acoes-conta .btn + .btn{margin-left:6px}
+
 @media (max-width:700px){
   .hero{padding:1.5rem 1rem 1.25rem}.hero h1{font-size:1.5rem}.hero img{height:30px}
   .wrap{padding:1.25rem 1rem 3rem}.card{padding:1rem}.acoes{margin-left:0}
@@ -150,20 +171,25 @@ tbody tr:hover td{background:var(--muted)}
 </section>
 
 <main class="wrap" id="app" hidden>
+  <nav class="abas" aria-label="Seções do dashboard">
+    <button type="button" class="aba" id="aba-btn-visitas" aria-current="page">Visitas</button>
+    <button type="button" class="aba" id="aba-btn-recep">Recepcionistas <span class="selo num" id="selo-pendentes" hidden>0</span></button>
+  </nav>
   <p class="aviso-demo" id="aviso-demo" hidden>Modo demonstração: dados fictícios, nada é lido da planilha.</p>
   <div class="aviso-erro" id="aviso-erro" role="alert" hidden>
     <span id="aviso-erro-txt"></span>
     <button type="button" class="btn" id="aviso-erro-tentar">Tentar de novo</button>
   </div>
 
+  <div id="aba-visitas" class="aba-corpo">
   <div class="card filtros">
     <div class="campo">
       <span class="lab" id="lab-periodo">Período</span>
       <div class="chips" id="periodos" role="group" aria-labelledby="lab-periodo"></div>
     </div>
     <div class="campo">
-      <span class="lab" id="lab-cidade">Cidade</span>
-      <div class="chips" id="cidades" role="group" aria-labelledby="lab-cidade"></div>
+      <span class="lab" id="lab-pdv">PDV</span>
+      <div class="chips" id="pdvs" role="group" aria-labelledby="lab-pdv"></div>
     </div>
     <label class="campo" style="flex:1 1 240px">
       <span class="lab">Empreendimento</span>
@@ -261,18 +287,48 @@ tbody tr:hover td{background:var(--muted)}
   <section class="card">
     <div class="cab"><h2>Últimos lançamentos</h2><span class="dica">do período filtrado, mais recentes primeiro</span></div>
     <div class="rolagem">
-      <table style="min-width:1080px">
+      <table style="min-width:1260px">
         <thead><tr>
-          <th scope="col">Data</th><th scope="col">Horário</th><th scope="col">Cliente</th>
+          <th scope="col">Data</th><th scope="col">Horário</th><th scope="col">PDV</th><th scope="col">Cliente</th>
           <th scope="col">CPF</th><th scope="col">Telefone</th><th scope="col">Empreendimento</th>
           <th scope="col">Tipo</th><th scope="col">Imobiliária</th><th scope="col">Corretor</th>
-          <th scope="col">Gerente</th>
+          <th scope="col">Gerente</th><th scope="col">Lançado por</th>
         </tr></thead>
         <tbody id="tab-recentes"></tbody>
       </table>
     </div>
     <p class="vazio" id="sem-recentes" hidden>Nenhuma visita no período para este filtro.</p>
   </section>
+  </div>
+
+  <div id="aba-recep" class="aba-corpo" hidden>
+    <div class="faixa-senha" id="faixa-senha" role="status" hidden>
+      <div class="faixa-senha-txt">
+        <strong>Senha temporária de <span id="senha-nome"></span></strong>
+        <span>Passe para a recepcionista. Ela não será mostrada de novo, e no próximo login ela cria a própria senha.</span>
+      </div>
+      <code id="senha-temp"></code>
+    </div>
+
+    <section class="card" id="bloco-pendentes" hidden>
+      <div class="cab"><h2>Aguardando aprovação</h2><span class="dica">Confira se a pessoa é mesmo recepcionista antes de aprovar.</span></div>
+      <ul class="pendentes" id="lista-pendentes"></ul>
+    </section>
+
+    <section class="card">
+      <div class="cab"><h2>Recepcionistas</h2><button type="button" class="btn" id="atualizar-contas">Atualizar</button></div>
+      <div class="rolagem">
+        <table style="min-width:760px">
+          <thead><tr>
+            <th scope="col">Nome</th><th scope="col">Usuário</th><th scope="col">Situação</th>
+            <th scope="col" class="dir">Visitas (30 dias)</th><th scope="col">Último acesso</th><th scope="col" class="dir">Ações</th>
+          </tr></thead>
+          <tbody id="tab-contas"></tbody>
+        </table>
+      </div>
+      <p class="vazio" id="sem-contas" hidden>Nenhuma recepcionista aprovada ainda.</p>
+    </section>
+  </div>
 </main>
 
 <script src="assets/config.js"></script>

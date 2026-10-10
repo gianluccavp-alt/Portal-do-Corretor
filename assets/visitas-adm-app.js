@@ -13,9 +13,9 @@
   var ALTURA_BARRA = 190;
   var PERIODOS = [['hoje', 'Hoje'], ['7', '7 dias'], ['30', '30 dias']];
   var NOME_PERIODO = { hoje: 'Hoje', '7': 'Últimos 7 dias', '30': 'Últimos 30 dias' };
-  var EMPS = V.listaEmpreendimentos(window.CITIES || []);
-  var CIDADES = ['Todas'].concat((window.CITIES || []).map(function (c) { return c.name; }));
-  var estado = { senha: '', todas: [], periodo: '7', cidade: 'Todas', emp: 'Todos', carregadoEm: null, hoje: V.dataLocalIso(new Date()) };
+  var EMPS = V.empreendimentosVisitas(window.CITIES || []);
+  var PDVS_FILTRO = [['Todos', 'Todos']].concat(V.PDVS.map(function (p) { return [p, p]; }));
+  var estado = { senha: '', todas: [], contas: [], aba: 'visitas', periodo: '7', pdv: 'Todos', emp: 'Todos', carregadoEm: null, hoje: V.dataLocalIso(new Date()) };
   var api = window.VisitasAPI.criar({
     url: window.VISITAS_APPS_SCRIPT_URL || '',
     senha: function () { return estado.senha; }
@@ -56,6 +56,8 @@
     gravarSessao('');
     estado.senha = '';
     estado.todas = [];
+    estado.contas = [];
+    mostrarAba('visitas');
     mostrarGate(msg);
   }
 
@@ -86,6 +88,7 @@
     buscar().then(function () {
       gravarSessao(s);
       mostrarApp();
+      carregarContas().catch(tratarErro);
     }, function (f) {
       estado.senha = '';
       mostrarGate(f && f.codigo === 'senha' ? 'Senha incorreta.' : (f && f.mensagem) || MSG_ERRO);
@@ -115,7 +118,6 @@
     todos.value = 'Todos';
     sel.appendChild(todos);
     EMPS.forEach(function (e) {
-      if (estado.cidade !== 'Todas' && e.cidade !== estado.cidade) return;
       var o = el('option', '', e.nome);
       o.value = e.nome;
       sel.appendChild(o);
@@ -126,17 +128,15 @@
     var iv = V.intervalo(estado.periodo, estado.hoje);
     return {
       iv: iv,
-      visitas: V.filtrar(estado.todas, { de: iv.de, ate: iv.ate, cidade: estado.cidade, empreendimento: estado.emp }),
-      lista: EMPS.filter(function (e) {
-        return (estado.cidade === 'Todas' || e.cidade === estado.cidade) && (estado.emp === 'Todos' || e.nome === estado.emp);
-      })
+      visitas: V.filtrar(estado.todas, { de: iv.de, ate: iv.ate, pdv: estado.pdv, empreendimento: estado.emp }),
+      lista: EMPS.filter(function (e) { return estado.emp === 'Todos' || e.nome === estado.emp; })
     };
   }
 
   /* ---------- render (spec 6.2) ---------- */
   function render() {
     marcarChips($('periodos'), estado.periodo);
-    marcarChips($('cidades'), estado.cidade);
+    marcarChips($('pdvs'), estado.pdv);
     var f = filtroAtual(), iv = f.iv, t = V.totaisPorTipo(f.visitas);
     var rotulo = estado.periodo === 'hoje'
       ? 'Hoje, ' + V.dataCurta(iv.ate)
@@ -247,6 +247,7 @@
       var tr = el('tr');
       celula(tr, V.dataCurta(v.data), 'num');
       celula(tr, v.hora, 'forte num');
+      celula(tr, v.pdv || '—');
       celula(tr, v.cliente, 'forte');
       celula(tr, V.formatarCpf(v.cpf), 'num');
       celula(tr, V.formatarTelefone(v.telefone), 'num');
@@ -261,6 +262,7 @@
       celula(tr, v.imobiliaria || '—', 'suave');
       celula(tr, v.corretor || '—');
       celula(tr, v.gerente || '—', 'suave');
+      celula(tr, v.lancadoPor || '—', 'suave');
       tb.appendChild(tr);
     });
     $('sem-recentes').hidden = lista.length > 0;
@@ -277,15 +279,95 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
   }
 
+  /* ---------- abas (spec 14.6) ---------- */
+  function mostrarAba(aba) {
+    estado.aba = aba;
+    $('aba-visitas').hidden = aba !== 'visitas';
+    $('aba-recep').hidden = aba !== 'recep';
+    $('aba-btn-visitas').setAttribute('aria-current', aba === 'visitas' ? 'page' : 'false');
+    $('aba-btn-recep').setAttribute('aria-current', aba === 'recep' ? 'page' : 'false');
+    $('faixa-senha').hidden = true;
+    if (aba === 'recep' && estado.senha) carregarContas().catch(tratarErro);
+  }
+
+  /* ---------- recepcionistas (spec 14.6) ---------- */
+  function curtoBr(s) {
+    var m = /^(\d{2})\/(\d{2})\/\d{4} (\d{2}:\d{2})/.exec(String(s || ''));
+    return m ? m[1] + '/' + m[2] + ' ' + m[3] : '—';
+  }
+  function carregarContas() {
+    $('atualizar-contas').disabled = true;
+    return api.chamar('contas', {}).then(function (r) {
+      estado.contas = r.contas || [];
+      $('aviso-erro').hidden = true;
+      renderContas();
+    }).finally(function () { $('atualizar-contas').disabled = false; });
+  }
+  function acaoConta(acao, c, pergunta) {
+    if (pergunta && !window.confirm(pergunta)) return;
+    $('faixa-senha').hidden = true;
+    api.chamar(acao, { usuario: c.usuario }).then(function (r) {
+      if (acao === 'redefinirSenha') {
+        $('senha-nome').textContent = c.nome;
+        $('senha-temp').textContent = r.senhaTemporaria;
+        $('faixa-senha').hidden = false;
+      }
+      return carregarContas();
+    }).catch(tratarErro);
+  }
+  function botao(texto, cls, fn) {
+    var b = el('button', cls, texto);
+    b.type = 'button';
+    b.addEventListener('click', fn);
+    return b;
+  }
+  function renderContas() {
+    var pend = estado.contas.filter(function (c) { return c.situacao === 'pendente'; });
+    var outras = estado.contas.filter(function (c) { return c.situacao !== 'pendente'; });
+    $('selo-pendentes').textContent = String(pend.length);
+    $('selo-pendentes').hidden = pend.length === 0;
+    $('bloco-pendentes').hidden = pend.length === 0;
+    var ul = $('lista-pendentes');
+    ul.textContent = '';
+    pend.forEach(function (c) {
+      var li = el('li');
+      var txt = el('div', 'pend-txt');
+      txt.appendChild(el('strong', '', c.nome));
+      txt.appendChild(el('span', 'dica', c.usuario + ' · cadastro em ' + curtoBr(c.criadoEm)));
+      li.appendChild(txt);
+      li.appendChild(botao('Recusar', 'btn', function () { acaoConta('recusar', c, 'Recusar o cadastro de ' + c.nome + '?'); }));
+      li.appendChild(botao('Aprovar', 'btn btn-p', function () { acaoConta('aprovar', c); }));
+      ul.appendChild(li);
+    });
+    var tb = $('tab-contas');
+    tb.textContent = '';
+    outras.forEach(function (c) {
+      var tr = el('tr');
+      celula(tr, c.nome, 'forte');
+      celula(tr, c.usuario, 'suave');
+      var td = celula(tr, '');
+      td.appendChild(el('span', 'badge ' + (c.situacao === 'ativa' ? 'badge-ok' : 'badge-off'), c.situacao === 'ativa' ? 'Ativa' : 'Desativada'));
+      if (c.temporaria) td.appendChild(el('span', 'badge badge-temp', 'Senha temporária'));
+      celula(tr, String(c.visitas30 || 0), 'dir num');
+      celula(tr, curtoBr(c.ultimoAcesso), 'suave');
+      var acoes = celula(tr, '', 'dir acoes-conta');
+      acoes.appendChild(botao('Redefinir senha', 'btn', function () {
+        acaoConta('redefinirSenha', c, 'Gerar uma senha temporária para ' + c.nome + '? A senha atual deixa de funcionar.');
+      }));
+      if (c.situacao === 'ativa') {
+        acoes.appendChild(botao('Desativar', 'btn', function () { acaoConta('desativar', c, 'Desativar o acesso de ' + c.nome + '?'); }));
+      } else {
+        acoes.appendChild(botao('Reativar', 'btn', function () { acaoConta('reativar', c); }));
+      }
+      tb.appendChild(tr);
+    });
+    $('sem-contas').hidden = outras.length > 0;
+  }
+
   /* ---------- inicio ---------- */
   function iniciar() {
     montarChips($('periodos'), PERIODOS, function (v) { estado.periodo = v; render(); });
-    montarChips($('cidades'), CIDADES.map(function (c) { return [c, c]; }), function (v) {
-      estado.cidade = v;
-      estado.emp = 'Todos';
-      montarSelectEmp();
-      render();
-    });
+    montarChips($('pdvs'), PDVS_FILTRO, function (v) { estado.pdv = v; render(); });
     montarSelectEmp();
     $('f-emp').addEventListener('change', function () { estado.emp = $('f-emp').value; render(); });
     $('gate-form').addEventListener('submit', entrar);
@@ -293,6 +375,9 @@
     $('aviso-erro-tentar').addEventListener('click', function () { buscar().catch(tratarErro); });
     $('exportar').addEventListener('click', exportar);
     $('sair').addEventListener('click', function () { sair(); });
+    $('aba-btn-visitas').addEventListener('click', function () { mostrarAba('visitas'); });
+    $('aba-btn-recep').addEventListener('click', function () { mostrarAba('recep'); });
+    $('atualizar-contas').addEventListener('click', function () { carregarContas().catch(tratarErro); });
 
     var salva = lerSessao();
     if (salva) {
@@ -300,6 +385,7 @@
       mostrarApp();
       render();
       buscar().catch(tratarErro);
+      carregarContas().catch(tratarErro);
     } else {
       mostrarGate();
     }
