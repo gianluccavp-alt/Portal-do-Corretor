@@ -1,10 +1,11 @@
 # Visitas da Recepção — design
 
 **Data:** 09/10/2026
-**Status:** v1 implementada na branch `feat/visitas-recepcao` (não publicada). **v2 (§13, dados do
-cliente em popup) aguardando revisão. Onde a §13 diverge das seções 1–12, vale a §13.**
+**Status:** v1 e v2 implementadas na branch `feat/visitas-recepcao` (não publicadas).
+**v3 (§14, contas das recepcionistas, PDV e só Ribeirão Preto) aguardando revisão.
+Onde uma seção mais nova diverge de uma anterior, vale a mais nova (§14 > §13 > §1–12).**
 **Páginas:**
-- `https://produtosdirecional.vercel.app/visitas-recepcao` (lançamento, pública)
+- `https://produtosdirecional.vercel.app/visitas-recepcao` (lançamento; com login a partir da v3)
 - `https://produtosdirecional.vercel.app/visitas-recepcao-adm` (dashboard, com senha)
 
 **Planilha:** `10Hi4moBVJlK6Gs3wdULQPGai8vGZu_JhSYX4CKWLTfk`, aba `VISITAS`
@@ -444,3 +445,290 @@ Telefone · Imobiliária · Corretor · Gerente de vendas · Excluída · Token`
 - Histórico do cliente entre stands ou "primeira visita vs retorno" no dashboard.
 - Consulta de CPF antes de registrar.
 - Ranking de corretores ou gerentes no dashboard.
+
+## 14. Revisão v3 — contas das recepcionistas, PDV e só Ribeirão Preto (10/10/2026)
+
+Pedido do comercial depois da v2:
+- cada recepcionista tem o próprio acesso, para identificar quem lançou cada visita;
+- sem login, a página de lançamento não mostra nem grava nada, mesmo que o link chegue a
+  um corretor;
+- por enquanto o lançamento atende só Ribeirão Preto, que tem dois stands (PDVs).
+
+**Esta seção substitui as partes das §1–13 que ela contradiz.** Nada foi publicado ainda,
+então as abas nascem direto no formato novo (sem migração).
+
+Telas: canvas "Visitas Recepção" (mesmo link do topo).
+- Recepção: `Main`, `RecepcaoCelular`, `PopupImobiliaria`, `PopupCelular`.
+- Acesso: `Login`, `LoginCadastro`, `LoginPendente`, `LoginTroca`.
+- Dashboard: `Admin` e `AdminRecepcionistas`.
+
+### 14.1 Decisões
+
+| Tema | Decisão |
+|---|---|
+| Criação de conta | A recepcionista se cadastra na própria página. A conta nasce **pendente** e só entra depois que o comercial aprova no dashboard |
+| Sessão | Vale até a **meia-noite** (horário de Brasília) do dia do login. "Sair" encerra antes |
+| Stand | A recepcionista escolhe livremente o PDV; a conta não fica presa a um stand |
+| Cidades | O lançamento e o dashboard aceitam **só os empreendimentos de Ribeirão Preto**. O resto do portal continua com todas as cidades do `config.js` |
+| PDV | Campo obrigatório com duas opções: **Zona Sul RP** e **Centro RP** |
+| Onde fica o PDV | No **Passo 1**, lembrado no aparelho. O empreendimento vira campo obrigatório **do popup** |
+| Senha do dashboard | Continua única (§4.4 e §13.5). Ela também autoriza as ações sobre as contas |
+
+### 14.2 Acesso à recepção (`/visitas-recepcao`)
+
+Sem sessão válida no aparelho, a página mostra só a tela de acesso. O HTML e o JS são
+estáticos e públicos; o que fica protegido são os **dados e a gravação**: todo pedido da
+recepção ao Web App exige a sessão.
+
+**Entrar** (quadro `Login`):
+- Campos: usuário e senha. Botão "Entrar" e link "Criar conta".
+- Usuário ou senha errados: "Usuário ou senha incorretos.", mesma mensagem nos dois casos.
+- Senha certa, mas a conta não foi liberada:
+  - **pendente:** mostra o quadro `LoginPendente` ("Seu cadastro está aguardando aprovação
+    do comercial.");
+  - **desativada:** "Seu acesso foi desativado. Fale com o comercial."
+  - Esses avisos só aparecem com a senha certa, para a tela não revelar quais usuários
+    existem.
+- 5 senhas erradas seguidas para o mesmo usuário bloqueiam esse usuário por 15 minutos:
+  "Muitas tentativas. Tente de novo em 15 minutos." Login certo zera a contagem.
+
+**Criar conta** (quadro `LoginCadastro`):
+
+| Campo | Regra |
+|---|---|
+| Nome completo | obrigatório, normalizado, até 80 caracteres |
+| Usuário | obrigatório; 3 a 30 caracteres; letras minúsculas sem acento, números, `.`, `-` e `_`; o que for digitado é convertido para minúsculas; único |
+| Senha | 8 a 72 caracteres; não pode ser igual ao usuário |
+| Confirmar senha | igual à senha (só no navegador) |
+
+- Usuário já existente: erro no campo, "Esse usuário já existe."
+- Sucesso: a tela "Cadastro enviado" diz que é preciso esperar a aprovação do comercial e
+  oferece "Voltar para entrar".
+- Com 20 cadastros pendentes, novos cadastros são recusados: "Muitos cadastros aguardando
+  aprovação. Fale com o comercial." Isso limita o abuso do formulário público.
+
+**Trocar senha temporária** (quadro `LoginTroca`):
+- Aparece logo depois do login quando o comercial redefiniu a senha (§14.5).
+- Campos: nova senha e confirmação (mesmas regras do cadastro). A nova senha não pode ser
+  igual à temporária.
+- Até trocar, a sessão não serve para mais nada.
+
+**Sessão no aparelho:**
+- Fica no `localStorage` (`visitas.sessao`) como `{ token, expira, nome, usuario }`.
+- Ao abrir a página, sessão vencida (passou de `expira`) é apagada e volta a tela de acesso.
+- A checagem de virada de dia da v1 também verifica a sessão: depois da meia-noite, a página
+  volta para a tela de acesso.
+- Qualquer resposta `sessao` do servidor (vencida, conta desativada, senha trocada) apaga a
+  sessão e volta para "Entrar", com o aviso "Sua sessão terminou. Entre de novo."
+- O topo mostra "Olá, {primeiro nome}" e o botão "Sair". "Sair" apaga a sessão no aparelho.
+- A chave `visitas.tokens` da v1/v2 deixa de existir; a página apaga essa chave se a
+  encontrar.
+
+### 14.3 O que muda no lançamento (substitui o que diverge na §13.1)
+
+- **Passo 1 · PDV:** dois botões, **Zona Sul RP** e **Centro RP**, lembrados no aparelho
+  (`visitas.pdv`; a chave antiga `visitas.emp` é apagada). Sem PDV escolhido, os cards do
+  Passo 2 ficam bloqueados com a dica "Escolha o PDV primeiro".
+- **Popup:** ganha, no topo dos campos, **Empreendimento de interesse** (`<select>`,
+  obrigatório). Ele lista só os 4 empreendimentos de Ribeirão Preto, na ordem do `config.js`
+  e começa vazio ("Selecione"). O topo do popup mostra tipo e PDV.
+- Ordem de validação e foco: empreendimento, cliente, cpf, telefone, data, hora,
+  imobiliaria, corretor.
+- **Contador e "Últimos lançamentos":** valem para o **PDV** escolhido e para hoje. Todas as
+  recepcionistas do mesmo PDV veem os mesmos números e a mesma lista.
+- Cada item da lista mostra também o empreendimento.
+- **CPF repetido:** a regra passa a ser mesmo CPF + **mesmo PDV** + mesma data. A mensagem
+  vira "Atenção: este CPF já tinha visita hoje neste PDV."
+- **Excluir:** o botão aparece só nos lançamentos **da própria recepcionista**, feitos hoje.
+  "Desfazer" da faixa usa a mesma regra.
+
+### 14.4 Planilha
+
+**Aba `RECEPCIONISTAS`** (nova; criada pelo script se não existir):
+
+`Usuário · Nome · Situação · Hash · Sal · Temporária · Criado em · Aprovado em · Último acesso`
+
+- `Situação`: `pendente`, `ativa` ou `desativada`.
+- A senha **nunca** é gravada. `Hash` guarda SHA-256 iterado 1.000 vezes sobre
+  `sal + senha`, em base64. `Sal` é aleatório por conta (`Utilities.getUuid()`).
+  - O Apps Script não tem bcrypt/scrypt; a iteração encarece tentativas em massa se a planilha
+    vazar. **Risco aceito**, já que a planilha é privada.
+- `Temporária`: `sim` quando a senha foi gerada pelo comercial e precisa ser trocada.
+- Colunas localizadas pelo nome do cabeçalho, como na `VISITAS`. Textos com neutralização
+  de fórmula. `Usuário` gravado como texto (`@`).
+
+**Aba `VISITAS`** (substitui a §13.2):
+
+`ID · Registrado em · Data · Horário · PDV · Empreendimento · Cidade · Tipo · Nome do cliente ·
+CPF · Telefone · Imobiliária · Corretor · Gerente de vendas · Lançado por · Excluída`
+
+- `Lançado por` guarda o **usuário** da recepcionista. Ele não muda; o nome pode mudar.
+- `Cidade` continua sendo preenchida ("Ribeirão Preto").
+- A coluna `Token` sai: a exclusão passa a usar a dona da visita (§14.3).
+
+### 14.5 Web App (substitui o que diverge nas §4 e §13.3)
+
+**Sessão:**
+- Token `usuario.expira.assinatura`.
+  - `expira`: meia-noite seguinte em `America/Sao_Paulo`, em milissegundos. O Brasil não tem
+    horário de verão desde 2019, então o fuso é fixo em −03:00.
+  - `assinatura`: HMAC-SHA256 de `usuario.expira.<12 primeiros caracteres do Hash>`, com o
+    segredo da Script Property `VISITAS_SEGREDO`, em base64 web-safe.
+  - Como o hash entra na assinatura, trocar ou redefinir a senha derruba as sessões abertas.
+- O segredo é gerado na primeira vez que for preciso (dois `getUuid()` concatenados) e nunca
+  sai do servidor.
+- Toda ação da recepção faz o mesmo:
+  1. confere assinatura e validade do token;
+  2. lê a linha da conta;
+  3. exige `Situação = ativa` e `Temporária ≠ sim` (exceto em `trocarSenha`).
+- Falha em qualquer passo → `erro:'sessao'`, sempre com a mesma mensagem: "Sua sessão
+  terminou. Entre de novo."
+- A comparação da assinatura não depende de onde está a primeira diferença.
+
+**Ações públicas** (sem sessão):
+- `entrar { usuario, senha }` → `{ sessao, expira, nome, usuario, trocarSenha: boolean }`.
+  - Erros: `credenciais`, `bloqueado`, `pendente`, `desativada`.
+  - As tentativas erradas são contadas no `CacheService` (`vis.falhas.<usuario>`, 15 minutos);
+    na quinta, o usuário fica bloqueado.
+  - Conta inexistente também passa pelo cálculo do hash, para levar o mesmo tempo.
+  - Atualiza `Último acesso`.
+- `cadastrar { nome, usuario, senha }` → `{ ok: true }`. Erros: `invalido` (com `campo`),
+  `limite`. Grava dentro do lock e confere a unicidade dentro do lock.
+
+**Ações da recepção** (com `sessao`):
+- `trocarSenha { sessao, novaSenha }` → nova `{ sessao, expira, ... }`, com `Temporária` limpa.
+- `registrar { sessao, pdv, empreendimento, data, hora, tipo, cliente, cpf, telefone, imobiliaria?, corretor, gerente? }`
+  → `{ visita /* resumida */, cpfRepetido }`.
+  - `pdv` precisa estar em `VISITAS_PDVS` → `campo:'pdv'`.
+  - `empreendimento` precisa estar na lista de Ribeirão Preto → `campo:'empreendimento'`.
+  - Grava `Lançado por` = usuário da sessão.
+- `dia { sessao, pdv, data }` → `{ visitas /* resumidas */, sugestoes }`.
+- `excluir { sessao, id }`: só quando a linha é da recepcionista da sessão e foi registrada
+  hoje. Fora disso → `nao_encontrada`, como antes.
+
+**Visita resumida** (respostas da recepção):
+`{ id, data, hora, pdv, empreendimento, tipo, primeiroNome, imobiliaria, corretor, minha: boolean }`.
+- `minha` diz se a visita foi lançada pela recepcionista da sessão.
+- O usuário de quem lançou não sai nas respostas da recepção.
+
+**Ações do dashboard** (com `senha`; a §4.4 continua valendo):
+- `listar`: a visita completa ganha `pdv` e `lancadoPor`.
+  - `lancadoPor` é o **nome** atual da recepcionista, ou o usuário se a conta não existir mais.
+- `contas` → `{ contas: [{ usuario, nome, situacao, temporaria, criadoEm, ultimoAcesso, visitas30 }] }`.
+  - Não traz `Hash` nem `Sal`.
+  - `visitas30` conta as visitas ativas lançadas por ela nos últimos 30 dias.
+- `aprovar { usuario }`: `pendente` → `ativa`, e grava `Aprovado em`.
+- `recusar { usuario }`: apaga a linha `pendente`. O usuário fica livre para um novo cadastro.
+- `desativar { usuario }` / `reativar { usuario }`: `ativa` ↔ `desativada`.
+  - Desativar derruba a sessão na próxima ação dela.
+  - As visitas já lançadas continuam.
+- `redefinirSenha { usuario }` → `{ senhaTemporaria }`. Gera 9 caracteres em 3 grupos
+  (`K7m-Q2x-9Tz`), sem caracteres ambíguos (0/O, 1/l/I), e marca `Temporária = sim`.
+  - A senha temporária aparece **uma vez** na resposta e não é guardada em claro.
+- Todas as ações que alteram contas rodam no lock.
+- Usuário inexistente ou em situação errada → `nao_encontrada`.
+
+**Listas oficiais:**
+- `VISITAS_EMPREENDIMENTOS` passa a ter só os 4 de Ribeirão Preto.
+- O teste de paridade compara com `window.CITIES` da cidade "Ribeirão Preto". Se um
+  empreendimento novo de RP entrar no portal sem entrar no Web App, o teste quebra.
+- Nova constante `VISITAS_PDVS = ['Zona Sul RP', 'Centro RP']`, igual no `.gs` e em
+  `assets/visitas.js`, também com teste de paridade.
+
+**Logs:**
+- Nada de senha, hash, sal, token ou segredo no `Logger.log`, além do que a §13.3 já proíbe.
+- Os erros esperados (`credenciais`, `sessao` etc.) não são logados.
+
+**`testeVisitas()`:**
+1. cria uma conta de teste já `ativa`;
+2. entra;
+3. registra, lê o `dia` e exclui;
+4. apaga a conta de teste.
+
+A linha de visita de teste fica marcada como excluída.
+
+### 14.6 Dashboard (substitui o que diverge nas §6 e §13.4)
+
+- Navegação no topo com duas abas, **Visitas** e **Recepcionistas**. A aba Recepcionistas
+  mostra um selo com o número de cadastros pendentes.
+- **Visitas:**
+  - os chips de cidade viram chips de **PDV**: Todos, Zona Sul RP, Centro RP;
+  - o seletor de empreendimento lista só Ribeirão Preto;
+  - KPIs, gráficos e tabelas seguem o filtro de PDV;
+  - "Últimos lançamentos" ganha as colunas **PDV** e **Lançado por**.
+  - CSV:
+    `Data;Horário;PDV;Empreendimento;Tipo;Cliente;CPF;Telefone;Imobiliária;Corretor;Gerente de vendas;Lançado por`.
+    A coluna Cidade sai, porque é sempre Ribeirão Preto.
+- **Recepcionistas** (quadro `AdminRecepcionistas`):
+  - "Aguardando aprovação": nome, usuário e data do cadastro, com **Recusar** e **Aprovar**.
+    O bloco some quando não há pendentes.
+  - Tabela das contas: Nome, Usuário, Situação (selo Ativa/Desativada, mais "Senha temporária"
+    quando houver), Visitas (30 dias), Último acesso, e as ações **Redefinir senha** e
+    **Desativar**/**Reativar**.
+  - Recusar, Desativar e Redefinir senha pedem confirmação (`confirm()`) antes de enviar.
+  - Depois de redefinir, uma faixa amarela mostra a senha temporária uma única vez, com o
+    nome da recepcionista. Ela some ao trocar de aba ou recarregar.
+  - Depois de cada ação, a lista de contas é recarregada.
+
+### 14.7 Regras puras e testes (complementa §7, §10 e §13.6)
+
+**`assets/visitas.js` ganha:**
+- `PDVS`;
+- `usuarioValido`, `normalizarUsuario`;
+- `validarSenha(senha, usuario) → mensagem | ''`;
+- `validarCadastro(d) → { ok, erros }`;
+- `sessaoValida(sessao, agoraMs)`.
+
+**`validarVisita`** passa a exigir `pdv` e `empreendimento`. `resumirVisita` inclui `pdv`. O
+CSV usa as colunas da §14.6.
+
+**O `.gs` tem as próprias versões:** hash da senha, geração e conferência do token, validação
+de usuário e senha, expiração na meia-noite, senha temporária e checagem de dona da visita.
+Todas são puras e testadas no Node via `vm`, com `Utilities` e `CacheService` falsos.
+
+**Testes novos:**
+- token: válido, vencido, assinatura alterada, outro usuário, hash da senha trocado;
+- meia-noite: antes e depois das 21h UTC;
+- hash: o mesmo sal e a mesma senha dão o mesmo hash, e outro sal dá outro;
+- usuário e senha: casos de borda;
+- senha temporária: formato e sem caracteres ambíguos;
+- bloqueio na 5ª falha e desbloqueio depois de login certo;
+- `excluir` recusando visita de outra recepcionista e visita de ontem;
+- `cpfRepetido` por PDV;
+- resumo com `minha` e sem usuário;
+- paridade de PDVs e de empreendimentos de RP;
+- `contas` sem hash nem sal.
+
+**Modo demonstração** (`?demo=1` ou URL vazia):
+- entra com qualquer usuário e qualquer senha de 8+ caracteres;
+- simula pendente, troca de senha e as ações do dashboard em memória;
+- os dados fictícios passam a ter PDV e "Lançado por".
+
+### 14.8 Deploy (complementa a §11)
+
+1. Colar o `.gs` novo.
+2. Se a senha do dashboard ainda não foi configurada: definir uma de 12+ caracteres só no
+   editor, rodar `configurarSenhaVisitas()` e voltar `VIS_SENHA_INICIAL` para `''`.
+3. Rodar `testeVisitas()`. Ele cria as abas `VISITAS` e `RECEPCIONISTAS`.
+4. Publicar uma **nova versão** do Web App.
+5. Primeira conta real: a recepcionista se cadastra e o comercial aprova no dashboard.
+
+### 14.9 Riscos e fora de escopo
+
+**Riscos aceitos:**
+- **Senha simples (8+):** com bloqueio por usuário, cobre o caso "link caiu na mão de um
+  corretor".
+- **Ataque distribuído entre muitos usuários:** não tem limite global. Fica para depois se
+  aparecer.
+- **Sessão de dia inteiro num aparelho compartilhado do stand:** a recepcionista precisa tocar
+  em "Sair" na troca de turno; o "Olá, {nome}" no topo deixa claro quem está logada.
+- **Enumeração de usuários pelo cadastro:** "Esse usuário já existe." revela que o usuário
+  existe, mas o impacto é baixo porque ainda é preciso a senha e a aprovação.
+
+**Fora de escopo:**
+- "Esqueci minha senha" por e-mail: a recepcionista pede ao comercial, que usa "Redefinir
+  senha".
+- Contas para o comercial (o dashboard continua com senha única).
+- Prender a conta a um PDV.
+- Outras cidades no lançamento.
+- Histórico de quem aprovou ou desativou cada conta.
