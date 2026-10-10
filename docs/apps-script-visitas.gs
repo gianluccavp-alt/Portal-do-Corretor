@@ -84,9 +84,15 @@ function doPost(e) {
     resposta = err instanceof VisFalha
       ? { ok: false, erro: err.codigo, mensagem: err.message, campo: err.campo }
       : { ok: false, erro: 'interno', mensagem: 'Erro interno.' };
-    if (!(err instanceof VisFalha)) Logger.log('visitas: ' + String((err && err.name) || 'Error') + (err && err.stack ? '\n' + err.stack : ''));
+    if (!(err instanceof VisFalha)) Logger.log('visitas: ' + String((err && err.name) || 'Error') + '\n' + visStackSemMensagem_(err && err.stack));
   }
   return visJson_(resposta);
+}
+
+/* so as linhas "at ..." do stack: a primeira linha do V8 repete a mensagem,
+   que pode trazer trecho da entrada (CPF, telefone) */
+function visStackSemMensagem_(stack) {
+  return String(stack || '').split('\n').filter(function (l) { return /^\s*at\s/.test(l); }).join('\n');
 }
 
 function visJson_(obj) {

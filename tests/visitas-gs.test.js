@@ -167,3 +167,11 @@ test('visSugestoes_ por coluna: agrupa, ignora excluídas e antigas, ordena', ()
   assert.deepEqual(plano(gs.visSugestoes_(linhas, indice(), '2026-07-11', 'Corretor')), ['__proto__', 'Bia', 'Rui']);
   assert.equal(({}).qtd, undefined);
 });
+
+test('visStackSemMensagem_ tira a linha da mensagem do stack', () => {
+  const stack = 'SyntaxError: Unexpected token in JSON at position 5: {"cpf":"52998224725"\n    at JSON.parse (<anonymous>)\n    at doPost (Codigo:80:20)';
+  const limpo = gs.visStackSemMensagem_(stack);
+  assert.ok(!limpo.includes('52998224725'));
+  assert.equal(limpo, '    at JSON.parse (<anonymous>)\n    at doPost (Codigo:80:20)');
+  assert.equal(gs.visStackSemMensagem_(undefined), '');
+});
