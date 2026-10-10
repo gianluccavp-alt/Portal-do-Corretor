@@ -10,7 +10,7 @@
    2. Cole este arquivo inteiro no Codigo.gs (ou num arquivo "Visitas").
    3. SO NO EDITOR (nunca no repositorio): troque
         var VIS_SENHA_INICIAL = '';
-      por a senha do dashboard, selecione configurarSenhaVisitas >
+      por a senha do dashboard (minimo de 12 caracteres), selecione configurarSenhaVisitas >
       Executar (autorize) e depois volte a linha para ''.
    4. Selecione testeVisitas > Executar > confira o log.
    5. Implantar > Nova implantacao > Tipo: App da Web
@@ -38,7 +38,8 @@ var VIS_DIAS_RETROATIVOS = 7;
 var VIS_MAX_DIAS_LISTAR = 92;
 var VIS_TIPOS = { esp: 'Espontânea', house: 'Corretor house', imob: 'Imobiliária' };
 var VIS_COLUNAS = ['ID', 'Registrado em', 'Data', 'Horário', 'Empreendimento', 'Cidade', 'Tipo',
-  'Corretor house', 'Imobiliária', 'Corretor imobiliária', 'Excluída', 'Token'];
+  'Nome do cliente', 'CPF', 'Telefone', 'Imobiliária', 'Corretor', 'Gerente de vendas', 'Excluída', 'Token'];
+var VIS_MIN_SENHA = 12;
 var VISITAS_EMPREENDIMENTOS = [
   { nome: 'Alta Vista Mangará', cidade: 'Campinas' },
   { nome: 'Cores da Mata Mangará', cidade: 'Campinas' },
@@ -54,6 +55,8 @@ var VISITAS_EMPREENDIMENTOS = [
 
 function configurarSenhaVisitas() {
   if (!VIS_SENHA_INICIAL) throw new Error('Preencha VIS_SENHA_INICIAL so no editor antes de executar.');
+  /* spec 13.5: o dashboard guarda dado pessoal, a senha precisa ser forte */
+  if (VIS_SENHA_INICIAL.length < VIS_MIN_SENHA) throw new Error('A senha precisa ter pelo menos ' + VIS_MIN_SENHA + ' caracteres.');
   PropertiesService.getScriptProperties().setProperty(VIS_PROP_SENHA, VIS_SENHA_INICIAL);
   Logger.log('Senha do /visitas-recepcao-adm configurada. Volte VIS_SENHA_INICIAL para \'\'.');
 }
@@ -148,8 +151,25 @@ function visCodigoTipo_(nome) {
   for (var k in VIS_TIPOS) if (VIS_TIPOS.hasOwnProperty(k) && VIS_TIPOS[k] === n) return k;
   return '';
 }
+function visDigitos_(s) { return String(s === null || s === undefined ? '' : s).replace(/\D/g, ''); }
+/* spec 13.1: mesmas regras de assets/visitas.js (paridade testada) */
+function visCpfValido_(s) {
+  var d = visDigitos_(s);
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false;
+  for (var t = 9; t < 11; t++) {
+    var soma = 0;
+    for (var i = 0; i < t; i++) soma += Number(d.charAt(i)) * (t + 1 - i);
+    if (((soma * 10) % 11) % 10 !== Number(d.charAt(t))) return false;
+  }
+  return true;
+}
+function visTelefoneValido_(s) {
+  var d = visDigitos_(s);
+  return (d.length === 10 || d.length === 11) && Number(d.slice(0, 2)) >= 11;
+}
+function visPrimeiroNome_(s) { return visTexto_(s).split(' ')[0] || ''; }
 
-/* spec 4.2: o servidor e a autoridade */
+/* spec 4.2 + 13.3: o servidor e a autoridade */
 function visValidar_(req, hoje, agoraMin) {
   var emp = visEmpreendimento_(req.empreendimento);
   if (!emp) throw new VisFalha('invalido', 'Empreendimento desconhecido.', 'empreendimento');
@@ -165,13 +185,18 @@ function visValidar_(req, hoje, agoraMin) {
   if (data === hoje && (+m[1]) * 60 + (+m[2]) > agoraMin + 5) {
     throw new VisFalha('invalido', 'O horário não pode estar no futuro.', 'hora');
   }
+  var cliente = visTexto_(req.cliente);
+  if (!cliente) throw new VisFalha('invalido', 'Informe o nome do cliente.', 'cliente');
+  if (!visCpfValido_(req.cpf)) throw new VisFalha('invalido', 'CPF inválido. Confira os números.', 'cpf');
+  if (!visTelefoneValido_(req.telefone)) throw new VisFalha('invalido', 'Telefone com DDD, 10 ou 11 números.', 'telefone');
   var imobiliaria = tipo === 'imob' ? visTexto_(req.imobiliaria) : '';
   if (tipo === 'imob' && !imobiliaria) throw new VisFalha('invalido', 'Informe a imobiliária.', 'imobiliaria');
+  var corretor = visTexto_(req.corretor);
+  if (!corretor) throw new VisFalha('invalido', 'Informe o nome do corretor.', 'corretor');
   return {
     empreendimento: emp.nome, cidade: emp.cidade, data: data, hora: hora, tipo: tipo,
-    corretorHouse: tipo === 'house' ? visTexto_(req.corretorHouse) : '',
-    imobiliaria: imobiliaria,
-    corretorImob: tipo === 'imob' ? visTexto_(req.corretorImob) : ''
+    cliente: cliente, cpf: visDigitos_(req.cpf), telefone: visDigitos_(req.telefone),
+    imobiliaria: imobiliaria, corretor: corretor, gerente: visTexto_(req.gerente)
   };
 }
 
@@ -185,19 +210,41 @@ function visDeLinha_(l, ix) {
     empreendimento: String(l[ix['Empreendimento']]),
     cidade: String(l[ix['Cidade']]),
     tipo: visCodigoTipo_(l[ix['Tipo']]),
-    corretorHouse: String(l[ix['Corretor house']]),
+    cliente: String(l[ix['Nome do cliente']]),
+    cpf: visDigitos_(l[ix['CPF']]),
+    telefone: visDigitos_(l[ix['Telefone']]),
     imobiliaria: String(l[ix['Imobiliária']]),
-    corretorImob: String(l[ix['Corretor imobiliária']])
+    corretor: String(l[ix['Corretor']]),
+    gerente: String(l[ix['Gerente de vendas']])
   };
 }
 
+/* spec 13.3: so isto sai nas respostas publicas */
+function visResumo_(v) {
+  return {
+    id: v.id, data: v.data, hora: v.hora, empreendimento: v.empreendimento, tipo: v.tipo,
+    primeiroNome: visPrimeiroNome_(v.cliente), imobiliaria: v.imobiliaria || '', corretor: v.corretor || ''
+  };
+}
+
+/* mesmo CPF, mesmo stand e mesma data, entre as linhas ativas */
+function visCpfRepetido_(linhas, ix, v) {
+  for (var i = 0; i < linhas.length; i++) {
+    var l = linhas[i];
+    if (!visAtiva_(l, ix)) continue;
+    if (visDigitos_(l[ix['CPF']]) === v.cpf && String(l[ix['Empreendimento']]) === v.empreendimento &&
+        visBrParaIso_(l[ix['Data']]) === v.data) return true;
+  }
+  return false;
+}
+
 /* nomes distintos (sem caixa/acento), grafia mais frequente, ordem alfabetica */
-function visSugestoes_(linhas, ix, desde) {
+function visSugestoes_(linhas, ix, desde, coluna) {
   var grupos = Object.create(null), ordem = [];
   linhas.forEach(function (l) {
     if (!visAtiva_(l, ix)) return;
     if (visBrParaIso_(l[ix['Registrado em']]) < desde) return;
-    var nome = visTexto_(l[ix['Imobiliária']]), k = visChave_(nome);
+    var nome = visTexto_(l[ix[coluna]]), k = visChave_(nome);
     if (!k) return;
     if (!grupos[k]) { grupos[k] = Object.create(null); ordem.push(k); }
     grupos[k][nome] = (grupos[k][nome] || 0) + 1;
@@ -238,6 +285,7 @@ function visLer_() {
   return {
     aba: aba,
     indice: cab.indice,
+    largura: cab.largura,
     linhas: n ? aba.getRange(2, 1, n, cab.largura).getDisplayValues() : []
   };
 }
@@ -265,24 +313,28 @@ function visRegistrar_(req) {
     'Empreendimento': v.empreendimento,
     'Cidade': v.cidade,
     'Tipo': VIS_TIPOS[v.tipo],
-    'Corretor house': v.corretorHouse,
+    'Nome do cliente': v.cliente,
+    'CPF': v.cpf,
+    'Telefone': v.telefone,
     'Imobiliária': v.imobiliaria,
-    'Corretor imobiliária': v.corretorImob,
+    'Corretor': v.corretor,
+    'Gerente de vendas': v.gerente,
     'Excluída': '0',
     'Token': visHash_(token)
   };
-  visComLock_(function () {
-    var aba = visAba_();
-    var cab = visCabecalho_(aba);
+  var repetido = visComLock_(function () {
+    var t = visLer_();
+    var achou = visCpfRepetido_(t.linhas, t.indice, v);
     var linha = [];
-    for (var i = 0; i < cab.largura; i++) linha.push('');
-    Object.keys(valores).forEach(function (nome) { linha[cab.indice[nome]] = visNeutralizar_(valores[nome]); });
-    /* formato texto: a planilha nao converte data/hora e mantem o valor exato */
-    var faixa = aba.getRange(aba.getLastRow() + 1, 1, 1, cab.largura);
+    for (var i = 0; i < t.largura; i++) linha.push('');
+    Object.keys(valores).forEach(function (nome) { linha[t.indice[nome]] = visNeutralizar_(valores[nome]); });
+    /* formato texto: a planilha nao converte data/hora/CPF e mantem o valor exato */
+    var faixa = t.aba.getRange(t.aba.getLastRow() + 1, 1, 1, t.largura);
     faixa.setNumberFormat('@');
     faixa.setValues([linha]);
+    return achou;
   });
-  return { visita: v, token: token };
+  return { visita: visResumo_(v), token: token, cpfRepetido: repetido };
 }
 
 function visDia_(req) {
@@ -294,9 +346,17 @@ function visDia_(req) {
   t.linhas.forEach(function (l) {
     if (!visAtiva_(l, ix)) return;
     var v = visDeLinha_(l, ix);
-    if (v.empreendimento === emp.nome && v.data === data) visitas.push(v);
+    if (v.empreendimento === emp.nome && v.data === data) visitas.push(visResumo_(v));
   });
-  return { visitas: visitas, sugestoesImob: visSugestoes_(t.linhas, ix, visSomarDias_(visHoje_(), -VIS_DIAS_SUGESTOES)) };
+  var desde = visSomarDias_(visHoje_(), -VIS_DIAS_SUGESTOES);
+  return {
+    visitas: visitas,
+    sugestoes: {
+      imobiliarias: visSugestoes_(t.linhas, ix, desde, 'Imobiliária'),
+      corretores: visSugestoes_(t.linhas, ix, desde, 'Corretor'),
+      gerentes: visSugestoes_(t.linhas, ix, desde, 'Gerente de vendas')
+    }
+  };
 }
 
 /* spec 4.3: so exclui com o token do proprio navegador e no mesmo dia */
@@ -337,11 +397,13 @@ function testeVisitas() {
   var hoje = visHoje_();
   var r = visRegistrar_({
     empreendimento: VISITAS_EMPREENDIMENTOS[0].nome, data: hoje,
-    hora: Utilities.formatDate(new Date(), VIS_FUSO, 'HH:mm'), tipo: 'imob', imobiliaria: 'TESTE - pode ignorar'
+    hora: Utilities.formatDate(new Date(), VIS_FUSO, 'HH:mm'), tipo: 'imob', imobiliaria: 'TESTE - pode ignorar',
+    cliente: 'TESTE - pode ignorar', cpf: '52998224725', telefone: '19999999999', corretor: 'TESTE', gerente: ''
   });
-  Logger.log('registrar: ' + JSON.stringify(r.visita));
+  Logger.log('registrar: ' + JSON.stringify(r.visita) + ' cpfRepetido=' + r.cpfRepetido);
   var d = visDia_({ empreendimento: VISITAS_EMPREENDIMENTOS[0].nome, data: hoje });
-  Logger.log('dia: ' + d.visitas.length + ' visita(s), ' + d.sugestoesImob.length + ' sugestao(oes)');
+  Logger.log('dia: ' + d.visitas.length + ' visita(s); sugestoes: ' + d.sugestoes.imobiliarias.length + ' imob, ' +
+    d.sugestoes.corretores.length + ' corretor, ' + d.sugestoes.gerentes.length + ' gerente');
   Logger.log('excluir: ' + JSON.stringify(visExcluir_({ id: r.visita.id, token: r.token })));
   Logger.log('listar: ' + visListar_({ de: hoje, ate: hoje }).visitas.length + ' visita(s) ativas hoje');
 }
