@@ -374,7 +374,10 @@ window.SimUnidades = (function () {
       var r = linhas[i];
 
       if (querem.indexOf(normKey(col(r, ['nome', 'empreendimento']))) < 0) continue;
-      if (normKey(col(r, ['status', 'unidade'])) !== 'disponivel') continue;
+      /* so unidades vendaveis entram no seletor: Disponivel ou Mirror (mesmo
+         criterio do site). Reservada / Reservada aguardando revisao ficam de fora. */
+      var statusU = normKey(col(r, ['status', 'unidade']));
+      if (statusU !== 'disponivel' && statusU !== 'mirror') continue;
 
       var codigo = codigoUnidade(r);
       if (!codigo) continue;                  /* vagas de garagem e afins */

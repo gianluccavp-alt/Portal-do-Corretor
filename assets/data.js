@@ -351,6 +351,11 @@ function rowsToUnits(rows, empSheetName) {
     if (wantNorms.indexOf(normKey(empVal)) < 0) continue;
     var isExtra = normKey(empVal) !== normKey(empSheetName); // veio de um nome agregado
 
+    // so entram as unidades Disponivel ou Mirror; Reservada e Reservada aguardando
+    // revisao de proposta (e qualquer outro status) ficam de fora do site
+    var statusU = normKey(findFirst(r, [['status', 'unidade'], ['status']]));
+    if (statusU !== 'disponivel' && statusU !== 'mirror') continue;
+
     var produto = findFirst(r, [['produto'], ['direcional']]);
     var apMatch = produto ? produto.match(/BL\d+-(\d+)/) : null;
 
