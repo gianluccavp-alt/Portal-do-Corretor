@@ -12,8 +12,8 @@
         var VIS_SENHA_INICIAL = '';
       por a senha do dashboard (minimo de 12 caracteres), selecione configurarSenhaVisitas >
       Executar (autorize) e depois volte a linha para ''.
-   4. Se ja existir uma aba VISITAS da versao anterior (v1), apague ou renomeie antes: a v2 cria a aba nova com o cabecalho certo.
-   5. Selecione testeVisitas > Executar > confira o log.
+   4. Se ja existir uma aba VISITAS de uma versao anterior, apague ou renomeie antes: a v3 cria as abas VISITAS e RECEPCIONISTAS com o cabecalho certo.
+   5. Selecione testeVisitas > Executar > confira o log (cria e apaga uma conta de teste).
    6. Implantar > Nova implantacao > Tipo: App da Web
         Executar como: Eu
         Quem tem acesso: Qualquer pessoa
@@ -22,10 +22,18 @@
    Ao alterar o codigo: Implantar > Gerenciar implantacoes > editar >
    Nova versao (a URL /exec continua a mesma).
 
-   ---------- EMPREENDIMENTOS ----------
-   VISITAS_EMPREENDIMENTOS precisa ter os mesmos nomes de
-   window.CITIES no assets/config.js. O teste
-   tests/visitas-gs.test.js falha se as listas divergirem.
+   ---------- EMPREENDIMENTOS E PDVS ----------
+   VISITAS_EMPREENDIMENTOS tem so os de Ribeirao Preto do
+   window.CITIES (assets/config.js) e VISITAS_PDVS precisa bater com
+   PDVS de assets/visitas.js. O teste tests/visitas-gs.test.js falha
+   se as listas divergirem.
+
+   ---------- CONTAS ----------
+   As recepcionistas se cadastram em /visitas-recepcao e o comercial
+   aprova em /visitas-recepcao-adm. A senha fica so como hash (aba
+   RECEPCIONISTAS) e a sessao vale ate a meia-noite. O segredo da
+   sessao (Script Property VISITAS_SEGREDO) e criado sozinho; apagar
+   essa propriedade derruba todas as sessoes.
    ============================================================ */
 
 var VIS_ABA = 'VISITAS';
@@ -38,8 +46,8 @@ var VIS_DIAS_SUGESTOES = 90;
 var VIS_DIAS_RETROATIVOS = 7;
 var VIS_MAX_DIAS_LISTAR = 92;
 var VIS_TIPOS = { esp: 'Espontânea', house: 'Corretor house', imob: 'Imobiliária' };
-var VIS_COLUNAS = ['ID', 'Registrado em', 'Data', 'Horário', 'Empreendimento', 'Cidade', 'Tipo',
-  'Nome do cliente', 'CPF', 'Telefone', 'Imobiliária', 'Corretor', 'Gerente de vendas', 'Excluída', 'Token'];
+var VIS_COLUNAS = ['ID', 'Registrado em', 'Data', 'Horário', 'PDV', 'Empreendimento', 'Cidade', 'Tipo',
+  'Nome do cliente', 'CPF', 'Telefone', 'Imobiliária', 'Corretor', 'Gerente de vendas', 'Lançado por', 'Excluída'];
 var VIS_MIN_SENHA = 12;
 /* ---------- contas das recepcionistas (spec 14) ---------- */
 var VIS_ABA_CONTAS = 'RECEPCIONISTAS';
@@ -54,17 +62,12 @@ var VIS_MSG_SESSAO = 'Sua sessão terminou. Entre de novo.';
 /* sem 0/O/o, 1/l/I */
 var VIS_TEMP_ALFABETO = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 var VISITAS_PDVS = ['Zona Sul RP', 'Centro RP'];
+/* spec 14.1: por enquanto so Ribeirao Preto */
 var VISITAS_EMPREENDIMENTOS = [
-  { nome: 'Alta Vista Mangará', cidade: 'Campinas' },
-  { nome: 'Cores da Mata Mangará', cidade: 'Campinas' },
-  { nome: 'Casa Prado Residencial Riva', cidade: 'Campinas' },
-  { nome: 'Seleto Amoreiras', cidade: 'Campinas' },
-  { nome: 'Universo - Parque Alphaville', cidade: 'Campinas' },
   { nome: 'Village Park', cidade: 'Ribeirão Preto' },
   { nome: 'Village Gaia', cidade: 'Ribeirão Preto' },
   { nome: 'Reserva Direcional Jardim Botânico', cidade: 'Ribeirão Preto' },
-  { nome: 'Direcional Conquista Clube Ipiranga', cidade: 'Ribeirão Preto' },
-  { nome: 'Conquista Vila da Mata', cidade: 'Sorocaba' }
+  { nome: 'Direcional Conquista Clube Ipiranga', cidade: 'Ribeirão Preto' }
 ];
 
 function configurarSenhaVisitas() {
@@ -117,9 +120,9 @@ function visRoteador_(req) {
     case 'entrar': return visEntrar_(req);
     case 'cadastrar': return visCadastrar_(req);
     case 'trocarSenha': return visTrocarSenha_(req);
-    case 'registrar': return visRegistrar_(req);
-    case 'dia': return visDia_(req);
-    case 'excluir': return visExcluir_(req);
+    case 'registrar': return visRegistrar_(req, visSessao_(req, false));
+    case 'dia': return visDia_(req, visSessao_(req, false));
+    case 'excluir': return visExcluir_(req, visSessao_(req, false));
   }
   /* daqui para baixo: so com a senha do dashboard */
   visConferirSenha_(req.senha);
@@ -205,6 +208,8 @@ function visPrimeiroNome_(s) { return visTexto_(s).split(' ')[0] || ''; }
 
 /* spec 4.2 + 13.3: o servidor e a autoridade */
 function visValidar_(req, hoje, agoraMin) {
+  var pdv = String(req.pdv || '');
+  if (VISITAS_PDVS.indexOf(pdv) < 0) throw new VisFalha('invalido', 'Escolha o PDV.', 'pdv');
   var emp = visEmpreendimento_(req.empreendimento);
   if (!emp) throw new VisFalha('invalido', 'Empreendimento desconhecido.', 'empreendimento');
   var tipo = String(req.tipo || '');
@@ -228,7 +233,7 @@ function visValidar_(req, hoje, agoraMin) {
   var corretor = visTexto_(req.corretor);
   if (!corretor) throw new VisFalha('invalido', 'Informe o nome do corretor.', 'corretor');
   return {
-    empreendimento: emp.nome, cidade: emp.cidade, data: data, hora: hora, tipo: tipo,
+    pdv: pdv, empreendimento: emp.nome, cidade: emp.cidade, data: data, hora: hora, tipo: tipo,
     cliente: cliente, cpf: visDigitos_(req.cpf), telefone: visDigitos_(req.telefone),
     imobiliaria: imobiliaria, corretor: corretor, gerente: visTexto_(req.gerente)
   };
@@ -241,6 +246,7 @@ function visDeLinha_(l, ix) {
     id: String(l[ix['ID']]),
     data: visBrParaIso_(l[ix['Data']]),
     hora: String(l[ix['Horário']]).trim(),
+    pdv: String(l[ix['PDV']]),
     empreendimento: String(l[ix['Empreendimento']]),
     cidade: String(l[ix['Cidade']]),
     tipo: visCodigoTipo_(l[ix['Tipo']]),
@@ -249,24 +255,26 @@ function visDeLinha_(l, ix) {
     telefone: visDigitos_(l[ix['Telefone']]),
     imobiliaria: String(l[ix['Imobiliária']]),
     corretor: String(l[ix['Corretor']]),
-    gerente: String(l[ix['Gerente de vendas']])
+    gerente: String(l[ix['Gerente de vendas']]),
+    lancadoPor: String(l[ix['Lançado por']]).trim()
   };
 }
 
-/* spec 13.3: so isto sai nas respostas publicas */
-function visResumo_(v) {
+/* spec 14.5: so isto sai nas respostas da recepcao; o usuario de quem lancou nao sai */
+function visResumo_(v, usuario) {
   return {
-    id: v.id, data: v.data, hora: v.hora, empreendimento: v.empreendimento, tipo: v.tipo,
-    primeiroNome: visPrimeiroNome_(v.cliente), imobiliaria: v.imobiliaria || '', corretor: v.corretor || ''
+    id: v.id, data: v.data, hora: v.hora, pdv: v.pdv || '', empreendimento: v.empreendimento, tipo: v.tipo,
+    primeiroNome: visPrimeiroNome_(v.cliente), imobiliaria: v.imobiliaria || '', corretor: v.corretor || '',
+    minha: !!usuario && v.lancadoPor === usuario
   };
 }
 
-/* mesmo CPF, mesmo stand e mesma data, entre as linhas ativas */
+/* mesmo CPF, mesmo PDV e mesma data, entre as linhas ativas */
 function visCpfRepetido_(linhas, ix, v) {
   for (var i = 0; i < linhas.length; i++) {
     var l = linhas[i];
     if (!visAtiva_(l, ix)) continue;
-    if (visDigitos_(l[ix['CPF']]) === v.cpf && String(l[ix['Empreendimento']]) === v.empreendimento &&
+    if (visDigitos_(l[ix['CPF']]) === v.cpf && String(l[ix['PDV']]) === v.pdv &&
         visBrParaIso_(l[ix['Data']]) === v.data) return true;
   }
   return false;
@@ -288,6 +296,26 @@ function visSugestoes_(linhas, ix, desde, coluna) {
     Object.keys(g).forEach(function (n) { if (melhor === null || g[n] > g[melhor]) melhor = n; });
     return melhor;
   }).sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); }).slice(0, VIS_MAX_SUGESTOES);
+}
+
+/* spec 14.3: exclui so a propria visita, registrada hoje */
+function visPodeExcluir_(l, ix, id, usuario, hoje) {
+  return !!usuario && String(l[ix['ID']]) === id && visAtiva_(l, ix) &&
+    String(l[ix['Lançado por']]).trim() === usuario && visBrParaIso_(l[ix['Registrado em']]) === hoje;
+}
+function visContarPorUsuario_(linhas, ix, desde) {
+  var qtd = Object.create(null);
+  linhas.forEach(function (l) {
+    if (!visAtiva_(l, ix) || visBrParaIso_(l[ix['Data']]) < desde) return;
+    var u = String(l[ix['Lançado por']]).trim();
+    if (u) qtd[u] = (qtd[u] || 0) + 1;
+  });
+  return qtd;
+}
+function visNomesPorUsuario_(t) {
+  var nomes = Object.create(null);
+  t.linhas.forEach(function (l) { var c = visContaDeLinha_(l, t.indice); if (c.usuario) nomes[c.usuario] = c.nome; });
+  return nomes;
 }
 
 /* ---------- planilha ---------- */
@@ -469,18 +497,19 @@ function visRegistrarFalha_(cache, usuario) {
 function visLimparFalhas_(cache, usuario) { cache.remove(visChaveFalhas_(usuario)); }
 
 /* ---------- acoes ---------- */
-function visRegistrar_(req) {
+function visRegistrar_(req, conta) {
   var agora = new Date();
   var hoje = Utilities.formatDate(agora, VIS_FUSO, 'yyyy-MM-dd');
   var hm = Utilities.formatDate(agora, VIS_FUSO, 'HH:mm').split(':');
   var v = visValidar_(req, hoje, (+hm[0]) * 60 + (+hm[1]));
-  var token = Utilities.getUuid();
   v.id = 'V' + agora.getTime() + Utilities.getUuid().slice(0, 4).toUpperCase();
+  v.lancadoPor = conta.usuario;
   var valores = {
     'ID': v.id,
     'Registrado em': Utilities.formatDate(agora, VIS_FUSO, 'dd/MM/yyyy HH:mm:ss'),
     'Data': visIsoParaBr_(v.data),
     'Horário': v.hora,
+    'PDV': v.pdv,
     'Empreendimento': v.empreendimento,
     'Cidade': v.cidade,
     'Tipo': VIS_TIPOS[v.tipo],
@@ -490,8 +519,8 @@ function visRegistrar_(req) {
     'Imobiliária': v.imobiliaria,
     'Corretor': v.corretor,
     'Gerente de vendas': v.gerente,
-    'Excluída': '0',
-    'Token': visHash_(token)
+    'Lançado por': conta.usuario,
+    'Excluída': '0'
   };
   var repetido = visComLock_(function () {
     var t = visLer_();
@@ -499,19 +528,19 @@ function visRegistrar_(req) {
     visAnexar_(t, valores);
     return achou;
   });
-  return { visita: visResumo_(v), token: token, cpfRepetido: repetido };
+  return { visita: visResumo_(v, conta.usuario), cpfRepetido: repetido };
 }
 
-function visDia_(req) {
-  var emp = visEmpreendimento_(req.empreendimento);
-  if (!emp) throw new VisFalha('invalido', 'Empreendimento desconhecido.', 'empreendimento');
+function visDia_(req, conta) {
+  var pdv = String(req.pdv || '');
+  if (VISITAS_PDVS.indexOf(pdv) < 0) throw new VisFalha('invalido', 'Escolha o PDV.', 'pdv');
   var data = String(req.data || '');
   if (!visDataValida_(data)) throw new VisFalha('invalido', 'Data inválida.', 'data');
   var t = visLer_(), ix = t.indice, visitas = [];
   t.linhas.forEach(function (l) {
     if (!visAtiva_(l, ix)) return;
     var v = visDeLinha_(l, ix);
-    if (v.empreendimento === emp.nome && v.data === data) visitas.push(visResumo_(v));
+    if (v.pdv === pdv && v.data === data) visitas.push(visResumo_(v, conta.usuario));
   });
   var desde = visSomarDias_(visHoje_(), -VIS_DIAS_SUGESTOES);
   return {
@@ -524,18 +553,15 @@ function visDia_(req) {
   };
 }
 
-/* spec 4.3: so exclui com o token do proprio navegador e no mesmo dia */
-function visExcluir_(req) {
-  var id = String(req.id || ''), token = String(req.token || '');
+/* spec 14.3: mesma resposta para id inexistente, de outra pessoa ou de outro dia */
+function visExcluir_(req, conta) {
+  var id = String(req.id || '');
   var hoje = visHoje_();
   return visComLock_(function () {
     var t = visLer_(), ix = t.indice;
     for (var i = 0; i < t.linhas.length; i++) {
-      var l = t.linhas[i];
-      if (String(l[ix['ID']]) !== id) continue;
-      var valido = token && String(l[ix['Token']]) === visHash_(token) &&
-        visBrParaIso_(l[ix['Registrado em']]) === hoje;
-      if (!valido) break;
+      if (String(t.linhas[i][ix['ID']]) !== id) continue;
+      if (!visPodeExcluir_(t.linhas[i], ix, id, conta.usuario, hoje)) break;
       t.aba.getRange(i + 2, ix['Excluída'] + 1).setValue('1');
       return { id: id };
     }
@@ -548,11 +574,14 @@ function visListar_(req) {
   if (!visDataValida_(de) || !visDataValida_(ate) || de > ate || visDiasEntre_(de, ate) > VIS_MAX_DIAS_LISTAR) {
     throw new VisFalha('invalido', 'Período inválido (máximo de 92 dias).', 'periodo');
   }
+  var nomes = visNomesPorUsuario_(visLerContas_());
   var t = visLer_(), ix = t.indice, visitas = [];
   t.linhas.forEach(function (l) {
     if (!visAtiva_(l, ix)) return;
     var v = visDeLinha_(l, ix);
-    if (v.data >= de && v.data <= ate) visitas.push(v);
+    if (v.data < de || v.data > ate) return;
+    v.lancadoPor = nomes[v.lancadoPor] || v.lancadoPor;
+    visitas.push(v);
   });
   return { visitas: visitas };
 }
@@ -637,8 +666,14 @@ function visTrocarSenha_(req) {
 function visNaoEncontrada_() { return new VisFalha('nao_encontrada', 'Recepcionista não encontrada.'); }
 
 function visContas_() {
-  var t = visLerContas_();
-  return { contas: t.linhas.map(function (l) { return visContaPublica_(visContaDeLinha_(l, t.indice), 0); }) };
+  var t = visLerContas_(), v = visLer_();
+  var qtd = visContarPorUsuario_(v.linhas, v.indice, visSomarDias_(visHoje_(), -29));
+  return {
+    contas: t.linhas.map(function (l) {
+      var c = visContaDeLinha_(l, t.indice);
+      return visContaPublica_(c, qtd[c.usuario] || 0);
+    })
+  };
 }
 
 function visMudarSituacao_(req, de, para) {
@@ -676,18 +711,39 @@ function visRedefinirSenha_(req) {
   });
 }
 
-/* ---------- conferencia manual (spec 4.6) ---------- */
+/* ---------- conferencia manual (spec 14.5) ---------- */
 function testeVisitas() {
-  var hoje = visHoje_();
-  var r = visRegistrar_({
-    empreendimento: VISITAS_EMPREENDIMENTOS[0].nome, data: hoje,
-    hora: Utilities.formatDate(new Date(), VIS_FUSO, 'HH:mm'), tipo: 'imob', imobiliaria: 'TESTE - pode ignorar',
-    cliente: 'TESTE - pode ignorar', cpf: '52998224725', telefone: '19999999999', corretor: 'TESTE', gerente: ''
+  var usuario = 'teste.visitas', senha = 'teste-' + Utilities.getUuid().slice(0, 8), sal = Utilities.getUuid();
+  var hash = visHashSenha_(senha, sal);
+  visComLock_(function () {
+    var t = visLerContas_();
+    if (visAcharConta_(t, usuario)) throw new Error('Ja existe a conta ' + usuario + ': apague a linha na aba ' + VIS_ABA_CONTAS + '.');
+    visAnexar_(t, {
+      'Usuário': usuario, 'Nome': 'TESTE - pode ignorar', 'Situação': 'ativa', 'Hash': hash, 'Sal': sal,
+      'Temporária': 'não', 'Criado em': visAgoraBr_(), 'Aprovado em': visAgoraBr_(), 'Último acesso': ''
+    });
   });
-  Logger.log('registrar: ' + JSON.stringify(r.visita) + ' cpfRepetido=' + r.cpfRepetido);
-  var d = visDia_({ empreendimento: VISITAS_EMPREENDIMENTOS[0].nome, data: hoje });
-  Logger.log('dia: ' + d.visitas.length + ' visita(s); sugestoes: ' + d.sugestoes.imobiliarias.length + ' imob, ' +
-    d.sugestoes.corretores.length + ' corretor, ' + d.sugestoes.gerentes.length + ' gerente');
-  Logger.log('excluir: ' + JSON.stringify(visExcluir_({ id: r.visita.id, token: r.token })));
-  Logger.log('listar: ' + visListar_({ de: hoje, ate: hoje }).visitas.length + ' visita(s) ativas hoje');
+  try {
+    var s = visEntrar_({ usuario: usuario, senha: senha });
+    Logger.log('entrar: ok, sessao ate ' + new Date(s.expira));
+    var conta = visSessao_({ sessao: s.sessao }, false);
+    var hoje = visHoje_();
+    var r = visRegistrar_({
+      pdv: VISITAS_PDVS[0], empreendimento: VISITAS_EMPREENDIMENTOS[0].nome, data: hoje,
+      hora: Utilities.formatDate(new Date(), VIS_FUSO, 'HH:mm'), tipo: 'imob', imobiliaria: 'TESTE - pode ignorar',
+      cliente: 'TESTE - pode ignorar', cpf: '52998224725', telefone: '19999999999', corretor: 'TESTE', gerente: ''
+    }, conta);
+    Logger.log('registrar: ' + JSON.stringify(r.visita) + ' cpfRepetido=' + r.cpfRepetido);
+    var d = visDia_({ pdv: VISITAS_PDVS[0], data: hoje }, conta);
+    Logger.log('dia: ' + d.visitas.length + ' visita(s) no PDV ' + VISITAS_PDVS[0]);
+    Logger.log('excluir: ' + JSON.stringify(visExcluir_({ id: r.visita.id }, conta)));
+    Logger.log('listar: ' + visListar_({ de: hoje, ate: hoje }).visitas.length + ' visita(s) ativas hoje');
+    Logger.log('contas: ' + visContas_().contas.length + ' conta(s)');
+  } finally {
+    visComLock_(function () {
+      var t = visLerContas_(), a = visAcharConta_(t, usuario);
+      if (a) t.aba.deleteRow(a.i + 2);
+    });
+    Logger.log('conta de teste apagada');
+  }
 }

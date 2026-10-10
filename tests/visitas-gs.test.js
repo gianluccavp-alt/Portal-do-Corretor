@@ -30,20 +30,23 @@ const plano = (x) => JSON.parse(JSON.stringify(x));
 const HOJE = '2026-10-09';
 const AGORA = 14 * 60 + 35;
 const base = {
-  empreendimento: 'Alta Vista Mangará', data: HOJE, hora: '14:35', tipo: 'esp',
+  pdv: 'Zona Sul RP', empreendimento: 'Village Park', data: HOJE, hora: '14:35', tipo: 'esp',
   cliente: '  Mariana   Souza Lima ', cpf: '529.982.247-25', telefone: '(19) 98765-4321', corretor: 'Rui', gerente: ''
 };
 const recusa = (campo) => (e) => e.codigo === 'invalido' && e.campo === campo;
 
-test('lista de empreendimentos do .gs bate com a do config.js', () => {
+test('empreendimentos do .gs são só os de Ribeirão Preto do config.js, e os PDVs batem', () => {
   const cfg = carregar('assets/config.js', { window: {} });
-  assert.deepEqual(plano(gs.VISITAS_EMPREENDIMENTOS), V.listaEmpreendimentos(cfg.window.CITIES));
+  const rp = V.empreendimentosVisitas(cfg.window.CITIES);
+  assert.equal(rp.length, 4);
+  assert.deepEqual(plano(gs.VISITAS_EMPREENDIMENTOS), rp);
+  assert.deepEqual(plano(gs.VISITAS_PDVS), V.PDVS);
 });
 
 test('visValidar_ devolve a visita completa normalizada, com cidade do servidor e só dígitos', () => {
   const v = plano(gs.visValidar_({ ...base, cidade: 'Outra', imobiliaria: 'Ignorada' }, HOJE, AGORA));
   assert.deepEqual(v, {
-    empreendimento: 'Alta Vista Mangará', cidade: 'Campinas', data: HOJE, hora: '14:35', tipo: 'esp',
+    pdv: 'Zona Sul RP', empreendimento: 'Village Park', cidade: 'Ribeirão Preto', data: HOJE, hora: '14:35', tipo: 'esp',
     cliente: 'Mariana Souza Lima', cpf: '52998224725', telefone: '19987654321', imobiliaria: '', corretor: 'Rui', gerente: ''
   });
 });
@@ -52,6 +55,10 @@ test('visValidar_ recusa empreendimento e tipo fora da lista', () => {
   assert.throws(() => gs.visValidar_({ ...base, empreendimento: 'Outro' }, HOJE, AGORA), recusa('empreendimento'));
   assert.throws(() => gs.visValidar_({ ...base, tipo: 'xyz' }, HOJE, AGORA), recusa('tipo'));
   assert.throws(() => gs.visValidar_({ ...base, tipo: 'constructor' }, HOJE, AGORA), recusa('tipo'));
+  assert.throws(() => gs.visValidar_({ ...base, empreendimento: 'Alta Vista Mangará' }, HOJE, AGORA), recusa('empreendimento'));
+  assert.throws(() => gs.visValidar_({ ...base, pdv: '' }, HOJE, AGORA), recusa('pdv'));
+  assert.throws(() => gs.visValidar_({ ...base, pdv: 'Zona Norte RP' }, HOJE, AGORA), recusa('pdv'));
+  assert.throws(() => gs.visValidar_({ ...base, pdv: 'Outro', empreendimento: 'Outro' }, HOJE, AGORA), recusa('pdv'));
 });
 
 test('visValidar_ limita data e horário como na v1', () => {
@@ -125,47 +132,71 @@ test('visNeutralizar_ e helpers de data', () => {
 function indice() { const ix = {}; gs.VIS_COLUNAS.forEach((n, i) => { ix[n] = i; }); return ix; }
 function linha(campos) { return gs.VIS_COLUNAS.map((n) => (campos[n] !== undefined ? campos[n] : '')); }
 
-test('VIS_COLUNAS na ordem da spec 13.2', () => {
-  assert.deepEqual(plano(gs.VIS_COLUNAS), ['ID', 'Registrado em', 'Data', 'Horário', 'Empreendimento', 'Cidade', 'Tipo',
-    'Nome do cliente', 'CPF', 'Telefone', 'Imobiliária', 'Corretor', 'Gerente de vendas', 'Excluída', 'Token']);
+test('VIS_COLUNAS na ordem da spec 14.4 (sem Token)', () => {
+  assert.deepEqual(plano(gs.VIS_COLUNAS), ['ID', 'Registrado em', 'Data', 'Horário', 'PDV', 'Empreendimento', 'Cidade', 'Tipo',
+    'Nome do cliente', 'CPF', 'Telefone', 'Imobiliária', 'Corretor', 'Gerente de vendas', 'Lançado por', 'Excluída']);
 });
 
-test('visDeLinha_ devolve a visita completa', () => {
+const COMPLETA = {
+  id: 'V1', data: '2026-10-09', hora: '14:30', pdv: 'Centro RP', empreendimento: 'Village Park', cidade: 'Ribeirão Preto', tipo: 'imob',
+  cliente: 'Mariana Souza', cpf: '52998224725', telefone: '19987654321', imobiliaria: 'Imob Ápice', corretor: 'Rui', gerente: 'Gil',
+  lancadoPor: 'recep.um'
+};
+
+test('visDeLinha_ devolve a visita completa com PDV e usuário de quem lançou', () => {
   const l = linha({
-    'ID': 'V1', 'Registrado em': '09/10/2026 14:35:00', 'Data': '09/10/2026', 'Horário': '14:30',
+    'ID': 'V1', 'Registrado em': '09/10/2026 14:35:00', 'Data': '09/10/2026', 'Horário': '14:30', 'PDV': 'Centro RP',
     'Empreendimento': 'Village Park', 'Cidade': 'Ribeirão Preto', 'Tipo': 'Imobiliária',
     'Nome do cliente': 'Mariana Souza', 'CPF': '52998224725', 'Telefone': '19987654321',
-    'Imobiliária': 'Imob Ápice', 'Corretor': 'Rui', 'Gerente de vendas': 'Gil', 'Excluída': '0'
+    'Imobiliária': 'Imob Ápice', 'Corretor': 'Rui', 'Gerente de vendas': 'Gil', 'Lançado por': ' recep.um ', 'Excluída': '0'
   });
-  assert.deepEqual(plano(gs.visDeLinha_(l, indice())), {
-    id: 'V1', data: '2026-10-09', hora: '14:30', empreendimento: 'Village Park', cidade: 'Ribeirão Preto', tipo: 'imob',
-    cliente: 'Mariana Souza', cpf: '52998224725', telefone: '19987654321', imobiliaria: 'Imob Ápice', corretor: 'Rui', gerente: 'Gil'
-  });
+  assert.deepEqual(plano(gs.visDeLinha_(l, indice())), COMPLETA);
 });
 
-test('visResumo_ é igual ao resumo do cliente e não expõe dados pessoais', () => {
-  const v = {
-    id: 'V1', data: '2026-10-09', hora: '14:30', empreendimento: 'Village Park', cidade: 'Ribeirão Preto', tipo: 'imob',
-    cliente: 'Mariana Souza', cpf: '52998224725', telefone: '19987654321', imobiliaria: 'Imob Ápice', corretor: 'Rui', gerente: 'Gil'
-  };
-  const r = plano(gs.visResumo_(v));
-  assert.deepEqual(r, V.resumirVisita(v));
-  const texto = JSON.stringify(r);
-  ['52998224725', '19987654321', 'Souza', 'Gil'].forEach((s) => assert.ok(!texto.includes(s), s));
+test('visResumo_ é igual ao resumo do cliente, marca "minha" e não expõe dados pessoais nem usuário', () => {
+  assert.deepEqual(plano(gs.visResumo_(COMPLETA, 'recep.um')), V.resumirVisita(COMPLETA, 'recep.um'));
+  assert.deepEqual(plano(gs.visResumo_(COMPLETA, 'recep.dois')), V.resumirVisita(COMPLETA, 'recep.dois'));
+  assert.equal(gs.visResumo_(COMPLETA, 'recep.um').minha, true);
+  const texto = JSON.stringify(gs.visResumo_(COMPLETA, 'recep.dois'));
+  ['52998224725', '19987654321', 'Souza', 'Gil', 'recep.um'].forEach((s) => assert.ok(!texto.includes(s), s));
 });
 
-test('visCpfRepetido_: mesmo CPF, mesmo stand e mesma data, só linhas ativas', () => {
+test('visCpfRepetido_: mesmo CPF, mesmo PDV e mesma data, só linhas ativas', () => {
   const ix = indice();
   const linhas = [
-    linha({ 'CPF': '52998224725', 'Empreendimento': 'Village Park', 'Data': '09/10/2026', 'Excluída': '0' }),
-    linha({ 'CPF': '11144477735', 'Empreendimento': 'Village Park', 'Data': '09/10/2026', 'Excluída': '1' })
+    linha({ 'CPF': '52998224725', 'PDV': 'Zona Sul RP', 'Empreendimento': 'Village Park', 'Data': '09/10/2026', 'Excluída': '0' }),
+    linha({ 'CPF': '11144477735', 'PDV': 'Zona Sul RP', 'Empreendimento': 'Village Park', 'Data': '09/10/2026', 'Excluída': '1' })
   ];
-  const v = (cpf, emp, data) => ({ cpf, empreendimento: emp, data });
-  assert.equal(gs.visCpfRepetido_(linhas, ix, v('52998224725', 'Village Park', '2026-10-09')), true);
-  assert.equal(gs.visCpfRepetido_(linhas, ix, v('52998224725', 'Village Gaia', '2026-10-09')), false);
-  assert.equal(gs.visCpfRepetido_(linhas, ix, v('52998224725', 'Village Park', '2026-10-08')), false);
-  assert.equal(gs.visCpfRepetido_(linhas, ix, v('11144477735', 'Village Park', '2026-10-09')), false);
-  assert.equal(gs.visCpfRepetido_([], ix, v('52998224725', 'Village Park', '2026-10-09')), false);
+  const v = (cpf, pdv, data, emp) => ({ cpf, pdv, data, empreendimento: emp || 'Village Gaia' });
+  assert.equal(gs.visCpfRepetido_(linhas, ix, v('52998224725', 'Zona Sul RP', '2026-10-09')), true);
+  assert.equal(gs.visCpfRepetido_(linhas, ix, v('52998224725', 'Centro RP', '2026-10-09', 'Village Park')), false);
+  assert.equal(gs.visCpfRepetido_(linhas, ix, v('52998224725', 'Zona Sul RP', '2026-10-08')), false);
+  assert.equal(gs.visCpfRepetido_(linhas, ix, v('11144477735', 'Zona Sul RP', '2026-10-09')), false);
+  assert.equal(gs.visCpfRepetido_([], ix, v('52998224725', 'Zona Sul RP', '2026-10-09')), false);
+});
+
+test('visPodeExcluir_: só a dona, só no dia do registro, só linha ativa', () => {
+  const ix = indice();
+  const l = linha({ 'ID': 'V9', 'Registrado em': '09/10/2026 10:00:00', 'Lançado por': 'recep.um', 'Excluída': '0' });
+  assert.equal(gs.visPodeExcluir_(l, ix, 'V9', 'recep.um', '2026-10-09'), true);
+  assert.equal(gs.visPodeExcluir_(l, ix, 'V9', 'recep.dois', '2026-10-09'), false);
+  assert.equal(gs.visPodeExcluir_(l, ix, 'V9', 'recep.um', '2026-10-10'), false);
+  assert.equal(gs.visPodeExcluir_(l, ix, 'V8', 'recep.um', '2026-10-09'), false);
+  assert.equal(gs.visPodeExcluir_(l, ix, 'V9', '', '2026-10-09'), false);
+  const excluida = linha({ 'ID': 'V9', 'Registrado em': '09/10/2026 10:00:00', 'Lançado por': 'recep.um', 'Excluída': '1' });
+  assert.equal(gs.visPodeExcluir_(excluida, ix, 'V9', 'recep.um', '2026-10-09'), false);
+});
+
+test('visContarPorUsuario_ conta visitas ativas desde a data, por quem lançou', () => {
+  const ix = indice();
+  const linhas = [
+    linha({ 'Data': '09/10/2026', 'Lançado por': 'recep.um', 'Excluída': '0' }),
+    linha({ 'Data': '01/10/2026', 'Lançado por': 'recep.um', 'Excluída': '0' }),
+    linha({ 'Data': '09/10/2026', 'Lançado por': 'recep.um', 'Excluída': '1' }),
+    linha({ 'Data': '09/10/2026', 'Lançado por': 'constructor', 'Excluída': '0' }),
+    linha({ 'Data': '01/08/2026', 'Lançado por': 'recep.dois', 'Excluída': '0' })
+  ];
+  assert.deepEqual(plano(gs.visContarPorUsuario_(linhas, ix, '2026-09-10')), { 'recep.um': 2, constructor: 1 });
 });
 
 test('visSugestoes_ por coluna: agrupa, ignora excluídas e antigas, ordena', () => {
