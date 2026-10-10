@@ -1,9 +1,10 @@
 /* ============================================================
    VISITAS DA RECEPCAO - interface de /visitas-recepcao
    ------------------------------------------------------------
-   Lancamento publico de visitas no stand + contador do dia.
-   Regras em assets/visitas.js; API em assets/visitas-api.js.
-   Spec: docs/superpowers/specs/2026-10-09-visitas-recepcao-design.md (secao 5)
+   Stand (Passo 1), cards que abrem o popup de cadastro (Passo 2)
+   e contador do dia. Regras em assets/visitas.js; API em
+   assets/visitas-api.js.
+   Spec: docs/superpowers/specs/2026-10-09-visitas-recepcao-design.md (secoes 5 e 13)
    ============================================================ */
 (function () {
   'use strict';
@@ -14,15 +15,14 @@
   var CHAVE_EMP = 'visitas.emp';
   var CHAVE_TOKENS = 'visitas.tokens';
   var INTERVALO_DIA = 60000;
-  var TEXTO_BOTAO = {
-    empreendimento: 'Escolha o empreendimento',
-    data: 'Informe a data',
-    hora: 'Informe o horário',
-    tipo: 'Escolha o tipo de visita',
-    imobiliaria: 'Informe a imobiliária'
+  var TITULO_TIPO = { esp: 'Espontânea', house: 'Agendada · Corretor house', imob: 'Imobiliária parceira' };
+  var ROTULO_CORRETOR = { esp: 'Corretor que atendeu', house: 'Corretor house que agendou', imob: 'Corretor da imobiliária' };
+  /* campo da API -> id do input no popup */
+  var CAMPOS = {
+    cliente: 'f-cliente', cpf: 'f-cpf', telefone: 'f-telefone', data: 'f-data',
+    hora: 'f-hora', imobiliaria: 'f-imob', corretor: 'f-corretor'
   };
-  var CAMPO_ID = { empreendimento: 'emp', data: 'data', hora: 'hora', imobiliaria: 'imob' };
-  var estado = { tipo: null, enviando: false, ultimo: null, timerFaixa: null, seqDia: 0 };
+  var estado = { tipo: null, enviando: false, ultimo: null, timerFaixa: null, seqDia: 0, hojeAplicado: '' };
 
   function $(id) { return document.getElementById(id); }
   function hoje() { return V.dataLocalIso(new Date()); }
@@ -42,7 +42,7 @@
   function guardarToken(id, token) { var t = lerTokens(); t[id] = { token: token, data: hoje() }; gravarLS(CHAVE_TOKENS, t); }
   function esquecerToken(id) { var t = lerTokens(); delete t[id]; gravarLS(CHAVE_TOKENS, t); }
 
-  /* ---------- formulario ---------- */
+  /* ---------- stand ---------- */
   function montarEmpreendimentos() {
     var sel = $('emp');
     (window.CITIES || []).forEach(function (c) {
@@ -60,43 +60,103 @@
     if (salvo && EMPS.some(function (e) { return e.nome === salvo; })) sel.value = salvo;
   }
 
-  function lerForm() {
+  /* ---------- popup (spec 13.1) ---------- */
+  function limparErro(id) {
+    $(id).setAttribute('aria-invalid', 'false');
+    $('e-' + id).textContent = '';
+    $('e-' + id).hidden = true;
+  }
+  function limparErros() {
+    Object.keys(CAMPOS).forEach(function (c) { limparErro(CAMPOS[c]); });
+    $('p-erro').hidden = true;
+  }
+  function mostrarErro(campo, msg) {
+    var id = CAMPOS[campo];
+    if (!id) return false;
+    $(id).setAttribute('aria-invalid', 'true');
+    $('e-' + id).textContent = msg;
+    $('e-' + id).hidden = false;
+    return true;
+  }
+  function atualizarBotao() {
+    $('p-registrar').disabled = estado.enviando;
+    $('p-registrar-txt').textContent = estado.enviando ? 'Registrando…' : 'Registrar visita';
+  }
+  function aplicarLimitesData(h) {
+    $('f-data').max = h;
+    $('f-data').min = V.somarDias(h, -7);
+  }
+
+  function abrirPopup(tipo) {
+    estado.tipo = tipo;
+    $('p-tipo').textContent = TITULO_TIPO[tipo];
+    $('p-ponto').style.background = V.TIPOS[tipo].cor;
+    $('p-emp').textContent = $('emp').value;
+    $('rot-corretor').textContent = ROTULO_CORRETOR[tipo];
+    $('bloco-imob').hidden = tipo !== 'imob';
+    ['f-cliente', 'f-cpf', 'f-telefone', 'f-imob', 'f-corretor', 'f-gerente'].forEach(function (id) { $(id).value = ''; });
+    var h = hoje();
+    aplicarLimitesData(h);
+    $('f-data').value = h;
+    $('f-hora').value = V.horaLocal(new Date());
+    limparErros();
+    estado.enviando = false;
+    atualizarBotao();
+    $('popup').showModal();
+    $('f-cliente').focus();
+  }
+  function fecharPopup() {
+    if ($('popup').open) $('popup').close();
+  }
+
+  function lerPopup() {
     return {
-      empreendimento: $('emp').value, data: $('data').value, hora: $('hora').value, tipo: estado.tipo,
-      corretorHouse: $('corretor-house').value, imobiliaria: $('imob').value, corretorImob: $('corretor-imob').value
+      empreendimento: $('emp').value, tipo: estado.tipo,
+      cliente: $('f-cliente').value, cpf: $('f-cpf').value, telefone: $('f-telefone').value,
+      data: $('f-data').value, hora: $('f-hora').value,
+      imobiliaria: estado.tipo === 'imob' ? $('f-imob').value : '',
+      corretor: $('f-corretor').value, gerente: $('f-gerente').value
     };
   }
 
-  function marcarInvalido(campo) {
-    ['emp', 'data', 'hora', 'imob'].forEach(function (id) {
-      $(id).setAttribute('aria-invalid', CAMPO_ID[campo] === id ? 'true' : 'false');
-    });
-  }
-
-  function atualizarBotao() {
-    var f = V.validarFormulario(lerForm());
-    $('registrar').disabled = estado.enviando || !f.ok;
-    $('registrar-txt').textContent = estado.enviando ? 'Registrando…' : f.ok ? 'Registrar visita' : TEXTO_BOTAO[f.faltando];
-  }
-
-  function escolherTipo(tipo) {
-    estado.tipo = tipo;
-    Array.prototype.forEach.call(document.querySelectorAll('.tipo'), function (b) {
-      b.setAttribute('aria-checked', b.getAttribute('data-tipo') === tipo ? 'true' : 'false');
-    });
-    $('extra-house').hidden = tipo !== 'house';
-    $('extra-imob').hidden = tipo !== 'imob';
+  function registrar(ev) {
+    if (ev) ev.preventDefault();
+    if (estado.enviando) return;
+    var dados = lerPopup();
+    var r = V.validarVisita(dados);
+    limparErros();
+    if (!r.ok) {
+      Object.keys(r.erros).forEach(function (c) { mostrarErro(c, r.erros[c]); });
+      if (CAMPOS[r.primeiro]) $(CAMPOS[r.primeiro]).focus();
+      return;
+    }
+    estado.enviando = true;
     atualizarBotao();
+    api.chamar('registrar', dados).then(function (resp) {
+      guardarToken(resp.visita.id, resp.token);
+      fecharPopup();
+      var texto = [resp.visita.hora, V.TIPOS[resp.visita.tipo].nome, resp.visita.primeiroNome].join(' · ');
+      if (resp.cpfRepetido) {
+        mostrarFaixa('aviso', 'Visita registrada. Atenção: este CPF já tinha visita hoje neste stand.', texto, true);
+      } else {
+        mostrarFaixa('ok', 'Visita registrada', texto, true);
+      }
+      estado.ultimo = resp.visita;
+      carregarDia();
+    }, function (f) {
+      if (f.codigo === 'invalido' && mostrarErro(f.campo, f.mensagem)) {
+        $(CAMPOS[f.campo]).focus();
+      } else {
+        $('p-erro').textContent = f.mensagem;
+        $('p-erro').hidden = false;
+      }
+    }).then(function () {
+      estado.enviando = false;
+      atualizarBotao();
+    });
   }
 
-  function limparTipo() {
-    $('corretor-house').value = '';
-    $('imob').value = '';
-    $('corretor-imob').value = '';
-    escolherTipo(null);
-  }
-
-  /* ---------- faixa de retorno (spec 5.2) ---------- */
+  /* ---------- faixa de retorno (spec 5.2 e 13.1) ---------- */
   function mostrarFaixa(tipo, titulo, texto, comDesfazer) {
     clearTimeout(estado.timerFaixa);
     $('faixa').className = 'faixa ' + tipo;
@@ -106,7 +166,7 @@
     $('faixa-texto').textContent = texto;
     $('faixa-desfazer').hidden = !comDesfazer;
     $('faixa').hidden = false;
-    /* no celular a faixa fica no topo do formulario: traz para a tela */
+    /* no celular a faixa fica no topo: traz para a tela */
     try { $('faixa').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { /* navegador antigo */ }
     if (tipo === 'ok') estado.timerFaixa = setTimeout(esconderFaixa, 8000);
   }
@@ -114,32 +174,6 @@
     clearTimeout(estado.timerFaixa);
     $('faixa').hidden = true;
     estado.ultimo = null;
-  }
-
-  /* ---------- acoes ---------- */
-  function registrar() {
-    var dados = lerForm();
-    if (estado.enviando || !V.validarFormulario(dados).ok) return;
-    estado.enviando = true;
-    atualizarBotao();
-    marcarInvalido(null);
-    api.chamar('registrar', dados).then(function (r) {
-      guardarToken(r.visita.id, r.token);
-      mostrarFaixa('ok', 'Visita registrada',
-        [r.visita.hora, V.TIPOS[r.visita.tipo].nome, r.visita.empreendimento].join(' · '), true);
-      estado.ultimo = r.visita;
-      limparTipo();
-      $('hora').value = V.horaLocal(new Date());
-      carregarDia();
-    }, function (f) {
-      marcarInvalido(f.campo);
-      mostrarFaixa('err', 'A visita não foi registrada', f.mensagem, false);
-      /* foco no campo citado; preventScroll para a faixa continuar visivel */
-      if (CAMPO_ID[f.campo]) $(CAMPO_ID[f.campo]).focus({ preventScroll: true });
-    }).then(function () {
-      estado.enviando = false;
-      atualizarBotao();
-    });
   }
 
   function excluir(id) {
@@ -152,7 +186,6 @@
         f.codigo === 'nao_encontrada' ? 'Ele pode já ter sido excluído.' : f.mensagem, false);
     }).then(carregarDia);
   }
-
   function desfazer() {
     var v = estado.ultimo;
     if (!v) return;
@@ -162,14 +195,14 @@
 
   /* ---------- contador do dia (spec 5.3) ---------- */
   function carregarDia() {
-    var emp = $('emp').value, data = $('data').value;
-    if (!emp || !data) return;
+    var emp = $('emp').value, data = hoje();
+    if (!emp) return;
     var seq = ++estado.seqDia;
     api.chamar('dia', { empreendimento: emp, data: data }).then(function (r) {
       if (seq !== estado.seqDia) return;
       var visitas = (r.visitas || []).filter(function (v) { return V.TIPOS[v.tipo]; });
       renderContador(visitas, emp, data);
-      renderSugestoes(r.sugestoesImob || []);
+      renderSugestoes(r.sugestoes || {});
       $('cont-erro').hidden = true;
     }, function (f) {
       if (seq !== estado.seqDia) return;
@@ -179,8 +212,8 @@
   }
 
   function renderContador(visitas, emp, data) {
-    var t = V.totaisPorTipo(visitas), eHoje = data === hoje();
-    $('cont-titulo').textContent = (eHoje ? 'Visitas hoje · ' : 'Visitas em ') + V.dataCurta(data);
+    var t = V.totaisPorTipo(visitas);
+    $('cont-titulo').textContent = 'Visitas hoje · ' + V.dataCurta(data);
     $('cont-emp').textContent = emp;
     $('cont-total').textContent = t.total;
     $('cont-total-lab').textContent = t.total === 1 ? 'visita registrada' : 'visitas registradas';
@@ -191,7 +224,7 @@
     var tokens = lerTokens(), ul = $('ultimos');
     ul.textContent = '';
     V.recentes(visitas, 6).forEach(function (v) { ul.appendChild(itemLista(v, !!tokens[v.id])); });
-    $('vazio').textContent = eHoje ? 'Nenhuma visita registrada hoje neste stand.' : 'Nenhuma visita registrada neste dia.';
+    $('vazio').textContent = 'Nenhuma visita registrada hoje neste stand.';
     $('vazio').hidden = visitas.length > 0;
   }
 
@@ -220,7 +253,7 @@
     var ponto = el('span', 'ponto');
     ponto.style.background = V.TIPOS[v.tipo].cor;
     tipo.appendChild(ponto);
-    tipo.appendChild(document.createTextNode(V.TIPOS[v.tipo].nome));
+    tipo.appendChild(document.createTextNode((v.primeiroNome ? v.primeiroNome + ' · ' : '') + V.TIPOS[v.tipo].nome));
     txt.appendChild(tipo);
     txt.appendChild(el('span', 'lista-det', V.detalhe(v)));
     li.appendChild(el('span', 'lista-hora num', v.hora));
@@ -241,66 +274,65 @@
     return li;
   }
 
-  function renderSugestoes(nomes) {
-    var dl = $('lista-imob');
+  function preencherLista(id, nomes) {
+    var dl = $(id);
     dl.textContent = '';
-    nomes.forEach(function (n) { var o = document.createElement('option'); o.value = n; dl.appendChild(o); });
+    (nomes || []).forEach(function (n) { var o = document.createElement('option'); o.value = n; dl.appendChild(o); });
+  }
+  function renderSugestoes(s) {
+    preencherLista('lista-imob', s.imobiliarias);
+    preencherLista('lista-corretor', s.corretores);
+    preencherLista('lista-gerente', s.gerentes);
   }
 
-  /* ---------- inicio ---------- */
-  /* virada do dia: tablet aberto de um dia pro outro nao pode gravar na data antiga */
-  var hojeAplicado = '';
-  function aplicarHoje() {
-    var h = hoje();
-    if (h === hojeAplicado) return false;
-    var anterior = hojeAplicado;
-    hojeAplicado = h;
-    $('data').max = h;
-    $('data').min = V.somarDias(h, -7);
-    if (!anterior || $('data').value === anterior) {
-      $('data').value = h;
-      $('hora').value = V.horaLocal(new Date());
-    }
-    return !!anterior;
-  }
+  /* ---------- virada do dia ---------- */
+  /* tablet aberto de um dia pro outro: popup aberto nao pode gravar na data antiga */
   function checarVirada() {
     if (document.visibilityState !== 'visible') return;
-    if (aplicarHoje()) atualizarBotao();
+    var h = hoje();
+    if (estado.hojeAplicado && h !== estado.hojeAplicado && $('popup').open) {
+      aplicarLimitesData(h);
+      if ($('f-data').value === estado.hojeAplicado) {
+        $('f-data').value = h;
+        $('f-hora').value = V.horaLocal(new Date());
+      }
+    }
+    estado.hojeAplicado = h;
     carregarDia();
   }
 
+  /* ---------- inicio ---------- */
   function iniciar() {
     montarEmpreendimentos();
-    aplicarHoje();
-    $('hora').value = V.horaLocal(new Date());
+    estado.hojeAplicado = hoje();
     $('aviso-demo').hidden = !api.demo;
 
     Array.prototype.forEach.call(document.querySelectorAll('.tipo'), function (b) {
-      b.addEventListener('click', function () { escolherTipo(b.getAttribute('data-tipo')); });
+      b.addEventListener('click', function () { abrirPopup(b.getAttribute('data-tipo')); });
     });
-    $('agora').addEventListener('click', function () { $('hora').value = V.horaLocal(new Date()); atualizarBotao(); });
     $('emp').addEventListener('change', function () {
       gravarLS(CHAVE_EMP, $('emp').value);
       esconderFaixa();
       carregarDia();
-      atualizarBotao();
     });
-    $('data').addEventListener('change', function () { carregarDia(); atualizarBotao(); });
-    ['hora', 'imob', 'corretor-house', 'corretor-imob'].forEach(function (id) {
-      $(id).addEventListener('input', atualizarBotao);
-    });
+    $('p-form').addEventListener('submit', registrar);
+    $('p-cancelar').addEventListener('click', fecharPopup);
+    $('p-fechar').addEventListener('click', fecharPopup);
+    $('popup').addEventListener('close', function () { estado.tipo = null; });
+    $('f-agora').addEventListener('click', function () { $('f-hora').value = V.horaLocal(new Date()); limparErro('f-hora'); });
+    $('f-cpf').addEventListener('input', function () { $('f-cpf').value = V.mascaraCpf($('f-cpf').value); });
+    $('f-telefone').addEventListener('input', function () { $('f-telefone').value = V.mascaraTelefone($('f-telefone').value); });
     /* campo corrigido deixa de ficar marcado como invalido */
-    ['emp', 'data', 'hora', 'imob'].forEach(function (id) {
-      $(id).addEventListener('input', function () { $(id).setAttribute('aria-invalid', 'false'); });
-      $(id).addEventListener('change', function () { $(id).setAttribute('aria-invalid', 'false'); });
+    Object.keys(CAMPOS).forEach(function (c) {
+      var id = CAMPOS[c];
+      $(id).addEventListener('input', function () { limparErro(id); });
+      $(id).addEventListener('change', function () { limparErro(id); });
     });
-    $('registrar').addEventListener('click', registrar);
     $('faixa-desfazer').addEventListener('click', desfazer);
     /* soma lancamentos de outro aparelho no mesmo stand */
     document.addEventListener('visibilitychange', checarVirada);
     setInterval(checarVirada, INTERVALO_DIA);
 
-    escolherTipo(null);
     carregarDia();
   }
 

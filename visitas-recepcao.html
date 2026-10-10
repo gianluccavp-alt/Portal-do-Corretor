@@ -96,6 +96,29 @@ h1,h2,p{margin:0}
 .vazio{padding:18px 0;text-align:center;color:var(--slate);font-size:14px}
 .erro-txt{color:var(--err);font-size:13.5px;font-weight:500}
 
+.faixa.aviso{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn)}
+.tipo-dica{font-size:13px;color:var(--slate)}
+
+/* ---------- popup (spec 13.1) ---------- */
+.popup{width:min(560px,calc(100vw - 24px));max-height:calc(100vh - 24px);padding:0;border:1px solid var(--hair);border-radius:16px;box-shadow:0 18px 50px rgba(28,32,34,.22);color:var(--ink);background:var(--surface)}
+.popup::backdrop{background:rgba(28,32,34,.45)}
+.popup form{display:flex;flex-direction:column;max-height:calc(100vh - 24px)}
+.p-cab{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:1.2rem 1.35rem 1rem;border-bottom:1px solid var(--hair)}
+.p-cab-txt{display:flex;flex-direction:column;gap:4px;min-width:0}
+.p-cab h2{font-size:1.25rem;font-weight:700;letter-spacing:-.3px}
+.p-corpo{padding:1.2rem 1.35rem;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
+.p-corpo .linha .campo{flex:1 1 200px}
+.sub-step{font-size:12.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
+.erro-campo{font-size:13px;font-weight:500;color:var(--err)}
+.p-rodape{display:flex;flex-wrap:wrap-reverse;justify-content:flex-end;gap:10px;padding:1rem 1.35rem 1.2rem;border-top:1px solid var(--hair)}
+.p-rodape .btn{flex:1 1 140px;min-height:48px}
+.p-rodape .btn-p{flex:2 1 220px;width:auto;min-height:48px;font-size:1rem}
+@media (max-width:600px){
+  .popup{width:100%;max-width:100%;height:100%;max-height:100%;margin:0;border:0;border-radius:0}
+  .popup form{height:100%;max-height:100%}
+  .p-corpo{flex:1 1 auto}
+}
+
 @media (max-width:700px){
   .hero{padding:1.5rem 1rem 1.25rem}.hero h1{font-size:1.5rem}.hero img{height:30px}
   .wrap{padding:1.25rem 1rem 3rem}.card{padding:1rem}
@@ -108,7 +131,7 @@ h1,h2,p{margin:0}
     <div class="hero-txt">
       <span class="step">Portal do Corretor · Recepção</span>
       <h1>Registro de visitas</h1>
-      <p>Registre cada cliente que entrar no stand: escolha o tipo de visita e toque em registrar.</p>
+      <p>Escolha o stand e toque no tipo de visita para registrar o cliente.</p>
     </div>
     <img src="assets/img/logo-direcional-header.png" alt="Direcional">
   </div>
@@ -126,74 +149,38 @@ h1,h2,p{margin:0}
     </div>
 
     <div class="card">
-      <span class="step">Passo 1 · Stand, data e horário</span>
-      <div class="linha">
-        <label class="campo" style="flex:2 1 260px">
-          <span class="lab">Empreendimento</span>
-          <select class="inp" id="emp"></select>
-        </label>
-        <label class="campo" style="flex:1 1 150px">
-          <span class="lab">Data</span>
-          <input class="inp" id="data" type="date">
-        </label>
-        <div class="campo" style="flex:1 1 170px">
-          <label class="lab" for="hora">Horário</label>
-          <div style="display:flex;gap:8px">
-            <input class="inp" id="hora" type="time" style="flex:1 1 auto;min-width:0">
-            <button type="button" class="btn" id="agora">Agora</button>
-          </div>
-        </div>
-      </div>
-      <p class="dica">Data e horário vêm preenchidos com o momento atual. Só altere se estiver lançando uma visita que já passou.</p>
+      <span class="step">Passo 1 · Stand</span>
+      <label class="campo">
+        <span class="lab">Empreendimento</span>
+        <select class="inp" id="emp"></select>
+      </label>
+      <p class="dica">Fica salvo neste aparelho. Só troque se mudar de stand.</p>
     </div>
 
     <div class="card">
       <span class="step">Passo 2 · Como o cliente chegou?</span>
-      <div class="tipos" role="radiogroup" aria-label="Tipo de visita">
-        <button type="button" class="tipo" role="radio" aria-checked="false" data-tipo="esp">
+      <div class="tipos" aria-label="Tipo de visita">
+        <button type="button" class="tipo" aria-haspopup="dialog" data-tipo="esp">
           <span class="tipo-ico" style="background:#F5F6F7;color:#3A4043">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M6 21V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v17"/><path d="M12.5 12h.01"/><path d="M16 9l4 3-4 3"/></svg>
           </span>
           <span><span class="tipo-nome">Espontânea</span><span class="tipo-desc">Chegou ao stand sem agendamento</span></span>
         </button>
-        <button type="button" class="tipo" role="radio" aria-checked="false" data-tipo="house">
+        <button type="button" class="tipo" aria-haspopup="dialog" data-tipo="house">
           <span class="tipo-ico" style="background:#FDEEF0;color:#E4032B">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M9 15.5l2 2 4-4"/></svg>
           </span>
           <span><span class="tipo-nome">Agendada · Corretor house</span><span class="tipo-desc">Agendada por um corretor da Direcional</span></span>
         </button>
-        <button type="button" class="tipo" role="radio" aria-checked="false" data-tipo="imob">
+        <button type="button" class="tipo" aria-haspopup="dialog" data-tipo="imob">
           <span class="tipo-ico" style="background:#EEF0F1;color:#5B6366">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/></svg>
           </span>
           <span><span class="tipo-nome">Imobiliária parceira</span><span class="tipo-desc">Trazido por corretor de imobiliária</span></span>
         </button>
       </div>
-
-      <div class="extra" id="extra-house" hidden>
-        <label class="campo">
-          <span class="lab">Corretor house que agendou <span class="opc">(opcional)</span></span>
-          <input class="inp" id="corretor-house" type="text" maxlength="80" autocomplete="off" placeholder="Nome do corretor">
-        </label>
-      </div>
-
-      <div class="extra" id="extra-imob" hidden>
-        <label class="campo">
-          <span class="lab">Imobiliária</span>
-          <input class="inp" id="imob" type="text" maxlength="80" autocomplete="off" list="lista-imob" placeholder="Digite ou escolha">
-          <datalist id="lista-imob"></datalist>
-        </label>
-        <label class="campo">
-          <span class="lab">Corretor da imobiliária <span class="opc">(opcional)</span></span>
-          <input class="inp" id="corretor-imob" type="text" maxlength="80" autocomplete="off" placeholder="Nome do corretor">
-        </label>
-      </div>
+      <p class="tipo-dica">Toque no tipo para abrir o cadastro da visita.</p>
     </div>
-
-    <button type="button" class="btn btn-p" id="registrar" disabled>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-      <span id="registrar-txt">Escolha o tipo de visita</span>
-    </button>
   </section>
 
   <aside class="col-cont" aria-label="Visitas do dia">
@@ -230,6 +217,83 @@ h1,h2,p{margin:0}
     </div>
   </aside>
 </main>
+
+<dialog class="popup" id="popup" aria-labelledby="p-titulo">
+  <form id="p-form" novalidate>
+    <div class="p-cab">
+      <div class="p-cab-txt">
+        <span class="lab rotulo-tipo"><span class="ponto" id="p-ponto"></span><span id="p-tipo"></span></span>
+        <h2 id="p-titulo">Registrar visita</h2>
+        <span class="dica" id="p-emp"></span>
+      </div>
+      <button type="button" class="btn btn-i" id="p-fechar" aria-label="Fechar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="p-corpo">
+      <span class="sub-step">Cliente</span>
+      <label class="campo">
+        <span class="lab">Nome do cliente</span>
+        <input class="inp" id="f-cliente" type="text" maxlength="80" autocomplete="off" placeholder="Nome completo" aria-describedby="e-f-cliente">
+        <span class="erro-campo" id="e-f-cliente" hidden></span>
+      </label>
+      <div class="linha">
+        <label class="campo">
+          <span class="lab">CPF</span>
+          <input class="inp" id="f-cpf" type="text" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="000.000.000-00" aria-describedby="e-f-cpf">
+          <span class="erro-campo" id="e-f-cpf" hidden></span>
+        </label>
+        <label class="campo">
+          <span class="lab">Telefone</span>
+          <input class="inp" id="f-telefone" type="tel" inputmode="numeric" maxlength="15" autocomplete="off" placeholder="(00) 00000-0000" aria-describedby="e-f-telefone">
+          <span class="erro-campo" id="e-f-telefone" hidden></span>
+        </label>
+      </div>
+      <span class="sub-step">Visita</span>
+      <div class="linha">
+        <label class="campo">
+          <span class="lab">Data</span>
+          <input class="inp" id="f-data" type="date" aria-describedby="e-f-data">
+          <span class="erro-campo" id="e-f-data" hidden></span>
+        </label>
+        <div class="campo">
+          <label class="lab" for="f-hora">Horário</label>
+          <div style="display:flex;gap:8px">
+            <input class="inp" id="f-hora" type="time" style="flex:1 1 auto;min-width:0" aria-describedby="e-f-hora">
+            <button type="button" class="btn" id="f-agora">Agora</button>
+          </div>
+          <span class="erro-campo" id="e-f-hora" hidden></span>
+        </div>
+      </div>
+      <div id="bloco-imob" hidden>
+        <label class="campo">
+          <span class="lab">Imobiliária</span>
+          <input class="inp" id="f-imob" type="text" maxlength="80" autocomplete="off" list="lista-imob" placeholder="Digite ou escolha" aria-describedby="e-f-imob">
+          <datalist id="lista-imob"></datalist>
+          <span class="erro-campo" id="e-f-imob" hidden></span>
+        </label>
+      </div>
+      <div class="linha">
+        <label class="campo">
+          <span class="lab" id="rot-corretor">Nome do corretor</span>
+          <input class="inp" id="f-corretor" type="text" maxlength="80" autocomplete="off" list="lista-corretor" placeholder="Nome do corretor" aria-describedby="e-f-corretor">
+          <datalist id="lista-corretor"></datalist>
+          <span class="erro-campo" id="e-f-corretor" hidden></span>
+        </label>
+        <label class="campo">
+          <span class="lab">Gerente de vendas <span class="opc">(opcional)</span></span>
+          <input class="inp" id="f-gerente" type="text" maxlength="80" autocomplete="off" list="lista-gerente" placeholder="Nome do gerente">
+          <datalist id="lista-gerente"></datalist>
+        </label>
+      </div>
+      <p class="erro-txt" id="p-erro" role="alert" hidden></p>
+    </div>
+    <div class="p-rodape">
+      <button type="button" class="btn" id="p-cancelar">Cancelar</button>
+      <button type="submit" class="btn btn-p" id="p-registrar"><span id="p-registrar-txt">Registrar visita</span></button>
+    </div>
+  </form>
+</dialog>
 
 <script src="assets/config.js"></script>
 <script src="assets/visitas.js"></script>
