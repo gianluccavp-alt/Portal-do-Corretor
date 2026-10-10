@@ -41,6 +41,19 @@ var VIS_TIPOS = { esp: 'Espontânea', house: 'Corretor house', imob: 'Imobiliár
 var VIS_COLUNAS = ['ID', 'Registrado em', 'Data', 'Horário', 'Empreendimento', 'Cidade', 'Tipo',
   'Nome do cliente', 'CPF', 'Telefone', 'Imobiliária', 'Corretor', 'Gerente de vendas', 'Excluída', 'Token'];
 var VIS_MIN_SENHA = 12;
+/* ---------- contas das recepcionistas (spec 14) ---------- */
+var VIS_ABA_CONTAS = 'RECEPCIONISTAS';
+var VIS_COLUNAS_CONTAS = ['Usuário', 'Nome', 'Situação', 'Hash', 'Sal', 'Temporária', 'Criado em', 'Aprovado em', 'Último acesso'];
+var VIS_PROP_SEGREDO = 'VISITAS_SEGREDO';
+var VIS_ITERACOES = 1000;
+var VIS_MAX_FALHAS = 5;
+var VIS_BLOQUEIO_S = 900;
+var VIS_MAX_PENDENTES = 20;
+var VIS_FUSO_MS = 3 * 3600000; /* Brasilia, -03:00 fixo (sem horario de verao desde 2019) */
+var VIS_MSG_SESSAO = 'Sua sessão terminou. Entre de novo.';
+/* sem 0/O/o, 1/l/I */
+var VIS_TEMP_ALFABETO = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+var VISITAS_PDVS = ['Zona Sul RP', 'Centro RP'];
 var VISITAS_EMPREENDIMENTOS = [
   { nome: 'Alta Vista Mangará', cidade: 'Campinas' },
   { nome: 'Cores da Mata Mangará', cidade: 'Campinas' },
@@ -304,6 +317,109 @@ function visHash_(texto) {
   return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, texto, Utilities.Charset.UTF_8)
     .map(function (b) { return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('');
 }
+
+/* ---------- contas e sessao: helpers puros (spec 14.5) ---------- */
+function visNormUsuario_(s) { return String(s === null || s === undefined ? '' : s).trim().toLowerCase(); }
+function visUsuarioValido_(s) { return /^[a-z0-9][a-z0-9._-]{2,29}$/.test(String(s === null || s === undefined ? '' : s)); }
+/* mesmas regras e mensagens de assets/visitas.js (paridade testada) */
+function visValidarSenha_(senha, usuario) {
+  var s = String(senha === null || senha === undefined ? '' : senha);
+  if (s.length < 8 || s.length > 72) return 'A senha precisa ter de 8 a 72 caracteres.';
+  if (s.toLowerCase() === visNormUsuario_(usuario)) return 'A senha não pode ser igual ao usuário.';
+  return '';
+}
+function visValidarCadastro_(req) {
+  var nome = visTexto_(req.nome);
+  if (!nome) throw new VisFalha('invalido', 'Informe seu nome completo.', 'nome');
+  var usuario = visNormUsuario_(req.usuario);
+  if (!visUsuarioValido_(usuario)) throw new VisFalha('invalido', 'Use de 3 a 30 letras minúsculas, números, ponto, hífen ou sublinhado.', 'usuario');
+  var msg = visValidarSenha_(req.senha, usuario);
+  if (msg) throw new VisFalha('invalido', msg, 'senha');
+  return { nome: nome, usuario: usuario, senha: String(req.senha) };
+}
+/* sem bcrypt no Apps Script: SHA-256 iterado encarece tentativas se a planilha vazar */
+function visHashSenha_(senha, sal) {
+  var h = visHash_(String(sal) + String(senha));
+  for (var i = 1; i < VIS_ITERACOES; i++) h = visHash_(h + sal);
+  return h;
+}
+function visExpiraMeiaNoite_(agoraMs) {
+  var dia = Math.floor((agoraMs - VIS_FUSO_MS) / 86400000);
+  return (dia + 1) * 86400000 + VIS_FUSO_MS;
+}
+/* o comeco do hash entra na assinatura: trocar a senha derruba as sessoes abertas */
+function visAssinar_(usuario, expira, hash, segredo) {
+  return Utilities.base64EncodeWebSafe(
+    Utilities.computeHmacSha256Signature(usuario + '.' + expira + '.' + String(hash).slice(0, 12), segredo));
+}
+function visCriarToken_(usuario, hash, agoraMs, segredo) {
+  var expira = visExpiraMeiaNoite_(agoraMs);
+  return { token: usuario + '.' + expira + '.' + visAssinar_(usuario, expira, hash, segredo), expira: expira };
+}
+/* o usuario pode ter ponto: le de tras para frente */
+function visLerToken_(token) {
+  var partes = String(token === null || token === undefined ? '' : token).split('.');
+  if (partes.length < 3) return null;
+  var assinatura = partes.pop(), expira = partes.pop(), usuario = partes.join('.');
+  if (!assinatura || !/^\d{1,15}$/.test(expira) || !visUsuarioValido_(usuario)) return null;
+  return { usuario: usuario, expira: Number(expira), assinatura: assinatura };
+}
+/* tempo nao depende de onde esta a primeira diferenca */
+function visIguais_(a, b) {
+  a = String(a); b = String(b);
+  var dif = a.length ^ b.length;
+  for (var i = 0; i < Math.max(a.length, b.length); i++) dif |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  return dif === 0;
+}
+function visConferirToken_(token, conta, agoraMs, segredo) {
+  var p = visLerToken_(token);
+  if (!p || !conta || p.usuario !== conta.usuario || agoraMs >= p.expira) return false;
+  return visIguais_(p.assinatura, visAssinar_(p.usuario, p.expira, conta.hash, segredo));
+}
+function visSessaoOk_(token, conta, agoraMs, segredo, permitirTemporaria) {
+  if (!conta || conta.situacao !== 'ativa' || (conta.temporaria && !permitirTemporaria)) return false;
+  return visConferirToken_(token, conta, agoraMs, segredo);
+}
+function visSenhaTemporaria_(bytes) {
+  var s = '';
+  for (var i = 0; i < 9; i++) {
+    if (i === 3 || i === 6) s += '-';
+    s += VIS_TEMP_ALFABETO.charAt(bytes[i] % VIS_TEMP_ALFABETO.length);
+  }
+  return s;
+}
+function visContaDeLinha_(l, ix) {
+  return {
+    usuario: String(l[ix['Usuário']]).trim(),
+    nome: String(l[ix['Nome']]),
+    situacao: String(l[ix['Situação']]).trim(),
+    hash: String(l[ix['Hash']]).trim(),
+    sal: String(l[ix['Sal']]).trim(),
+    temporaria: String(l[ix['Temporária']]).trim() === 'sim',
+    criadoEm: String(l[ix['Criado em']]),
+    aprovadoEm: String(l[ix['Aprovado em']]),
+    ultimoAcesso: String(l[ix['Último acesso']])
+  };
+}
+/* o que o dashboard ve de cada conta: nunca hash nem sal */
+function visContaPublica_(c, visitas30) {
+  return {
+    usuario: c.usuario, nome: c.nome, situacao: c.situacao, temporaria: c.temporaria,
+    criadoEm: c.criadoEm, ultimoAcesso: c.ultimoAcesso, visitas30: visitas30 || 0
+  };
+}
+function visContarPendentes_(linhas, ix) {
+  return linhas.filter(function (l) { return String(l[ix['Situação']]).trim() === 'pendente'; }).length;
+}
+/* tentativas erradas por usuario, no CacheService */
+function visChaveFalhas_(usuario) { return 'vis.falhas.' + usuario; }
+function visBloqueado_(cache, usuario) { return Number(cache.get(visChaveFalhas_(usuario)) || 0) >= VIS_MAX_FALHAS; }
+function visRegistrarFalha_(cache, usuario) {
+  var n = Number(cache.get(visChaveFalhas_(usuario)) || 0) + 1;
+  cache.put(visChaveFalhas_(usuario), String(n), VIS_BLOQUEIO_S);
+  return n;
+}
+function visLimparFalhas_(cache, usuario) { cache.remove(visChaveFalhas_(usuario)); }
 
 /* ---------- acoes ---------- */
 function visRegistrar_(req) {

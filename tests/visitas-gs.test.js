@@ -10,7 +10,21 @@ function carregar(arquivo, ctx) {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '..', arquivo), 'utf8'), ctx);
   return ctx;
 }
-const gs = carregar('docs/apps-script-visitas.gs', {});
+const crypto = require('node:crypto');
+const assinado = (buf) => Array.from(buf, (b) => (b > 127 ? b - 256 : b));
+const UtilitiesFalso = {
+  DigestAlgorithm: { SHA_256: 'sha256' },
+  Charset: { UTF_8: 'utf8' },
+  computeDigest: (alg, texto) => assinado(crypto.createHash('sha256').update(String(texto), 'utf8').digest()),
+  computeHmacSha256Signature: (valor, chave) => assinado(crypto.createHmac('sha256', chave).update(valor, 'utf8').digest()),
+  base64EncodeWebSafe: (bytes) => Buffer.from(bytes.map((b) => b & 255)).toString('base64').replace(/\+/g, '-').replace(/\//g, '_'),
+  getUuid: () => crypto.randomUUID()
+};
+const gs = carregar('docs/apps-script-visitas.gs', { Utilities: UtilitiesFalso });
+function cacheFalso() {
+  const m = new Map();
+  return { get: (k) => (m.has(k) ? m.get(k) : null), put: (k, v) => { m.set(k, String(v)); }, remove: (k) => { m.delete(k); } };
+}
 const plano = (x) => JSON.parse(JSON.stringify(x));
 
 const HOJE = '2026-10-09';
@@ -174,4 +188,125 @@ test('visStackSemMensagem_ tira a linha da mensagem do stack', () => {
   assert.ok(!limpo.includes('52998224725'));
   assert.equal(limpo, '    at JSON.parse (<anonymous>)\n    at doPost (Codigo:80:20)');
   assert.equal(gs.visStackSemMensagem_(undefined), '');
+});
+
+test('usuário e senha: mesmo resultado no cliente e no servidor', () => {
+  const usuarios = ['ana', 'maria.silva', 'recep_2', '3ab', 'ab', '-abc', 'joão', 'Maria', '', 'a'.repeat(30), 'a'.repeat(31)];
+  usuarios.forEach((u) => assert.equal(gs.visUsuarioValido_(u), V.usuarioValido(u), u));
+  assert.equal(gs.visNormUsuario_('  Maria.Silva '), V.normalizarUsuario('  Maria.Silva '));
+  const senhas = [['12345678', 'ana'], ['1234567', 'ana'], ['x'.repeat(73), 'ana'], ['Maria.Silva', 'maria.silva'], [undefined, 'ana']];
+  senhas.forEach(([s, u]) => assert.equal(gs.visValidarSenha_(s, u), V.validarSenha(s, u), String(s)));
+});
+
+test('visValidarCadastro_ normaliza e recusa com o campo certo', () => {
+  assert.deepEqual(plano(gs.visValidarCadastro_({ nome: ' Maria  Silva ', usuario: ' Maria.Silva ', senha: 'segredo123' })),
+    { nome: 'Maria Silva', usuario: 'maria.silva', senha: 'segredo123' });
+  assert.throws(() => gs.visValidarCadastro_({ nome: ' ', usuario: 'ana', senha: 'segredo123' }), recusa('nome'));
+  assert.throws(() => gs.visValidarCadastro_({ nome: 'Ana', usuario: 'a b', senha: 'segredo123' }), recusa('usuario'));
+  assert.throws(() => gs.visValidarCadastro_({ nome: 'Ana', usuario: 'ana', senha: '123' }), recusa('senha'));
+});
+
+test('visHashSenha_: determinístico por sal, diferente com outro sal ou outra senha, sem a senha em claro', () => {
+  const h = gs.visHashSenha_('segredo123', 'sal-1');
+  assert.match(h, /^[0-9a-f]{64}$/);
+  assert.equal(gs.visHashSenha_('segredo123', 'sal-1'), h);
+  assert.notEqual(gs.visHashSenha_('segredo123', 'sal-2'), h);
+  assert.notEqual(gs.visHashSenha_('segredo124', 'sal-1'), h);
+  let esperado = crypto.createHash('sha256').update('sal-1segredo123').digest('hex');
+  for (let i = 1; i < 1000; i++) esperado = crypto.createHash('sha256').update(esperado + 'sal-1').digest('hex');
+  assert.equal(h, esperado);
+});
+
+test('visExpiraMeiaNoite_: próxima meia-noite de Brasília (03h UTC)', () => {
+  assert.equal(gs.visExpiraMeiaNoite_(Date.UTC(2026, 9, 10, 2, 59)), Date.UTC(2026, 9, 10, 3, 0));
+  assert.equal(gs.visExpiraMeiaNoite_(Date.UTC(2026, 9, 10, 3, 0)), Date.UTC(2026, 9, 11, 3, 0));
+  assert.equal(gs.visExpiraMeiaNoite_(Date.UTC(2026, 9, 10, 15, 0)), Date.UTC(2026, 9, 11, 3, 0));
+  assert.equal(gs.visExpiraMeiaNoite_(Date.UTC(2026, 11, 31, 20, 0)), Date.UTC(2027, 0, 1, 3, 0));
+});
+
+test('token de sessão: válido, vencido, alterado, outro usuário, hash trocado, segredo errado', () => {
+  const agora = Date.UTC(2026, 9, 10, 15, 0);
+  const conta = { usuario: 'maria.silva', hash: 'a'.repeat(64), situacao: 'ativa', temporaria: false };
+  const t = gs.visCriarToken_(conta.usuario, conta.hash, agora, 'segredo');
+  assert.equal(t.expira, Date.UTC(2026, 9, 11, 3, 0));
+  assert.ok(t.token.startsWith('maria.silva.' + t.expira + '.'));
+  assert.deepEqual(plano(gs.visLerToken_(t.token)).usuario, 'maria.silva');
+  assert.equal(gs.visConferirToken_(t.token, conta, agora, 'segredo'), true);
+  assert.equal(gs.visConferirToken_(t.token, conta, t.expira, 'segredo'), false);
+  assert.equal(gs.visConferirToken_(t.token, conta, agora, 'outro'), false);
+  assert.equal(gs.visConferirToken_(t.token.slice(0, -2) + 'xx', conta, agora, 'segredo'), false);
+  const futuro = t.token.replace('.' + t.expira + '.', '.' + (t.expira + 86400000) + '.');
+  assert.equal(gs.visConferirToken_(futuro, conta, agora, 'segredo'), false);
+  assert.equal(gs.visConferirToken_(t.token, { ...conta, usuario: 'outra' }, agora, 'segredo'), false);
+  assert.equal(gs.visConferirToken_(t.token, { ...conta, hash: 'b'.repeat(64) }, agora, 'segredo'), false);
+  assert.equal(gs.visConferirToken_('lixo', conta, agora, 'segredo'), false);
+  assert.equal(gs.visConferirToken_(undefined, conta, agora, 'segredo'), false);
+  assert.equal(gs.visLerToken_('ab.123.x'), null);
+  assert.equal(gs.visLerToken_('ana.12a.x'), null);
+  assert.equal(gs.visLerToken_('ana.123.'), null);
+});
+
+test('visSessaoOk_ exige conta ativa e, fora da troca de senha, sem senha temporária', () => {
+  const agora = Date.UTC(2026, 9, 10, 15, 0);
+  const conta = { usuario: 'ana', hash: 'c'.repeat(64), situacao: 'ativa', temporaria: false };
+  const { token } = gs.visCriarToken_('ana', conta.hash, agora, 's');
+  assert.equal(gs.visSessaoOk_(token, conta, agora, 's', false), true);
+  assert.equal(gs.visSessaoOk_(token, { ...conta, situacao: 'desativada' }, agora, 's', false), false);
+  assert.equal(gs.visSessaoOk_(token, { ...conta, situacao: 'pendente' }, agora, 's', true), false);
+  assert.equal(gs.visSessaoOk_(token, { ...conta, temporaria: true }, agora, 's', false), false);
+  assert.equal(gs.visSessaoOk_(token, { ...conta, temporaria: true }, agora, 's', true), true);
+  assert.equal(gs.visSessaoOk_(token, null, agora, 's', true), false);
+});
+
+test('visIguais_', () => {
+  assert.equal(gs.visIguais_('abc', 'abc'), true);
+  assert.equal(gs.visIguais_('abc', 'abd'), false);
+  assert.equal(gs.visIguais_('abc', 'abcd'), false);
+  assert.equal(gs.visIguais_('', ''), true);
+});
+
+test('visSenhaTemporaria_: 3 grupos de 3, sem caracteres ambíguos', () => {
+  const s = gs.visSenhaTemporaria_([0, 1, 2, 55, 56, 100, 200, 254, 255]);
+  assert.match(s, /^[A-Za-z0-9]{3}-[A-Za-z0-9]{3}-[A-Za-z0-9]{3}$/);
+  for (let i = 0; i < 50; i++) {
+    const bytes = Array.from(crypto.randomBytes(9));
+    assert.doesNotMatch(gs.visSenhaTemporaria_(bytes), /[0O1lIo]/);
+  }
+  assert.equal(gs.visSenhaTemporaria_([0, 0, 0, 0, 0, 0, 0, 0, 0]), 'aaa-aaa-aaa');
+  assert.equal(V.validarSenha(s, 'ana'), '');
+});
+
+function indiceContas() { const ix = {}; gs.VIS_COLUNAS_CONTAS.forEach((n, i) => { ix[n] = i; }); return ix; }
+function linhaConta(c) { return gs.VIS_COLUNAS_CONTAS.map((n) => (c[n] !== undefined ? c[n] : '')); }
+
+test('VIS_COLUNAS_CONTAS, visContaDeLinha_ e visContaPublica_ (sem hash nem sal)', () => {
+  assert.deepEqual(plano(gs.VIS_COLUNAS_CONTAS), ['Usuário', 'Nome', 'Situação', 'Hash', 'Sal', 'Temporária', 'Criado em', 'Aprovado em', 'Último acesso']);
+  const l = linhaConta({
+    'Usuário': ' ana ', 'Nome': 'Ana Lima', 'Situação': 'ativa', 'Hash': 'h'.repeat(64), 'Sal': 's1', 'Temporária': 'sim',
+    'Criado em': '01/10/2026 09:00:00', 'Aprovado em': '01/10/2026 10:00:00', 'Último acesso': '10/10/2026 08:02:00'
+  });
+  const c = plano(gs.visContaDeLinha_(l, indiceContas()));
+  assert.deepEqual(c, {
+    usuario: 'ana', nome: 'Ana Lima', situacao: 'ativa', hash: 'h'.repeat(64), sal: 's1', temporaria: true,
+    criadoEm: '01/10/2026 09:00:00', aprovadoEm: '01/10/2026 10:00:00', ultimoAcesso: '10/10/2026 08:02:00'
+  });
+  const p = plano(gs.visContaPublica_(c, 12));
+  assert.deepEqual(p, { usuario: 'ana', nome: 'Ana Lima', situacao: 'ativa', temporaria: true, criadoEm: '01/10/2026 09:00:00', ultimoAcesso: '10/10/2026 08:02:00', visitas30: 12 });
+  assert.ok(!JSON.stringify(p).includes('h'.repeat(64)));
+  assert.equal(gs.visContaPublica_(c).visitas30, 0);
+  const linhas = [linhaConta({ 'Situação': 'pendente' }), linhaConta({ 'Situação': 'ativa' }), linhaConta({ 'Situação': ' pendente ' })];
+  assert.equal(gs.visContarPendentes_(linhas, indiceContas()), 2);
+});
+
+test('bloqueio: 5 falhas bloqueiam, login certo limpa', () => {
+  const cache = cacheFalso();
+  for (let i = 1; i <= 4; i++) {
+    assert.equal(gs.visRegistrarFalha_(cache, 'ana'), i);
+    assert.equal(gs.visBloqueado_(cache, 'ana'), false);
+  }
+  assert.equal(gs.visRegistrarFalha_(cache, 'ana'), 5);
+  assert.equal(gs.visBloqueado_(cache, 'ana'), true);
+  assert.equal(gs.visBloqueado_(cache, 'bia'), false);
+  gs.visLimparFalhas_(cache, 'ana');
+  assert.equal(gs.visBloqueado_(cache, 'ana'), false);
 });
