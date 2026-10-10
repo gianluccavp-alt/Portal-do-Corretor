@@ -172,6 +172,7 @@ tbody tr:hover td{background:var(--muted)}
     <div class="acoes">
       <span class="dica" id="atualizado-em"></span>
       <button type="button" class="btn" id="atualizar">Atualizar</button>
+      <span class="dica">Contém dados pessoais (CPF e telefone).</span>
       <button type="button" class="btn" id="exportar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
         Exportar CSV
@@ -260,10 +261,12 @@ tbody tr:hover td{background:var(--muted)}
   <section class="card">
     <div class="cab"><h2>Últimos lançamentos</h2><span class="dica">do período filtrado, mais recentes primeiro</span></div>
     <div class="rolagem">
-      <table style="min-width:640px">
+      <table style="min-width:1080px">
         <thead><tr>
-          <th scope="col">Data</th><th scope="col">Horário</th><th scope="col">Empreendimento</th>
-          <th scope="col">Tipo</th><th scope="col">Detalhe</th>
+          <th scope="col">Data</th><th scope="col">Horário</th><th scope="col">Cliente</th>
+          <th scope="col">CPF</th><th scope="col">Telefone</th><th scope="col">Empreendimento</th>
+          <th scope="col">Tipo</th><th scope="col">Imobiliária</th><th scope="col">Corretor</th>
+          <th scope="col">Gerente</th>
         </tr></thead>
         <tbody id="tab-recentes"></tbody>
       </table>

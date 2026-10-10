@@ -93,11 +93,14 @@ Spec: `docs/superpowers/specs/2026-09-28-pendencias-vendas-design.md`.
 
 ## Visitas da recepção
 
-- `/visitas-recepcao`: a recepcionista lança cada visita do stand (espontânea,
-  agendada por corretor house ou trazida por imobiliária) e vê o total do dia.
-  Página pública, sem senha.
-- `/visitas-recepcao-adm`: dashboard do comercial, com senha (Script Property
-  `VISITAS_SENHA` no Apps Script; a senha não fica no repositório).
+- `/visitas-recepcao`: a recepcionista escolhe o stand e toca no tipo de visita
+  (espontânea, agendada por corretor house ou trazida por imobiliária). Abre um popup
+  com nome, CPF e telefone do cliente, data e horário, corretor (obrigatório), gerente
+  de vendas (opcional) e, no tipo imobiliária, a imobiliária. Página pública, sem senha:
+  ela nunca recebe CPF, telefone nem nome completo de volta do servidor.
+- `/visitas-recepcao-adm`: dashboard do comercial, com senha forte (mínimo de 12
+  caracteres, Script Property `VISITAS_SENHA` no Apps Script; a senha não fica no
+  repositório). Mostra e exporta CPF e telefone: é dado pessoal (LGPD).
 - Dados na aba `VISITAS` da planilha de visitas, via Web App
   (`docs/apps-script-visitas.gs`, instruções de implantação no cabeçalho).
 - `window.VISITAS_APPS_SCRIPT_URL` em `assets/config.js` = URL `/exec` do Web App.

@@ -247,6 +247,9 @@
       var tr = el('tr');
       celula(tr, V.dataCurta(v.data), 'num');
       celula(tr, v.hora, 'forte num');
+      celula(tr, v.cliente, 'forte');
+      celula(tr, V.formatarCpf(v.cpf), 'num');
+      celula(tr, V.formatarTelefone(v.telefone), 'num');
       celula(tr, v.empreendimento);
       var td = celula(tr, '');
       var badge = el('span', 'badge');
@@ -255,7 +258,9 @@
       badge.appendChild(ponto);
       badge.appendChild(document.createTextNode(V.TIPOS[v.tipo].nome));
       td.appendChild(badge);
-      celula(tr, V.detalhe(v), 'suave');
+      celula(tr, v.imobiliaria || '—', 'suave');
+      celula(tr, v.corretor || '—');
+      celula(tr, v.gerente || '—', 'suave');
       tb.appendChild(tr);
     });
     $('sem-recentes').hidden = lista.length > 0;
