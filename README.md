@@ -93,22 +93,20 @@ Spec: `docs/superpowers/specs/2026-09-28-pendencias-vendas-design.md`.
 
 ## Visitas da recepção
 
-- `/visitas-recepcao`: a recepcionista escolhe o stand e toca no tipo de visita
-  (espontânea, agendada por corretor house ou trazida por imobiliária). Abre um popup
-  com nome, CPF e telefone do cliente, data e horário, corretor (obrigatório), gerente
-  de vendas (opcional) e, no tipo imobiliária, a imobiliária. Página pública, sem senha:
-  ela nunca recebe CPF, telefone nem nome completo de volta do servidor.
-- `/visitas-recepcao-adm`: dashboard do comercial, com senha forte (mínimo de 12
-  caracteres, Script Property `VISITAS_SENHA` no Apps Script; a senha não fica no
-  repositório). Mostra e exporta CPF e telefone: é dado pessoal (LGPD).
-- Dados na aba `VISITAS` da planilha de visitas, via Web App
-  (`docs/apps-script-visitas.gs`, instruções de implantação no cabeçalho).
-- `window.VISITAS_APPS_SCRIPT_URL` em `assets/config.js` = URL `/exec` do Web App.
-  Vazio (ou `?demo=1`) = **modo demonstração** com dados fictícios na memória da aba.
-- Se já existir uma aba `VISITAS` da versão anterior (v1), apague ou renomeie antes de
-  publicar: a v2 cria a aba nova com o cabeçalho certo.
-- Empreendimento novo no `config.js` também precisa entrar em
-  `VISITAS_EMPREENDIMENTOS` no `.gs`. O teste de paridade avisa se esquecer.
+- `/visitas-recepcao`: cada recepcionista entra com usuário e senha próprios.
+  - A conta é criada pela própria recepcionista ("Criar conta") e só funciona depois que o comercial aprova no dashboard.
+  - A sessão vale até a meia-noite.
+  - Ela escolhe o PDV (Zona Sul RP ou Centro RP) e toca no tipo de visita.
+  - O popup pede empreendimento (só os de Ribeirão Preto), nome, CPF e telefone do cliente, data e horário, corretor e, no tipo imobiliária, a imobiliária. Gerente de vendas é opcional.
+  - Cada visita grava quem lançou; a recepcionista só exclui as próprias visitas do dia. A página nunca recebe CPF, telefone nem nome completo de volta do servidor.
+- `/visitas-recepcao-adm`: dashboard do comercial, com senha forte (mínimo de 12 caracteres, Script Property `VISITAS_SENHA` no Apps Script; a senha não fica no repositório).
+  - Filtro por PDV.
+  - Mostra e exporta CPF e telefone: é dado pessoal (LGPD).
+  - Aba **Recepcionistas**: aprovar ou recusar cadastros, desativar ou reativar contas e gerar senha temporária.
+- Dados nas abas `VISITAS` e `RECEPCIONISTAS` da planilha de visitas, via Web App (`docs/apps-script-visitas.gs`, instruções de implantação no cabeçalho). Senhas ficam só como hash.
+- `window.VISITAS_APPS_SCRIPT_URL` em `assets/config.js` = URL `/exec` do Web App. Vazio (ou `?demo=1`) = **modo demonstração** com dados e contas fictícios na memória da aba (`pendente.demo`, `desativada.demo` e `troca.demo` mostram os outros estados do login).
+- Se já existir uma aba `VISITAS` de uma versão anterior, apague ou renomeie antes de publicar: a v3 cria as abas novas com o cabeçalho certo.
+- Por enquanto o lançamento atende só Ribeirão Preto. Empreendimento novo de Ribeirão Preto no `config.js` também precisa entrar em `VISITAS_EMPREENDIMENTOS` no `.gs`; o teste de paridade avisa se esquecer.
 
 Spec: `docs/superpowers/specs/2026-10-09-visitas-recepcao-design.md`.
 
