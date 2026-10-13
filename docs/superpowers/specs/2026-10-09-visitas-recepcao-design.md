@@ -724,6 +724,10 @@ Todas são puras e testadas no Node via `vm`, com `Utilities` e `CacheService` f
   em "Sair" na troca de turno; o "Olá, {nome}" no topo deixa claro quem está logada.
 - **Enumeração de usuários pelo cadastro:** "Esse usuário já existe." revela que o usuário
   existe, mas o impacto é baixo porque ainda é preciso a senha e a aprovação.
+- **Bloqueio por tentativa em usuário alheio (DoS):** quem chuta o usuário de outra pessoa
+  consegue travá-la por 15 minutos. O comercial destrava com "Redefinir senha" ou "Reativar".
+- **Reativar no mesmo dia revive tokens antigos:** os tokens emitidos antes do "Desativar"
+  voltam a valer até a meia-noite, porque o token é amarrado ao hash e à situação atual.
 
 **Fora de escopo:**
 - "Esqueci minha senha" por e-mail: a recepcionista pede ao comercial, que usa "Redefinir
