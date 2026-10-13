@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Visitas nos stands · Administração | Portal do Corretor</title>
+<link rel="icon" type="image/webp" href="assets/img/favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<!-- Dashboard interno de visitas (com senha). Spec: docs/superpowers/specs/2026-10-09-visitas-recepcao-design.md
+     Telas: canvas "Visitas Recepcao", quadro Admin -->
+<style>
+:root{
+  --red:#E4032B;--red-deep:#B8001F;--ink:#3A4043;--slate:#727A7D;--hair:#E7E9EA;--bg:#F5F6F7;--surface:#FFFFFF;--muted:#FAFBFB;
+  --err:#C4001C;--err-bg:#FDEEF0;--err-line:#F6C9D0;--warn:#8A5700;--warn-bg:#FFF7E6;--warn-line:#F1DCAE;
+  --foco:0 0 0 3px rgba(228,3,43,.10);--foco-forte:0 0 0 3px rgba(228,3,43,.25)
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+[hidden]{display:none!important}
+button,input,select{font:inherit;color:inherit}
+h1,h2,p{margin:0}
+.num{font-variant-numeric:tabular-nums}
+.lab{font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--slate)}
+.dica{font-size:13px;color:var(--slate)}
+.step{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
+.step::before{content:"";width:22px;height:2px;border-radius:2px;background:var(--red)}
+h2{font-size:.95rem;font-weight:700}
+
+.hero{background:var(--surface) url(assets/img/hero-bg.png) center/cover no-repeat;border-bottom:1px solid var(--hair);padding:2.25rem 1.25rem 1.75rem}
+.hero-in{max-width:1240px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:18px}
+.hero-txt{display:flex;flex-direction:column;gap:6px;flex:1 1 320px;min-width:0}
+.hero h1{font-size:2.15rem;font-weight:700;line-height:1.15;letter-spacing:-.6px}
+.hero p{color:var(--slate);max-width:60ch}
+.hero img{height:44px;width:auto}
+
+.wrap{max-width:1240px;margin:0 auto;padding:1.75rem 1.25rem 4rem;display:flex;flex-direction:column;gap:18px}
+.card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:1.35rem;display:flex;flex-direction:column;gap:14px;min-width:0}
+.campo{display:flex;flex-direction:column;gap:6px;min-width:0}
+.inp{width:100%;min-height:44px;border:1px solid var(--hair);border-radius:9px;background:var(--surface);padding:0 12px;outline:none;transition:border-color .15s,box-shadow .15s}
+.inp:focus{border-color:var(--red);box-shadow:var(--foco)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 15px;border-radius:9px;border:1px solid var(--hair);background:var(--surface);font-weight:500;font-size:14px;cursor:pointer;white-space:nowrap;transition:border-color .15s,color .15s,background .15s}
+.btn:hover:not(:disabled){border-color:var(--red);color:var(--red)}
+.btn:disabled{color:var(--slate);cursor:default}
+.btn:focus-visible,.fchip:focus-visible{outline:none;box-shadow:var(--foco-forte)}
+.btn-p{background:var(--red);border-color:var(--red);color:#fff;width:100%;min-height:48px}
+.btn-p:hover:not(:disabled){background:var(--red-deep);border-color:var(--red-deep);color:#fff}
+.btn-p:disabled{background:#F2A3B1;border-color:#F2A3B1;color:#fff}
+.aviso-demo{padding:12px 16px;border:1px dashed var(--warn-line);background:var(--warn-bg);color:var(--warn);border-radius:12px;font-size:13.5px}
+.aviso-erro{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid var(--err-line);background:var(--err-bg);color:var(--err);font-weight:500}
+.aviso-erro span{flex:1 1 220px}
+.erro{color:var(--err);font-weight:500;font-size:14px}
+
+/* ---------- senha ---------- */
+.gate{display:flex;justify-content:center;padding:3rem 1rem}
+.gate-card{width:100%;max-width:400px}
+
+/* ---------- filtros ---------- */
+.filtros{flex-direction:row;flex-wrap:wrap;align-items:flex-end;gap:14px 22px;padding:1rem 1.1rem}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.fchip{min-height:36px;padding:0 13px;border-radius:999px;border:1px solid var(--hair);background:var(--surface);color:#5B6366;font-size:13px;font-weight:500;cursor:pointer;transition:border-color .15s}
+.fchip:hover{border-color:var(--red)}
+.fchip[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
+.acoes{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto}
+
+/* ---------- numeros ---------- */
+.kpis{flex-direction:row;flex-wrap:wrap;gap:10px;padding:1.1rem}
+.kpi{flex:1 1 180px;min-width:0;padding:6px 14px;display:flex;flex-direction:column;gap:4px}
+.kpi+.kpi{border-left:1px solid var(--hair)}
+.kpi-n{font-size:1.7rem;font-weight:700;line-height:1.1}
+.kpi-total .kpi-n{font-size:2.4rem;letter-spacing:-1px}
+.kpi-lab{display:flex;align-items:center;gap:8px}
+.ponto{display:inline-block;width:9px;height:9px;border-radius:999px;flex:none}
+@media (max-width:620px){.kpi+.kpi{border-left:0;border-top:1px solid var(--hair);padding-top:12px}.kpi{flex-basis:100%}}
+
+/* ---------- grafico ---------- */
+.dupla{display:flex;flex-wrap:wrap;gap:18px;align-items:stretch}
+.dupla .grande{flex:999 1 560px}
+.dupla .lado{flex:1 1 320px}
+.cab{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.legenda{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--slate)}
+.legenda span{display:flex;align-items:center;gap:6px}
+.quad{display:inline-block;width:10px;height:10px;border-radius:3px}
+.rolagem{overflow-x:auto}
+.grafico-box{min-width:520px;display:flex;flex-direction:column;gap:6px}
+.grafico{height:220px;display:flex;align-items:flex-end;gap:4px;border-bottom:1px solid var(--hair);background-image:linear-gradient(#F0F1F2 1px,transparent 1px);background-size:100% 55px}
+.col{flex:1 1 0;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end}
+.col:hover .pilha{opacity:.82}
+.col-val{font-size:11px;color:var(--slate);text-align:center;line-height:1.4;min-height:15px}
+.pilha{display:flex;flex-direction:column;border-radius:4px 4px 0 0;overflow:hidden;width:100%;max-width:34px;margin:0 auto}
+.rotulos{display:flex;gap:4px}
+.rot{flex:1 1 0;min-width:0;text-align:center;font-size:11px;color:var(--slate);white-space:nowrap}
+.vazio{padding:28px 0;text-align:center;color:var(--slate);font-size:14px}
+
+/* ---------- origem e ranking ---------- */
+.mix{display:flex;height:14px;border-radius:999px;overflow:hidden;background:var(--bg)}
+.mix div{height:100%}
+.mix-p{height:8px}
+.leg-linha{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px}
+.leg-linha > span:first-child{display:flex;align-items:center;gap:8px}
+.ranking{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.rank-trilho{height:6px;border-radius:999px;background:var(--bg);overflow:hidden;margin-top:4px}
+.rank-trilho div{height:100%;border-radius:999px;background:#A3ABAE}
+.divisor{padding-top:16px;border-top:1px dashed var(--hair)}
+
+/* ---------- tabelas ---------- */
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:8px 10px;font-size:11.5px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--slate);border-bottom:1px solid var(--hair);white-space:nowrap}
+td{padding:10px;border-bottom:1px dashed var(--hair)}
+.dir{text-align:right}
+tbody tr:hover td{background:var(--muted)}
+.forte{font-weight:700}
+.suave{color:var(--slate)}
+.badge{display:inline-flex;align-items:center;gap:7px;padding:2px 10px;border:1px solid var(--hair);border-radius:999px;font-size:12.5px;font-weight:500;white-space:nowrap}
+
+/* ---------- abas e recepcionistas (spec 14.6) ---------- */
+.abas{display:flex;gap:4px;border-bottom:1px solid var(--hair)}
+.aba{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:0;border-bottom:2px solid transparent;background:none;color:var(--slate);font-weight:500;font-size:.92rem;cursor:pointer}
+.aba[aria-current="page"]{color:var(--ink);font-weight:700;border-bottom-color:var(--red)}
+.aba-sair{margin-left:auto;align-self:center}
+.aba:focus-visible{outline:none;box-shadow:var(--foco-forte)}
+.selo{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--red);color:#fff;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.aba-corpo{display:flex;flex-direction:column;gap:18px}
+.faixa-senha{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn)}
+.faixa-senha-txt{flex:1 1 260px;min-width:0;display:flex;flex-direction:column;font-size:.86rem}
+.faixa-senha code{font-family:ui-monospace,Menlo,monospace;font-size:1.05rem;font-weight:700;padding:8px 12px;background:#fff;border:1px solid var(--warn-line);border-radius:9px;color:var(--ink)}
+.pendentes{list-style:none;margin:0;padding:0}
+.pendentes li{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 0;border-top:1px dashed var(--hair)}
+.pend-txt{flex:1 1 240px;min-width:0;display:flex;flex-direction:column}
+.pendentes .btn-p{width:auto;min-height:44px;padding:0 18px}
+.badge-ok{background:#EFF9F2;border-color:#C7E7D3;color:#1B7A40}
+.badge-off{background:var(--bg);color:#5B6366}
+.badge-temp{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn);margin-left:6px}
+.acoes-conta{white-space:nowrap}
+.acoes-conta .btn{min-height:36px;font-size:13px;padding:0 12px}
+.acoes-conta .btn + .btn{margin-left:6px}
+
+@media (max-width:700px){
+  .hero{padding:1.5rem 1rem 1.25rem}.hero h1{font-size:1.5rem}.hero img{height:30px}
+  .wrap{padding:1.25rem 1rem 3rem}.card{padding:1rem}.acoes{margin-left:0}
+}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-in">
+    <div class="hero-txt">
+      <span class="step">Portal do Corretor · Administração</span>
+      <h1>Visitas nos stands</h1>
+      <p>Acompanhe o fluxo de visitas lançado pelas recepções, por empreendimento e por origem do cliente.</p>
+    </div>
+    <img src="assets/img/logo-direcional-header.png" alt="Direcional">
+  </div>
+</header>
+
+<section class="gate" id="gate" hidden>
+  <form class="card gate-card" id="gate-form" novalidate>
+    <span class="step">Acesso restrito</span>
+    <h2>Dashboard de visitas</h2>
+    <p class="dica">Digite a senha do comercial para ver os lançamentos.</p>
+    <label class="campo">
+      <span class="lab">Senha</span>
+      <input class="inp" id="gate-senha" type="password" autocomplete="current-password" required>
+    </label>
+    <p class="erro" id="gate-erro" role="alert" hidden></p>
+    <button class="btn btn-p" id="gate-entrar" type="submit">Entrar</button>
+    <p class="dica" id="gate-demo" hidden>Modo demonstração: qualquer senha entra e os dados são fictícios.</p>
+  </form>
+</section>
+
+<main class="wrap" id="app" hidden>
+  <nav class="abas" aria-label="Seções do dashboard">
+    <button type="button" class="aba" id="aba-btn-visitas" aria-current="page">Visitas</button>
+    <button type="button" class="aba" id="aba-btn-recep">Recepcionistas <span class="selo num" id="selo-pendentes" hidden>0</span></button>
+    <button type="button" class="btn aba-sair" id="sair">Sair</button>
+  </nav>
+  <p class="aviso-demo" id="aviso-demo" hidden>Modo demonstração: dados fictícios, nada é lido da planilha.</p>
+  <div class="aviso-erro" id="aviso-erro" role="alert" hidden>
+    <span id="aviso-erro-txt"></span>
+    <button type="button" class="btn" id="aviso-erro-tentar">Tentar de novo</button>
+  </div>
+
+  <div id="aba-visitas" class="aba-corpo">
+  <div class="card filtros">
+    <div class="campo">
+      <span class="lab" id="lab-periodo">Período</span>
+      <div class="chips" id="periodos" role="group" aria-labelledby="lab-periodo"></div>
+    </div>
+    <div class="campo">
+      <span class="lab" id="lab-pdv">PDV</span>
+      <div class="chips" id="pdvs" role="group" aria-labelledby="lab-pdv"></div>
+    </div>
+    <label class="campo" style="flex:1 1 240px">
+      <span class="lab">Empreendimento</span>
+      <select class="inp" id="f-emp"></select>
+    </label>
+    <div class="acoes">
+      <span class="dica" id="atualizado-em"></span>
+      <button type="button" class="btn" id="atualizar">Atualizar</button>
+      <span class="dica">Contém dados pessoais (CPF e telefone).</span>
+      <button type="button" class="btn" id="exportar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
+        Exportar CSV
+      </button>
+    </div>
+  </div>
+
+  <div class="card kpis">
+    <div class="kpi kpi-total">
+      <span class="lab">Total de visitas</span>
+      <span class="kpi-n num" id="k-total">0</span>
+      <span class="dica" id="k-total-lab"></span>
+    </div>
+    <div class="kpi">
+      <span class="lab kpi-lab"><span class="ponto" style="background:#3A4043"></span>Espontânea</span>
+      <span class="kpi-n num" id="k-esp">0</span>
+      <span class="dica" id="k-esp-pct"></span>
+    </div>
+    <div class="kpi">
+      <span class="lab kpi-lab"><span class="ponto" style="background:#E4032B"></span>Corretor house</span>
+      <span class="kpi-n num" id="k-house">0</span>
+      <span class="dica" id="k-house-pct"></span>
+    </div>
+    <div class="kpi">
+      <span class="lab kpi-lab"><span class="ponto" style="background:#A3ABAE"></span>Imobiliária</span>
+      <span class="kpi-n num" id="k-imob">0</span>
+      <span class="dica" id="k-imob-pct"></span>
+    </div>
+    <div class="kpi">
+      <span class="lab">Média por dia</span>
+      <span class="kpi-n num" id="k-media">0</span>
+      <span class="dica" id="k-media-lab"></span>
+    </div>
+  </div>
+
+  <div class="dupla">
+    <section class="card grande">
+      <div class="cab">
+        <h2 id="grafico-titulo">Visitas por dia</h2>
+        <div class="legenda">
+          <span><span class="quad" style="background:#3A4043"></span>Espontânea</span>
+          <span><span class="quad" style="background:#E4032B"></span>Corretor house</span>
+          <span><span class="quad" style="background:#A3ABAE"></span>Imobiliária</span>
+        </div>
+      </div>
+      <div class="rolagem" id="grafico-area">
+        <div class="grafico-box">
+          <div class="grafico" id="grafico" role="img"></div>
+          <div class="rotulos" id="grafico-rotulos" aria-hidden="true"></div>
+        </div>
+      </div>
+      <p class="vazio" id="grafico-vazio" hidden>Nenhuma visita no período para este filtro.</p>
+    </section>
+
+    <section class="card lado">
+      <h2>Origem das visitas</h2>
+      <div class="mix" aria-hidden="true"><div id="o-esp" style="background:#3A4043"></div><div id="o-house" style="background:#E4032B"></div><div id="o-imob" style="background:#A3ABAE"></div></div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="leg-linha"><span><span class="ponto" style="background:#3A4043"></span>Espontânea</span><span class="num" id="ol-esp"></span></div>
+        <div class="leg-linha"><span><span class="ponto" style="background:#E4032B"></span>Corretor house</span><span class="num" id="ol-house"></span></div>
+        <div class="leg-linha"><span><span class="ponto" style="background:#A3ABAE"></span>Imobiliária</span><span class="num" id="ol-imob"></span></div>
+      </div>
+      <div class="divisor" style="display:flex;flex-direction:column;gap:10px">
+        <h2>Imobiliárias que mais trouxeram</h2>
+        <ol class="ranking" id="ranking"></ol>
+      </div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="cab"><h2>Por empreendimento</h2><span class="dica" id="t-emps-lab"></span></div>
+    <div class="rolagem">
+      <table style="min-width:720px">
+        <thead><tr>
+          <th scope="col">Empreendimento</th><th scope="col">Cidade</th>
+          <th scope="col" class="dir">Total</th><th scope="col" class="dir">Espontânea</th>
+          <th scope="col" class="dir">House</th><th scope="col" class="dir">Imobiliária</th>
+          <th scope="col" style="width:200px">Origem</th>
+        </tr></thead>
+        <tbody id="tab-emps"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="cab"><h2>Últimos lançamentos</h2><span class="dica">do período filtrado, mais recentes primeiro</span></div>
+    <div class="rolagem">
+      <table style="min-width:1260px">
+        <thead><tr>
+          <th scope="col">Data</th><th scope="col">Horário</th><th scope="col">PDV</th><th scope="col">Cliente</th>
+          <th scope="col">CPF</th><th scope="col">Telefone</th><th scope="col">Empreendimento</th>
+          <th scope="col">Tipo</th><th scope="col">Imobiliária</th><th scope="col">Corretor</th>
+          <th scope="col">Gerente</th><th scope="col">Lançado por</th>
+        </tr></thead>
+        <tbody id="tab-recentes"></tbody>
+      </table>
+    </div>
+    <p class="vazio" id="sem-recentes" hidden>Nenhuma visita no período para este filtro.</p>
+  </section>
+  </div>
+
+  <div id="aba-recep" class="aba-corpo" hidden>
+    <div class="faixa-senha" id="faixa-senha" role="status" hidden>
+      <div class="faixa-senha-txt">
+        <strong>Senha temporária de <span id="senha-nome"></span></strong>
+        <span>Passe para a recepcionista. Ela não será mostrada de novo, e no próximo login ela cria a própria senha.</span>
+      </div>
+      <code id="senha-temp"></code>
+    </div>
+
+    <section class="card" id="bloco-pendentes" hidden>
+      <div class="cab"><h2>Aguardando aprovação</h2><span class="dica">Confira se a pessoa é mesmo recepcionista antes de aprovar.</span></div>
+      <ul class="pendentes" id="lista-pendentes"></ul>
+    </section>
+
+    <section class="card">
+      <div class="cab"><h2>Recepcionistas</h2><button type="button" class="btn" id="atualizar-contas">Atualizar</button></div>
+      <div class="rolagem">
+        <table style="min-width:760px">
+          <thead><tr>
+            <th scope="col">Nome</th><th scope="col">Usuário</th><th scope="col">Situação</th>
+            <th scope="col" class="dir">Visitas (30 dias)</th><th scope="col">Último acesso</th><th scope="col" class="dir">Ações</th>
+          </tr></thead>
+          <tbody id="tab-contas"></tbody>
+        </table>
+      </div>
+      <p class="vazio" id="sem-contas" hidden>Nenhuma recepcionista aprovada ainda.</p>
+    </section>
+  </div>
+</main>
+
+<script src="assets/config.js"></script>
+<script src="assets/visitas.js"></script>
+<script src="assets/visitas-api.js"></script>
+<script src="assets/visitas-adm-app.js"></script>
+</body>
+</html>

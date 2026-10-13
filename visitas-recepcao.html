@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Registro de visitas · Recepção | Portal do Corretor</title>
+<link rel="icon" type="image/webp" href="assets/img/favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<!-- Lancamento de visitas no stand (publica). Spec: docs/superpowers/specs/2026-10-09-visitas-recepcao-design.md
+     Telas: canvas "Visitas Recepcao", quadros Main e RecepcaoCelular -->
+<style>
+:root{
+  --red:#E4032B;--red-deep:#B8001F;--ink:#3A4043;--slate:#727A7D;--hair:#E7E9EA;--bg:#F5F6F7;--surface:#FFFFFF;
+  --ok:#1B7A40;--ok-bg:#EFF9F2;--ok-line:#C7E7D3;--err:#C4001C;--err-bg:#FDEEF0;--err-line:#F6C9D0;
+  --warn:#8A5700;--warn-bg:#FFF7E6;--warn-line:#F1DCAE;
+  --foco:0 0 0 3px rgba(228,3,43,.10);--foco-forte:0 0 0 3px rgba(228,3,43,.25)
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.5;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+[hidden]{display:none!important}
+button,input,select{font:inherit;color:inherit}
+h1,h2,p{margin:0}
+.num{font-variant-numeric:tabular-nums}
+.lab{font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--slate)}
+.opc{text-transform:none;letter-spacing:normal;font-weight:400}
+.dica{font-size:13px;color:var(--slate)}
+.step{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
+.step::before{content:"";width:22px;height:2px;border-radius:2px;background:var(--red)}
+
+.hero{background:var(--surface) url(assets/img/hero-bg.png) center/cover no-repeat;border-bottom:1px solid var(--hair);padding:2.25rem 1.25rem 1.75rem}
+.hero-in{max-width:1120px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:18px}
+.hero-txt{display:flex;flex-direction:column;gap:6px;flex:1 1 320px;min-width:0}
+.hero h1{font-size:2.15rem;font-weight:700;line-height:1.15;letter-spacing:-.6px}
+.hero p{color:var(--slate);max-width:56ch}
+.hero img{height:44px;width:auto}
+
+.wrap{max-width:1120px;margin:0 auto;padding:1.75rem 1.25rem 4rem;display:flex;flex-wrap:wrap;align-items:flex-start;gap:22px}
+.col-form{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:18px}
+.col-cont{flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:18px}
+.card{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:1.35rem;display:flex;flex-direction:column;gap:14px}
+.linha{display:flex;flex-wrap:wrap;gap:14px}
+.campo{display:flex;flex-direction:column;gap:6px;min-width:0}
+.inp{width:100%;min-height:46px;border:1px solid var(--hair);border-radius:9px;background:var(--surface);padding:0 12px;outline:none;transition:border-color .15s,box-shadow .15s}
+.inp:focus{border-color:var(--red);box-shadow:var(--foco)}
+.inp[aria-invalid="true"]{border-color:var(--err);background:var(--err-bg)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 14px;border-radius:9px;border:1px solid var(--hair);background:var(--surface);font-weight:500;font-size:14px;cursor:pointer;white-space:nowrap;transition:border-color .15s,color .15s,background .15s}
+.btn:hover:not(:disabled){border-color:var(--red);color:var(--red)}
+.btn:focus-visible,.tipo:focus-visible{outline:none;box-shadow:var(--foco-forte)}
+.btn-p{width:100%;min-height:56px;font-size:1.05rem;font-weight:700;background:var(--red);border-color:var(--red);color:#fff}
+.btn-p:hover:not(:disabled){background:var(--red-deep);border-color:var(--red-deep);color:#fff}
+.btn-p:disabled{background:var(--hair);border-color:var(--hair);color:var(--ink);cursor:not-allowed}
+.btn-i{width:44px;min-height:44px;padding:0;color:var(--slate);flex:none}
+.btn-i:hover:not(:disabled){border-color:var(--err);color:var(--err)}
+
+.tipos{display:flex;flex-wrap:wrap;gap:12px}
+.tipo{flex:1 1 220px;min-width:0;display:flex;gap:12px;align-items:center;text-align:left;padding:14px;min-height:84px;border-radius:14px;border:1px solid var(--hair);background:var(--surface);cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.tipo:hover{border-color:var(--red)}
+.tipo-ico{flex:none;width:44px;height:44px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+.tipo-nome{display:block;font-weight:700;font-size:.95rem}
+.tipo-desc{display:block;font-size:13px;color:var(--slate);line-height:1.35}
+.extra{display:flex;flex-wrap:wrap;gap:14px;padding-top:14px;border-top:1px dashed var(--hair)}
+.extra .campo{flex:1 1 220px}
+
+.faixa{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:1px solid}
+.faixa.ok{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok)}
+.faixa.err{background:var(--err-bg);border-color:var(--err-line);color:var(--err)}
+.faixa-txt{flex:1 1 200px;min-width:0}
+.faixa-txt strong{display:block}
+.faixa-txt span{font-size:14px}
+.faixa .btn{min-height:44px;border-color:currentColor;color:inherit}
+.aviso-demo{padding:12px 16px;border:1px dashed var(--warn-line);background:var(--warn-bg);color:var(--warn);border-radius:12px;font-size:13.5px}
+
+.total{display:flex;align-items:baseline;gap:10px;padding-bottom:16px;border-bottom:1px dashed var(--hair)}
+.total-n{font-size:4rem;font-weight:700;line-height:1;letter-spacing:-2px}
+.total-lab{color:var(--slate)}
+.barras{display:flex;flex-direction:column;gap:12px}
+.barra-top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px}
+.barra-trilho{height:8px;border-radius:999px;background:var(--bg);overflow:hidden;margin-top:6px}
+.barra-trilho div{height:100%;border-radius:999px;width:0;transition:width .3s}
+.ponto{display:inline-block;width:9px;height:9px;border-radius:999px;flex:none}
+.rotulo-tipo{display:flex;align-items:center;gap:8px}
+.lista-cab{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lista-cab strong{font-size:.95rem}
+.lista{list-style:none;margin:0;padding:0}
+.lista li{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px dashed var(--hair)}
+.lista-hora{width:46px;flex:none;font-weight:700}
+.lista-txt{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
+.lista-tipo{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:500}
+.lista-det{font-size:12.5px;color:var(--slate);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vazio{padding:18px 0;text-align:center;color:var(--slate);font-size:14px}
+.erro-txt{color:var(--err);font-size:13.5px;font-weight:500}
+
+.faixa.aviso{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn)}
+.tipo-dica{font-size:13px;color:var(--slate)}
+
+/* ---------- acesso e PDV (spec 14) ---------- */
+.hero-user{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.acesso{display:flex;justify-content:center;padding:2.5rem 1rem 4rem}
+.acesso-card{width:100%;max-width:440px}
+.acesso-tela{display:flex;flex-direction:column;gap:14px}
+.acesso-tela h2{font-size:1.25rem;font-weight:700;letter-spacing:-.3px}
+.acesso-tela .linha .campo{flex:1 1 180px}
+.acesso-ok{align-items:flex-start}
+.acesso-ico{width:44px;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:var(--ok-bg);color:var(--ok)}
+.acesso-link{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.link{background:none;border:0;padding:0 4px;min-height:44px;cursor:pointer;font-weight:500;color:var(--ink);text-decoration:underline;text-underline-offset:3px;align-self:flex-start}
+.link:hover{color:var(--red)}
+.link:focus-visible{outline:none;box-shadow:var(--foco-forte);border-radius:6px}
+.msg{padding:10px 12px;border-radius:9px;border:1px solid;font-size:14px;font-weight:500}
+.msg.err{background:var(--err-bg);border-color:var(--err-line);color:var(--err)}
+.msg.aviso{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn)}
+.pdvs{display:flex;flex-wrap:wrap;gap:12px}
+.pdv{flex:1 1 180px;min-height:56px;border-radius:12px;border:1px solid var(--hair);background:var(--surface);font-weight:700;font-size:1rem;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.pdv:hover{border-color:var(--red)}
+.pdv[aria-pressed="true"]{border-color:var(--red);background:#FDEEF0;color:var(--red);box-shadow:var(--foco)}
+.pdv:focus-visible{outline:none;box-shadow:var(--foco-forte)}
+.tipo:disabled{opacity:.5;cursor:not-allowed}
+.tipo:disabled:hover{border-color:var(--hair)}
+
+/* ---------- popup (spec 13.1) ---------- */
+.popup{width:min(560px,calc(100vw - 24px));max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);padding:0;border:1px solid var(--hair);border-radius:16px;box-shadow:0 18px 50px rgba(28,32,34,.22);color:var(--ink);background:var(--surface)}
+.popup::backdrop{background:rgba(28,32,34,.45)}
+.popup form{display:flex;flex-direction:column;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px)}
+.p-cab{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:1.2rem 1.35rem 1rem;border-bottom:1px solid var(--hair)}
+.p-cab-txt{display:flex;flex-direction:column;gap:4px;min-width:0}
+.p-cab h2{font-size:1.25rem;font-weight:700;letter-spacing:-.3px}
+.p-corpo{padding:1.2rem 1.35rem;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
+.p-corpo .linha .campo{flex:1 1 200px}
+.sub-step{font-size:12.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
+.erro-campo{font-size:13px;font-weight:500;color:var(--err)}
+.p-rodape{display:flex;flex-wrap:wrap-reverse;justify-content:flex-end;gap:10px;padding:1rem 1.35rem 1.2rem;border-top:1px solid var(--hair)}
+.p-rodape .btn{flex:1 1 140px;min-height:48px}
+.p-rodape .btn-p{flex:2 1 220px;width:auto;min-height:48px;font-size:1rem}
+@media (max-width:600px){
+  .popup{width:100%;max-width:100%;height:100%;max-height:100%;height:100dvh;max-height:100dvh;margin:0;border:0;border-radius:0}
+  .popup form{height:100%;max-height:100%}
+  .p-corpo{flex:1 1 auto}
+}
+
+@media (max-width:700px){
+  .hero{padding:1.5rem 1rem 1.25rem}.hero h1{font-size:1.5rem}.hero img{height:30px}
+  .wrap{padding:1.25rem 1rem 3rem}.card{padding:1rem}
+}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-in">
+    <div class="hero-txt">
+      <span class="step">Portal do Corretor · Recepção</span>
+      <h1>Registro de visitas</h1>
+      <p id="hero-sub">Escolha o stand e toque no tipo de visita para registrar o cliente.</p>
+    </div>
+    <img src="assets/img/logo-direcional-header.png" alt="Direcional">
+    <div class="hero-user" id="hero-user" hidden>
+      <span class="dica">Olá, <strong id="ola"></strong></span>
+      <button type="button" class="btn" id="sair">Sair</button>
+    </div>
+  </div>
+</header>
+
+<section class="acesso" id="acesso" hidden>
+  <div class="card acesso-card">
+    <p class="aviso-demo" id="acesso-demo" hidden>Modo demonstração: qualquer usuário e senha de 8 ou mais caracteres entram. Teste também <strong>pendente.demo</strong>, <strong>desativada.demo</strong> e <strong>troca.demo</strong>.</p>
+
+    <form id="t-entrar" class="acesso-tela" novalidate>
+      <span class="step">Entrar</span>
+      <h2>Olá! Entre com o seu usuário</h2>
+      <p class="msg" id="a-msg" role="alert" hidden></p>
+      <label class="campo">
+        <span class="lab">Usuário</span>
+        <input class="inp" id="a-usuario" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ex.: maria.silva">
+      </label>
+      <label class="campo">
+        <span class="lab">Senha</span>
+        <input class="inp" id="a-senha" type="password" autocomplete="current-password">
+      </label>
+      <button type="submit" class="btn btn-p" id="a-entrar">Entrar</button>
+      <p class="acesso-link"><span class="dica">Primeiro acesso?</span> <button type="button" class="link" id="a-ir-cadastro">Criar conta</button></p>
+      <p class="dica">Esqueceu a senha? Peça ao comercial para gerar uma senha temporária.</p>
+    </form>
+
+    <form id="t-cadastro" class="acesso-tela" novalidate hidden>
+      <span class="step">Criar conta</span>
+      <h2>Cadastro de recepcionista</h2>
+      <p class="dica">Depois de enviar, o comercial precisa aprovar o seu acesso.</p>
+      <label class="campo">
+        <span class="lab">Nome completo</span>
+        <input class="inp" id="c-nome" type="text" maxlength="80" autocomplete="name" aria-describedby="e-c-nome">
+        <span class="erro-campo" id="e-c-nome" hidden></span>
+      </label>
+      <label class="campo">
+        <span class="lab">Usuário</span>
+        <input class="inp" id="c-usuario" type="text" maxlength="30" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ex.: maria.silva" aria-describedby="d-c-usuario e-c-usuario">
+        <span class="dica" id="d-c-usuario">Letras minúsculas, números, ponto, hífen ou sublinhado. De 3 a 30 caracteres.</span>
+        <span class="erro-campo" id="e-c-usuario" hidden></span>
+      </label>
+      <div class="linha">
+        <label class="campo">
+          <span class="lab">Senha</span>
+          <input class="inp" id="c-senha" type="password" autocomplete="new-password" aria-describedby="e-c-senha">
+          <span class="erro-campo" id="e-c-senha" hidden></span>
+        </label>
+        <label class="campo">
+          <span class="lab">Confirmar senha</span>
+          <input class="inp" id="c-confirmacao" type="password" autocomplete="new-password" aria-describedby="e-c-confirmacao">
+          <span class="erro-campo" id="e-c-confirmacao" hidden></span>
+        </label>
+      </div>
+      <span class="dica">Mínimo de 8 caracteres.</span>
+      <p class="erro-txt" id="c-erro" role="alert" hidden></p>
+      <button type="submit" class="btn btn-p" id="c-enviar">Enviar cadastro</button>
+      <button type="button" class="link" id="c-ir-entrar">Já tenho conta · Entrar</button>
+    </form>
+
+    <div id="t-enviado" class="acesso-tela acesso-ok" hidden>
+      <span class="acesso-ico" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+      <h2>Cadastro enviado</h2>
+      <p class="dica">Assim que o comercial aprovar, você já consegue entrar com o usuário <strong id="enviado-usuario"></strong>.</p>
+      <button type="button" class="link" id="enviado-voltar">Voltar para Entrar</button>
+    </div>
+
+    <form id="t-troca" class="acesso-tela" novalidate hidden>
+      <span class="step">Nova senha</span>
+      <h2>Crie uma senha nova</h2>
+      <p class="dica">Você entrou com uma senha temporária. Escolha a sua senha para continuar.</p>
+      <label class="campo">
+        <span class="lab">Nova senha</span>
+        <input class="inp" id="n-senha" type="password" autocomplete="new-password" aria-describedby="e-n-senha">
+        <span class="erro-campo" id="e-n-senha" hidden></span>
+      </label>
+      <label class="campo">
+        <span class="lab">Confirmar nova senha</span>
+        <input class="inp" id="n-confirmacao" type="password" autocomplete="new-password" aria-describedby="e-n-confirmacao">
+        <span class="erro-campo" id="e-n-confirmacao" hidden></span>
+      </label>
+      <p class="erro-txt" id="n-erro" role="alert" hidden></p>
+      <button type="submit" class="btn btn-p" id="n-salvar">Salvar e continuar</button>
+      <button type="button" class="link" id="n-sair">Sair e entrar com outro usuário</button>
+    </form>
+  </div>
+</section>
+
+<main class="wrap" id="app" hidden>
+  <section class="col-form" aria-label="Nova visita">
+    <p class="aviso-demo" id="aviso-demo" hidden>Modo demonstração: dados fictícios, nada é gravado na planilha.</p>
+
+    <div class="faixa" id="faixa" role="status" aria-live="polite" hidden>
+      <svg id="faixa-ico-ok" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>
+      <svg id="faixa-ico-err" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 7v6M12 16.5v.5"/></svg>
+      <div class="faixa-txt"><strong id="faixa-titulo"></strong><span id="faixa-texto"></span></div>
+      <button type="button" class="btn" id="faixa-desfazer">Desfazer</button>
+    </div>
+
+    <div class="card">
+      <span class="step">Passo 1 · PDV</span>
+      <div class="pdvs" role="group" aria-label="PDV">
+        <button type="button" class="pdv" aria-pressed="false" data-pdv="Zona Sul RP">Zona Sul RP</button>
+        <button type="button" class="pdv" aria-pressed="false" data-pdv="Centro RP">Centro RP</button>
+      </div>
+      <p class="dica">Fica salvo neste aparelho. Só troque se mudar de stand.</p>
+    </div>
+
+    <div class="card">
+      <span class="step">Passo 2 · Como o cliente chegou?</span>
+      <div class="tipos" aria-label="Tipo de visita">
+        <button type="button" class="tipo" aria-haspopup="dialog" data-tipo="esp">
+          <span class="tipo-ico" style="background:#F5F6F7;color:#3A4043">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18"/><path d="M6 21V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v17"/><path d="M12.5 12h.01"/><path d="M16 9l4 3-4 3"/></svg>
+          </span>
+          <span><span class="tipo-nome">Espontânea</span><span class="tipo-desc">Chegou ao stand sem agendamento</span></span>
+        </button>
+        <button type="button" class="tipo" aria-haspopup="dialog" data-tipo="house">
+          <span class="tipo-ico" style="background:#FDEEF0;color:#E4032B">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M9 15.5l2 2 4-4"/></svg>
+          </span>
+          <span><span class="tipo-nome">Agendada · Corretor house</span><span class="tipo-desc">Agendada por um corretor da Direcional</span></span>
+        </button>
+        <button type="button" class="tipo" aria-haspopup="dialog" data-tipo="imob">
+          <span class="tipo-ico" style="background:#EEF0F1;color:#5B6366">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/></svg>
+          </span>
+          <span><span class="tipo-nome">Imobiliária parceira</span><span class="tipo-desc">Trazido por corretor de imobiliária</span></span>
+        </button>
+      </div>
+      <p class="tipo-dica" id="tipo-dica">Toque no tipo para abrir o cadastro da visita.</p>
+    </div>
+  </section>
+
+  <aside class="col-cont" aria-label="Visitas do dia">
+    <div class="card">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <span class="lab" id="cont-titulo">Visitas hoje</span>
+        <strong id="cont-emp" style="font-size:.95rem"></strong>
+      </div>
+      <div class="total">
+        <span class="total-n num" id="cont-total">0</span>
+        <span class="total-lab" id="cont-total-lab">visitas registradas</span>
+      </div>
+      <div class="barras">
+        <div>
+          <div class="barra-top"><span class="rotulo-tipo"><span class="ponto" style="background:#3A4043"></span>Espontânea</span><strong class="num" id="q-esp">0</strong></div>
+          <div class="barra-trilho"><div id="b-esp" style="background:#3A4043"></div></div>
+        </div>
+        <div>
+          <div class="barra-top"><span class="rotulo-tipo"><span class="ponto" style="background:#E4032B"></span>Corretor house</span><strong class="num" id="q-house">0</strong></div>
+          <div class="barra-trilho"><div id="b-house" style="background:#E4032B"></div></div>
+        </div>
+        <div>
+          <div class="barra-top"><span class="rotulo-tipo"><span class="ponto" style="background:#A3ABAE"></span>Imobiliária</span><strong class="num" id="q-imob">0</strong></div>
+          <div class="barra-trilho"><div id="b-imob" style="background:#A3ABAE"></div></div>
+        </div>
+      </div>
+      <p class="erro-txt" id="cont-erro" role="alert" hidden></p>
+    </div>
+
+    <div class="card" style="gap:10px">
+      <div class="lista-cab"><strong>Últimos lançamentos</strong><span class="dica">deste PDV</span></div>
+      <p class="vazio" id="vazio" hidden></p>
+      <ul class="lista" id="ultimos"></ul>
+    </div>
+  </aside>
+</main>
+
+<dialog class="popup" id="popup" aria-labelledby="p-titulo">
+  <form id="p-form" novalidate>
+    <div class="p-cab">
+      <div class="p-cab-txt">
+        <span class="lab rotulo-tipo"><span class="ponto" id="p-ponto"></span><span id="p-tipo"></span></span>
+        <h2 id="p-titulo">Registrar visita</h2>
+        <span class="dica" id="p-pdv"></span>
+      </div>
+      <button type="button" class="btn btn-i" id="p-fechar" aria-label="Fechar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="p-corpo">
+      <label class="campo">
+        <span class="lab">Empreendimento de interesse</span>
+        <select class="inp" id="f-emp" aria-describedby="e-f-emp"></select>
+        <span class="erro-campo" id="e-f-emp" hidden></span>
+      </label>
+      <span class="sub-step">Cliente</span>
+      <label class="campo">
+        <span class="lab">Nome do cliente</span>
+        <input class="inp" id="f-cliente" type="text" maxlength="80" autocomplete="off" placeholder="Nome completo" aria-describedby="e-f-cliente">
+        <span class="erro-campo" id="e-f-cliente" hidden></span>
+      </label>
+      <div class="linha">
+        <label class="campo">
+          <span class="lab">CPF</span>
+          <input class="inp" id="f-cpf" type="text" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="000.000.000-00" aria-describedby="e-f-cpf">
+          <span class="erro-campo" id="e-f-cpf" hidden></span>
+        </label>
+        <label class="campo">
+          <span class="lab">Telefone</span>
+          <input class="inp" id="f-telefone" type="tel" inputmode="numeric" maxlength="15" autocomplete="off" placeholder="(00) 00000-0000" aria-describedby="e-f-telefone">
+          <span class="erro-campo" id="e-f-telefone" hidden></span>
+        </label>
+      </div>
+      <span class="sub-step">Visita</span>
+      <div class="linha">
+        <label class="campo">
+          <span class="lab">Data</span>
+          <input class="inp" id="f-data" type="date" aria-describedby="e-f-data">
+          <span class="erro-campo" id="e-f-data" hidden></span>
+        </label>
+        <div class="campo">
+          <label class="lab" for="f-hora">Horário</label>
+          <div style="display:flex;gap:8px">
+            <input class="inp" id="f-hora" type="time" style="flex:1 1 auto;min-width:0" aria-describedby="e-f-hora">
+            <button type="button" class="btn" id="f-agora">Agora</button>
+          </div>
+          <span class="erro-campo" id="e-f-hora" hidden></span>
+        </div>
+      </div>
+      <div id="bloco-imob" hidden>
+        <label class="campo">
+          <span class="lab">Imobiliária</span>
+          <input class="inp" id="f-imob" type="text" maxlength="80" autocomplete="off" list="lista-imob" placeholder="Digite ou escolha" aria-describedby="e-f-imob">
+          <datalist id="lista-imob"></datalist>
+          <span class="erro-campo" id="e-f-imob" hidden></span>
+        </label>
+      </div>
+      <div class="linha">
+        <label class="campo">
+          <span class="lab" id="rot-corretor">Nome do corretor</span>
+          <input class="inp" id="f-corretor" type="text" maxlength="80" autocomplete="off" list="lista-corretor" placeholder="Nome do corretor" aria-describedby="e-f-corretor">
+          <datalist id="lista-corretor"></datalist>
+          <span class="erro-campo" id="e-f-corretor" hidden></span>
+        </label>
+        <label class="campo">
+          <span class="lab">Gerente de vendas <span class="opc">(opcional)</span></span>
+          <input class="inp" id="f-gerente" type="text" maxlength="80" autocomplete="off" list="lista-gerente" placeholder="Nome do gerente">
+          <datalist id="lista-gerente"></datalist>
+        </label>
+      </div>
+      <p class="erro-txt" id="p-erro" role="alert" hidden></p>
+    </div>
+    <div class="p-rodape">
+      <button type="button" class="btn" id="p-cancelar">Cancelar</button>
+      <button type="submit" class="btn btn-p" id="p-registrar"><span id="p-registrar-txt">Registrar visita</span></button>
+    </div>
+  </form>
+</dialog>
+
+<script src="assets/config.js"></script>
+<script src="assets/visitas.js"></script>
+<script src="assets/visitas-api.js"></script>
+<script src="assets/visitas-recepcao-app.js"></script>
+</body>
+</html>
