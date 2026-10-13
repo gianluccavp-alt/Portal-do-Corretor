@@ -562,4 +562,4 @@ window.PENDENCIAS_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7
    fica so no Apps Script (Script Property VISITAS_SENHA).
    Vazio = modo demonstracao (dados ficticios na memoria da aba, nada e
    gravado). Com URL preenchida, ?demo=1 na pagina forca o modo demo. */
-window.VISITAS_APPS_SCRIPT_URL = '';
+window.VISITAS_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzmOPIHUN6Nl5EYmH_htPcpFveqfS2UYfZ4yaAb5mV-BC2KtqBeYORc6OJvWV9zUB8/exec';
