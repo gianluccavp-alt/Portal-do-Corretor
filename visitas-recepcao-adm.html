@@ -120,6 +120,7 @@ tbody tr:hover td{background:var(--muted)}
 .abas{display:flex;gap:4px;border-bottom:1px solid var(--hair)}
 .aba{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:0;border-bottom:2px solid transparent;background:none;color:var(--slate);font-weight:500;font-size:.92rem;cursor:pointer}
 .aba[aria-current="page"]{color:var(--ink);font-weight:700;border-bottom-color:var(--red)}
+.aba-sair{margin-left:auto;align-self:center}
 .aba:focus-visible{outline:none;box-shadow:var(--foco-forte)}
 .selo{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--red);color:#fff;font-size:.72rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
 .aba-corpo{display:flex;flex-direction:column;gap:18px}
@@ -174,6 +175,7 @@ tbody tr:hover td{background:var(--muted)}
   <nav class="abas" aria-label="Seções do dashboard">
     <button type="button" class="aba" id="aba-btn-visitas" aria-current="page">Visitas</button>
     <button type="button" class="aba" id="aba-btn-recep">Recepcionistas <span class="selo num" id="selo-pendentes" hidden>0</span></button>
+    <button type="button" class="btn aba-sair" id="sair">Sair</button>
   </nav>
   <p class="aviso-demo" id="aviso-demo" hidden>Modo demonstração: dados fictícios, nada é lido da planilha.</p>
   <div class="aviso-erro" id="aviso-erro" role="alert" hidden>
@@ -203,7 +205,6 @@ tbody tr:hover td{background:var(--muted)}
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
         Exportar CSV
       </button>
-      <button type="button" class="btn" id="sair">Sair</button>
     </div>
   </div>
 

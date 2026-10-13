@@ -15,7 +15,7 @@
   var NOME_PERIODO = { hoje: 'Hoje', '7': 'Últimos 7 dias', '30': 'Últimos 30 dias' };
   var EMPS = V.empreendimentosVisitas(window.CITIES || []);
   var PDVS_FILTRO = [['Todos', 'Todos']].concat(V.PDVS.map(function (p) { return [p, p]; }));
-  var estado = { senha: '', todas: [], contas: [], aba: 'visitas', periodo: '7', pdv: 'Todos', emp: 'Todos', carregadoEm: null, hoje: V.dataLocalIso(new Date()) };
+  var estado = { senha: '', todas: [], contas: [], senhaTemp: null, aba: 'visitas', periodo: '7', pdv: 'Todos', emp: 'Todos', carregadoEm: null, hoje: V.dataLocalIso(new Date()) };
   var api = window.VisitasAPI.criar({
     url: window.VISITAS_APPS_SCRIPT_URL || '',
     senha: function () { return estado.senha; }
@@ -57,6 +57,7 @@
     estado.senha = '';
     estado.todas = [];
     estado.contas = [];
+    estado.senhaTemp = null;
     mostrarAba('visitas');
     mostrarGate(msg);
   }
@@ -286,6 +287,7 @@
     $('aba-recep').hidden = aba !== 'recep';
     $('aba-btn-visitas').setAttribute('aria-current', aba === 'visitas' ? 'page' : 'false');
     $('aba-btn-recep').setAttribute('aria-current', aba === 'recep' ? 'page' : 'false');
+    estado.senhaTemp = null;
     $('faixa-senha').hidden = true;
     if (aba === 'recep' && estado.senha) carregarContas().catch(tratarErro);
   }
@@ -303,22 +305,26 @@
       renderContas();
     }).finally(function () { $('atualizar-contas').disabled = false; });
   }
-  function acaoConta(acao, c, pergunta) {
+  function acaoConta(acao, c, pergunta, btn) {
     if (pergunta && !window.confirm(pergunta)) return;
+    estado.senhaTemp = null;
     $('faixa-senha').hidden = true;
+    var botoes = btn && btn.parentNode ? btn.parentNode.querySelectorAll('button') : [];
+    var travar = function (v) { Array.prototype.forEach.call(botoes, function (b) { b.disabled = v; }); };
+    travar(true);
     api.chamar(acao, { usuario: c.usuario }).then(function (r) {
-      if (acao === 'redefinirSenha') {
-        $('senha-nome').textContent = c.nome;
-        $('senha-temp').textContent = r.senhaTemporaria;
-        $('faixa-senha').hidden = false;
-      }
-      return carregarContas();
-    }).catch(tratarErro);
+      if (acao === 'redefinirSenha') estado.senhaTemp = { nome: c.nome, valor: r.senhaTemporaria };
+      return carregarContas().catch(tratarErro);
+    }, function (f) {
+      tratarErro(f);
+      /* estado pode ter mudado no servidor: recarrega a lista */
+      if (!(f && f.codigo === 'senha')) return carregarContas().catch(tratarErro);
+    }).then(function () { travar(false); });
   }
   function botao(texto, cls, fn) {
     var b = el('button', cls, texto);
     b.type = 'button';
-    b.addEventListener('click', fn);
+    b.addEventListener('click', function () { fn(b); });
     return b;
   }
   function renderContas() {
@@ -335,8 +341,8 @@
       txt.appendChild(el('strong', '', c.nome));
       txt.appendChild(el('span', 'dica', c.usuario + ' · cadastro em ' + curtoBr(c.criadoEm)));
       li.appendChild(txt);
-      li.appendChild(botao('Recusar', 'btn', function () { acaoConta('recusar', c, 'Recusar o cadastro de ' + c.nome + '?'); }));
-      li.appendChild(botao('Aprovar', 'btn btn-p', function () { acaoConta('aprovar', c); }));
+      li.appendChild(botao('Recusar', 'btn', function (b) { acaoConta('recusar', c, 'Recusar o cadastro de ' + c.nome + '?', b); }));
+      li.appendChild(botao('Aprovar', 'btn btn-p', function (b) { acaoConta('aprovar', c, null, b); }));
       ul.appendChild(li);
     });
     var tb = $('tab-contas');
@@ -351,17 +357,22 @@
       celula(tr, String(c.visitas30 || 0), 'dir num');
       celula(tr, curtoBr(c.ultimoAcesso), 'suave');
       var acoes = celula(tr, '', 'dir acoes-conta');
-      acoes.appendChild(botao('Redefinir senha', 'btn', function () {
-        acaoConta('redefinirSenha', c, 'Gerar uma senha temporária para ' + c.nome + '? A senha atual deixa de funcionar.');
+      acoes.appendChild(botao('Redefinir senha', 'btn', function (b) {
+        acaoConta('redefinirSenha', c, 'Gerar uma senha temporária para ' + c.nome + '? A senha atual deixa de funcionar.', b);
       }));
       if (c.situacao === 'ativa') {
-        acoes.appendChild(botao('Desativar', 'btn', function () { acaoConta('desativar', c, 'Desativar o acesso de ' + c.nome + '?'); }));
+        acoes.appendChild(botao('Desativar', 'btn', function (b) { acaoConta('desativar', c, 'Desativar o acesso de ' + c.nome + '?', b); }));
       } else {
-        acoes.appendChild(botao('Reativar', 'btn', function () { acaoConta('reativar', c); }));
+        acoes.appendChild(botao('Reativar', 'btn', function (b) { acaoConta('reativar', c, null, b); }));
       }
       tb.appendChild(tr);
     });
     $('sem-contas').hidden = outras.length > 0;
+    $('faixa-senha').hidden = !estado.senhaTemp;
+    if (estado.senhaTemp) {
+      $('senha-nome').textContent = estado.senhaTemp.nome;
+      $('senha-temp').textContent = estado.senhaTemp.valor;
+    }
   }
 
   /* ---------- inicio ---------- */
@@ -372,7 +383,9 @@
     $('f-emp').addEventListener('change', function () { estado.emp = $('f-emp').value; render(); });
     $('gate-form').addEventListener('submit', entrar);
     $('atualizar').addEventListener('click', function () { buscar().catch(tratarErro); });
-    $('aviso-erro-tentar').addEventListener('click', function () { buscar().catch(tratarErro); });
+    $('aviso-erro-tentar').addEventListener('click', function () {
+      (estado.aba === 'recep' ? carregarContas() : buscar()).catch(tratarErro);
+    });
     $('exportar').addEventListener('click', exportar);
     $('sair').addEventListener('click', function () { sair(); });
     $('aba-btn-visitas').addEventListener('click', function () { mostrarAba('visitas'); });
