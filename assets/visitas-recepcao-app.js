@@ -279,6 +279,7 @@
     estado.enviando = true;
     atualizarBotao();
     api.chamar('registrar', dados).then(function (resp) {
+      if (!estado.sessao) return;
       estado.enviando = false;
       atualizarBotao();
       fecharPopup();
@@ -466,6 +467,7 @@
       $(id).addEventListener('input', function () { limparErro(id); });
     });
     $('sair').addEventListener('click', function () { if (!estado.enviando) encerrar(); });
+    $('n-sair').addEventListener('click', function () { encerrar(); });
 
     cada('.pdv', function (b) { b.addEventListener('click', function () { escolherPdv(b.getAttribute('data-pdv')); }); });
     cada('.tipo', function (b) { b.addEventListener('click', function () { abrirPopup(b.getAttribute('data-tipo')); }); });

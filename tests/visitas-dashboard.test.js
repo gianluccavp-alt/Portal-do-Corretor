@@ -77,7 +77,7 @@ test('gerarCSV: BOM, separador ;, ordem cronológica, aspas, neutralização, PD
     { data: '2026-10-09', hora: '11:50', pdv: 'Centro RP', empreendimento: 'Village Gaia', cidade: 'Ribeirão Preto', tipo: 'esp', cliente: 'Ana Lima', cpf: '52998224725', telefone: '15998765432', imobiliaria: '', corretor: 'Rui', gerente: '', lancadoPor: 'Recepcionista Um' },
     { data: '2026-10-08', hora: '14:00', pdv: 'Zona Sul RP', empreendimento: 'Village Park', cidade: 'Ribeirão Preto', tipo: 'imob', cliente: '=HYPERLINK("x")', cpf: '11144477735', telefone: '1932458890', imobiliaria: 'Imob; Centro', corretor: 'Bia', gerente: 'Gil', lancadoPor: 'Recepcionista Dois' }
   ];
-  const esperado = '﻿' + CABECALHO_CSV + '\r\n' +
+  const esperado = '\uFEFF' + CABECALHO_CSV + '\r\n' +
     '08/10/2026;14:00;Zona Sul RP;Village Park;Imobiliária;"\'=HYPERLINK(""x"")";111.444.777-35;(19) 3245-8890;"Imob; Centro";Bia;Gil;Recepcionista Dois\r\n' +
     '09/10/2026;11:50;Centro RP;Village Gaia;Espontânea;Ana Lima;529.982.247-25;(15) 99876-5432;;Rui;;Recepcionista Um\r\n';
   assert.equal(V.gerarCSV(visitas), esperado);

@@ -141,7 +141,7 @@ function visRoteador_(req) {
 function visConferirSenha_(enviada) {
   var senha = PropertiesService.getScriptProperties().getProperty(VIS_PROP_SENHA);
   if (!senha) throw new VisFalha('interno', 'Senha do dashboard não configurada. Rode configurarSenhaVisitas().');
-  if (enviada !== senha) throw new VisFalha('senha', 'Senha incorreta.');
+  if (!visIguais_(String(enviada === null || enviada === undefined ? '' : enviada), senha)) throw new VisFalha('senha', 'Senha incorreta.');
 }
 
 function visComLock_(fn) {
@@ -684,6 +684,7 @@ function visMudarSituacao_(req, de, para) {
     var valores = { 'Situação': para };
     if (de === 'pendente') valores['Aprovado em'] = visAgoraBr_();
     visAtualizarLinha_(t, a.i, valores);
+    if (para === 'ativa') visLimparFalhas_(CacheService.getScriptCache(), usuario);
     return { usuario: usuario, situacao: para };
   });
 }
@@ -707,6 +708,7 @@ function visRedefinirSenha_(req) {
     var t = visLerContas_(), a = visAcharConta_(t, usuario);
     if (!a || a.conta.situacao === 'pendente') throw visNaoEncontrada_();
     visAtualizarLinha_(t, a.i, { 'Hash': hash, 'Sal': sal, 'Temporária': 'sim' });
+    visLimparFalhas_(CacheService.getScriptCache(), usuario);
     return { usuario: usuario, senhaTemporaria: temp };
   });
 }

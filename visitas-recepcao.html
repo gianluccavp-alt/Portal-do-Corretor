@@ -60,7 +60,6 @@ h1,h2,p{margin:0}
 .tipos{display:flex;flex-wrap:wrap;gap:12px}
 .tipo{flex:1 1 220px;min-width:0;display:flex;gap:12px;align-items:center;text-align:left;padding:14px;min-height:84px;border-radius:14px;border:1px solid var(--hair);background:var(--surface);cursor:pointer;transition:border-color .15s,box-shadow .15s}
 .tipo:hover{border-color:var(--red)}
-.tipo[aria-checked="true"]{border-color:var(--red);box-shadow:var(--foco)}
 .tipo-ico{flex:none;width:44px;height:44px;border-radius:9px;display:flex;align-items:center;justify-content:center}
 .tipo-nome{display:block;font-weight:700;font-size:.95rem}
 .tipo-desc{display:block;font-size:13px;color:var(--slate);line-height:1.35}
@@ -242,6 +241,7 @@ h1,h2,p{margin:0}
       </label>
       <p class="erro-txt" id="n-erro" role="alert" hidden></p>
       <button type="submit" class="btn btn-p" id="n-salvar">Salvar e continuar</button>
+      <button type="button" class="link" id="n-sair">Sair e entrar com outro usuário</button>
     </form>
   </div>
 </section>
