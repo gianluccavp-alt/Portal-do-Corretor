@@ -353,3 +353,86 @@ test('roteador: ações do comercial exigem a senha antes de qualquer leitura', 
     assert.throws(() => ctx.visRoteador_({ acao, senha: 'errada', usuario: 'ana' }), (e) => e.codigo === 'senha', acao);
   });
 });
+
+/* ---------- contas com planilha falsa: visEntrar_ e visRedefinirSenha_ ---------- */
+function ambienteContas() {
+  const cab = ['Usuário', 'Nome', 'Situação', 'Hash', 'Sal', 'Temporária', 'Criado em', 'Aprovado em', 'Último acesso'];
+  const linhas = [cab.slice()];
+  const aba = {
+    getLastRow: () => linhas.length,
+    getLastColumn: () => cab.length,
+    setFrozenRows() {},
+    deleteRow: (r) => { linhas.splice(r - 1, 1); },
+    getRange(r, c, nr, nc) {
+      nr = nr || 1; nc = nc || 1;
+      const faixa = {
+        getDisplayValues: () => {
+          const out = [];
+          for (let i = 0; i < nr; i++) out.push((linhas[r - 1 + i] || []).slice(c - 1, c - 1 + nc).map(String));
+          return out;
+        },
+        setValues: (m) => {
+          m.forEach((lin, i) => { linhas[r - 1 + i] = linhas[r - 1 + i] || []; lin.forEach((v, j) => { linhas[r - 1 + i][c - 1 + j] = v; }); });
+          return faixa;
+        },
+        setValue: (v) => { linhas[r - 1][c - 1] = v; return faixa; },
+        setNumberFormat: () => faixa,
+        setFontWeight: () => faixa
+      };
+      return faixa;
+    }
+  };
+  const ss = { getSheetByName: (n) => (n === 'RECEPCIONISTAS' ? aba : null), insertSheet: () => aba };
+  const cache = cacheFalso();
+  const props = {};
+  const ctx = carregar('docs/apps-script-visitas.gs', {
+    Utilities: { ...UtilitiesFalso, formatDate: () => '10/10/2026 10:00:00' },
+    CacheService: { getScriptCache: () => cache },
+    PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => (k in props ? props[k] : null), setProperty: (k, v) => { props[k] = String(v); } }) },
+    LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock() {} }) },
+    SpreadsheetApp: { getActiveSpreadsheet: () => ss }
+  });
+  const conta = (usuario, situacao) => linhas.push([usuario, usuario, situacao, ctx.visHashSenha_('senha-certa', 'sal1'), 'sal1', 'não', '', '', '']);
+  conta('ana', 'ativa'); conta('pen', 'pendente'); conta('des', 'desativada');
+  const linha = (u) => linhas.find((l, i) => i > 0 && l[0] === u);
+  return { ctx, linha, cab };
+}
+const codigo = (c) => (e) => e.codigo === c;
+
+test('visEntrar_: credenciais erradas, situacoes e bloqueio por tentativas', () => {
+  const { ctx } = ambienteContas();
+  assert.throws(() => ctx.visEntrar_({ usuario: 'ana', senha: 'errada' }), codigo('credenciais'));
+  assert.throws(() => ctx.visEntrar_({ usuario: 'fantasma', senha: 'senha-certa' }), codigo('credenciais'));
+  assert.throws(() => ctx.visEntrar_({ usuario: 'pen', senha: 'errada' }), codigo('credenciais'));
+  assert.throws(() => ctx.visEntrar_({ usuario: 'pen', senha: 'senha-certa' }), codigo('pendente'));
+  assert.throws(() => ctx.visEntrar_({ usuario: 'des', senha: 'errada' }), codigo('credenciais'));
+  assert.throws(() => ctx.visEntrar_({ usuario: 'des', senha: 'senha-certa' }), codigo('desativada'));
+  const s = ctx.visEntrar_({ usuario: 'ana', senha: 'senha-certa' });
+  assert.equal(typeof s.sessao, 'string');
+  assert.equal(typeof s.expira, 'number');
+  assert.equal(s.usuario, 'ana');
+  assert.equal(s.trocarSenha, false);
+  for (let i = 0; i < 4; i++) assert.throws(() => ctx.visEntrar_({ usuario: 'ana', senha: 'x' + i }), codigo('credenciais'));
+  assert.throws(() => ctx.visEntrar_({ usuario: 'ana', senha: 'x4' }), codigo('bloqueado'));
+  assert.throws(() => ctx.visEntrar_({ usuario: 'ana', senha: 'senha-certa' }), codigo('bloqueado'));
+});
+
+test('visRedefinirSenha_ gera temporaria, troca o hash e libera o bloqueio', () => {
+  const { ctx, linha } = ambienteContas();
+  for (let i = 0; i < 5; i++) assert.throws(() => ctx.visEntrar_({ usuario: 'ana', senha: 'x' + i }), /./);
+  assert.throws(() => ctx.visEntrar_({ usuario: 'ana', senha: 'senha-certa' }), codigo('bloqueado'));
+  const antes = linha('ana')[3];
+  const r = ctx.visRedefinirSenha_({ usuario: 'ana' });
+  assert.match(r.senhaTemporaria, /^[A-Za-z0-9]{3}-[A-Za-z0-9]{3}-[A-Za-z0-9]{3}$/);
+  assert.equal(linha('ana')[5], 'sim');
+  assert.notEqual(linha('ana')[3], antes);
+  const s = ctx.visEntrar_({ usuario: 'ana', senha: r.senhaTemporaria });
+  assert.equal(s.trocarSenha, true);
+});
+
+test('reativar libera o bloqueio da conta', () => {
+  const { ctx } = ambienteContas();
+  for (let i = 0; i < 5; i++) assert.throws(() => ctx.visEntrar_({ usuario: 'des', senha: 'x' + i }), /./);
+  ctx.visMudarSituacao_({ usuario: 'des' }, 'desativada', 'ativa');
+  assert.equal(ctx.visEntrar_({ usuario: 'des', senha: 'senha-certa' }).usuario, 'des');
+});
