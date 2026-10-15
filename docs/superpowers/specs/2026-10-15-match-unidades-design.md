@@ -77,14 +77,14 @@ Data de referência = hoje. Para cada unidade disponível do recorte, vinda do `
 
 - Valor de venda = campo `associativo` da unidade no `SimUnidades` (já considera preço promocional).
 - **Ato fixo, com data de hoje:** R$ 1.500 no Conquista Clube Ipiranga (`id: 'ipiranga'`), R$ 2.500 nos demais.
-- Sem sinais, anuais e bônus. Saldo do Pro Soluto = venda − financiamento − subsídio − ato
-  (mínimo 0).
+- Sem sinais, anuais e bônus. Financiamento = mínimo entre a capacidade CAIXA e venda − subsídio − ato.
+  Saldo do Pro Soluto = venda − financiamento − subsídio − ato (mínimo 0).
 
 ### 4.3 Fluxo e política (`match-prosoluto.js`)
 
-- Venda = hoje. 1º vencimento = primeiro dia válido (5, 10 ou 15) a pelo menos 30 dias de hoje,
-  respeitando o máximo de 120 dias do associativo.
-- **Prazo do Pro Soluto = prazo máximo da política escolhida** (84 meses).
+- Venda = hoje. 1º vencimento = mês seguinte à venda, dia 10 (mesma sugestão do associativo).
+- **Prazo do Pro Soluto = prazo máximo da política escolhida** (84 meses). Se a parcela linear ficar abaixo da
+  parcela mínima do produto, o prazo encurta até atingi-la. Pro Soluto zerado não tem carnê e é aprovado.
 - Entrega = entrega do empreendimento, ou da torre quando houver data específica (Village Gaia, Torre 1).
 - Idade = idade na data de hoje. Renda = renda informada.
 - Roda o **carnê linear**. Se não aprovar, roda o **escalonado**.
