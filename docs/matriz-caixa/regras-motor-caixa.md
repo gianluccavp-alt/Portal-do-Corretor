@@ -14,6 +14,9 @@ reais** da CAIXA (PRICE e SAC) e 3 casos de idade-limite (`node docs/matriz-caix
 | Subsídio | ± R$ 1 |
 | Valor financiado | − R$ 2,90 (arredondamento: 1 centavo de parcela ≈ R$ 2 de financiamento) |
 
+> Versão oficial em uso: [`assets/motor-caixa.js`](../../assets/motor-caixa.js), testada por
+> `tests/motor-caixa.test.js`. O protótipo em `prototipo/` fica como registro da engenharia reversa.
+
 ## 1. Cidades
 
 | Município (IBGE) | Teto F1/F2 | Fator populacional (Fpop) | UF (FD/R) |
