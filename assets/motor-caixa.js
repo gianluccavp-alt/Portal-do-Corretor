@@ -100,7 +100,8 @@
     return Math.min(d, DESCONTO_MAX);
   }
 
-  /* entrada: { renda, valor, nascimento: Date, municipio, fgts: bool, sistema: 'PRICE'|'SAC', hoje: Date, prazo? } */
+  /* entrada: { renda, valor, nascimento: Date, municipio, fgts: bool, sistema: 'PRICE'|'SAC', hoje: Date, prazo?,
+               valorFinanciamento? (teto opcional: financiar menos que a capacidade) } */
   function simular(e) {
     var cidade = CIDADES[e.municipio];
     if (!cidade) return { erro: 'Cidade sem regras da CAIXA mapeadas' };
@@ -122,7 +123,7 @@
       pv = Math.min(pv, cap);
     });
     var sub = enq.subsidio ? subsidio(e.renda, e.valor, enq.jn, cidade) : 0;
-    var fin = r2(Math.min(pv, COTA * e.valor));
+    var fin = r2(Math.min(pv, COTA * e.valor, e.valorFinanciamento > 0 ? e.valorFinanciamento : Infinity));
     var parcelaBase = r2(fin * k);
     var seguradoras = SEGURADORAS.map(function (s) {
       var primeira = parcelaBase + enq.taxaAdm + r2(fin * taxaMip(s, idade)) + r2(e.valor * s.dfi / 100);

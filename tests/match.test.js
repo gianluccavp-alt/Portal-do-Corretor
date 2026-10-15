@@ -55,6 +55,12 @@ test('avaliarUnidade: financiamento + subsídio + ato acima da venda não deixa 
   assert.equal(r.status, 'ok');
   assert.equal(r.linha.saldoPS, 0);
   assert.equal(r.linha.financiamento, 150000 - r.linha.subsidio - 2500);
+  /* a parcela CAIXA tem de ser a do valor financiado de fato, nao a da capacidade maxima */
+  const M = require('../assets/motor-caixa.js');
+  const cx = M.simular({ renda: 9000, valor: 200000, nascimento: NASC, municipio: '3543402', fgts: true, hoje: HOJE,
+    valorFinanciamento: r.linha.financiamento });
+  assert.equal(cx.valorFinanciamento, r.linha.financiamento);
+  assert.equal(r.linha.parcelaFin, Math.max(...cx.seguradoras.map((s) => s.primeira)));
 });
 
 test('avaliarUnidade: aprova pelo linear quando cabe; usa a parcela maior entre seguradoras', () => {
@@ -82,6 +88,9 @@ test('avaliarUnidade: Pro Soluto pequeno encurta o prazo até a parcela mínima'
   assert.equal(r.status, 'ok');
   assert.ok(r.linha.prazoPS < 84, 'prazo deveria encurtar');
   assert.ok(r.linha.parcelaPS >= 150, 'parcela abaixo da mínima do produto');
+  /* o associativo precisa abrir com o mesmo prazo encurtado */
+  const u = new URL(Match.urlAssociativo(r.linha, CLIENTE, HOJE), 'https://x/');
+  assert.equal(+u.searchParams.get('prazo'), r.linha.prazoPS);
 });
 
 test('buscar: filtra cidade e empreendimento, agrupa, ordena e conta descartes', () => {

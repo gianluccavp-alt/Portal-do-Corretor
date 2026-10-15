@@ -52,9 +52,10 @@
     return 600000;
   }
 
-  function simulaCaixa(cliente, municipio, valor, hoje) {
+  function simulaCaixa(cliente, municipio, valor, hoje, tetoFinanciamento) {
     return Motor.simular({ renda: cliente.renda, valor: valor, nascimento: cliente.nascimento,
-      municipio: municipio, fgts: cliente.fgts !== false, sistema: 'PRICE', hoje: hoje });
+      municipio: municipio, fgts: cliente.fgts !== false, sistema: 'PRICE', hoje: hoje,
+      valorFinanciamento: tetoFinanciamento });
   }
 
   function validarCliente(cliente, cidade, hoje) {
@@ -88,6 +89,8 @@
     var subsidio = cx.subsidio;
     /* Review Focus 1: banco + subsidio + ato nao podem passar da venda */
     var financiamento = Math.max(0, Math.min(cx.valorFinanciamento, r2(venda - subsidio - ato)));
+    /* financiamento menor que a capacidade: a parcela CAIXA e a do valor financiado de fato */
+    if (financiamento < cx.valorFinanciamento) cx = simulaCaixa(cliente, municipio, un.avaliacao, hoje, financiamento);
     var parcelaFin = Math.max.apply(null, cx.seguradoras.map(function (s) { return s.primeira; }));
 
     var pol = PS.politicaPorId(politicaId);
@@ -174,7 +177,7 @@
     var p = {
       emp: l.empId, unidade: l.codigo, politica: l.politicaId,
       renda: cliente.renda, idade: idadeAnos(cliente.nascimento, hoje), valor: l.venda,
-      fin: l.financiamento, sub: l.subsidio, parcFin: l.parcelaFin, ato: l.ato
+      fin: l.financiamento, sub: l.subsidio, parcFin: l.parcelaFin, ato: l.ato, prazo: l.prazoPS
     };
     var q = Object.keys(p).map(function (k) { return k + '=' + encodeURIComponent(p[k]); }).join('&');
     return 'simulador-associativo.html?' + q;

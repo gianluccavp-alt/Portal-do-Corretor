@@ -2571,6 +2571,7 @@ $('b-pdf').addEventListener('click', function(){
   if(POLITICAS.some(function(p){ return p.id===q.get('politica'); })) S.politicaId = q.get('politica');
   [['renda','renda'],['idade','idade'],['valor','valor'],['fin','financiado'],['sub','subsidio'],
    ['parcFin','parcFin'],['ato','ato']].forEach(function(p){ var v=n(p[0]); if(v!==null) S[p[1]]=v; });
+  var pz=n('prazo'); if(pz!==null && pz>=1) S.prazo=Math.round(pz);
 })();
 initCombos();
 sugereDatas();
