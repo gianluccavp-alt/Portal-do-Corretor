@@ -47,7 +47,8 @@
     return {
       renda: window.Match.numero($('f-renda').value),
       nascimento: nasc,
-      fgts: document.querySelector('input[name=fgts]:checked').value === 'S'
+      fgts: document.querySelector('input[name=fgts]:checked').value === 'S',
+      possuiImovel: document.querySelector('input[name=imovel]:checked').value === 'S'
     };
   }
   function erro(msg) { var el = $('mt-erro'); el.textContent = msg || ''; el.hidden = !msg; }
@@ -127,7 +128,9 @@
           '<input type="checkbox" data-k="' + esc(chave) + '" aria-label="Incluir ' + esc(l.codigo) + ' no PDF">' +
           '<div><div class="mt-un-cod">' + esc(l.codigo) + '</div>' +
           '<div class="mt-un-sub">Torre ' + l.torre + ' · ' + l.andar + 'º andar · final ' + l.final + ' · ' +
-          esc(l.tipoLabel || '') + (l.areaPriv ? ' · ' + l.areaPriv + ' m²' : '') + '</div></div>' +
+          esc(l.tipoLabel || '') + (l.areaPriv ? ' · ' + l.areaPriv + ' m²' : '') + '</div>' +
+          (l.travaF3 ? '<div class="mt-selo">Simulada na Faixa 3: valor travado em R$ 400 mil no PCV</div>' : '') +
+          '</div>' +
           '<a href="' + esc(window.Match.urlAssociativo(l, ultimo.cliente, ultimo.hoje)) + '">Abrir no associativo →</a>' +
           '<div class="mt-un-nums">' +
           '<div><span>Valor</span><b>' + brl(l.venda) + '</b></div>' +
@@ -135,7 +138,7 @@
           '<div><span>Subsídio</span><b>' + brl(l.subsidio) + '</b></div>' +
           '<div><span>Ato</span><b>' + brl(l.ato) + '</b></div>' +
           '<div><span>Pro Soluto (' + l.carne + ')</span><b>' + brl(l.parcelaPS) + ' × ' + l.prazoPS + '</b></div>' +
-          '<div><span>Parcela CAIXA</span><b>' + brl(l.parcelaFin) + '</b></div>' +
+          '<div><span>Parcela CAIXA' + (l.faixa === 'SBPE' ? ' (SBPE)' : '') + '</span><b>' + brl(l.parcelaFin) + '</b></div>' +
           '<div><span>Comprometimento</span><b>' + pct(l.crTotal) + '</b></div>' +
           '</div></article>';
       });
