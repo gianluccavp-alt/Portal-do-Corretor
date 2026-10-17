@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Match de Unidades · Portal do Corretor</title>
+<link rel="icon" type="image/webp" href="assets/img/favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/home.css">
+<link rel="stylesheet" href="assets/match.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand-lockup" href="index.html">
+      <img class="brand-logo" src="assets/img/logo-direcional-header.png" width="415" height="95" alt="Grupo Direcional">
+      <span class="brand-rule"></span>
+      <span class="brand-name">Portal do Corretor</span>
+    </a>
+  </div>
+</header>
+
+<main class="wrap mt-main" id="conteudo">
+  <p class="step-label">Ferramentas</p>
+  <h1 class="mt-title">Match de Unidades</h1>
+  <p class="mt-sub">Informe o perfil do cliente para ver as unidades que ele consegue comprar, com financiamento CAIXA, subsídio e Pro Soluto estimados.</p>
+
+  <form class="mt-form" id="mt-form" novalidate>
+    <div class="mt-field">
+      <label for="f-cidade">Cidade</label>
+      <select id="f-cidade" required></select>
+    </div>
+    <div class="mt-field">
+      <label for="f-emp">Empreendimento</label>
+      <select id="f-emp"></select>
+    </div>
+    <div class="mt-field">
+      <label for="f-renda">Renda bruta</label>
+      <input id="f-renda" type="text" inputmode="decimal" placeholder="R$ 0,00" autocomplete="off" required>
+    </div>
+    <div class="mt-field">
+      <label for="f-nasc">Data de nascimento</label>
+      <input id="f-nasc" type="date" required>
+    </div>
+    <fieldset class="mt-field mt-seg">
+      <legend>3 anos de FGTS</legend>
+      <label><input type="radio" name="fgts" value="S" checked> Sim</label>
+      <label><input type="radio" name="fgts" value="N"> Não</label>
+    </fieldset>
+    <fieldset class="mt-field mt-seg">
+      <legend>Possui imóvel na cidade</legend>
+      <label><input type="radio" name="imovel" value="N" checked> Não</label>
+      <label><input type="radio" name="imovel" value="S"> Sim</label>
+    </fieldset>
+    <div class="mt-field">
+      <label for="f-pol">Política</label>
+      <select id="f-pol"></select>
+    </div>
+    <p class="mt-erro" id="mt-erro" role="alert" hidden></p>
+    <button class="mt-btn" type="submit" id="mt-buscar">Encontrar unidades</button>
+  </form>
+
+  <p class="notice mt-status" id="mt-status" hidden></p>
+
+  <section class="mt-resultado" id="mt-resultado" hidden aria-live="polite">
+    <div class="mt-resumo" id="mt-resumo"></div>
+    <div class="mt-acoes">
+      <span id="mt-contagem"></span>
+      <button class="mt-btn mt-btn-sec" type="button" id="mt-pdf" disabled>Gerar PDF (0)</button>
+    </div>
+    <div id="mt-grupos"></div>
+    <p class="mt-rodape" id="mt-rodape"></p>
+  </section>
+
+  <p class="mt-aviso">Valores estimados com o motor calibrado no Simulador Habitacional CAIXA em 15/10/2026. Sujeitos à análise de crédito da CAIXA e à aprovação da Direcional.</p>
+</main>
+
+<script src="assets/simuladores.js"></script>
+<script src="assets/motor-caixa.js"></script>
+<script src="assets/match-prosoluto.js"></script>
+<script src="assets/match.js"></script>
+<script src="assets/match-app.js"></script>
+</body>
+</html>
