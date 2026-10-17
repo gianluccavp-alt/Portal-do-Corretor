@@ -1,7 +1,7 @@
 # Match de Unidades — design
 
 **Data:** 15/10/2026
-**Status:** aprovado no brainstorm, aguardando revisão da spec
+**Status:** aprovado; extensão SBPE e trava da Faixa 3 aprovadas em 17/10/2026 (§4.5 e §4.6)
 **Página:** `match-unidades.html` (card novo em "Ferramentas" na home)
 **Base de cálculo:** `docs/matriz-caixa/regras-motor-caixa.md` e `docs/matriz-caixa/prototipo/`
 
@@ -58,6 +58,7 @@ cópia (§9).
 | Renda bruta | Obrigatório, > 0. |
 | Data de nascimento | Obrigatório. |
 | 3 anos de FGTS | Sim/Não, padrão Sim. |
+| Possui imóvel na cidade | Sim/Não, padrão Não. Sim leva ao SBPE (§4.5). |
 | Política | Aço, Bronze, Prata, Ouro, Diamante. Padrão **Aço**. |
 
 ## 4. Cálculo por unidade (`assets/match.js`)
@@ -98,6 +99,26 @@ Empreendimento, torre/andar/final, tipologia, área privativa, valor de venda, f
 ato, saldo do Pro Soluto, parcela do Pro Soluto × prazo (e se é linear ou escalonado), parcela do
 financiamento e C.R. total.
 
+### 4.5 SBPE (extensão de 17/10/2026)
+
+Regras e coleta: `docs/matriz-caixa/coleta-sbpe-2026-10-17.md`.
+
+- **Quando:** cliente **possui imóvel na cidade** ou **renda > R$ 13.000**. Produto 100501122 (SBPE TR, imóvel
+  vinculado a empreendimento, Taxa Balcão). Renda acima de R$ 13 mil deixa de ser erro.
+- **Taxa mensal** = (1 + 11,49%)^(1/12) − 1, exibida como 10,92% nominal / 11,49% efetiva. Sem subsídio. Taxa de adm. R$ 25.
+- **PRICE (usado na tela):** comprometimento **25%**, cota **80%**, prazo até **360** meses (com a regra de idade).
+- SAC (só no motor): comprometimento 30%, cota 90%, prazo até 420.
+- **Seguros próprios do SBPE:** seguradoras 14, 16 (Caixa Residencial Habitacional Especial) e 4 (Tokio), com
+  tabelas de MIP e DFI da coleta. O teto confere as 3 em qualquer idade (premissa: não coletado acima de 60 anos).
+- Idade: mesma regra do MCMV (entrada até 70a6m; premissa coerente com os prazos coletados).
+- Sem limite de valor do imóvel por faixa.
+
+### 4.6 Faixa 3 travada no PCV (extensão de 17/10/2026)
+
+Quando o cliente está no MCMV, **avaliação > R$ 400.000**, **venda associativa < R$ 400.000** e **renda ≤ R$ 9.600**,
+a CAIXA é simulada com o imóvel em **R$ 400.000 (Faixa 3)**, porque o contrato (PCV) trava esse valor.
+O cartão mostra o selo "Simulada na Faixa 3: valor travado em R$ 400 mil no PCV". O selo não vai para o PDF.
+
 ## 5. Resultado na tela (`assets/match-app.js`)
 
 - **Resumo do cliente** no topo: faixa MCMV, juros, prazo CAIXA e subsídio estimado (do enquadramento
@@ -137,7 +158,7 @@ Gerado no navegador com jsPDF (como os simuladores), com as unidades marcadas.
 | Situação | Comportamento |
 |---|---|
 | Planilha indisponível | Mesmo aviso e "Tentar novamente" dos simuladores (`SimUnidades`). |
-| Renda acima de R$ 13.000 | Mensagem no formulário: fora do MCMV. Sem lista. |
+| Renda acima de R$ 13.000 | Vai para o SBPE (§4.5). |
 | Idade acima de 70 anos e 6 meses | Mensagem no formulário: fora do limite de idade da CAIXA. Sem lista. |
 | Campo obrigatório vazio | Mensagem no campo; botão não calcula. |
 | Unidade sem avaliação ou fora do teto | Descartada; entra na contagem do rodapé. |

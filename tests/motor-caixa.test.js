@@ -64,12 +64,60 @@ test('idade-limite: 70a6m exatos simula com 120 meses; 1 dia a mais é recusado'
   assert.match(M.simular({ ...base, nascimento: dt('15/02/1956') }).erro, /70 anos e 6 meses/);
 });
 
-test('renda acima de R$ 13.000 está fora do enquadramento', () => {
+test('renda acima de R$ 13.000 não dá erro: vai para o SBPE (spec §4.5)', () => {
   const r = M.simular({ renda: 13000.01, valor: 500000, nascimento: dt('15/03/1990'), municipio: '3543402', fgts: true, hoje: HOJE });
-  assert.match(r.erro, /enquadramento/);
+  assert.ok(!r.erro, r.erro);
+  assert.equal(r.produto, '100501122');
 });
 
 test('MUNICIPIO_POR_CIDADE cobre as cidades do catálogo', () => {
   assert.deepEqual(M.MUNICIPIO_POR_CIDADE, { 'Ribeirão Preto': '3543402', Campinas: '3509502', Sorocaba: '3552205' });
   assert.equal(M.CIDADES['3509502'].tetoF12, 270000);
+});
+
+/* ---------- SBPE (coleta de 17/10/2026) ---------- */
+const HOJE_SBPE = new Date(2026, 9, 17);
+/* fin: o teto fechado fica ate R$ 3,64 abaixo da CAIXA (mesmo residuo do MCMV) */
+const TOL_SBPE = { fin: 4, prazo: 0, p14: 0.05, p16: 0.05, p4: 0.05 };
+
+test('SBPE: reproduz as 8 respostas da CAIXA (SAC 30%/90%/420 e PRICE 25%/80%/360)', () => {
+  const linhas = fs.readFileSync(path.join(FIX, 'casos-sbpe.txt'), 'utf8').trim().split('\n').filter((x) => !x.startsWith('#'));
+  assert.equal(linhas.length, 8);
+  for (const l of linhas) {
+    const c = l.split(';');
+    const r = M.simular({ renda: +c[0], valor: +c[1], nascimento: dt(c[2]), municipio: '3543402', fgts: true,
+      possuiImovel: c[3] === 'S', sistema: c[4], hoje: HOJE_SBPE });
+    const id = 'sbpe ' + l;
+    assert.ok(!r.erro, id + ': ' + r.erro);
+    assert.equal(r.produto, '100501122', id);
+    assert.equal(r.faixa, 'SBPE', id);
+    const sg = {}; r.seguradoras.forEach((s) => { sg[s.codigo] = s.primeira; });
+    const got = { fin: r.valorFinanciamento, prazo: r.prazo, p14: sg['14'], p16: sg['16'], p4: sg['4'] };
+    const exp = { fin: +c[5], prazo: +c[6] };
+    if (c[7]) exp.p14 = +c[7];
+    if (c[8]) exp.p16 = +c[8];
+    if (c[9]) exp.p4 = +c[9];
+    for (const k of Object.keys(exp)) {
+      assert.ok(Math.abs(got[k] - exp[k]) <= TOL_SBPE[k] + 1e-9, `${id} ${k}: motor ${got[k]} caixa ${exp[k]}`);
+    }
+  }
+});
+
+test('SBPE: juros exibidos 10,92% nominal / 11,49% efetiva, sem subsídio e com taxa de R$ 25', () => {
+  const r = M.simular({ renda: 7000, valor: 381000, nascimento: dt('26/01/1998'), municipio: '3543402', fgts: true,
+    possuiImovel: true, hoje: HOJE_SBPE });
+  assert.equal(r.jurosNominal, 10.92);
+  assert.equal(r.jurosEfetivo, 11.49);
+  assert.equal(r.subsidio, 0);
+  assert.equal(r.taxaAdm, 25);
+  assert.deepEqual(r.seguradoras.map((s) => s.codigo), ['14', '16', '4']);
+});
+
+test('SBPE: escolhido por possuir imóvel ou por renda acima de R$ 13.000', () => {
+  const base = { valor: 300000, nascimento: dt('15/03/1990'), municipio: '3543402', fgts: true, hoje: HOJE_SBPE };
+  assert.equal(M.simular({ ...base, renda: 4000, valor: 250000 }).faixa, 'Faixa 2');
+  assert.equal(M.simular({ ...base, renda: 4000, valor: 250000, possuiImovel: true }).faixa, 'SBPE');
+  assert.equal(M.simular({ ...base, renda: 13000 }).faixa, 'Faixa 4');
+  assert.equal(M.simular({ ...base, renda: 13000.01 }).faixa, 'SBPE');
+  assert.equal(M.simular({ ...base, renda: 20000, valor: 1200000 }).faixa, 'SBPE');
 });

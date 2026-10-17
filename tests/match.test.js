@@ -27,7 +27,7 @@ test('ato: R$ 1.500 no Ipiranga, R$ 2.500 nos demais', () => {
 test('validarCliente: campos obrigatórios, renda e idade fora do MCMV', () => {
   assert.match(Match.validarCliente({ renda: 0, nascimento: NASC, fgts: true }, 'Ribeirão Preto', HOJE), /renda/i);
   assert.match(Match.validarCliente({ renda: 4000, nascimento: null, fgts: true }, 'Ribeirão Preto', HOJE), /nascimento/i);
-  assert.match(Match.validarCliente({ renda: 13000.01, nascimento: NASC, fgts: true }, 'Ribeirão Preto', HOJE), /13\.000/);
+  assert.equal(Match.validarCliente({ renda: 13000.01, nascimento: NASC, fgts: true }, 'Ribeirão Preto', HOJE), null, 'acima de 13 mil vai para o SBPE');
   assert.match(Match.validarCliente({ renda: 4000, nascimento: new Date(1956, 3, 14), fgts: true }, 'Ribeirão Preto', HOJE), /70 anos e 6 meses/);
   assert.equal(Match.validarCliente(CLIENTE, 'Ribeirão Preto', HOJE), null);
 });
@@ -150,4 +150,65 @@ test('urlAssociativo leva os dados para o simulador associativo', () => {
   assert.equal(+u.searchParams.get('valor'), 225000);
   assert.equal(+u.searchParams.get('fin'), linha.financiamento);
   assert.equal(+u.searchParams.get('ato'), 2500);
+});
+
+/* ---------- SBPE e trava da Faixa 3 (spec 4.5 e 4.6) ---------- */
+
+test('resumoCliente: possui imóvel ou renda acima de R$ 13.000 mostra SBPE', () => {
+  assert.equal(Match.resumoCliente({ ...CLIENTE, possuiImovel: true }, 'Ribeirão Preto', HOJE).faixa, 'SBPE');
+  assert.equal(Match.resumoCliente({ renda: 15000, nascimento: NASC, fgts: true }, 'Ribeirão Preto', HOJE).faixa, 'SBPE');
+  assert.equal(Match.resumoCliente(CLIENTE, 'Ribeirão Preto', HOJE).faixa, 'Faixa 2');
+});
+
+test('avaliarUnidade: cliente com imóvel é simulado no SBPE (PRICE 25%)', () => {
+  const emp = EMP('park', 'Ribeirão Preto');
+  const cli = { renda: 9000, nascimento: NASC, fgts: true, possuiImovel: true };
+  const r = Match.avaliarUnidade(cli, emp, UN('BL01-0301', 300000, 300000), 'diamante', HOJE);
+  assert.equal(r.status, 'ok');
+  const M = require('../assets/motor-caixa.js');
+  const cx = M.simular({ renda: 9000, valor: 300000, nascimento: NASC, municipio: '3543402', fgts: true, possuiImovel: true, hoje: HOJE });
+  assert.equal(cx.faixa, 'SBPE');
+  assert.equal(r.linha.faixa, 'SBPE');
+  assert.equal(r.linha.jurosNominal, 10.92);
+  assert.ok(r.linha.prazoFin <= 360);
+  assert.ok(Math.abs(r.linha.parcelaFin - 2250) < 0.05, 'parcela CAIXA = 25% da renda no SBPE PRICE');
+});
+
+test('trava da Faixa 3: avaliação > 400 mil, venda < 400 mil e renda ≤ 9.600 simula com R$ 400 mil', () => {
+  const emp = EMP('botanico', 'Ribeirão Preto');
+  const cli = { renda: 7000, nascimento: NASC, fgts: true };
+  const r = Match.avaliarUnidade(cli, emp, UN('BL01-0301', 420000, 390000), 'diamante', HOJE);
+  const M = require('../assets/motor-caixa.js');
+  const cx400 = M.simular({ renda: 7000, valor: 400000, nascimento: NASC, municipio: '3543402', fgts: true, hoje: HOJE });
+  assert.equal(cx400.faixa, 'Faixa 3');
+  /* mesmo que a politica reprove, a simulacao CAIXA tem de ter sido feita na Faixa 3 */
+  const linha = r.linha || Match.avaliarUnidade(cli, emp, UN('BL01-0301', 420000, 330000), 'diamante', HOJE).linha;
+  assert.ok(linha, 'deveria haver uma unidade aprovada para conferir');
+  assert.equal(linha.travaF3, true);
+  assert.equal(linha.faixa, 'Faixa 3');
+  assert.equal(linha.jurosNominal, 7.66);
+  assert.ok(linha.financiamento <= 320000 + 0.005, 'cota de 80% sobre R$ 400 mil');
+});
+
+test('trava da Faixa 3 não se aplica fora da regra', () => {
+  const emp = EMP('botanico', 'Ribeirão Preto');
+  const semTrava = (cli, un) => {
+    const r = Match.avaliarUnidade(cli, emp, un, 'diamante', HOJE);
+    return r.status === 'ok' ? r.linha.travaF3 : false;
+  };
+  /* venda >= 400 mil: segue na Faixa 4 */
+  assert.equal(semTrava({ renda: 7000, nascimento: NASC, fgts: true }, UN('BL01-0301', 420000, 400000)), false);
+  /* renda acima de 9.600 */
+  assert.equal(semTrava({ renda: 9700, nascimento: NASC, fgts: true }, UN('BL01-0301', 420000, 390000)), false);
+  /* cliente no SBPE */
+  assert.equal(semTrava({ renda: 7000, nascimento: NASC, fgts: true, possuiImovel: true }, UN('BL01-0301', 420000, 390000)), false);
+  /* avaliacao ate 400 mil: nada a travar */
+  assert.equal(semTrava({ renda: 7000, nascimento: NASC, fgts: true }, UN('BL01-0301', 400000, 390000)), false);
+});
+
+test('linhaPdf não leva o selo da trava da Faixa 3', () => {
+  const emp = EMP('botanico', 'Ribeirão Preto');
+  const { linha } = Match.avaliarUnidade({ renda: 7000, nascimento: NASC, fgts: true }, emp, UN('BL01-0301', 420000, 330000), 'diamante', HOJE);
+  assert.ok(!('travaF3' in Match.linhaPdf(linha)));
+  assert.ok(!('faixa' in Match.linhaPdf(linha)));
 });
