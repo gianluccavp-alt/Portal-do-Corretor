@@ -127,6 +127,8 @@ O cartão mostra o selo "Simulada na Faixa 3: valor travado em R$ 400 mil no PCV
 - **Lista agrupada por empreendimento**, com a contagem no título. Unidades ordenadas da menor para a
   maior parcela de Pro Soluto.
 - Cada unidade tem **Abrir no associativo** (§6) e uma caixa de seleção para o PDF (§7).
+- Quando a unidade cai em faixa diferente da do resumo (ex.: renda de Faixa 3 em unidade vendida a partir de
+  R$ 400 mil → Faixa 4), o cartão mostra o selo "Enquadrada na Faixa X (juros% a.a.)". Não vai para o PDF.
 - **Nenhuma unidade cabe:** a tela informa isso e, se existir, sugere a próxima política em que alguma
   unidade cabe ("12 unidades cabem na política Prata"), recalculando nas políticas acima da escolhida.
 - Rodapé da lista: quantas unidades ficaram fora por falta de avaliação ou por enquadramento.

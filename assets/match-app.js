@@ -132,6 +132,7 @@
           '<div class="mt-un-sub">Torre ' + l.torre + ' · ' + l.andar + 'º andar · final ' + l.final + ' · ' +
           esc(l.tipoLabel || '') + (l.areaPriv ? ' · ' + l.areaPriv + ' m²' : '') + '</div>' +
           (l.travaF3 ? '<div class="mt-selo">Simulada na Faixa 3: valor travado em R$ 400 mil no PCV</div>' : '') +
+          (window.Match.seloFaixa(l, resumo.faixa) ? '<div class="mt-selo mt-selo-faixa">' + esc(window.Match.seloFaixa(l, resumo.faixa)) + '</div>' : '') +
           '</div>' +
           '<a href="' + esc(window.Match.urlAssociativo(l, ultimo.cliente, ultimo.hoje)) + '">Abrir no associativo →</a>' +
           '<div class="mt-un-nums">' +

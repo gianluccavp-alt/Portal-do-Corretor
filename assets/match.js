@@ -180,6 +180,14 @@
     return { grupos: grupos, total: total, descartadas: desc, sugestao: sugestao };
   }
 
+  /* selo do cartao quando a unidade cai em faixa diferente da do resumo do cliente
+     (ex.: renda de Faixa 3 em unidade vendida acima de 400 mil -> Faixa 4).
+     A trava da Faixa 3 ja tem selo proprio. */
+  function seloFaixa(l, faixaResumo) {
+    if (l.travaF3 || !l.faixa || l.faixa === faixaResumo) return null;
+    return 'Enquadrada na ' + l.faixa + ' (' + String(l.jurosNominal).replace('.', ',') + '% a.a.)';
+  }
+
   function linhaPdf(l) {
     return { empNome: l.empNome, codigo: l.codigo, tipoLabel: l.tipoLabel, areaPriv: l.areaPriv,
              venda: l.venda, financiamento: l.financiamento, subsidio: l.subsidio, ato: l.ato,
@@ -197,7 +205,7 @@
   }
 
   var api = {
-    numero: numero, atoDe: atoDe, validarCliente: validarCliente, resumoCliente: resumoCliente,
+    numero: numero, atoDe: atoDe, seloFaixa: seloFaixa, validarCliente: validarCliente, resumoCliente: resumoCliente,
     avaliarUnidade: avaliarUnidade, buscar: buscar, linhaPdf: linhaPdf, urlAssociativo: urlAssociativo,
     ORDEM_POLITICAS: ORDEM_POLITICAS
   };

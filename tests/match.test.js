@@ -212,3 +212,29 @@ test('linhaPdf não leva o selo da trava da Faixa 3', () => {
   assert.ok(!('travaF3' in Match.linhaPdf(linha)));
   assert.ok(!('faixa' in Match.linhaPdf(linha)));
 });
+
+/* ---------- selo de faixa no cartao (pedido de 20/10/2026) ---------- */
+
+test('seloFaixa: avisa quando a unidade cai em faixa diferente do resumo', () => {
+  assert.equal(Match.seloFaixa({ faixa: 'Faixa 4', jurosNominal: 10, travaF3: false }, 'Faixa 3'),
+    'Enquadrada na Faixa 4 (10% a.a.)');
+  assert.equal(Match.seloFaixa({ faixa: 'Faixa 3', jurosNominal: 7.66, travaF3: false }, 'Faixa 2'),
+    'Enquadrada na Faixa 3 (7,66% a.a.)');
+});
+
+test('seloFaixa: nada quando bate com o resumo ou quando a trava da Faixa 3 já explica', () => {
+  assert.equal(Match.seloFaixa({ faixa: 'Faixa 3', jurosNominal: 7.66, travaF3: false }, 'Faixa 3'), null);
+  assert.equal(Match.seloFaixa({ faixa: 'Faixa 3', jurosNominal: 7.66, travaF3: true }, 'Faixa 3'), null);
+  assert.equal(Match.seloFaixa({ faixa: 'SBPE', jurosNominal: 10.92, travaF3: false }, 'SBPE'), null);
+});
+
+test('seloFaixa: unidade do Botânico vendida acima de 400 mil com renda de Faixa 3 cai na Faixa 4', () => {
+  const emp = EMP('botanico', 'Ribeirão Preto');
+  const cli = { renda: 9600, nascimento: NASC, fgts: true };
+  const resumo = Match.resumoCliente(cli, 'Ribeirão Preto', HOJE);
+  const r = Match.avaliarUnidade(cli, emp, UN('BL03-1205', 412800, 400800), 'diamante', HOJE);
+  assert.equal(r.status, 'ok');
+  assert.equal(resumo.faixa, 'Faixa 3');
+  assert.equal(r.linha.faixa, 'Faixa 4');
+  assert.equal(Match.seloFaixa(r.linha, resumo.faixa), 'Enquadrada na Faixa 4 (10% a.a.)');
+});
