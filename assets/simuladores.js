@@ -394,6 +394,8 @@ window.SimUnidades = (function () {
       var ba          = parseBR(valorExato(r, 'B.A. da Unidade'));
       var folgaCampG  = parseBR(valorExato(r, 'Folga Campanha G'));
       var folgaTabela = parseBR(valorExato(r, 'Folga de Tabela'));
+      /* "Folga Volta ao Caixa" = premio; mesma coluna e criterio de assets/data.js */
+      var folgaVoltaCx = parseBR(col(r, ['folga', 'volta', 'caixa']) || col(r, ['folga', 'volta']));
       var vcm         = parseBR(valorExato(r, 'Valor Comercial Mínimo'));
       var avaliacao   = parseBR(valorExato(r, 'Valor de Avaliação Bancária'));
       var areaPriv    = Math.round(parseBR(valorExato(r, 'Área privativa total')));
@@ -419,7 +421,9 @@ window.SimUnidades = (function () {
         tipoLabel: rotuloTipo(cfg, tipo),
         sol: ehNascente(cfg, n, final) ? 'Nascente' : 'Poente',
         areaPriv: areaPriv, vagas: vagas, avaliacao: avaliacao,
-        tabelaDireta: tabelaExibida, associativo: assocExibido, promocional: promocional
+        tabelaDireta: tabelaExibida, associativo: assocExibido, promocional: promocional,
+        /* valor do "Sem Premio" do site de produtos (associativoOf): promocional usa o VCM */
+        associativoSemPremio: promocional ? vcm : associativo - folgaVoltaCx
       };
     }
 

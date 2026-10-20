@@ -61,7 +61,9 @@
         (u.unidades[b.id] || []).forEach(function (cod) {
           var d = u.detalhes[cod] || {};
           unidades.push({ codigo: cod, torre: parseInt(b.id.replace(/\D/g, ''), 10), tipoLabel: d.tipoLabel,
-            areaPriv: d.areaPriv, avaliacao: d.avaliacao, associativo: d.associativo });
+            areaPriv: d.areaPriv, avaliacao: d.avaliacao,
+            /* spec 4.2: valor associativo SEM premio (sem a Folga Volta ao Caixa) */
+            associativo: d.associativoSemPremio });
         });
       });
       return { emp: emp, unidades: unidades };

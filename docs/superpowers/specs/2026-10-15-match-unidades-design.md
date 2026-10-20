@@ -76,7 +76,8 @@ Data de referência = hoje. Para cada unidade disponível do recorte, vinda do `
 
 ### 4.2 Pro Soluto
 
-- Valor de venda = campo `associativo` da unidade no `SimUnidades` (já considera preço promocional).
+- Valor de venda = **associativo sem prêmio** (`associativoSemPremio` no `SimUnidades`): associativo − Folga Volta ao
+  Caixa, o mesmo valor do filtro "Prêmio: Sem Prêmio" do site de produtos. Unidade promocional usa o VCM. (Ajuste de 20/10/2026.)
 - **Ato fixo, com data de hoje:** R$ 1.500 no Conquista Clube Ipiranga (`id: 'ipiranga'`), R$ 2.500 nos demais.
 - Sem sinais, anuais e bônus. Financiamento = mínimo entre a capacidade CAIXA e venda − subsídio − ato.
   Saldo do Pro Soluto = venda − financiamento − subsídio − ato (mínimo 0).
