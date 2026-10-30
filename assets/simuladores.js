@@ -96,29 +96,66 @@ window.SimUnidades = (function () {
     for (var i = 0; i < ouvintes.length; i++) ouvintes[i](estado, erroMsg);
   }
 
-  /* Le a lista de promocionais do Web App (ou do localStorage em modo dev).
-     Falha silenciosa: sem a lista, nenhuma unidade e tratada como promocional. */
+  /* Le a lista de promocionais da aba "Promocionais" publicada como CSV
+     (window.PROMO_CSV_URL, de config.js) - a mesma fonte que o site de produtos
+     le em assets/data.js (fetchPromocionais). O Web App (PROMO_APPS_SCRIPT_URL)
+     fica so como reserva: hoje ele responde { unidades: [{ emp, identificador }] }
+     e nao mais { identificadores }, por isso os dois formatos sao aceitos.
+     Sem nenhuma URL: modo dev (localStorage). Falha silenciosa: sem a lista,
+     nenhuma unidade e tratada como promocional. */
   function carregaPromocionais() {
-    function aplica(data) {
-      if (!data || !data.identificadores) return;
+    function aplicaChaves(chaves) {
       PROMO_SET = {};
-      for (var i = 0; i < data.identificadores.length; i++) {
-        PROMO_SET[('' + data.identificadores[i]).trim()] = true;
-      }
+      for (var i = 0; i < chaves.length; i++) PROMO_SET[('' + chaves[i]).trim()] = true;
       avisa();
     }
-    var url = window.PROMO_APPS_SCRIPT_URL;
-    if (!url) {
+    function aplica(data) {
+      if (!data) return false;
+      if (data.identificadores) { aplicaChaves(data.identificadores); return true; }
+      if (data.unidades) {
+        aplicaChaves(data.unidades.filter(function (u) { return u && u.emp && u.identificador; })
+          .map(function (u) { return chavePromo(u.emp, u.identificador); }));
+        return true;
+      }
+      return false;
+    }
+    function doCsv(text) {
+      var rows = (text && text.trim().charAt(0) !== '<') ? parseCSV(text) : null;
+      if (!rows) return false;
+      var chaves = [];
+      for (var i = 0; i < rows.length; i++) {
+        var emp = rows[i]['Empreendimento'], ident = rows[i]['Identificador'];
+        if (emp && ident) chaves.push(chavePromo(emp, ident));
+      }
+      aplicaChaves(chaves);
+      return true;
+    }
+    function doAppsScript() {
+      var url = window.PROMO_APPS_SCRIPT_URL;
+      if (!url) return;
+      fetch(url)
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(aplica)
+        .catch(function () { /* segue sem promocionais */ });
+    }
+    var csv = window.PROMO_CSV_URL;
+    if (!csv && !window.PROMO_APPS_SCRIPT_URL) {
       try {
         var raw = localStorage.getItem('promo_dev_list');
         if (raw) aplica(JSON.parse(raw));
       } catch (e) { /* sem localStorage: segue sem promocionais */ }
       return;
     }
-    fetch(url)
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(aplica)
-      .catch(function () { /* segue sem promocionais */ });
+    if (!csv) { doAppsScript(); return; }
+    function tenta(url, proximo) {
+      fetch(url)
+        .then(function (r) { return r.ok ? r.text() : null; })
+        .then(function (text) { if (!doCsv(text)) proximo(); })
+        .catch(function () { proximo(); });
+    }
+    tenta(csv, function () {
+      tenta('https://corsproxy.io/?' + encodeURIComponent(csv), doAppsScript);
+    });
   }
 
   /* ---------- CSV (portado de assets/data.js) ---------- */
