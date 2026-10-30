@@ -299,36 +299,43 @@ a.brand-lockup{text-decoration:none}
    REVELAÇÃO (celular)
    ============================================================ */
 .mt-revelacao{background:#fff}
-.mt-revelacao-in{display:flex;flex-direction:column;max-width:520px;margin:0 auto;padding:8px 20px max(30px,env(safe-area-inset-bottom));min-height:100vh;min-height:100dvh}
+/* a tela inteira cabe sem rolagem (390x700 a 1440x900): o anel e os textos encolhem com a altura */
+.mt-revelacao-in{display:flex;flex-direction:column;max-width:520px;margin:0 auto;padding:8px 20px calc(58px + env(safe-area-inset-bottom));min-height:100vh;min-height:100dvh}
 .mt-revelacao .mt-appbar{padding:0}
 .mt-revelacao .mt-ico-btn{background:var(--fundo);box-shadow:none}
 
-.mt-anel-box{position:relative;width:250px;height:250px;margin:16px auto 0;flex:none}
-.mt-anel{display:block;transform:rotate(-90deg)}
+.mt-anel-box{position:relative;width:min(240px,30vh);height:min(240px,30vh);margin:min(16px,2vh) auto 0;flex:none}
+.mt-anel{display:block;width:100%;height:100%;transform:rotate(-90deg)}
 .mt-anel-fundo{fill:none;stroke:#F6E3E6;stroke-width:14}
 .mt-anel-prog{fill:none;stroke:var(--dir-red);stroke-width:14;stroke-linecap:round;stroke-dasharray:628.3;stroke-dashoffset:0;transform-box:view-box;transform-origin:50% 50%}
 .mt-anel-busca,.mt-anel-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .mt-anel-busca{opacity:0}
 .mt-anel-busca .mt-ic3d{width:70px;height:70px}
 .mt-anel-msg{margin-top:10px;font-size:14px;font-weight:600;color:var(--texto-3)}
-.mt-contagem{font-size:88px;line-height:1;font-weight:800;letter-spacing:-3px;color:var(--grafite);font-variant-numeric:tabular-nums}
-.mt-anel-rot{font-size:15px;font-weight:600;color:var(--texto-2);margin-top:4px}
+.mt-contagem{font-size:min(88px,11vh);line-height:1;font-weight:800;letter-spacing:-3px;color:var(--grafite);font-variant-numeric:tabular-nums}
 .mt-anel-box .twinkle{position:absolute}
 .mt-tw-1{top:6px;right:14px;fill:var(--ouro)}
 .mt-tw-2{bottom:30px;left:2px;fill:var(--dir-red);animation-delay:-1s}
 .mt-tw-3{bottom:4px;right:40px;fill:var(--ouro);animation-delay:-1.7s}
 
-.mt-rev-cab{text-align:center;margin-top:18px}
+.mt-rev-cab{text-align:center;margin-top:min(18px,2.2vh)}
 .mt-rev-titulo{font-size:26px;line-height:1.15;font-weight:800;letter-spacing:-.7px;color:var(--grafite)}
 .mt-rev-sub{margin-top:6px;font-size:14px;color:var(--texto-3)}
-.mt-rev-resumo{margin-top:20px;border-radius:20px;background:var(--fundo);padding:6px 16px}
+.mt-rev-resumo{margin-top:min(20px,2.4vh);border-radius:20px;background:var(--fundo);padding:4px 16px}
 .mt-rev-resumo:empty{display:none}
 .rev-linha{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:46px;border-bottom:1px solid var(--linha)}
 .rev-linha:last-child{border-bottom:0}
 .rev-linha span{font-size:14px;color:var(--texto-2)}
 .rev-linha b{font-size:15px;color:var(--ink);text-align:right}
 .rev-linha b.mt-verde{color:var(--verde)}
-.mt-rev-acao{margin-top:auto;padding-top:24px;display:flex;flex-direction:column;gap:10px}
+.mt-rev-acao{margin-top:auto;padding-top:min(24px,2.8vh);display:flex;flex-direction:column;gap:10px}
+@media (max-height:760px){
+  .mt-rev-titulo{font-size:22px;letter-spacing:-.5px}
+  .mt-rev-sub{margin-top:4px;font-size:13px}
+  .rev-linha{min-height:40px}
+  .rev-linha span{font-size:13px}
+  .rev-linha b{font-size:14px}
+}
 .mt-rev-acao:empty{padding-top:0}
 
 /* buscando: anel girando, mensagem, textos guardados */
@@ -356,7 +363,7 @@ a.brand-lockup{text-decoration:none}
 /* ============================================================
    RESULTADO (celular)
    ============================================================ */
-.mt-res-in{padding-bottom:calc(110px + env(safe-area-inset-bottom))}
+.mt-res-in{padding-bottom:calc(140px + env(safe-area-inset-bottom))}
 .mt-res-cab{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;min-height:68px;padding:8px 14px 8px;background:var(--fundo)}
 .mt-res-cab-txt{flex:1;min-width:0}
 .mt-res-sobre{display:none}
@@ -383,11 +390,12 @@ a.brand-lockup{text-decoration:none}
 .dest-selos{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .dest-selos:empty{display:none}
 .dest-mensal{margin-top:14px;padding:14px;border-radius:18px;background:var(--fundo)}
-.dest-mensal-topo{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+/* valor e % na mesma linha, alinhados pela base */
+.dest-mensal-topo{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:2px}
 .dest-mensal .dado-rot{font-size:12px}
-.dest-mensal-val{display:block;font-size:32px;font-weight:800;letter-spacing:-1px;color:var(--grafite);font-variant-numeric:tabular-nums;margin-top:2px;white-space:nowrap}
-.dest-cr{text-align:right}
-.dest-cr-val{display:block;font-size:18px;font-weight:800;color:var(--verde)}
+.dest-mensal-val{display:block;font-size:28px;font-weight:800;letter-spacing:-.8px;color:var(--grafite);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dest-cr{flex:none;font-size:13px;color:var(--texto-3);white-space:nowrap}
+.dest-cr-val{font-size:16px;font-weight:800;color:var(--verde);font-variant-numeric:tabular-nums}
 .dest-cr-val.mt-ambar{color:var(--ambar)}
 .barra-cr{margin-top:10px;height:8px;border-radius:99px;background:#E3E7E9;overflow:hidden}
 .barra-cr-fill{display:block;width:0;height:100%;border-radius:99px;background:var(--verde)}
@@ -433,14 +441,24 @@ a.brand-lockup{text-decoration:none}
 .mt-mais:hover{background:#fff}
 
 .mt-res-lado{padding:0 20px}
-.mt-lateral{display:none}
-.mt-aviso{margin-top:14px;font-size:11px;line-height:1.5;color:#8A9295}
 
-.lado-card{background:#fff;border-radius:24px;padding:22px}
-.lado-cab{display:flex;align-items:center;gap:12px}
-.lado-cab .mt-ic3d{width:52px;height:52px}
-.lado-cab h3{font-size:17px;font-weight:800;color:var(--grafite)}
-.lado-lista{margin-top:14px;display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.45;color:var(--texto-2)}
+/* aviso de estimativa: rodapé fixo e discreto (revelação; resultado no desktop).
+   No celular o resultado já tem a barra fixa do PDF: a frase entra nela. */
+.mt-rodape{position:fixed;left:0;right:0;bottom:0;z-index:25;margin:0;padding:8px 16px max(8px,env(safe-area-inset-bottom));font-size:11px;line-height:1.4;color:#8A9295;text-align:center;
+  background:rgba(245,246,247,.88);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.mt-revelacao .mt-rodape{background:rgba(255,255,255,.88)}
+.mt-rodape-res{display:none}
+.mt-pdf-aviso{flex:1 0 100%;order:3;margin:0;font-size:11px;line-height:1.35;color:#8A9295;text-align:center}
+
+.mt-lateral{display:flex;flex-direction:column;gap:14px;margin-top:20px}
+.mt-lateral:empty{display:none}
+.lado-card{background:#fff;border-radius:24px;padding:16px 18px}
+.lado-cab{display:flex;align-items:center;gap:12px;min-height:44px;cursor:pointer;list-style:none;border-radius:12px}
+.lado-cab::-webkit-details-marker{display:none}
+.lado-cab .mt-ic3d{width:44px;height:44px}
+.lado-cab h3{flex:1;font-size:17px;font-weight:800;color:var(--grafite)}
+.lado-card[open] > .lado-cab .chev{transform:rotate(180deg)}
+.lado-lista{margin-top:12px;display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.45;color:var(--texto-2)}
 .lado-lista li{display:flex;gap:10px}
 .lado-lista li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--dir-red);margin-top:8px;flex:none}
 .lado-mais{position:relative;overflow:hidden;background:var(--grafite);color:#fff;border-radius:24px;padding:22px}
@@ -452,11 +470,26 @@ a.brand-lockup{text-decoration:none}
 .mt-app .lado-mais-btn{background:#fff;color:var(--grafite)}
 .lado-mais-btn:hover{background:#FFE9ED}
 
-.mt-pdf-barra{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;align-items:center;gap:12px;padding:12px 16px max(30px,env(safe-area-inset-bottom));background:#fff;box-shadow:0 -1px 0 var(--linha),0 -16px 24px -18px rgba(58,64,67,.25)}
+.mt-pdf-barra{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:12px 16px max(10px,env(safe-area-inset-bottom));background:#fff;box-shadow:0 -1px 0 var(--linha),0 -16px 24px -18px rgba(58,64,67,.25)}
 .mt-pdf-info{flex:1;min-width:0;display:flex;flex-direction:column}
 .mt-pdf-rot{font-size:12px;color:var(--texto-3)}
 .mt-pdf-qtd{font-size:15px;font-weight:800;color:var(--ink);white-space:nowrap}
 .mt-pdf-barra .btn-pri{width:180px;height:52px;flex:none}
+
+/* popup do PDF (Padrão 2.0): raio 24px, sombra suave; no celular ocupa a largura com 16px de margem */
+.mt-dlg{width:calc(100% - 32px);max-width:440px;margin:auto;padding:0;border:0;border-radius:24px;background:#fff;color:var(--ink);
+  box-shadow:0 1px 2px rgba(58,64,67,.08),0 30px 60px -20px rgba(58,64,67,.4)}
+.mt-dlg::backdrop{background:rgba(43,48,51,.45)}
+.mt-dlg[open]{animation:pop .35s var(--mola) both}
+.mt-dlg-form{display:flex;flex-direction:column;padding:24px 22px 22px}
+.mt-dlg-tit{font-size:22px;font-weight:800;letter-spacing:-.4px;color:var(--grafite)}
+.mt-dlg-sub{margin-top:4px;font-size:14px;color:var(--texto-3)}
+.mt-dlg-campo{display:block;margin-top:16px;font-size:13px;font-weight:600;color:var(--texto-2)}
+.mt-dlg-input{display:block;width:100%;height:48px;margin-top:6px;padding:0 14px;border-radius:14px;border:1.5px solid var(--linha);font-size:16px;color:var(--grafite);transition:border-color .2s,box-shadow .2s}
+.mt-app .mt-dlg-input{border:1.5px solid var(--linha)}
+.mt-app .mt-dlg-input:focus{border-color:var(--dir-red);box-shadow:0 0 0 4px rgba(228,3,43,.1)}
+.mt-dlg-acoes{display:flex;gap:10px;margin-top:22px}
+.mt-dlg-acoes .btn-sec,.mt-dlg-acoes .btn-pri{flex:1;width:auto;height:48px;border-radius:14px;font-size:15px}
 
 /* tablet: mesma tela do celular, numa coluna centralizada */
 @media (min-width:600px) and (max-width:1023.98px){
@@ -562,14 +595,14 @@ a.brand-lockup{text-decoration:none}
   .mt-voltar-txt{display:inline}
 
   /* ---------- revelação ---------- */
-  .mt-revelacao-in{min-height:calc(100vh - var(--header-h));padding:24px 32px 48px;max-width:560px}
+  .mt-revelacao-in{min-height:calc(100vh - var(--header-h));padding:min(24px,2.6vh) 32px 56px;max-width:560px}
   .mt-revelacao .mt-appbar{height:auto;padding:0}
   .mt-revelacao .mt-appbar-tit{visibility:hidden}
   .mt-revelacao .mt-ico-btn{width:auto;padding:0 16px 0 12px;gap:6px;display:inline-flex;align-items:center;font-size:14px;font-weight:600;color:var(--texto-2)}
-  .mt-anel-box{margin-top:24px}
-  .mt-rev-titulo{font-size:34px;letter-spacing:-1px}
+  .mt-anel-box{margin-top:min(24px,2.6vh)}
+  .mt-rev-titulo{font-size:min(34px,3.8vh);letter-spacing:-1px}
   .mt-rev-sub{font-size:16px}
-  .mt-rev-acao{margin-top:32px;flex-direction:row;justify-content:center}
+  .mt-rev-acao{margin-top:min(32px,3.4vh);flex-direction:row;justify-content:center}
   .mt-rev-acao .btn-pri{width:auto;min-width:280px}
 
   /* ---------- resultado ---------- */
@@ -591,9 +624,12 @@ a.brand-lockup{text-decoration:none}
   .mt-res-grade{display:flex;flex-wrap:wrap;gap:28px;margin-top:28px;align-items:flex-start}
   .mt-res-main{flex:999 1 640px;min-width:0}
   .mt-res-lado{flex:1 1 280px;max-width:360px;padding:0;display:flex;flex-direction:column;gap:14px}
-  .mt-lateral{display:flex;flex-direction:column;gap:14px}
-  .mt-lateral:empty{display:none}
-  .mt-aviso{margin:4px 4px 0;font-size:12px}
+  .mt-lateral{margin-top:0}
+  .lado-card{padding:22px}
+  .lado-cab .mt-ic3d{width:52px;height:52px}
+  .mt-res-in{padding-bottom:72px}
+  .mt-rodape{font-size:12px;padding-top:9px;padding-bottom:max(9px,env(safe-area-inset-bottom))}
+  .mt-rodape-res{display:block}
 
   .mt-destaque{display:flex;flex-wrap:wrap;margin:0;border-radius:30px;box-shadow:var(--sombra-1),0 30px 50px -34px rgba(58,64,67,.45)}
   .dest-foto{flex:1 1 320px;min-height:300px;height:auto}
@@ -607,6 +643,7 @@ a.brand-lockup{text-decoration:none}
   .dest-mensal{margin-top:20px;padding:18px 20px;border-radius:20px}
   .dest-mensal .dado-rot{font-size:13px}
   .dest-mensal-val{font-size:40px;letter-spacing:-1.2px}
+  .dest-cr{font-size:15px}
   .dest-cr-val{font-size:22px}
   .barra-cr{margin-top:12px}
   .dest-grade{gap:16px 14px;margin-top:20px}
@@ -637,9 +674,11 @@ a.brand-lockup{text-decoration:none}
 
   .mt-mais{display:inline-block;width:auto;margin:12px 0 0;padding:0 18px;border-radius:14px}
 
-  .mt-pdf-barra{position:static;padding:0;gap:12px;background:none;box-shadow:none}
-  .mt-pdf-info{flex:none;text-align:right}
-  .mt-pdf-rot{font-size:12px}
+  .mt-pdf-barra{position:static;flex-wrap:nowrap;padding:0;gap:12px;background:none;box-shadow:none}
+  /* ordem: Editar perfil, Gerar PDF, "No PDF · N unidades" */
+  .mt-pdf-info{order:2;flex:none;flex-direction:row;align-items:baseline;gap:6px;white-space:nowrap}
+  .mt-pdf-rot{font-size:14px}
+  .mt-pdf-rot::after{content:" ·"}
   .mt-pdf-qtd{font-size:14px}
   .mt-pdf-barra .btn-pri{width:auto;height:52px;padding:0 24px;border-radius:16px;font-size:15px}
 }

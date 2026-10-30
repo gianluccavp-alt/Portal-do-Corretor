@@ -509,7 +509,6 @@
     var pol = nomePolitica(r.politicaId), rev = $('mt-revelacao');
     cancelaAnimacao();
     revEstado(null);
-    rev.querySelector('.mt-anel-rot').textContent = total === 1 ? 'unidade cabe' : 'unidades cabem';
     $('mt-rev-titulo').textContent = total
       ? 'O cliente cabe em ' + plural(total, 'unidade', 'unidades')
       : 'Nenhuma unidade cabe na política ' + pol;
@@ -713,15 +712,34 @@
     return row;
   }
 
-  function desenhaLateral() {
-    var box = $('mt-lateral'), res = estado.resultado, d = res.descartadas, fora = [];
-    box.innerHTML = '';
-    box.appendChild(modelo('tpl-lateral'));
-    var itens = ['Cruzamos todas as unidades disponíveis agora na planilha.'];
+  /* "Como chegamos aqui": a simulacao em frases curtas, com os numeros desta busca.
+     Sem jargao: nada de folga, VCM, C.R. ou avaliacao bancaria. */
+  function frasesSimulacao() {
+    var b = estado.busca, s = b.resumo, r = estado.r, d = estado.resultado.descartadas, fora = [];
+    var pol = window.MatchProSoluto.politicaPorId(r.politicaId);
+    var anos = b.cliente.nascimento ? idade(b.cliente.nascimento, b.hoje) : null;
+    var itens = ['Com renda de ' + dinheiro(r.renda) + (anos !== null ? ' e ' + anos + ' anos' : '') +
+      ', a CAIXA financia até ' + dinheiro(s.financiamentoMax) + ' em ' + s.prazo + ' meses, com juros de ' +
+      jurosNum(s.jurosNominal) + '% ao ano' + (s.faixa ? ' (' + s.faixa + ')' : '') + '.'];
+    itens.push(s.subsidio > 0 ? 'Subsídio estimado de ' + dinheiro(s.subsidio) + '.'
+      : r.possuiImovel ? 'Sem subsídio: o cliente já tem imóvel na cidade.' : 'Sem subsídio para esta renda.');
+    itens.push('O valor de cada unidade é o associativo da tabela de hoje. Unidades promocionais já entram com o preço promocional.');
+    var ato = r.ato !== null ? 'ato de ' + dinheiro(r.ato)
+      : r.empId ? 'ato padrão de ' + dinheiro(M.atoDe(r.empId)) : 'ato padrão de cada empreendimento';
+    itens.push('Somamos financiamento, subsídio e ' + ato + '. O que falta vira Pro Soluto, pago em até ' + pol.prazo + ' parcelas.');
+    itens.push('Só aparecem unidades em que o Pro Soluto e a parcela total cabem nos limites da política ' + pol.nome + '.');
     if (d.foraEnquadramento) fora.push(d.foraEnquadramento + ' fora do enquadramento da renda');
     if (d.semAvaliacao) fora.push(d.semAvaliacao + ' sem valor de avaliação');
     if (fora.length) itens.push('Ficaram de fora: ' + fora.join(' · ') + '.');
-    box.querySelector('.lado-lista').innerHTML = itens.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('');
+    return itens;
+  }
+
+  function desenhaLateral() {
+    var box = $('mt-lateral'), res = estado.resultado;
+    box.innerHTML = '';
+    box.appendChild(modelo('tpl-lateral'));
+    box.querySelector('.lado-card').open = !!(window.matchMedia && window.matchMedia('(min-width:1024px)').matches);
+    box.querySelector('.lado-lista').innerHTML = frasesSimulacao().map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('');
     var mais = box.querySelector('.lado-mais'), sug = res.sugestao;
     mais.hidden = !sug;
     if (!sug) return;
@@ -757,43 +775,127 @@
 
   /* ---------- PDF (spec secao 7) ---------- */
   var AVISO_PDF = 'A biblioteca de PDF ainda está carregando. Tente de novo em alguns segundos.';
-  function gerarPdf() {
-    if (!window.jspdf || !window.jspdf.jsPDF) { alert(AVISO_PDF); return; }
+  var AVISO_ESTIMATIVA = 'Valores estimados. Sujeitos à análise de crédito da CAIXA e à aprovação da Direcional.';
+  var RODAPE_PDF = 'Simulação aproximada, sujeita à análise de crédito da CAIXA e à aprovação da Direcional.';
+  var CHAVE_CORRETOR = 'mt-corretor';
+
+  /* logo do PDF: mesma carga via canvas do simulador associativo */
+  var logoPdf = null;
+  (function () {
+    var img = new Image();
+    img.onload = function () {
+      var cv = document.createElement('canvas');
+      cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+      cv.getContext('2d').drawImage(img, 0, 0);
+      try { logoPdf = { data: cv.toDataURL('image/jpeg', 0.92), w: img.naturalWidth, h: img.naturalHeight }; }
+      catch (e) { logoPdf = null; }
+    };
+    img.src = 'assets/img/logo-direcional.jpg';
+  })();
+
+  function pdfPronto() {
+    return !!(window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API && typeof window.jspdf.jsPDF.API.autoTable === 'function');
+  }
+  function slug(t) {
+    return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+  function lerCorretor() { try { return localStorage.getItem(CHAVE_CORRETOR) || ''; } catch (e) { return ''; } }
+  function gravarCorretor(v) {
+    try { if (v) localStorage.setItem(CHAVE_CORRETOR, v); else localStorage.removeItem(CHAVE_CORRETOR); } catch (e) { /* sem localStorage */ }
+  }
+
+  /* abre o popup; sem <dialog> (navegador antigo) gera direto, sem nomes */
+  function abrirPdf() {
+    if (!pdfPronto()) { alert(AVISO_PDF); return; }
+    var dlg = $('mt-dlg-pdf');
+    if (typeof dlg.showModal !== 'function') { montaPdf('', ''); return; }
+    $('mt-dlg-cliente').value = '';
+    $('mt-dlg-corretor').value = lerCorretor();
+    dlg.showModal();
+    $('mt-dlg-cliente').focus();
+  }
+
+  function montaPdf(cliente, corretor) {
+    if (!pdfPronto()) { alert(AVISO_PDF); return; }
     var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
-    if (typeof doc.autoTable !== 'function') { alert(AVISO_PDF); return; }
-    var nome = prompt('Nome do cliente (opcional):', '') || '';
-    var W = doc.internal.pageSize.getWidth(), Mg = 14;
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(228, 3, 43);
-    doc.text('Grupo Direcional', Mg, 18);
-    doc.setFontSize(11); doc.setTextColor(58, 64, 67);
-    doc.text('Unidades sugeridas' + (nome ? ' para ' + nome : ''), Mg, 26);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(106, 114, 117);
-    doc.text('Gerado em ' + hoje().toLocaleDateString('pt-BR'), Mg, 31);
+    var b = estado.busca, s = b.resumo, r = estado.r;
+    var W = doc.internal.pageSize.getWidth(), Mg = 14, y = 12;
+    var CINZA = [114, 122, 125], TINTA = [58, 64, 67];
+
+    if (logoPdf) {
+      var lw = 38, lh = lw * logoPdf.h / logoPdf.w;
+      doc.addImage(logoPdf.data, 'JPEG', (W - lw) / 2, y, lw, lh);
+      y += lh + 6;
+    } else { y += 4; }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(TINTA[0], TINTA[1], TINTA[2]);
+    doc.text('Unidades sugeridas', W / 2, y, { align: 'center' }); y += 5;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(CINZA[0], CINZA[1], CINZA[2]);
+    var emp = r.empId && empDe(r.empId);
+    doc.text(emp ? emp.nome + '  ·  ' + emp.cidade : r.cidade + '  ·  todos os empreendimentos', W / 2, y, { align: 'center' });
+    y += 7;
+
+    var anos = b.cliente.nascimento ? idade(b.cliente.nascimento, b.hoje) : null;
+    var rotulo = { fontStyle: 'bold', textColor: CINZA };
+    doc.autoTable({
+      startY: y, theme: 'plain', margin: { left: Mg, right: Mg },
+      body: [['Cliente', cliente || '-', 'Corretor', corretor || '-'],
+             ['Renda informada', r.renda > 0 ? dinheiro(r.renda) : '-', 'Idade', anos !== null ? anos + ' anos' : '-']],
+      styles: { fontSize: 8.5, cellPadding: 1.4, textColor: TINTA },
+      columnStyles: { 0: Object.assign({ cellWidth: 34 }, rotulo), 1: { cellWidth: 54 },
+                      2: Object.assign({ cellWidth: 40 }, rotulo), 3: { cellWidth: 'auto' } }
+    });
+    y = doc.lastAutoTable.finalY + 5;
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(TINTA[0], TINTA[1], TINTA[2]);
+    doc.text('Condições CAIXA', Mg, y); y += 1.5;
+    doc.autoTable({
+      startY: y, theme: 'plain', margin: { left: Mg, right: Mg },
+      body: [['Enquadramento', s.faixa || '-', 'Taxa de juros', juros(s.jurosNominal)],
+             ['Prazo', s.prazo + ' meses', 'Financiamento até', dinheiro(s.financiamentoMax)]],
+      styles: { fontSize: 8.5, cellPadding: 1.4, textColor: TINTA },
+      columnStyles: { 0: Object.assign({ cellWidth: 34 }, rotulo), 1: { cellWidth: 54 },
+                      2: Object.assign({ cellWidth: 40 }, rotulo), 3: { cellWidth: 'auto' } }
+    });
+    y = doc.lastAutoTable.finalY + 2.5;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(6.8); doc.setTextColor(138, 146, 149);
+    doc.text(AVISO_ESTIMATIVA, Mg + 1.4, y); y += 5;
 
     var linhas = Object.keys(estado.marcadas).map(function (k) { return M.linhaPdf(estado.marcadas[k]); });
     doc.autoTable({
-      startY: 36, margin: { left: Mg, right: Mg },
+      startY: y, margin: { left: Mg, right: Mg, bottom: 22 }, theme: 'grid',
       head: [['Empreendimento / unidade', 'Valor', 'Financiamento', 'Subsídio', 'Ato', 'Pro Soluto', 'Parcela CAIXA']],
       body: linhas.map(function (l) {
-        return [l.empNome + '\n' + l.codigo + ' · ' + (l.tipoLabel || '') + (l.areaPriv ? ' · ' + l.areaPriv + ' m²' : ''),
+        /* a ultima linha vazia guarda o espaco do selo "Condição especial", desenhado depois */
+        return [l.empNome + '\n' + l.codigo + ' · ' + (l.tipoLabel || '') + (l.areaPriv ? ' · ' + l.areaPriv + ' m²' : '') +
+            (l.promocional ? '\n ' : ''),
           dinheiro(l.venda), dinheiro(l.financiamento), dinheiro(l.subsidio), dinheiro(l.ato),
-          dinheiro(l.parcelaPS) + ' × ' + l.prazoPS + (l.carne === 'escalonado' ? '\n(escalonado)' : ''), dinheiro(l.parcelaFin)];
+          F.textoPS(l) + (l.parcelaPS > 0 && l.carne === 'escalonado' ? '\n(escalonado)' : ''), dinheiro(l.parcelaFin)];
       }),
-      styles: { fontSize: 7.5, cellPadding: 1.8, textColor: [58, 64, 67] },
-      headStyles: { fillColor: [228, 3, 43], textColor: 255 },
+      styles: { fontSize: 7.5, cellPadding: 1.8, textColor: TINTA, lineColor: [231, 233, 234] },
+      headStyles: { fillColor: [228, 3, 43], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [250, 251, 251] },
       /* valores em uma linha so: a coluna da unidade absorve a quebra */
-      columnStyles: { 0: { cellWidth: 44 }, 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' },
-                      4: { halign: 'right' }, 5: { halign: 'right' }, 6: { halign: 'right' } }
+      columnStyles: { 0: { cellWidth: 46 }, 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' },
+                      4: { halign: 'right' }, 5: { halign: 'right' }, 6: { halign: 'right' } },
+      didDrawCell: function (d) {
+        if (d.section !== 'body' || d.column.index !== 0 || !linhas[d.row.index] || !linhas[d.row.index].promocional) return;
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(181, 114, 0);
+        doc.text('Condição especial', d.cell.x + d.cell.padding('left'), d.cell.y + d.cell.height - d.cell.padding('bottom'),
+          { baseline: 'bottom' });
+      }
     });
-    var total = doc.internal.getNumberOfPages();
+
+    var total = doc.internal.getNumberOfPages(), gerado = hoje().toLocaleDateString('pt-BR');
     for (var p = 1; p <= total; p++) {
       doc.setPage(p);
       var H = doc.internal.pageSize.getHeight();
-      doc.setFontSize(7); doc.setTextColor(114, 122, 125);
-      doc.text('Simulação aproximada, sujeita à análise de crédito da CAIXA e à aprovação da Direcional.', Mg, H - 8);
-      doc.text('Página ' + p + ' de ' + total, W - Mg, H - 8, { align: 'right' });
+      doc.setDrawColor(231, 233, 234); doc.setLineWidth(0.2); doc.line(Mg, H - 14, W - Mg, H - 14);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(CINZA[0], CINZA[1], CINZA[2]);
+      doc.text(RODAPE_PDF, Mg, H - 10);
+      doc.text('Gerado em ' + gerado + '  ·  Página ' + p + ' de ' + total, Mg, H - 6.5);
     }
-    doc.save('unidades-' + (nome ? nome.replace(/\s+/g, '-').toLowerCase() : 'cliente') + '.pdf');
+    doc.save('unidades-' + (slug(cliente) || 'cliente') + '.pdf');
   }
 
   /* ---------- eventos ---------- */
@@ -809,7 +911,17 @@
   $('mt-rev-voltar').addEventListener('click', function () { irPara('perguntas', ETAPAS.length - 1, true); });
   $('mt-editar').addEventListener('click', editarPerfil);
   $('mt-res-voltar').addEventListener('click', editarPerfil);
-  $('mt-pdf').addEventListener('click', gerarPdf);
+  $('mt-pdf').addEventListener('click', abrirPdf);
+  $('mt-dlg-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var cliente = $('mt-dlg-cliente').value.trim(), corretor = $('mt-dlg-corretor').value.trim();
+    gravarCorretor(corretor);
+    $('mt-dlg-pdf').close();
+    montaPdf(cliente, corretor);
+  });
+  $('mt-dlg-cancelar').addEventListener('click', function () { $('mt-dlg-pdf').close(); });
+  /* Esc (cancel) fecha sem gerar; ao fechar, o foco volta ao "Gerar PDF" */
+  $('mt-dlg-pdf').addEventListener('close', function () { $('mt-pdf').focus(); });
   $('mt-mais').addEventListener('click', function () {
     var box = $('mt-outras'), de = box.children.length;
     estado.mostrar = Infinity;

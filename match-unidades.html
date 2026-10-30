@@ -123,7 +123,6 @@
         </div>
         <div class="mt-anel-num">
           <span class="mt-contagem" id="mt-contagem">0</span>
-          <span class="mt-anel-rot">unidades cabem</span>
         </div>
         <svg class="twinkle mt-tw-1" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z"/></svg>
         <svg class="twinkle mt-tw-2" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z"/></svg>
@@ -140,6 +139,7 @@
 
       <div class="mt-rev-acao" id="mt-rev-acao"></div>
     </div>
+    <p class="mt-rodape">Valores estimados. Sujeitos à análise de crédito da CAIXA e à aprovação da Direcional.</p>
   </section>
 
   <!-- ============ RESULTADO ============ -->
@@ -154,13 +154,15 @@
         </div>
         <div class="mt-res-acoes">
           <button class="btn-sec mt-editar" type="button" id="mt-editar"><svg class="mt-so-dk" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg><span>Editar<span class="mt-so-dk"> perfil</span></span></button>
-          <!-- celular: barra fixa no rodapé; desktop: ao lado de "Editar perfil" -->
+          <!-- celular: barra fixa no rodapé (com o aviso em linha pequena);
+               desktop: "Editar perfil", "Gerar PDF" e depois "No PDF · N unidades" -->
           <div class="mt-pdf-barra">
             <div class="mt-pdf-info">
               <span class="mt-pdf-rot">No PDF</span>
               <b class="mt-pdf-qtd" id="mt-pdf-qtd">0 unidades</b>
             </div>
             <button class="btn-pri" type="button" id="mt-pdf" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Gerar PDF</button>
+            <p class="mt-pdf-aviso mt-so-cel">Valores estimados. Sujeitos à análise de crédito da CAIXA e à aprovação da Direcional.</p>
           </div>
         </div>
       </header>
@@ -191,10 +193,25 @@
 
         <aside class="mt-res-lado">
           <div class="mt-lateral" id="mt-lateral"></div>
-          <p class="mt-aviso">Valores estimados com o motor calibrado no Simulador Habitacional CAIXA em 15/10/2026. Sujeitos à análise de crédito da CAIXA e à aprovação da Direcional.</p>
         </aside>
       </div>
     </div>
+    <!-- popup do PDF (no lugar do prompt): Enter envia; Esc e Cancelar fecham sem gerar -->
+    <dialog class="mt-dlg" id="mt-dlg-pdf" aria-labelledby="mt-dlg-tit" aria-describedby="mt-dlg-sub">
+      <form class="mt-dlg-form" id="mt-dlg-form" method="dialog">
+        <h2 class="mt-dlg-tit" id="mt-dlg-tit">Gerar PDF</h2>
+        <p class="mt-dlg-sub" id="mt-dlg-sub">Os dois campos são opcionais.</p>
+        <label class="mt-dlg-campo" for="mt-dlg-cliente">Nome do cliente</label>
+        <input class="mt-dlg-input" type="text" id="mt-dlg-cliente" maxlength="80" autocomplete="off">
+        <label class="mt-dlg-campo" for="mt-dlg-corretor">Nome do corretor</label>
+        <input class="mt-dlg-input" type="text" id="mt-dlg-corretor" maxlength="80" autocomplete="name">
+        <div class="mt-dlg-acoes">
+          <button class="btn-sec" type="button" id="mt-dlg-cancelar">Cancelar</button>
+          <button class="btn-pri" type="submit">Gerar PDF</button>
+        </div>
+      </form>
+    </dialog>
+    <p class="mt-rodape mt-rodape-res">Valores estimados. Sujeitos à análise de crédito da CAIXA e à aprovação da Direcional.</p>
   </section>
 
 </main>
@@ -360,9 +377,10 @@
     <p class="dest-andar"></p>
     <div class="dest-selos"></div>
     <div class="dest-mensal">
+      <span class="dado-rot">Por mês · CAIXA + Pro Soluto</span>
       <div class="dest-mensal-topo">
-        <div><span class="dado-rot">Por mês · CAIXA + Pro Soluto</span><b class="dest-mensal-val"></b></div>
-        <div class="dest-cr"><span class="dado-rot">da renda</span><b class="dest-cr-val"></b></div>
+        <b class="dest-mensal-val"></b>
+        <span class="dest-cr"><b class="dest-cr-val"></b> da renda</span>
       </div>
       <div class="barra-cr"><span class="barra-cr-fill"></span></div>
     </div>
@@ -417,13 +435,15 @@
 </template>
 
 <template id="tpl-lateral">
-  <div class="lado-card">
-    <div class="lado-cab">
+  <!-- recolhível no celular; aberto no desktop -->
+  <details class="lado-card">
+    <summary class="lado-cab">
       <img class="mt-ic3d" src="assets/img/icones-3d/alvo.svg" alt="" width="52" height="52">
       <h3>Como chegamos aqui</h3>
-    </div>
+      <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </summary>
     <ul class="lado-lista"></ul>
-  </div>
+  </details>
   <div class="lado-mais" hidden>
     <img class="mt-ic3d lado-mais-ic" src="assets/img/icones-3d/medalha.svg" alt="" width="84" height="84">
     <p class="lado-mais-sobre">Mais opções</p>
