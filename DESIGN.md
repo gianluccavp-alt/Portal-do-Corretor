@@ -340,6 +340,15 @@ Cards de política da operação renderizados a partir de artes PNG prontas em
 transparente e sem borda; a seleção é leve — `transform: scale(1.03)` +
 `drop-shadow(0 7px 16px rgba(228,3,43,.28))`. Não desenhe moldura em volta dessas artes.
 
+## Padrão visual 2.0 (em adoção)
+
+Evolução do sistema, estreada no Match de Unidades (`match-unidades.html`) e a ser
+estendida às demais telas: ícones 3D em SVG (`assets/img/icones-3d/`) no lugar dos
+traços, raios de borda maiores, DM Sans em peso 800 nos títulos e movimento sutil
+(flutuação, entradas escalonadas, revelação animada), sempre respeitando
+`prefers-reduced-motion`. Referência completa em
+[`docs/design/match-unidades-nova-ux/README.md`](docs/design/match-unidades-nova-ux/README.md).
+
 ## Do's and Don'ts
 
 ### Do:

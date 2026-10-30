@@ -57,6 +57,7 @@
     TELAS.forEach(function (t) { $('mt-' + t).hidden = t !== tela; });
     document.body.classList.toggle('mt-em-fluxo', tela !== 'abertura');
     erro('');
+    if (tela === 'abertura') atualizaRepetir();
     if (tela === 'perguntas') {
       var n = estado.etapa;
       $('mt-passo').textContent = 'Passo ' + (n + 1) + ' de ' + ETAPAS.length;
@@ -74,6 +75,30 @@
         : tela === 'revelacao' ? $('mt-rev-titulo') : tela === 'resultado' ? $('mt-res-titulo') : $('mt-comecar');
       if (alvo) alvo.focus({ preventScroll: true });
     }
+  }
+
+  /* ---------- repetir a ultima busca ---------- */
+  var CHAVES = Object.keys(F.respostasIniciais(''));
+  function ultimaBusca() {
+    var r;
+    try {
+      var bruto = sessionStorage.getItem('mt-ultima');
+      if (!bruto) return null;
+      r = JSON.parse(bruto);
+      if (!r || typeof r !== 'object') return null;
+      for (var i = 0; i < CHAVES.length; i++) if (!(CHAVES[i] in r)) return null;
+      if (cidades().indexOf(r.cidade) < 0) return null;
+      for (var k = 0; k < ETAPAS.length - 1; k++) if (F.validarEtapa(ETAPAS[k], r, hoje())) return null;
+    } catch (e) { return null; }
+    return r;
+  }
+  function atualizaRepetir() { $('mt-repetir').hidden = !ultimaBusca(); }
+  function repetir() {
+    var r = ultimaBusca();
+    if (!r) { atualizaRepetir(); return; }
+    estado.r = r;
+    estado.resultado = null; estado.busca = null;
+    irPara('perguntas', ETAPAS.length - 1, true);
   }
 
   function erro(msg) { var el = $('mt-erro'); el.textContent = msg || ''; el.hidden = !msg; }
@@ -739,6 +764,7 @@
 
   /* ---------- eventos ---------- */
   $('mt-comecar').addEventListener('click', function () { irPara('perguntas', 0, true); });
+  $('mt-repetir').addEventListener('click', repetir);
   $('mt-continuar').addEventListener('click', continuar);
   $('mt-voltar').addEventListener('click', voltar);
   $('mt-sair').addEventListener('click', function () { irPara('abertura', null, true); });
