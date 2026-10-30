@@ -2,12 +2,12 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Match de Unidades · Portal do Corretor</title>
 <link rel="icon" type="image/webp" href="assets/img/favicon.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/home.css">
 <link rel="stylesheet" href="assets/match.css">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -27,81 +27,416 @@
   </div>
 </header>
 
-<main class="wrap mt-main" id="conteudo">
-  <p class="step-label">Ferramentas</p>
-  <h1 class="mt-title">Match de Unidades</h1>
-  <p class="mt-sub">Informe o perfil do cliente para ver as unidades que ele consegue comprar, com financiamento CAIXA, subsídio e Pro Soluto estimados.</p>
+<main class="mt-app" id="conteudo">
 
-  <form class="mt-form" id="mt-form" novalidate>
-    <div class="mt-field">
-      <label for="f-cidade">Cidade</label>
-      <select id="f-cidade" required></select>
-    </div>
-    <div class="mt-field">
-      <label for="f-emp">Empreendimento</label>
-      <select id="f-emp"></select>
-    </div>
-    <div class="mt-field">
-      <label for="f-renda">Renda bruta</label>
-      <input id="f-renda" type="text" inputmode="decimal" placeholder="R$ 0,00" autocomplete="off" required>
-    </div>
-    <div class="mt-field">
-      <label for="f-ato">Ato do cliente</label>
-      <input id="f-ato" type="text" inputmode="decimal" placeholder="Padrão (R$ 2.500)" autocomplete="off" aria-describedby="f-ato-dica">
-      <small class="mt-dica" id="f-ato-dica">Em branco usa o ato padrão de cada empreendimento.</small>
-    </div>
-    <div class="mt-field">
-      <label for="f-nasc">Data de nascimento</label>
-      <input id="f-nasc" type="date" required>
-    </div>
-    <fieldset class="mt-field mt-seg">
-      <legend>3 anos de FGTS</legend>
-      <label><input type="radio" name="fgts" value="S" checked> Sim</label>
-      <label><input type="radio" name="fgts" value="N"> Não</label>
-    </fieldset>
-    <fieldset class="mt-field mt-seg">
-      <legend>Possui imóvel na cidade</legend>
-      <label><input type="radio" name="imovel" value="N" checked> Não</label>
-      <label><input type="radio" name="imovel" value="S"> Sim</label>
-    </fieldset>
-    <fieldset class="mt-field mt-seg" id="f-social-box" hidden>
-      <legend>Mais de um comprador e/ou dependente</legend>
-      <label><input type="radio" name="social" value="S"> Sim</label>
-      <label><input type="radio" name="social" value="N"> Não</label>
-      <small class="mt-dica">Sem dependente, a CAIXA concede só 30% do subsídio.</small>
-    </fieldset>
-    <fieldset class="mt-field mt-seg" id="f-subant-box" hidden>
-      <legend>Já recebeu subsídio FGTS/União</legend>
-      <label><input type="radio" name="subant" value="N" checked> Não</label>
-      <label><input type="radio" name="subant" value="S"> Sim</label>
-    </fieldset>
-    <div class="mt-field">
-      <label for="f-pol">Política</label>
-      <select id="f-pol"></select>
-    </div>
-    <p class="mt-erro" id="mt-erro" role="alert" hidden></p>
-    <button class="mt-btn" type="submit" id="mt-buscar">Encontrar unidades</button>
-  </form>
+  <!-- ============ ABERTURA ============ -->
+  <section class="mt-tela mt-abertura" id="mt-abertura" aria-labelledby="mt-abertura-titulo">
+    <div class="mt-abertura-in">
+      <div class="mt-hero" aria-hidden="true">
+        <span class="mt-hero-anel mt-hero-anel-1"></span>
+        <span class="mt-hero-anel mt-hero-anel-2"></span>
+        <span class="float mt-hero-casa"><img class="mt-ic3d" src="assets/img/icones-3d/casa.svg" alt="" width="150" height="150"></span>
+        <span class="float mt-hero-ic mt-hero-pino"><img class="mt-ic3d" src="assets/img/icones-3d/pino.svg" alt="" width="58" height="58"></span>
+        <span class="float mt-hero-ic mt-hero-moedas"><img class="mt-ic3d" src="assets/img/icones-3d/moedas.svg" alt="" width="60" height="60"></span>
+        <span class="float mt-hero-ic mt-hero-medalha"><img class="mt-ic3d" src="assets/img/icones-3d/medalha.svg" alt="" width="52" height="52"></span>
+        <span class="float mt-hero-ic mt-hero-pessoas"><img class="mt-ic3d" src="assets/img/icones-3d/pessoas.svg" alt="" width="50" height="50"></span>
+      </div>
 
-  <p class="notice mt-status" id="mt-status" hidden></p>
+      <div class="mt-abertura-txt">
+        <div class="enter">
+          <p class="mt-sobre">Ferramenta do corretor</p>
+          <h1 class="mt-abertura-tit" id="mt-abertura-titulo">Match de Unidades</h1>
+          <p class="mt-abertura-lead">Seis perguntas rápidas sobre o cliente e você vê as unidades que ele consegue comprar, com CAIXA, subsídio e Pro Soluto já calculados.</p>
+        </div>
 
-  <section class="mt-resultado" id="mt-resultado" hidden aria-live="polite">
-    <div class="mt-resumo" id="mt-resumo"></div>
-    <div class="mt-acoes">
-      <span id="mt-contagem"></span>
-      <button class="mt-btn mt-btn-sec" type="button" id="mt-pdf" disabled>Gerar PDF (0)</button>
+        <ul class="mt-tags enter d1">
+          <li class="mt-tag"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>≈ 1 minuto</li>
+          <li class="mt-tag"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>6 perguntas</li>
+        </ul>
+
+        <div class="mt-abertura-acoes enter d2">
+          <button class="btn-pri sheen" type="button" id="mt-comecar">Começar<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          <button class="mt-link" type="button" id="mt-repetir" hidden>Repetir a última busca</button>
+        </div>
+      </div>
     </div>
-    <div id="mt-grupos"></div>
-    <p class="mt-rodape" id="mt-rodape"></p>
   </section>
 
-  <p class="mt-aviso">Valores estimados com o motor calibrado no Simulador Habitacional CAIXA em 15/10/2026. Sujeitos à análise de crédito da CAIXA e à aprovação da Direcional.</p>
+  <!-- ============ PERGUNTAS ============ -->
+  <section class="mt-tela mt-perguntas" id="mt-perguntas" aria-label="Perguntas sobre o cliente" hidden>
+    <div class="mt-topo">
+      <div class="mt-appbar">
+        <button class="mt-ico-btn" type="button" id="mt-voltar" aria-label="Voltar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span class="mt-voltar-txt">Voltar</span></button>
+        <div class="mt-appbar-tit">
+          <span class="mt-appbar-nome">Match de Unidades</span>
+          <span class="mt-passo" id="mt-passo">Passo 1 de 6</span>
+        </div>
+        <button class="mt-ico-btn" type="button" id="mt-sair" aria-label="Sair do Match"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="mt-barra"><span class="mt-barra-fill" id="mt-progresso"></span></div>
+    </div>
+
+    <div class="mt-perg-corpo">
+      <div class="mt-trilha-box">
+        <div class="mt-trilha-cab">
+          <p class="mt-sobre">Match de Unidades</p>
+          <p class="mt-trilha-tit">Atendimento</p>
+        </div>
+        <!-- Itens: <li class="mt-tl mt-tl-feito|mt-tl-atual|mt-tl-futuro"> (modelo em #tpl-trilha) -->
+        <ol class="mt-trilha" id="mt-trilha" role="list" aria-label="Etapas"></ol>
+      </div>
+
+      <div class="mt-pergunta">
+        <span class="mt-rail" aria-hidden="true"><span class="mt-rail-now now"></span><span class="mt-rail-linha"></span></span>
+        <div class="mt-pergunta-in">
+          <div class="mt-etapa" id="mt-etapa"></div>
+          <p class="mt-erro" id="mt-erro" role="alert" hidden></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-acoes">
+      <span class="mt-enter-dica">Pressione <kbd>Enter</kbd> para continuar</span>
+      <button class="btn-pri" type="button" id="mt-continuar">Continuar<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+  </section>
+
+  <!-- ============ REVELAÇÃO ============ -->
+  <!-- Estados: sem classe = final estático; .mt-buscando = anel girando;
+       .mt-revelado = toca a revelação; .mt-rev-erro = falha da planilha -->
+  <section class="mt-tela mt-revelacao" id="mt-revelacao" aria-labelledby="mt-rev-titulo" hidden>
+    <div class="mt-revelacao-in">
+      <div class="mt-appbar">
+        <button class="mt-ico-btn" type="button" id="mt-rev-voltar" aria-label="Editar respostas"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span class="mt-voltar-txt">Editar respostas</span></button>
+        <div class="mt-appbar-tit"><span class="mt-appbar-nome">Match de Unidades</span></div>
+        <span class="mt-appbar-vazio"></span>
+      </div>
+
+      <div class="mt-anel-box">
+        <svg class="mt-anel" id="mt-anel" width="250" height="250" viewBox="0 0 232 232" aria-hidden="true">
+          <circle class="mt-anel-fundo" cx="116" cy="116" r="100"/>
+          <circle class="mt-anel-prog" cx="116" cy="116" r="100"/>
+        </svg>
+        <div class="mt-anel-busca">
+          <span class="float"><img class="mt-ic3d" src="assets/img/icones-3d/alvo.svg" alt="" width="70" height="70"></span>
+          <p class="mt-anel-msg dots">Cruzando unidades<span>.</span><span>.</span><span>.</span></p>
+        </div>
+        <div class="mt-anel-num">
+          <span class="mt-contagem" id="mt-contagem">0</span>
+          <span class="mt-anel-rot">unidades cabem</span>
+        </div>
+        <svg class="twinkle mt-tw-1" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z"/></svg>
+        <svg class="twinkle mt-tw-2" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z"/></svg>
+        <svg class="twinkle mt-tw-3" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z"/></svg>
+      </div>
+
+      <div class="mt-rev-cab" aria-live="polite">
+        <h2 class="mt-rev-titulo" id="mt-rev-titulo" tabindex="-1"></h2>
+        <p class="mt-rev-sub" id="mt-rev-sub"></p>
+      </div>
+
+      <!-- Linhas: <div class="rev-linha"><span>Enquadramento</span><b>Faixa 2</b></div> -->
+      <div class="mt-rev-resumo" id="mt-rev-resumo"></div>
+
+      <div class="mt-rev-acao" id="mt-rev-acao"></div>
+    </div>
+  </section>
+
+  <!-- ============ RESULTADO ============ -->
+  <section class="mt-tela mt-resultado" id="mt-resultado" aria-labelledby="mt-res-titulo" hidden>
+    <div class="mt-res-in">
+      <header class="mt-res-cab">
+        <button class="mt-ico-btn mt-so-cel" type="button" id="mt-res-voltar" aria-label="Editar perfil"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <div class="mt-res-cab-txt">
+          <p class="mt-sobre mt-res-sobre"><svg width="14" height="14" viewBox="0 0 24 24" fill="#F5AE1E" aria-hidden="true"><path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z"/></svg>Match concluído</p>
+          <h1 class="mt-res-titulo" id="mt-res-titulo" tabindex="-1"></h1>
+          <p class="mt-res-sub" id="mt-res-sub"></p>
+        </div>
+        <div class="mt-res-acoes">
+          <button class="btn-sec mt-editar" type="button" id="mt-editar"><svg class="mt-so-dk" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg><span>Editar<span class="mt-so-dk"> perfil</span></span></button>
+          <!-- celular: barra fixa no rodapé; desktop: ao lado de "Editar perfil" -->
+          <div class="mt-pdf-barra">
+            <div class="mt-pdf-info">
+              <span class="mt-pdf-rot">No PDF</span>
+              <b class="mt-pdf-qtd" id="mt-pdf-qtd">0 unidades</b>
+            </div>
+            <button class="btn-pri" type="button" id="mt-pdf" disabled><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Gerar PDF</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Chips: <div class="chip"><span class="chip-rot">Subsídio</span><b class="chip-val mt-verde">R$ 21.500</b></div> -->
+      <div class="mt-chips hscroll enter" id="mt-chips"></div>
+
+      <div class="mt-res-grade">
+        <div class="mt-res-main">
+          <article class="mt-destaque enter d2" id="mt-destaque"></article>
+
+          <div class="mt-outras-cab enter d3">
+            <h2 class="mt-outras-tit" id="mt-outras-tit">Outras unidades</h2>
+            <span class="mt-outras-leg mt-so-cel">por mês · % da renda</span>
+            <div class="mt-segs" id="mt-ordem" role="group" aria-label="Ordenar as outras unidades"></div>
+          </div>
+
+          <div class="mt-tabela enter d4">
+            <div class="mt-tabela-in">
+              <div class="row row-titulos" aria-hidden="true">
+                <span>PDF</span><span>Unidade</span><span>Valor</span><span>Financiamento</span><span>Subsídio</span><span>Pro Soluto</span><span>Por mês</span><span></span>
+              </div>
+              <div class="mt-outras" id="mt-outras"></div>
+            </div>
+          </div>
+          <button class="mt-mais" type="button" id="mt-mais" hidden>Ver mais unidades</button>
+        </div>
+
+        <aside class="mt-res-lado">
+          <div class="mt-lateral" id="mt-lateral"></div>
+          <p class="mt-aviso">Valores estimados com o motor calibrado no Simulador Habitacional CAIXA em 15/10/2026. Sujeitos à análise de crédito da CAIXA e à aprovação da Direcional.</p>
+        </aside>
+      </div>
+    </div>
+  </section>
+
 </main>
+
+<!-- ============ ETAPAS (clonadas para #mt-etapa) ============ -->
+<template id="tpl-onde">
+  <div class="mt-etapa-cab enter">
+    <div class="mt-etapa-txt">
+      <p class="mt-sobre">Onde</p>
+      <h2 class="mt-etapa-tit" tabindex="-1">Onde o cliente quer morar?</h2>
+    </div>
+    <img class="mt-ic3d float" src="assets/img/icones-3d/pino.svg" alt="" width="64" height="64">
+  </div>
+  <!-- <button type="button" class="pill" aria-pressed="false">Campinas</button> -->
+  <div class="mt-pills hscroll enter d1" data-campo="cidade" role="group" aria-label="Cidade"></div>
+  <!-- <button type="button" class="opt" aria-pressed="false">foto/ícone + .opt-txt + .radio</button> -->
+  <div class="mt-opts enter d2" data-campo="empId" role="group" aria-label="Empreendimento"></div>
+</template>
+
+<template id="tpl-renda">
+  <div class="mt-etapa-cab enter">
+    <div class="mt-etapa-txt">
+      <p class="mt-sobre">Renda</p>
+      <h2 class="mt-etapa-tit" tabindex="-1">Qual a renda bruta familiar?</h2>
+    </div>
+    <img class="mt-ic3d float" src="assets/img/icones-3d/carteira.svg" alt="" width="64" height="64">
+  </div>
+  <label class="field field-grande enter d1">
+    <span class="field-pre">R$</span>
+    <input type="text" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Renda bruta em reais" data-campo="renda">
+    <span class="field-suf">/mês</span>
+  </label>
+  <div class="mt-nota enter d2">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg>
+    <span>Some a renda de todos que vão compor o financiamento, antes dos descontos.</span>
+  </div>
+</template>
+
+<template id="tpl-ato">
+  <div class="mt-etapa-cab enter">
+    <div class="mt-etapa-txt">
+      <p class="mt-sobre">Ato</p>
+      <h2 class="mt-etapa-tit" tabindex="-1">Quanto o cliente dá de ato?</h2>
+    </div>
+    <img class="mt-ic3d float" src="assets/img/icones-3d/moedas.svg" alt="" width="64" height="64">
+  </div>
+  <div class="mt-opts mt-opts-ato enter d1">
+    <button type="button" class="opt opt-so-txt" data-opcao="padrao" aria-pressed="false">
+      <span class="opt-txt">
+        <span class="opt-nome">Ato padrão do empreendimento</span>
+        <span class="opt-sub mt-ato-padrao-sub"></span>
+      </span>
+      <span class="radio"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+    </button>
+    <button type="button" class="opt opt-so-txt" data-opcao="outro" aria-pressed="false">
+      <span class="opt-txt"><span class="opt-nome">Outro valor</span></span>
+      <span class="radio"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+    </button>
+    <label class="field field-grande enter mt-ato-campo" hidden>
+      <span class="field-pre">R$</span>
+      <input type="text" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Valor do ato em reais" data-campo="ato">
+    </label>
+  </div>
+</template>
+
+<template id="tpl-nascimento">
+  <div class="mt-etapa-cab enter">
+    <div class="mt-etapa-txt">
+      <p class="mt-sobre">Nascimento</p>
+      <h2 class="mt-etapa-tit" tabindex="-1">Quando o cliente nasceu?</h2>
+    </div>
+    <img class="mt-ic3d float" src="assets/img/icones-3d/calendario.svg" alt="" width="64" height="64">
+  </div>
+  <p class="mt-etapa-lead enter d1">A idade define o prazo máximo do financiamento. Com dois compradores, use o mais velho.</p>
+  <div class="mt-data enter d2">
+    <label class="field field-data">
+      <span class="field-rot">DIA</span>
+      <input type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="DD" aria-label="Dia do nascimento" data-campo="dia">
+    </label>
+    <label class="field field-data">
+      <span class="field-rot">MÊS</span>
+      <input type="text" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="MM" aria-label="Mês do nascimento" data-campo="mes">
+    </label>
+    <label class="field field-data">
+      <span class="field-rot">ANO</span>
+      <input type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="AAAA" aria-label="Ano do nascimento" data-campo="ano">
+    </label>
+  </div>
+  <p class="mt-idade pop" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="#F5AE1E" aria-hidden="true"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/></svg><span class="mt-idade-txt"></span></p>
+</template>
+
+<template id="tpl-perfil">
+  <div class="mt-etapa-cab enter">
+    <div class="mt-etapa-txt">
+      <p class="mt-sobre">Perfil do cliente</p>
+      <h2 class="mt-etapa-tit" tabindex="-1">O que vale para ele?</h2>
+      <p class="mt-etapa-lead">Toque para ligar ou desligar.</p>
+    </div>
+  </div>
+  <div class="mt-tiles">
+    <button type="button" class="tile enter d1" role="switch" aria-checked="false" data-campo="fgts">
+      <span class="tile-topo"><img class="mt-ic3d" src="assets/img/icones-3d/maleta.svg" alt="" width="50" height="50"><span class="sw"></span></span>
+      <span class="tile-txt"><span class="tile-tit">3 anos de FGTS</span><span class="tile-sub">Somando todos os períodos</span></span>
+    </button>
+    <button type="button" class="tile enter d2" role="switch" aria-checked="false" data-campo="possuiImovel">
+      <span class="tile-topo"><img class="mt-ic3d" src="assets/img/icones-3d/chave.svg" alt="" width="50" height="50"><span class="sw"></span></span>
+      <span class="tile-txt"><span class="tile-tit">Possui imóvel na cidade</span><span class="tile-sub">Residencial, em nome do cliente</span></span>
+    </button>
+    <button type="button" class="tile enter d3" role="switch" aria-checked="false" data-campo="fatorSocial">
+      <span class="tile-topo"><img class="mt-ic3d" src="assets/img/icones-3d/pessoas.svg" alt="" width="50" height="50"><span class="sw"></span></span>
+      <span class="tile-txt"><span class="tile-tit">Mais de um comprador ou dependente</span><span class="tile-sub">Sem dependente, só 30% do subsídio</span></span>
+    </button>
+    <button type="button" class="tile enter d4" role="switch" aria-checked="false" data-campo="subsidioAnterior">
+      <span class="tile-topo"><img class="mt-ic3d" src="assets/img/icones-3d/presente.svg" alt="" width="50" height="50"><span class="sw"></span></span>
+      <span class="tile-txt"><span class="tile-tit">Já recebeu subsídio FGTS/União</span><span class="tile-sub">Em qualquer financiamento anterior</span></span>
+    </button>
+  </div>
+  <div class="mt-alerta pop mt-aviso-dep" hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4.5M12 17.5h.01"/></svg>
+    <span>Sem dependente, a CAIXA concede só 30% do subsídio.</span>
+  </div>
+</template>
+
+<template id="tpl-politica">
+  <div class="mt-etapa-cab enter">
+    <div class="mt-etapa-txt">
+      <p class="mt-sobre">Política</p>
+      <h2 class="mt-etapa-tit" tabindex="-1">Qual política comercial?</h2>
+    </div>
+    <img class="mt-ic3d float" src="assets/img/icones-3d/medalha.svg" alt="" width="64" height="64">
+  </div>
+  <!-- <button type="button" class="pol" aria-pressed="false" aria-label="Política Ouro"><img src="assets/img/ranking/ouro.png" alt=""><span class="pol-check">✓</span></button> -->
+  <div class="mt-pols hscroll enter d1" data-campo="politicaId" role="group" aria-label="Política comercial"></div>
+</template>
+
+<!-- ============ MODELOS DE ITENS (trilha, destaque, linha, lateral) ============ -->
+<template id="tpl-trilha">
+  <li class="mt-tl mt-tl-feito">
+    <button type="button" class="mt-tl-btn" aria-label="">
+      <span class="mt-tl-rail"><span class="mt-tl-check"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="mt-tl-linha"></span></span>
+      <span class="mt-tl-txt"><span class="mt-tl-rot"></span><span class="mt-tl-val"></span></span>
+      <span class="mt-tl-edit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg><span class="mt-tl-edit-txt">Editar</span></span>
+    </button>
+  </li>
+  <li class="mt-tl mt-tl-atual" aria-current="step">
+    <span class="mt-tl-rail"><span class="mt-tl-now now"></span><span class="mt-tl-linha"></span></span>
+    <span class="mt-tl-txt"><span class="mt-tl-rot">Agora</span><span class="mt-tl-val"></span></span>
+  </li>
+  <li class="mt-tl mt-tl-futuro">
+    <span class="mt-tl-rail"><span class="mt-tl-bola"></span><span class="mt-tl-linha"></span></span>
+    <span class="mt-tl-txt"><span class="mt-tl-rot"></span></span>
+  </li>
+</template>
+
+<template id="tpl-destaque">
+  <div class="dest-foto">
+    <img src="" alt="" width="480" height="300">
+    <span class="selo-melhor"><svg width="13" height="13" viewBox="0 0 24 24" fill="#FFD27A" aria-hidden="true"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/></svg>Melhor match</span>
+  </div>
+  <div class="dest-corpo">
+    <p class="dest-sobre"></p>
+    <div class="dest-linha"><h3 class="dest-cod"></h3><span class="dest-tipo"></span></div>
+    <p class="dest-andar"></p>
+    <div class="dest-selos"></div>
+    <div class="dest-mensal">
+      <div class="dest-mensal-topo">
+        <div><span class="dado-rot">Por mês · CAIXA + Pro Soluto</span><b class="dest-mensal-val"></b></div>
+        <div class="dest-cr"><span class="dado-rot">da renda</span><b class="dest-cr-val"></b></div>
+      </div>
+      <div class="barra-cr"><span class="barra-cr-fill"></span></div>
+    </div>
+    <dl class="dest-grade">
+      <div class="dado"><dt class="dado-rot">Valor</dt><dd class="dado-val" data-v="valor"></dd></div>
+      <div class="dado"><dt class="dado-rot">Financiamento</dt><dd class="dado-val" data-v="fin"></dd></div>
+      <div class="dado"><dt class="dado-rot">Subsídio</dt><dd class="dado-val mt-verde" data-v="subsidio"></dd></div>
+      <div class="dado"><dt class="dado-rot">Ato</dt><dd class="dado-val" data-v="ato"></dd></div>
+      <div class="dado"><dt class="dado-rot">Pro Soluto</dt><dd class="dado-val" data-v="ps"></dd></div>
+      <div class="dado"><dt class="dado-rot">Parcela CAIXA</dt><dd class="dado-val" data-v="parcela"></dd></div>
+    </dl>
+    <div class="dest-acoes">
+      <a class="btn-sec dest-assoc" href="#" target="_blank" rel="noopener">Abrir no associativo<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <button type="button" class="btn-sec btn-pdf" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="btn-pdf-mais" d="M12 5v14M5 12h14"/><path class="btn-pdf-ok" d="M5 12.5l4.5 4.5L19 7.5"/></svg>PDF</button>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-linha">
+  <div class="row">
+    <!-- celular: cartão expansível -->
+    <div class="row-cel">
+      <button type="button" class="row-abrir" aria-expanded="false">
+        <span class="row-un"><span class="row-cod"></span><span class="row-sub"></span></span>
+        <span class="row-mes"><b class="row-mes-val"></b><span class="row-cr"></span></span>
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="row-det" hidden>
+        <dl class="row-dados">
+          <div class="dado"><dt class="dado-rot">Valor</dt><dd class="dado-val" data-v="valor"></dd></div>
+          <div class="dado"><dt class="dado-rot">Financiamento</dt><dd class="dado-val" data-v="fin"></dd></div>
+          <div class="dado"><dt class="dado-rot">Pro Soluto</dt><dd class="dado-val" data-v="ps"></dd></div>
+        </dl>
+        <div class="row-acoes">
+          <a class="btn-sec row-assoc" href="#" target="_blank" rel="noopener">Abrir no associativo</a>
+          <button type="button" class="btn-sec btn-pdf" aria-pressed="false">PDF</button>
+        </div>
+      </div>
+    </div>
+    <!-- desktop: linha da tabela -->
+    <div class="row-dk">
+      <button type="button" class="cb" role="checkbox" aria-checked="false" aria-label=""><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+      <span class="row-un"><span class="row-cod"></span><span class="row-sub"></span></span>
+      <span class="row-num" data-v="valor"></span>
+      <span class="row-num" data-v="fin"></span>
+      <span class="row-num mt-verde" data-v="subsidio"></span>
+      <span class="row-num" data-v="ps"></span>
+      <span class="row-mes"><b class="row-mes-val"></b><span class="row-cr"></span></span>
+      <a class="go" href="#" target="_blank" rel="noopener" aria-label="" title="Abrir no associativo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-lateral">
+  <div class="lado-card">
+    <div class="lado-cab">
+      <img class="mt-ic3d" src="assets/img/icones-3d/alvo.svg" alt="" width="52" height="52">
+      <h3>Como chegamos aqui</h3>
+    </div>
+    <ul class="lado-lista"></ul>
+  </div>
+  <div class="lado-mais" hidden>
+    <img class="mt-ic3d lado-mais-ic" src="assets/img/icones-3d/medalha.svg" alt="" width="84" height="84">
+    <p class="lado-mais-sobre">Mais opções</p>
+    <h3 class="lado-mais-tit"></h3>
+    <button type="button" class="lado-mais-btn"></button>
+  </div>
+</template>
 
 <script src="assets/simuladores.js"></script>
 <script src="assets/motor-caixa.js"></script>
 <script src="assets/match-prosoluto.js"></script>
 <script src="assets/match.js"></script>
+<script src="assets/match-fluxo.js"></script>
 <script src="assets/match-app.js"></script>
 </body>
 </html>
