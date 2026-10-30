@@ -74,3 +74,11 @@ test('textoPS, textoContagem e fotoDe', () => {
   assert.equal(F.textoContagem(9), '9 unidades cabem');
   assert.equal(F.fotoDe({ sheetName: 'Reserva Direcional Jardim Botânico' }), 'assets/img/cards/reserva-direcional-jardim-botanico@480.webp');
 });
+test('reaisDigitados ignora centavos e simbolos', () => {
+  assert.equal(F.reaisDigitados('3.500,00'), 3500);
+  assert.equal(F.reaisDigitados('R$ 3500'), 3500);
+  assert.equal(F.reaisDigitados('4200,5'), 4200);
+  assert.equal(F.reaisDigitados('3.500'), 3500);
+  assert.equal(F.reaisDigitados(''), 0);
+  assert.equal(F.reaisDigitados('12.345.678'), 12345678);
+});

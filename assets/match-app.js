@@ -37,12 +37,24 @@
     EMPS.forEach(function (e) { if (vistas.indexOf(e.cidade) < 0) vistas.push(e.cidade); });
     return vistas;
   }
-  /* so os digitos, em reais inteiros, formatado como 4.200 */
+  /* reais inteiros (centavos depois da virgula sao ignorados), formatado como 4.200 */
   function moeda(input) {
-    var dig = input.value.replace(/\D/g, '').slice(0, 9);
-    var n = dig ? M.numero(dig) : 0;
-    input.value = dig ? n.toLocaleString('pt-BR') : '';
-    return { n: n, vazio: !dig };
+    var antes = input.value.slice(0, input.selectionStart == null ? input.value.length : input.selectionStart);
+    var digAntes = antes.split(',')[0].replace(/\D/g, '').length;
+    var n = F.reaisDigitados(input.value);
+    var dig = String(n).slice(0, 9);
+    n = dig === '0' ? 0 : parseInt(dig, 10);
+    var vazio = !/\d/.test(input.value.split(',')[0]);
+    var texto = vazio ? '' : n.toLocaleString('pt-BR');
+    if (input.value !== texto) {
+      input.value = texto;
+      if (document.activeElement === input && input.setSelectionRange) {
+        var pos = 0, vistos = 0;
+        while (pos < texto.length && vistos < digAntes) { if (/\d/.test(texto.charAt(pos))) vistos++; pos++; }
+        input.setSelectionRange(pos, pos);
+      }
+    }
+    return { n: n, vazio: vazio };
   }
   function idade(nasc, em) {
     var a = em.getFullYear() - nasc.getFullYear();
@@ -382,7 +394,7 @@
   /* reais inteiros, como no layout: R$ 239.900 (o PDF segue com centavos via brl) */
   function dinheiro(n) { return 'R$ ' + Math.round(isFinite(n) ? n : 0).toLocaleString('pt-BR'); }
   function pctRenda(cr) { return Math.round((cr || 0) * 100) + '%'; }
-  function acimaDoIdeal(cr) { return cr > 0.30; }
+  function acimaDoIdeal(cr) { return Math.round((cr || 0) * 100) > 30; }
   function juros(j) { return Number(j).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) + '% a.a.'; }
   function plural(n, um, varios) { return n + ' ' + (n === 1 ? um : varios); }
   function dois(n) { return (n < 10 ? '0' : '') + n; }
@@ -483,7 +495,7 @@
       : 'Nenhuma unidade cabe na política ' + pol;
     $('mt-rev-sub').textContent = recorte(r) + ' · Política ' + pol;
     $('mt-rev-resumo').innerHTML = [['Enquadramento', s.faixa || '-'],
-      ['Subsídio estimado', dinheiro(s.subsidio), 'mt-verde'],
+      s.subsidio > 0 ? ['Subsídio estimado', dinheiro(s.subsidio), 'mt-verde'] : ['Subsídio estimado', 'Sem subsídio'],
       ['Financiamento até', dinheiro(s.financiamentoMax)]].map(function (x) {
       return '<div class="rev-linha"><span>' + esc(x[0]) + '</span><b' + (x[2] ? ' class="' + x[2] + '"' : '') + '>' +
         esc(x[1]) + '</b></div>';
@@ -539,7 +551,7 @@
     var res = estado.resultado, b = estado.busca, s = b.resumo, r = estado.r;
     $('mt-res-titulo').textContent = F.textoContagem(res.total);
     $('mt-res-sub').textContent = recorte(r) + ' · ' + nomePolitica(r.politicaId) + ' · ' + dinheiro(r.renda) + '/mês';
-    $('mt-chips').innerHTML = [['Enquadramento', s.faixa || '-'], ['Subsídio', dinheiro(s.subsidio), 'mt-verde'],
+    $('mt-chips').innerHTML = [['Enquadramento', s.faixa || '-'], (s.subsidio > 0 ? ['Subsídio', dinheiro(s.subsidio), 'mt-verde'] : ['Subsídio', 'Sem subsídio']),
       ['Financ. até', dinheiro(s.financiamentoMax)], ['Juros CAIXA', juros(s.jurosNominal)],
       ['Prazo', s.prazo + ' meses']].map(function (c) {
       return '<div class="chip"><span class="chip-rot">' + esc(c[0]) + '</span><b class="chip-val' + (c[2] ? ' ' + c[2] : '') + '">' +
@@ -763,7 +775,11 @@
   }
 
   /* ---------- eventos ---------- */
-  $('mt-comecar').addEventListener('click', function () { irPara('perguntas', 0, true); });
+  $('mt-comecar').addEventListener('click', function () {
+    estado.r = F.respostasIniciais('');
+    estado.resultado = null; estado.busca = null; estado.marcadas = {};
+    irPara('perguntas', 0, true);
+  });
   $('mt-repetir').addEventListener('click', repetir);
   $('mt-continuar').addEventListener('click', continuar);
   $('mt-voltar').addEventListener('click', voltar);

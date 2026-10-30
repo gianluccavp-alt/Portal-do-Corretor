@@ -126,7 +126,13 @@
     return 'assets/img/cards/' + slug + '@480.webp';
   }
 
-  var api = { ETAPAS: ETAPAS, respostasIniciais: respostasIniciais, dataNascimento: dataNascimento,
+  /* reais inteiros digitados: tudo antes da primeira virgula, so digitos */
+  function reaisDigitados(str) {
+    var dig = String(str == null ? '' : str).split(',')[0].replace(/\D/g, '');
+    return dig ? parseInt(dig, 10) : 0;
+  }
+
+  var api = { reaisDigitados: reaisDigitados, ETAPAS: ETAPAS, respostasIniciais: respostasIniciais, dataNascimento: dataNascimento,
     perguntasPerfil: perguntasPerfil, cliente: cliente, validarEtapa: validarEtapa, resumoEtapa: resumoEtapa,
     textoAtoPadrao: textoAtoPadrao, mensal: mensal, melhorMatch: melhorMatch, ordenar: ordenar,
     achatar: achatar, textoPS: textoPS, textoContagem: textoContagem, fotoDe: fotoDe };
