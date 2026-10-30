@@ -370,8 +370,9 @@
           var d = u.detalhes[cod] || {};
           unidades.push({ codigo: cod, torre: parseInt(b.id.replace(/\D/g, ''), 10), tipoLabel: d.tipoLabel,
             areaPriv: d.areaPriv, avaliacao: d.avaliacao,
-            /* spec 4.2: valor associativo SEM premio (sem a Folga Volta ao Caixa) */
-            associativo: d.associativoSemPremio });
+            /* spec 4.2: valor associativo SEM premio (sem a Folga Volta ao Caixa);
+               unidade promocional ja vem com o Valor Comercial Minimo */
+            associativo: d.associativoSemPremio, promocional: !!d.promocional });
         });
       });
       return { emp: emp, unidades: unidades };
@@ -484,6 +485,23 @@
     revela(!reduzido());
   }
 
+  /* a lista de promocionais chega por um fetch separado, depois da planilha: quando ela
+     (ou qualquer nova carga) avisa, a busca ja feita e refeita para nunca ficar com valor velho */
+  function recalcula() {
+    if (!resultadoValido()) return;
+    var r = estado.r, b = estado.busca, res;
+    try {
+      res = M.buscar({ cliente: b.cliente, cidade: r.cidade, empId: r.empId, politicaId: r.politicaId, hoje: b.hoje, estoque: estoque(r.cidade) });
+    } catch (e) { return; }
+    var antes = estado.resultado.total, linhas = F.achatar(res), porChave = {}, marcadas = {};
+    linhas.forEach(function (l) { porChave[chaveDe(l)] = l; });
+    Object.keys(estado.marcadas).forEach(function (k) { if (porChave[k]) marcadas[k] = porChave[k]; });
+    if (estado.aberta && !porChave[estado.aberta]) estado.aberta = '';
+    estado.resultado = res; b.linhas = linhas; estado.marcadas = marcadas;
+    if (estado.tela === 'resultado') desenhaResultado();
+    else if (estado.tela === 'revelacao' && res.total !== antes) revela(false);
+  }
+
   function revela(animar) {
     var res = estado.resultado, s = estado.busca.resumo, r = estado.r, total = res.total;
     var pol = nomePolitica(r.politicaId), rev = $('mt-revelacao');
@@ -576,9 +594,11 @@
     return sf ? [sf] : [];
   }
   function poeSelos(box, l) {
-    selos(l).forEach(function (t) {
+    var lista = selos(l).map(function (t) { return ['selo', t]; });
+    if (l.promocional) lista.unshift(['selo selo-promo', 'Promocional']);
+    lista.forEach(function (x) {
       var s = document.createElement('span');
-      s.className = 'selo'; s.textContent = t;
+      s.className = x[0]; s.textContent = x[1];
       box.appendChild(s);
     });
   }
@@ -832,7 +852,7 @@
 
   /* uma assinatura so para a vida da pagina */
   window.SimUnidades.aoMudar(function (est) {
-    if (!pendente) return;
+    if (!pendente) { if (est === 'ok') recalcula(); return; }
     if (estado.tela !== 'revelacao') { pendente = false; return; }
     if (est === 'ok') { pendente = false; calcula(); }
     else if (est === 'erro') { pendente = false; mostraErro(); }

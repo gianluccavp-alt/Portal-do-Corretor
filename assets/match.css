@@ -144,6 +144,8 @@ a.brand-lockup{text-decoration:none}
 
 .selo{display:inline-block;align-self:flex-start;font-size:11px;font-weight:700;color:#7A4D00;background:#FFF7E6;padding:3px 8px;border-radius:99px}
 .selo-cinza{color:var(--ink);background:#EEF1F3}
+/* unidade promocional: pílula âmbar no estilo do selo do site */
+.selo-promo{color:#B57200;background:#FFF7E6;border:1px solid #F3D9A4;padding:2px 8px}
 
 .dado-rot{display:block;font-size:11px;color:var(--texto-3)}
 .dado-val{display:block;font-size:14px;font-weight:700;margin-top:2px;color:var(--ink);font-variant-numeric:tabular-nums}

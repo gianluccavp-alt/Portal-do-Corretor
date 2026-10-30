@@ -150,7 +150,9 @@
         prazoPS: e.prazo, parcelaFin: parcelaFin,
         crTotal: carne === 'linear' ? c.crLinear : c.crEscal,
         jurosNominal: cx.jurosNominal, prazoFin: cx.prazo, politicaId: pol.id,
-        faixa: cx.faixa, travaF3: trava
+        faixa: cx.faixa, travaF3: trava,
+        /* so repasse: a venda ja chega com o valor promocional (associativoSemPremio) */
+        promocional: un.promocional === true
       }
     };
   }
@@ -204,7 +206,8 @@
   function linhaPdf(l) {
     return { empNome: l.empNome, codigo: l.codigo, tipoLabel: l.tipoLabel, areaPriv: l.areaPriv,
              venda: l.venda, financiamento: l.financiamento, subsidio: l.subsidio, ato: l.ato,
-             parcelaPS: l.parcelaPS, prazoPS: l.prazoPS, carne: l.carne, parcelaFin: l.parcelaFin };
+             parcelaPS: l.parcelaPS, prazoPS: l.prazoPS, carne: l.carne, parcelaFin: l.parcelaFin,
+             promocional: l.promocional === true };
   }
 
   function urlAssociativo(l, cliente, hoje) {

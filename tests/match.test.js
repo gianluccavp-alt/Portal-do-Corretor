@@ -174,7 +174,7 @@ test('linhaPdf não carrega nenhum campo interno', () => {
   const { linha } = Match.avaliarUnidade(CLIENTE, emp, UN('BL01-0301', 260000, 225000), 'diamante', HOJE);
   const pdf = Match.linhaPdf(linha);
   assert.deepEqual(Object.keys(pdf).sort(), ['areaPriv', 'ato', 'carne', 'codigo', 'empNome', 'financiamento',
-    'parcelaFin', 'parcelaPS', 'prazoPS', 'subsidio', 'tipoLabel', 'venda'].sort());
+    'parcelaFin', 'parcelaPS', 'prazoPS', 'promocional', 'subsidio', 'tipoLabel', 'venda'].sort());
   const texto = JSON.stringify(pdf);
   assert.ok(!/politica|crTotal|avaliacao|folga/i.test(texto));
 });
@@ -279,4 +279,24 @@ test('seloFaixa: unidade do Botânico vendida acima de 400 mil com renda de Faix
   assert.equal(resumo.faixa, 'Faixa 3');
   assert.equal(r.linha.faixa, 'Faixa 4');
   assert.equal(Match.seloFaixa(r.linha, resumo.faixa), 'Enquadrada na Faixa 4 (10% a.a.)');
+});
+
+/* ---------- unidade promocional (ajustes do teste de 30/10/2026) ---------- */
+
+test('avaliarUnidade: repassa a marca de promocional para a linha (sem mudar contas)', () => {
+  const emp = EMP('gaia', 'Ribeirão Preto');
+  const promo = Match.avaliarUnidade(CLIENTE, emp, UN('BL01-0301', 260000, 225000, { promocional: true }), 'diamante', HOJE);
+  const normal = Match.avaliarUnidade(CLIENTE, emp, UN('BL01-0301', 260000, 225000), 'diamante', HOJE);
+  assert.equal(promo.linha.promocional, true);
+  assert.equal(normal.linha.promocional, false);
+  const semMarca = Object.assign({}, promo.linha, { promocional: false });
+  assert.deepEqual(semMarca, normal.linha);
+});
+
+test('linhaPdf leva a marca de promocional', () => {
+  const emp = EMP('gaia', 'Ribeirão Preto');
+  const promo = Match.avaliarUnidade(CLIENTE, emp, UN('BL01-0301', 260000, 225000, { promocional: true }), 'diamante', HOJE);
+  const normal = Match.avaliarUnidade(CLIENTE, emp, UN('BL01-0301', 260000, 225000), 'diamante', HOJE);
+  assert.equal(Match.linhaPdf(promo.linha).promocional, true);
+  assert.equal(Match.linhaPdf(normal.linha).promocional, false);
 });
