@@ -29,7 +29,8 @@ reais** da CAIXA (PRICE e SAC) e 3 casos de idade-limite (`node docs/matriz-caix
 
 | Condição | Produto | Juros nominal (com 3+ anos de FGTS) | Taxa adm. |
 |---|---|---|---|
-| renda ≤ 2.850 e imóvel ≤ teto | 100501101 (FGTS vinc. empreendimento) | 4,50% | R$ 0 |
+| renda ≤ 2.160 e imóvel ≤ teto | 100501101 (FGTS vinc. empreendimento) | 4,25% | R$ 0 |
+| 2.160,01–2.850 e imóvel ≤ teto | 100501101 | 4,50% | R$ 0 |
 | 2.850,01–3.200 e imóvel ≤ teto | 100501101 | 4,75% | R$ 25 |
 | 3.200,01–3.500 e imóvel ≤ teto | 100501101 | 5,00% | R$ 25 |
 | 3.500,01–4.000 e imóvel ≤ teto | 100501101 | 5,50% | R$ 25 |
@@ -90,18 +91,27 @@ reais** da CAIXA (PRICE e SAC) e 3 casos de idade-limite (`node docs/matriz-caix
 
 ## 6. Subsídio (desconto FGTS), só nas faixas 1 e 2 com imóvel ≤ teto
 
+Recalibrado em 30/10/2026 com o **fator social** ("Possui mais de um comprador e/ou dependente na proposta?",
+campo `fatorSocial` do simulador). Fixtures: `tests/fixtures/caixa/casos-fator-social*.txt` (46 respostas).
+
 ```
-D = Frenda × (1 + (FD/R + FDfin + FUH) / 100)
-Frenda = (626,3737 + 0,0041745 × (3.700 − R)²) / 1,10 × Fpop      (zero se R > 3.700)
-FDfin  = 10 − 40 × (Dfin / VVI − 0,5),   limitado a ±10
-Dfin   = 0,25 × R × ((1 + j)^420 − 1) / ((1 + j)^420 × j),   j = juros nominal da operação / 12
-VVI    = min(valor do imóvel, 67,5% do teto F1/F2 do município)
-FD/R   = 2,07 (SP);   FUH = 0 (o simulador não pede área)
+Dfamília = min(55.000, Frenda × (1 + (FD/R + FDfin + FUH) / 100))
+Frenda   = (626,8731 + 0,0041743 × max(0, 3.700 − R)²) / 1,10 × Fpop / 0,30
+FDfin    = 10 − 40 × (Dfin / VVI − 0,5),   limitado a ±10
+Dfin     = 0,25 × R × ((1 + j)^420 − 1) / ((1 + j)^420 × j),   j = juros nominal da operação / 12
+VVI      = min(valor do imóvel, 67,5% do teto F1/F2 do município)
+FD/R     = 2,07 (SP);   FUH = 0 (o simulador não pede área)
+
+com dependente ou mais de um comprador:  D = Dfamília
+só o comprador (unipessoal):             D = 30% × Dfamília
 ```
 
-- Arredondado para reais inteiros. **Se D < R$ 1.500, o subsídio é zero** (por isso ele some perto de R$ 3.227 de renda). Teto de R$ 55.000.
-- Não depende da idade. Sobe levemente sem FGTS, porque os juros mais altos reduzem o Dfin.
-- A forma da fórmula é a da IN 48/2022; o fator renda foi recalibrado em 2026 e casa com os dados com erro de R$ 0,50.
+- Arredondado para reais inteiros. **Se D < R$ 1.500, o subsídio é zero.** No unipessoal isso zera o
+  subsídio perto de R$ 3.227 de renda; com dependente ele vai até **R$ 4.000,00** (4.000,01 já não tem).
+- O teto de R$ 55.000 vale para a família; o unipessoal fica com 30% do valor já limitado (R$ 16.500).
+- Quem já recebeu subsídio FGTS/União (a partir de maio/2005) não recebe de novo: o motor zera.
+  A CAIXA recusa essa combinação no simulador (MN1872), então ela não foi medida.
+- Não depende da idade nem do sistema (PRICE ou SAC). Sobe levemente sem FGTS (juros maiores reduzem o Dfin).
 
 ## 7. Limitações conhecidas
 
@@ -112,4 +122,5 @@ FD/R   = 2,07 (SP);   FUH = 0 (o simulador não pede área)
    (o ponto onde os juros saltam para 7,66%) e o Fpop (pelo subsídio de uma renda conhecida).
 3. **Regras mudam:** revalidar sempre que o Conselho Curador do FGTS ou o MCID alterarem o programa
    (a última mudança foi em 22/04/2026). Os casos em `prototipo/` servem de teste de regressão.
-4. Fora do escopo: imóvel usado, mais de um comprador, Pró-Cotista, SBPE e FUH (área do imóvel; o simulador não pede).
+4. Fora do escopo: imóvel usado, Pró-Cotista e FUH (área do imóvel; o simulador não pede). Mais de um comprador
+   entra só como fator social do subsídio; a renda informada é a renda familiar somada.

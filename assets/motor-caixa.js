@@ -59,7 +59,10 @@
   var COTA = 0.80;
   var TAXA_ADM = 25;
   var DESCONTO_MIN = 1500, DESCONTO_MAX = 55000;
-  var SUB_A = 626.3736950136708, SUB_C = 0.004174523285009393, SUB_RDMIN = 3700, SUB_FPOP_BASE = 1.10;
+  /* fator renda calibrado com fator social (coleta de 30/10/2026); sem outro comprador nem
+     dependente a CAIXA concede 30% do desconto da familia */
+  var SUB_A = 626.8731303372242, SUB_C = 0.004174331173301016, SUB_RDMIN = 3700, SUB_FPOP_BASE = 1.10;
+  var FATOR_UNIPESSOAL = 0.30, RENDA_MAX_SUBSIDIO = 4000;
 
   var r2 = function (x) { return Math.round(x * 100 + 1e-9) / 100; };
   var addMeses = function (d, n) { return new Date(d.getFullYear(), d.getMonth() + n, d.getDate()); };
@@ -94,7 +97,7 @@
   function enquadrar(renda, valor, cidade, fgts) {
     var red = fgts ? 0 : 0.5;
     if (renda <= 5000 && valor <= cidade.tetoF12) {
-      var jn = renda <= 2850 ? 4.5 : renda <= 3200 ? 4.75 : renda <= 3500 ? 5.0 : renda <= 4000 ? 5.5 : 6.5;
+      var jn = renda <= 2160 ? 4.25 : renda <= 2850 ? 4.5 : renda <= 3200 ? 4.75 : renda <= 3500 ? 5.0 : renda <= 4000 ? 5.5 : 6.5;
       return { produto: '100501101', faixa: renda <= 3200 ? 'Faixa 1' : 'Faixa 2', jn: jn + red,
                taxaAdm: renda <= 2850 ? 0 : TAXA_ADM, subsidio: true };
     }
@@ -105,20 +108,22 @@
     return null;
   }
 
-  function subsidio(renda, valor, jn, cidade) {
+  /* fatorSocial: mais de um comprador e/ou dependente na proposta */
+  function subsidio(renda, valor, jn, cidade, fatorSocial) {
+    if (renda > RENDA_MAX_SUBSIDIO) return 0;
     var j = jn / 1200, n = 420;
     var dfin = 0.25 * renda * ((Math.pow(1 + j, n) - 1) / (Math.pow(1 + j, n) * j));
     var vvi = Math.min(valor, 0.675 * cidade.tetoF12);
     var fdfin = Math.max(-10, Math.min(10, 10 - 40 * (dfin / vvi - 0.5)));
     var fdr = Math.max(-10, Math.min(10, FDR_UF[cidade.uf] || 0));
-    if (renda > SUB_RDMIN) return 0;
-    var frenda = (SUB_A + SUB_C * Math.pow(SUB_RDMIN - renda, 2)) / SUB_FPOP_BASE * cidade.fpop;
-    var d = Math.round(frenda * (1 + (fdr + fdfin) / 100));
-    if (d < DESCONTO_MIN) return 0;
-    return Math.min(d, DESCONTO_MAX);
+    var frenda = (SUB_A + SUB_C * Math.pow(Math.max(0, SUB_RDMIN - renda), 2)) / SUB_FPOP_BASE * cidade.fpop / FATOR_UNIPESSOAL;
+    var familia = Math.min(frenda * (1 + (fdr + fdfin) / 100), DESCONTO_MAX);
+    var d = Math.round(fatorSocial ? familia : familia * FATOR_UNIPESSOAL);
+    return d < DESCONTO_MIN ? 0 : d;
   }
 
   /* entrada: { renda, valor, nascimento: Date, municipio, fgts: bool, possuiImovel?: bool, sistema: 'PRICE'|'SAC',
+               fatorSocial?: bool (mais de um comprador e/ou dependente), subsidioAnterior?: bool (ja recebeu desconto FGTS/Uniao),
                hoje: Date, prazo?, valorFinanciamento? (teto opcional: financiar menos que a capacidade) }
      possuiImovel ou renda > 13.000 -> SBPE; senao MCMV. */
   function simular(e) {
@@ -152,7 +157,7 @@
       var cap = (lim - enq.taxaAdm - e.valor * s.dfi / 100) / (k + taxaMip(s, idade));
       pv = Math.min(pv, cap);
     });
-    var sub = enq.subsidio ? subsidio(e.renda, e.valor, enq.jn, cidade) : 0;
+    var sub = enq.subsidio && e.subsidioAnterior !== true ? subsidio(e.renda, e.valor, enq.jn, cidade, e.fatorSocial === true) : 0;
     var fin = r2(Math.min(pv, regra.cota * e.valor, e.valorFinanciamento > 0 ? e.valorFinanciamento : Infinity));
     var parcelaBase = r2(fin * k);
     var seguradoras = segs.map(function (s) {

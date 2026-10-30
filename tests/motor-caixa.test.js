@@ -121,3 +121,38 @@ test('SBPE: escolhido por possuir imóvel ou por renda acima de R$ 13.000', () =
   assert.equal(M.simular({ ...base, renda: 13000.01 }).faixa, 'SBPE');
   assert.equal(M.simular({ ...base, renda: 20000, valor: 1200000 }).faixa, 'SBPE');
 });
+
+const linhasFixture = (nome) => fs.readFileSync(path.join(FIX, nome), 'utf8').trim().split('\n').filter((x) => !x.startsWith('#'));
+
+test('fator social: subsídio e juros de 37 respostas da CAIXA (com e sem dependente, 3 cidades)', () => {
+  const linhas = linhasFixture('casos-fator-social.txt');
+  assert.equal(linhas.length, 37);
+  for (const l of linhas) {
+    const c = l.split(';');
+    const cid = M.CIDADES[c[3]];
+    const enq = M.enquadrar(+c[0], +c[1], cid, true);
+    assert.equal(enq.jn, +c[5], l + ': juros');
+    const sub = enq.subsidio ? M.subsidio(+c[0], +c[1], enq.jn, cid, c[2] === 'S') : 0;
+    assert.ok(Math.abs(sub - +c[4]) <= TOL.sub, `${l}: motor ${sub}`);
+  }
+});
+
+test('fator social: 9 simulações PRICE com entrada zero (financiamento, subsídio e parcelas)', () => {
+  const linhas = linhasFixture('casos-fator-social-price.txt');
+  assert.equal(linhas.length, 9);
+  for (const l of linhas) {
+    const c = l.split(';');
+    const sg = Object.fromEntries(c[9].split(' ').map((x) => { const [k, v] = x.split(':'); return [k, v.split('/').map(Number)]; }));
+    confere('fator social ' + l.slice(0, 30),
+      { renda: +c[0], valor: +c[1], nascimento: dt('26/01/1998'), municipio: c[3], fgts: c[4] === 'S',
+        fatorSocial: c[2] === 'S', hoje: new Date(2026, 9, 30) },
+      { fin: +c[5], sub: +c[6], jn: +c[7], prazo: +c[8], p14: sg['14'][0], p15: sg['15'][0], p4: sg['4'][0], u: sg['14'][1] });
+  }
+});
+
+test('sem dependente a CAIXA concede 30% do desconto da família; subsídio anterior zera', () => {
+  const e = { renda: 2500, valor: 200000, nascimento: dt('26/01/1998'), municipio: '3543402', fgts: true, hoje: HOJE };
+  assert.equal(M.simular(e).subsidio, 6799);
+  assert.equal(M.simular(Object.assign({ fatorSocial: true }, e)).subsidio, 22663);
+  assert.equal(M.simular(Object.assign({ fatorSocial: true, subsidioAnterior: true }, e)).subsidio, 0);
+});

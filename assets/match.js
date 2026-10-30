@@ -67,9 +67,15 @@
     return 600000;
   }
 
+  /* renda que pode ter subsidio (Faixas 1 e 2 ate R$ 4.000, sem imovel na cidade):
+     so nesse caso o formulario pergunta dependente e subsidio anterior */
+  var RENDA_MAX_SUBSIDIO = 4000;
+  function temSubsidio(renda, possuiImovel) { return renda > 0 && renda <= RENDA_MAX_SUBSIDIO && possuiImovel !== true; }
+
   function simulaCaixa(cliente, municipio, valor, hoje, tetoFinanciamento) {
     return Motor.simular({ renda: cliente.renda, valor: valor, nascimento: cliente.nascimento,
       municipio: municipio, fgts: cliente.fgts !== false, possuiImovel: cliente.possuiImovel === true,
+      fatorSocial: cliente.fatorSocial === true, subsidioAnterior: cliente.subsidioAnterior === true,
       sistema: 'PRICE', hoje: hoje, valorFinanciamento: tetoFinanciamento });
   }
 
@@ -77,6 +83,8 @@
     if (!(cliente.renda > 0)) return 'Informe a renda bruta do cliente.';
     if (typeof cliente.ato === 'number' && !(cliente.ato >= 0)) return 'Informe um ato válido ou deixe em branco.';
     if (!cliente.nascimento || !isFinite(cliente.nascimento.getTime())) return 'Informe a data de nascimento do cliente.';
+    if (temSubsidio(cliente.renda, cliente.possuiImovel) && cliente.fatorSocial == null)
+      return 'Informe se há mais de um comprador ou dependente: muda o subsídio.';
     var municipio = Motor.MUNICIPIO_POR_CIDADE[cidade];
     if (!municipio) return 'Escolha a cidade.';
     var r = simulaCaixa(cliente, municipio, valorReferencia(cliente.renda, municipio, ehSbpe(cliente)), hoje);
@@ -210,7 +218,7 @@
   }
 
   var api = {
-    numero: numero, atoDe: atoDe, atoCliente: atoCliente, seloFaixa: seloFaixa, validarCliente: validarCliente, resumoCliente: resumoCliente,
+    numero: numero, temSubsidio: temSubsidio, atoDe: atoDe, atoCliente: atoCliente, seloFaixa: seloFaixa, validarCliente: validarCliente, resumoCliente: resumoCliente,
     avaliarUnidade: avaliarUnidade, buscar: buscar, linhaPdf: linhaPdf, urlAssociativo: urlAssociativo,
     ORDEM_POLITICAS: ORDEM_POLITICAS
   };

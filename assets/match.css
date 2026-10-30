@@ -16,6 +16,8 @@ a.brand-lockup{text-decoration:none}
 .mt-field input:focus,.mt-field select:focus{outline:none;border-color:var(--dir-red);box-shadow:0 0 0 3px rgba(228,3,43,.15)}
 .mt-dica{font-size:.74rem;color:var(--grey)}
 .mt-seg{flex-direction:row;align-items:center;gap:1rem;flex-wrap:wrap}
+.mt-seg[hidden]{display:none}
+.mt-seg .mt-dica{width:100%}
 .mt-seg legend{width:100%;margin-bottom:.35rem}
 .mt-seg label{display:flex;align-items:center;gap:.4rem;font-size:1rem;color:var(--ink);min-height:44px}
 .mt-erro{grid-column:1/-1;margin:0;color:var(--dir-red-deep);font-weight:500}

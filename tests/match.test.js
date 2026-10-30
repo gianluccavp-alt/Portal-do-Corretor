@@ -4,7 +4,7 @@ const Match = require('../assets/match.js');
 
 const HOJE = new Date(2026, 9, 15);
 const NASC = new Date(1990, 2, 15);              /* 36 anos */
-const CLIENTE = { renda: 4000, nascimento: NASC, fgts: true };
+const CLIENTE = { renda: 4000, nascimento: NASC, fgts: true, fatorSocial: false };
 
 const EMP = (id, cidade, extra) => Object.assign({ id, nome: 'Emp ' + id, cidade, inicioObra: '2026-01-01',
   entrega: '2028-12-31', parcMin: 150 }, extra || {});
@@ -47,8 +47,31 @@ test('validarCliente: campos obrigatórios, renda e idade fora do MCMV', () => {
   assert.match(Match.validarCliente({ renda: 0, nascimento: NASC, fgts: true }, 'Ribeirão Preto', HOJE), /renda/i);
   assert.match(Match.validarCliente({ renda: 4000, nascimento: null, fgts: true }, 'Ribeirão Preto', HOJE), /nascimento/i);
   assert.equal(Match.validarCliente({ renda: 13000.01, nascimento: NASC, fgts: true }, 'Ribeirão Preto', HOJE), null, 'acima de 13 mil vai para o SBPE');
-  assert.match(Match.validarCliente({ renda: 4000, nascimento: new Date(1956, 3, 14), fgts: true }, 'Ribeirão Preto', HOJE), /70 anos e 6 meses/);
+  assert.match(Match.validarCliente({ renda: 4000, nascimento: new Date(1956, 3, 14), fgts: true, fatorSocial: false }, 'Ribeirão Preto', HOJE), /70 anos e 6 meses/);
   assert.equal(Match.validarCliente(CLIENTE, 'Ribeirão Preto', HOJE), null);
+});
+
+test('subsídio: dependente só é perguntado (e exigido) com renda até R$ 4.000 e sem imóvel', () => {
+  assert.equal(Match.temSubsidio(4000, false), true);
+  assert.equal(Match.temSubsidio(4000.01, false), false);
+  assert.equal(Match.temSubsidio(2500, true), false);
+  const semResposta = { renda: 2500, nascimento: NASC, fgts: true };
+  assert.match(Match.validarCliente(semResposta, 'Ribeirão Preto', HOJE), /dependente/);
+  assert.equal(Match.validarCliente({ renda: 5000, nascimento: NASC, fgts: true }, 'Ribeirão Preto', HOJE), null);
+});
+
+test('subsídio: com dependente sobe para o valor da família; subsídio anterior zera', () => {
+  const emp = EMP('park', 'Ribeirão Preto');
+  const un = UN('BL01-0301', 200000, 165000);
+  const base = { renda: 2500, nascimento: NASC, fgts: true };
+  const so = Match.avaliarUnidade(Object.assign({ fatorSocial: false }, base), emp, un, 'diamante', HOJE);
+  const fam = Match.avaliarUnidade(Object.assign({ fatorSocial: true }, base), emp, un, 'diamante', HOJE);
+  const ant = Match.avaliarUnidade(Object.assign({ fatorSocial: true, subsidioAnterior: true }, base), emp, un, 'diamante', HOJE);
+  assert.equal(so.linha.subsidio, 6799);
+  assert.equal(fam.linha.subsidio, 22663);
+  assert.equal(ant.linha.subsidio, 0);
+  assert.ok(fam.linha.saldoPS < so.linha.saldoPS, 'subsídio maior reduz o Pro Soluto');
+  assert.equal(Match.resumoCliente(Object.assign({ fatorSocial: true }, base), 'Ribeirão Preto', HOJE).subsidio, 22663);
 });
 
 test('resumoCliente devolve o enquadramento da renda', () => {

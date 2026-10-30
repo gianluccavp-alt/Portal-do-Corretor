@@ -50,8 +50,24 @@
       ato: /\d/.test($('f-ato').value) ? window.Match.numero($('f-ato').value) : null,
       nascimento: nasc,
       fgts: document.querySelector('input[name=fgts]:checked').value === 'S',
-      possuiImovel: document.querySelector('input[name=imovel]:checked').value === 'S'
+      possuiImovel: document.querySelector('input[name=imovel]:checked').value === 'S',
+      /* null = nao respondido (so e perguntado quando a renda tem subsidio) */
+      fatorSocial: perguntaSubsidio() ? radio('social') : false,
+      subsidioAnterior: perguntaSubsidio() && radio('subant') === true
     };
+  }
+  function radio(nome) {
+    var el = document.querySelector('input[name=' + nome + ']:checked');
+    return el ? el.value === 'S' : null;
+  }
+  function perguntaSubsidio() {
+    return window.Match.temSubsidio(window.Match.numero($('f-renda').value),
+      document.querySelector('input[name=imovel]:checked').value === 'S');
+  }
+  function mostraPerguntasSubsidio() {
+    var ver = perguntaSubsidio();
+    $('f-social-box').hidden = !ver;
+    $('f-subant-box').hidden = !ver;
   }
   function erro(msg) { var el = $('mt-erro'); el.textContent = msg || ''; el.hidden = !msg; }
 
@@ -221,6 +237,9 @@
       var v = window.Match.numero(this.value); this.value = v || id === 'f-ato' ? brl(v) : '';
     });
   });
+  $('f-renda').addEventListener('input', mostraPerguntasSubsidio);
+  $('f-renda').addEventListener('blur', mostraPerguntasSubsidio);
+  document.querySelectorAll('input[name=imovel]').forEach(function (el) { el.addEventListener('change', mostraPerguntasSubsidio); });
   $('mt-form').addEventListener('submit', function (ev) { ev.preventDefault(); buscar(); });
   $('mt-grupos').addEventListener('change', function (ev) {
     var k = ev.target.getAttribute && ev.target.getAttribute('data-k');
