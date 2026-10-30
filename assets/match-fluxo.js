@@ -124,7 +124,7 @@
   function textoContagem(total) { return total === 1 ? '1 unidade cabe' : total + ' unidades cabem'; }
 
   function fotoDe(emp) {
-    var slug = emp.sheetName.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    var slug = emp.sheetName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
     return 'assets/img/cards/' + slug + '@480.webp';
   }

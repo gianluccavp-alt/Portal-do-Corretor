@@ -119,9 +119,13 @@ window.SimUnidades = (function () {
       }
       return false;
     }
+    /* CSV baixado com o cabecalho e sem linhas = nenhuma promocional (lista vazia valida,
+       como em assets/data.js). So cai na reserva se a resposta for HTML/lixo. */
     function doCsv(text) {
-      var rows = (text && text.trim().charAt(0) !== '<') ? parseCSV(text) : null;
-      if (!rows) return false;
+      var limpo = ('' + (text || '')).replace(/^\uFEFF/, '').trim();
+      if (!limpo || limpo.charAt(0) === '<') return false;
+      if (!/identificador/i.test(limpo.split('\n')[0])) return false;
+      var rows = parseCSV(limpo) || [];
       var chaves = [];
       for (var i = 0; i < rows.length; i++) {
         var emp = rows[i]['Empreendimento'], ident = rows[i]['Identificador'];

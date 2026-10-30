@@ -797,7 +797,7 @@
     return !!(window.jspdf && window.jspdf.jsPDF && window.jspdf.jsPDF.API && typeof window.jspdf.jsPDF.API.autoTable === 'function');
   }
   function slug(t) {
-    return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
       .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
   }
   function lerCorretor() { try { return localStorage.getItem(CHAVE_CORRETOR) || ''; } catch (e) { return ''; } }
@@ -836,14 +836,14 @@
     y += 7;
 
     var anos = b.cliente.nascimento ? idade(b.cliente.nascimento, b.hoje) : null;
-    var rotulo = { fontStyle: 'bold', textColor: CINZA };
+    function rotulo(largura) { return { cellWidth: largura, fontStyle: 'bold', textColor: CINZA }; }
     doc.autoTable({
       startY: y, theme: 'plain', margin: { left: Mg, right: Mg },
       body: [['Cliente', cliente || '-', 'Corretor', corretor || '-'],
              ['Renda informada', r.renda > 0 ? dinheiro(r.renda) : '-', 'Idade', anos !== null ? anos + ' anos' : '-']],
       styles: { fontSize: 8.5, cellPadding: 1.4, textColor: TINTA },
-      columnStyles: { 0: Object.assign({ cellWidth: 34 }, rotulo), 1: { cellWidth: 54 },
-                      2: Object.assign({ cellWidth: 40 }, rotulo), 3: { cellWidth: 'auto' } }
+      columnStyles: { 0: rotulo(34), 1: { cellWidth: 54 },
+                      2: rotulo(40), 3: { cellWidth: 'auto' } }
     });
     y = doc.lastAutoTable.finalY + 5;
 
@@ -854,8 +854,8 @@
       body: [['Enquadramento', s.faixa || '-', 'Taxa de juros', juros(s.jurosNominal)],
              ['Prazo', s.prazo + ' meses', 'Financiamento até', dinheiro(s.financiamentoMax)]],
       styles: { fontSize: 8.5, cellPadding: 1.4, textColor: TINTA },
-      columnStyles: { 0: Object.assign({ cellWidth: 34 }, rotulo), 1: { cellWidth: 54 },
-                      2: Object.assign({ cellWidth: 40 }, rotulo), 3: { cellWidth: 'auto' } }
+      columnStyles: { 0: rotulo(34), 1: { cellWidth: 54 },
+                      2: rotulo(40), 3: { cellWidth: 'auto' } }
     });
     y = doc.lastAutoTable.finalY + 2.5;
     doc.setFont('helvetica', 'normal'); doc.setFontSize(6.8); doc.setTextColor(138, 146, 149);
