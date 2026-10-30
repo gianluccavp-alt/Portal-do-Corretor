@@ -40,17 +40,19 @@ test('resumoEtapa monta a linha da trilha', () => {
   const r = Object.assign(F.respostasIniciais('Ribeirão Preto'), { empId: 'park', renda: 3500, dia: '14', mes: '03', ano: '1993' });
   assert.equal(F.resumoEtapa('onde', r, ctx), 'Village Park');
   assert.equal(F.resumoEtapa('onde', Object.assign({}, r, { empId: '' }), ctx), 'Ribeirão Preto · todos');
-  assert.equal(F.resumoEtapa('renda', r, ctx), 'R$ 3.500/mês');
-  assert.equal(F.resumoEtapa('ato', r, ctx), 'Padrão · R$ 2.500');
+  assert.equal(F.resumoEtapa('renda', r, ctx), 'R$ 3.500,00/mês');
+  assert.equal(F.resumoEtapa('ato', r, ctx), 'Padrão · R$ 2.500,00');
   assert.equal(F.resumoEtapa('ato', Object.assign({}, r, { empId: '' }), ctx), 'Padrão de cada empreendimento');
-  assert.equal(F.resumoEtapa('ato', Object.assign({}, r, { ato: 5000 }), ctx), 'R$ 5.000');
+  assert.equal(F.resumoEtapa('ato', Object.assign({}, r, { ato: 5000 }), ctx), 'R$ 5.000,00');
+  assert.equal(F.resumoEtapa('renda', Object.assign({}, r, { renda: 6750 }), ctx), 'R$ 6.750,00/mês');
+  assert.equal(F.resumoEtapa('ato', Object.assign({}, r, { ato: 1000 }), ctx), 'R$ 1.000,00');
   assert.equal(F.resumoEtapa('nascimento', r, ctx), '14/03/1993 · 33 anos');
   assert.equal(F.resumoEtapa('perfil', r, ctx), 'FGTS 3 anos · Sem imóvel · Sem dependente');
   assert.equal(F.resumoEtapa('politica', r, ctx), 'Ouro');
 });
 test('textoAtoPadrao', () => {
-  assert.equal(F.textoAtoPadrao('ipiranga'), 'R$ 1.500');
-  assert.equal(F.textoAtoPadrao('park'), 'R$ 2.500');
+  assert.equal(F.textoAtoPadrao('ipiranga'), 'R$ 1.500,00');
+  assert.equal(F.textoAtoPadrao('park'), 'R$ 2.500,00');
   assert.equal(F.textoAtoPadrao(''), 'o padrão de cada empreendimento');
 });
 test('melhorMatch e ordenar', () => {
@@ -69,7 +71,9 @@ test('melhorMatch e ordenar', () => {
 });
 test('textoPS, textoContagem e fotoDe', () => {
   assert.equal(F.textoPS({ parcelaPS: 0, prazoPS: 84 }), 'Sem Pro Soluto');
-  assert.equal(F.textoPS({ parcelaPS: 412, prazoPS: 84 }), 'R$ 412 × 84');
+  assert.equal(F.textoPS({ parcelaPS: 412, prazoPS: 84 }), 'R$ 412,00 × 84');
+  assert.equal(F.textoPS({ parcelaPS: 1185.9, prazoPS: 84 }), 'R$ 1.185,90 × 84');
+  assert.equal(F.textoPS({ parcelaPS: 512.434, prazoPS: 84 }), 'R$ 512,43 × 84');
   assert.equal(F.textoContagem(1), '1 unidade cabe');
   assert.equal(F.textoContagem(9), '9 unidades cabem');
   assert.equal(F.fotoDe({ sheetName: 'Reserva Direcional Jardim Botânico' }), 'assets/img/cards/reserva-direcional-jardim-botanico@480.webp');

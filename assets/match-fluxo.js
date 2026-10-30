@@ -50,7 +50,10 @@
     return null;
   }
 
-  function dinheiro(n) { return 'R$ ' + Math.round(n).toLocaleString('pt-BR'); }
+  /* reais com centavos: R$ 1.185,90 (nada de arredondar na tela) */
+  function dinheiro(n) {
+    return 'R$ ' + (isFinite(n) ? n : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
   function dois(n) { return (n < 10 ? '0' : '') + n; }
 
   function idadeAnos(nasc, em) {
@@ -135,7 +138,7 @@
   var api = { reaisDigitados: reaisDigitados, ETAPAS: ETAPAS, respostasIniciais: respostasIniciais, dataNascimento: dataNascimento,
     perguntasPerfil: perguntasPerfil, cliente: cliente, validarEtapa: validarEtapa, resumoEtapa: resumoEtapa,
     textoAtoPadrao: textoAtoPadrao, mensal: mensal, melhorMatch: melhorMatch, ordenar: ordenar,
-    achatar: achatar, textoPS: textoPS, textoContagem: textoContagem, fotoDe: fotoDe };
+    achatar: achatar, textoPS: textoPS, textoContagem: textoContagem, fotoDe: fotoDe, dinheiro: dinheiro };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else raiz.MatchFluxo = api;

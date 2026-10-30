@@ -23,9 +23,6 @@
   function esc(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
-  function brl(n) {
-    return (isFinite(n) ? n : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  }
   function hoje() { var d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
   function modelo(id) { return $(id).content.cloneNode(true); }
   function cada(lista, fn) { Array.prototype.forEach.call(lista, fn); }
@@ -392,11 +389,16 @@
   var pendente = false;            /* busca esperando a planilha */
   var anim = { seq: 0, raf: 0, timers: [] };
 
-  /* reais inteiros, como no layout: R$ 239.900 (o PDF segue com centavos via brl) */
-  function dinheiro(n) { return 'R$ ' + Math.round(isFinite(n) ? n : 0).toLocaleString('pt-BR'); }
-  function pctRenda(cr) { return Math.round((cr || 0) * 100) + '%'; }
-  function acimaDoIdeal(cr) { return Math.round((cr || 0) * 100) > 30; }
-  function juros(j) { return Number(j).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) + '% a.a.'; }
+  /* sem arredondamento: reais com centavos (R$ 312.800,00) e % com 2 casas (47,57%) */
+  function dinheiro(n) { return F.dinheiro(n); }
+  function pctRenda(cr) {
+    return ((cr || 0) * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+  }
+  /* compara o valor exibido (2 casas): 30,00% ainda e verde */
+  function acimaDoIdeal(cr) { return Math.round((cr || 0) * 10000) > 3000; }
+  /* juros como o motor entrega, so com virgula: 7,66% a.a. */
+  function jurosNum(j) { return String(j).replace('.', ','); }
+  function juros(j) { return jurosNum(j) + '% a.a.'; }
   function plural(n, um, varios) { return n + ' ' + (n === 1 ? um : varios); }
   function dois(n) { return (n < 10 ? '0' : '') + n; }
   function reduzido() { return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }
@@ -774,8 +776,8 @@
       head: [['Empreendimento / unidade', 'Valor', 'Financiamento', 'Subsídio', 'Ato', 'Pro Soluto', 'Parcela CAIXA']],
       body: linhas.map(function (l) {
         return [l.empNome + '\n' + l.codigo + ' · ' + (l.tipoLabel || '') + (l.areaPriv ? ' · ' + l.areaPriv + ' m²' : ''),
-          brl(l.venda), brl(l.financiamento), brl(l.subsidio), brl(l.ato),
-          brl(l.parcelaPS) + ' × ' + l.prazoPS + (l.carne === 'escalonado' ? '\n(escalonado)' : ''), brl(l.parcelaFin)];
+          dinheiro(l.venda), dinheiro(l.financiamento), dinheiro(l.subsidio), dinheiro(l.ato),
+          dinheiro(l.parcelaPS) + ' × ' + l.prazoPS + (l.carne === 'escalonado' ? '\n(escalonado)' : ''), dinheiro(l.parcelaFin)];
       }),
       styles: { fontSize: 7.5, cellPadding: 1.8, textColor: [58, 64, 67] },
       headStyles: { fillColor: [228, 3, 43], textColor: 255 },
