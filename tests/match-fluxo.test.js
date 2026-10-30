@@ -42,6 +42,7 @@ test('resumoEtapa monta a linha da trilha', () => {
   assert.equal(F.resumoEtapa('onde', Object.assign({}, r, { empId: '' }), ctx), 'Ribeirão Preto · todos');
   assert.equal(F.resumoEtapa('renda', r, ctx), 'R$ 3.500/mês');
   assert.equal(F.resumoEtapa('ato', r, ctx), 'Padrão · R$ 2.500');
+  assert.equal(F.resumoEtapa('ato', Object.assign({}, r, { empId: '' }), ctx), 'Padrão de cada empreendimento');
   assert.equal(F.resumoEtapa('ato', Object.assign({}, r, { ato: 5000 }), ctx), 'R$ 5.000');
   assert.equal(F.resumoEtapa('nascimento', r, ctx), '14/03/1993 · 33 anos');
   assert.equal(F.resumoEtapa('perfil', r, ctx), 'FGTS 3 anos · Sem imóvel · Sem dependente');

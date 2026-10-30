@@ -70,7 +70,10 @@
       return achado ? achado.nome : r.empId;
     }
     if (etapa === 'renda') return dinheiro(r.renda) + '/mês';
-    if (etapa === 'ato') return r.ato === null ? 'Padrão · ' + textoAtoPadrao(r.empId || 'padrao') : dinheiro(r.ato);
+    if (etapa === 'ato') {
+      if (r.ato !== null) return dinheiro(r.ato);
+      return r.empId ? 'Padrão · ' + textoAtoPadrao(r.empId) : 'Padrão de cada empreendimento';
+    }
     if (etapa === 'nascimento') {
       var nasc = dataNascimento(r.dia, r.mes, r.ano);
       if (!nasc) return '';
