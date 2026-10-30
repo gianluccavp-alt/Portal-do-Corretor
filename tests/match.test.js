@@ -24,6 +24,25 @@ test('ato: R$ 1.500 no Ipiranga, R$ 2.500 nos demais', () => {
   assert.equal(Match.atoDe('gaia'), 2500);
 });
 
+test('atoCliente: ato informado vale (inclusive zero); vazio usa o padrão do empreendimento', () => {
+  assert.equal(Match.atoCliente({ ato: 8000 }, 'gaia'), 8000);
+  assert.equal(Match.atoCliente({ ato: 0 }, 'gaia'), 0);
+  assert.equal(Match.atoCliente({ ato: null }, 'ipiranga'), 1500);
+  assert.equal(Match.atoCliente({}, 'gaia'), 2500);
+});
+
+test('avaliarUnidade: ato maior reduz o saldo do Pro Soluto na mesma medida', () => {
+  const emp = EMP('park', 'Ribeirão Preto');
+  const un = UN('BL01-0301', 260000, 225000);
+  const padrao = Match.avaliarUnidade(CLIENTE, emp, un, 'diamante', HOJE);
+  const maior = Match.avaliarUnidade(Object.assign({ ato: 10000 }, CLIENTE), emp, un, 'diamante', HOJE);
+  assert.equal(maior.status, 'ok');
+  assert.equal(maior.linha.ato, 10000);
+  assert.equal(maior.linha.financiamento, padrao.linha.financiamento);
+  assert.ok(Math.abs(padrao.linha.saldoPS - maior.linha.saldoPS - 7500) < 0.01);
+  assert.ok(maior.linha.parcelaPS < padrao.linha.parcelaPS);
+});
+
 test('validarCliente: campos obrigatórios, renda e idade fora do MCMV', () => {
   assert.match(Match.validarCliente({ renda: 0, nascimento: NASC, fgts: true }, 'Ribeirão Preto', HOJE), /renda/i);
   assert.match(Match.validarCliente({ renda: 4000, nascimento: null, fgts: true }, 'Ribeirão Preto', HOJE), /nascimento/i);

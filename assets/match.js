@@ -38,6 +38,10 @@
   }
 
   function atoDe(empId) { return ATO_POR_EMP[empId] || ATO_PADRAO; }
+  /* ato informado pelo corretor (0 vale); vazio usa o padrao do empreendimento */
+  function atoCliente(cliente, empId) {
+    return typeof cliente.ato === 'number' && cliente.ato >= 0 ? r2(cliente.ato) : atoDe(empId);
+  }
 
   function idadeAnos(nasc, em) {
     var a = em.getFullYear() - nasc.getFullYear();
@@ -71,6 +75,7 @@
 
   function validarCliente(cliente, cidade, hoje) {
     if (!(cliente.renda > 0)) return 'Informe a renda bruta do cliente.';
+    if (typeof cliente.ato === 'number' && !(cliente.ato >= 0)) return 'Informe um ato válido ou deixe em branco.';
     if (!cliente.nascimento || !isFinite(cliente.nascimento.getTime())) return 'Informe a data de nascimento do cliente.';
     var municipio = Motor.MUNICIPIO_POR_CIDADE[cidade];
     if (!municipio) return 'Escolha a cidade.';
@@ -96,7 +101,7 @@
     var cx = simulaCaixa(cliente, municipio, valorCaixa, hoje);
     if (cx.erro) return { status: 'fora-enquadramento' };
 
-    var ato = atoDe(emp.id);
+    var ato = atoCliente(cliente, emp.id);
     var venda = un.associativo;
     var subsidio = cx.subsidio;
     /* Review Focus 1: banco + subsidio + ato nao podem passar da venda */
@@ -205,7 +210,7 @@
   }
 
   var api = {
-    numero: numero, atoDe: atoDe, seloFaixa: seloFaixa, validarCliente: validarCliente, resumoCliente: resumoCliente,
+    numero: numero, atoDe: atoDe, atoCliente: atoCliente, seloFaixa: seloFaixa, validarCliente: validarCliente, resumoCliente: resumoCliente,
     avaliarUnidade: avaliarUnidade, buscar: buscar, linhaPdf: linhaPdf, urlAssociativo: urlAssociativo,
     ORDEM_POLITICAS: ORDEM_POLITICAS
   };

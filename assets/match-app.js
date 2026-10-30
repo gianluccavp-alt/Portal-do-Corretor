@@ -46,6 +46,8 @@
     var nasc = $('f-nasc').value ? new Date($('f-nasc').value + 'T00:00:00') : null;
     return {
       renda: window.Match.numero($('f-renda').value),
+      /* vazio = ato padrao de cada empreendimento */
+      ato: /\d/.test($('f-ato').value) ? window.Match.numero($('f-ato').value) : null,
       nascimento: nasc,
       fgts: document.querySelector('input[name=fgts]:checked').value === 'S',
       possuiImovel: document.querySelector('input[name=imovel]:checked').value === 'S'
@@ -213,8 +215,11 @@
 
   /* ---------- eventos ---------- */
   $('f-cidade').addEventListener('change', preencheEmps);
-  $('f-renda').addEventListener('blur', function () {
-    var v = window.Match.numero(this.value); this.value = v ? brl(v) : '';
+  ['f-renda', 'f-ato'].forEach(function (id) {
+    $(id).addEventListener('blur', function () {
+      if (!this.value.trim()) return;
+      var v = window.Match.numero(this.value); this.value = v || id === 'f-ato' ? brl(v) : '';
+    });
   });
   $('mt-form').addEventListener('submit', function (ev) { ev.preventDefault(); buscar(); });
   $('mt-grupos').addEventListener('change', function (ev) {
