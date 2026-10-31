@@ -563,3 +563,8 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
   width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,0.25);
   background:rgba(255,255,255,0.1);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .zoom-lightbox-close svg{width:18px;height:18px}
+
+/* unidade aberta pelo Match de Unidades (?un=) */
+.u-alvo{border-color:var(--gold)!important;box-shadow:0 0 0 3px rgba(228,3,43,.18),0 12px 28px -16px rgba(0,0,0,.35)!important;animation:u-alvo-pulso 1.6s ease-out 2}
+@keyframes u-alvo-pulso{0%{box-shadow:0 0 0 0 rgba(228,3,43,.35)}100%{box-shadow:0 0 0 14px rgba(228,3,43,0)}}
+@media (prefers-reduced-motion:reduce){.u-alvo{animation:none}}

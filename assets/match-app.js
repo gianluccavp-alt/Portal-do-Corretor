@@ -673,10 +673,23 @@
     });
   }
 
-  function linkAssoc(a, l, rotulo) {
-    var b = estado.busca;
-    a.href = M.urlAssociativo(l, b.cliente, b.hoje);
-    a.setAttribute('aria-label', rotulo + ' (abre em nova aba)');
+  /* "Abrir unidade": popup com o simulador associativo e a página do empreendimento */
+  function ligaAbrir(btn, l) {
+    btn.setAttribute('aria-label', 'Abrir ' + nomeUn(l));
+    btn.addEventListener('click', function () { abrirUnidade(l, btn); });
+  }
+  function desktop() { return !!(window.matchMedia && window.matchMedia('(min-width:1024px)').matches); }
+  function abrirUnidade(l, origem) {
+    var b = estado.busca, dlg = $('mt-dlg-un'), pag = window.SimUnidades.idPagina(l.empId);
+    $('mt-un-tit').textContent = apto(l) + ' · Torre ' + l.torre;
+    $('mt-un-sub').textContent = l.empNome + ' · ' + andarFinal(l);
+    $('mt-un-assoc').href = M.urlAssociativo(l, b.cliente, b.hoje);
+    var prod = $('mt-un-prod');
+    prod.hidden = !pag;
+    if (pag) prod.href = 'empreendimento.html?e=' + encodeURIComponent(pag) + '&un=' + encodeURIComponent(l.codigo);
+    dlg._origem = origem || null;
+    if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+    $('mt-un-assoc').focus();
   }
 
   function desenhaDestaque(l) {
@@ -705,7 +718,7 @@
     fill.classList.toggle('mt-ambar', acima);
     preenche(art, { valor: dinheiro(l.venda), fin: dinheiro(l.financiamento), subsidio: dinheiro(l.subsidio),
       ato: dinheiro(l.ato), ps: F.textoPS(l), parcela: dinheiro(l.parcelaFin) });
-    linkAssoc(art.querySelector('.dest-assoc'), l, 'Abrir ' + nomeUn(l) + ' no associativo');
+    ligaAbrir(art.querySelector('.dest-assoc'), l);
     ligaPdf(art.querySelector('.btn-pdf'), l);
   }
 
@@ -789,14 +802,22 @@
       el.appendChild(sm);
     });
     cada(row.querySelectorAll('.row-sub'), function (el) { el.textContent = sub; poeSelos(el.parentNode, l); });
-    cada(row.querySelectorAll('.row-mes-val'), function (el) { el.textContent = dinheiro(F.mensal(l)); });
+    /* celular: total por mês; desktop: coluna "Parcela CAIXA" */
+    cada(row.querySelectorAll('.row-mes-val'), function (el) {
+      el.textContent = dinheiro(el.classList.contains('row-caixa') ? l.parcelaFin : F.mensal(l));
+    });
     cada(row.querySelectorAll('.row-cr'), function (el) {
-      el.textContent = pctRenda(l.crTotal) + (el.closest('.row-dk') ? ' da renda' : '');
+      el.textContent = pctRenda(l.crTotal);
       el.classList.toggle('mt-ambar', acima);
     });
     preenche(row, { valor: dinheiro(l.venda), fin: dinheiro(l.financiamento), subsidio: dinheiro(l.subsidio), ps: F.textoPS(l) });
-    linkAssoc(row.querySelector('.row-assoc'), l, 'Abrir ' + nomeUn(l) + ' no associativo');
-    linkAssoc(row.querySelector('.go'), l, 'Abrir ' + nomeUn(l) + ' no associativo');
+    ligaAbrir(row.querySelector('.row-assoc'), l);
+    ligaAbrir(row.querySelector('.go'), l);
+    /* desktop: clicar em qualquer lugar da linha abre o mesmo popup (menos checkbox e botões) */
+    row.addEventListener('click', function (ev) {
+      if (!desktop() || ev.target.closest('button, a')) return;
+      abrirUnidade(l, row.querySelector('.go'));
+    });
     ligaPdf(row.querySelector('.row-det .btn-pdf'), l);
     ligaPdf(row.querySelector('.cb'), l);
 
@@ -1067,6 +1088,11 @@
   $('mt-editar').addEventListener('click', editarPerfil);
   $('mt-res-voltar').addEventListener('click', editarPerfil);
   $('mt-pdf').addEventListener('click', abrirPdf);
+  $('mt-un-fechar').addEventListener('click', function () { $('mt-dlg-un').close(); });
+  /* escolher uma opção abre a nova aba e fecha o popup */
+  cada([$('mt-un-assoc'), $('mt-un-prod')], function (a) { a.addEventListener('click', function () { $('mt-dlg-un').close(); }); });
+  $('mt-dlg-un').addEventListener('close', function () { if (this._origem && this._origem.focus) this._origem.focus(); });
+  $('mt-dlg-un').addEventListener('click', function (ev) { if (ev.target === this) this.close(); });
   $('mt-rev-detalhes').addEventListener('click', function () { abrirDetalhes(this); });
   $('mt-det-fechar').addEventListener('click', function () { $('mt-dlg-det').close(); });
   $('mt-dlg-det').addEventListener('close', function () { if (this._origem && this._origem.focus) this._origem.focus(); });

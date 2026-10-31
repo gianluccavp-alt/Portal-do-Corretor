@@ -21,6 +21,25 @@ var TIPO_LABEL = {
 };
 
 /* ---------- helpers ---------- */
+/* link do Match de Unidades (?un=BL02-0202): filtra a torre e rola ate a unidade (uma vez) */
+var UNIDADE_ALVO = (function () {
+  var m = /[?&]un=([^&]*)/.exec(window.location.search || '');
+  var c = m ? decodeURIComponent(m[1]).match(/^BL(\d+)-(\d+)$/i) : null;
+  /* "0202" -> 2o andar, final 02 (mesma leitura do Match) */
+  return c ? { torre: parseInt(c[1], 10), andar: parseInt(c[2].slice(0, -2) || '0', 10),
+               final: parseInt(c[2].slice(-2), 10), rolou: false } : null;
+})();
+function ehUnidadeAlvo(u) {
+  return !!UNIDADE_ALVO && blocoNum(u.bl) === UNIDADE_ALVO.torre && u.andar === UNIDADE_ALVO.andar && u.f === UNIDADE_ALVO.final;
+}
+function focaUnidadeAlvo() {
+  if (!UNIDADE_ALVO || UNIDADE_ALVO.rolou) return;
+  UNIDADE_ALVO.rolou = true;
+  var opt = document.getElementById('torre-opt-' + UNIDADE_ALVO.torre);
+  if (opt) setTorre(String(UNIDADE_ALVO.torre), opt);
+  var el = document.querySelector('#units-grid .u-alvo');
+  if (el) setTimeout(function () { el.scrollIntoView({ behavior: 'instant', block: 'center' }); }, 80);
+}
 function blocoNum(bl) { var m = ('' + (bl || '')).match(/\d+/); return m ? parseInt(m[0], 10) : 1; }
 // Nascente pode depender do bloco (via emp.solNascente); senao usa o padrao global
 function unitNascente(u) {
@@ -612,6 +631,10 @@ function renderUnits() {
   var html = '';
   for (var j = 0; j < list.length; j++) html += buildUnit(list[j], j);
   grid.innerHTML = html;
+  /* destaca a unidade vinda do Match (cada unidade e um filho do grid) */
+  if (UNIDADE_ALVO && grid.children.length === list.length) {
+    for (var a = 0; a < list.length; a++) if (ehUnidadeAlvo(list[a])) grid.children[a].classList.add('u-alvo');
+  }
 }
 
 // popup de detalhes (informativo) so nos empreendimentos de Ribeirao Preto
@@ -902,6 +925,7 @@ function doUpdate() {
     updatePremioVisibility();
     updateVagaVisibility();
     renderUnits();
+    focaUnidadeAlvo();
     var now = new Date();
     var hm = now.getHours() + ':' + (now.getMinutes() < 10 ? '0' : '') + now.getMinutes();
     var luEl = document.getElementById('last-update'); if (luEl) luEl.textContent = 'Atualizado as ' + hm;

@@ -190,7 +190,7 @@
           <div class="mt-tabela enter d4">
             <div class="mt-tabela-in">
               <div class="row row-titulos" aria-hidden="true">
-                <span>PDF</span><span>Unidade</span><span>Valor</span><span>Financiamento</span><span>Subsídio</span><span>Pro Soluto</span><span>Por mês</span><span></span>
+                <span>PDF</span><span>Unidade</span><span>Valor</span><span>Financiamento</span><span>Subsídio</span><span>Pro Soluto</span><span>Parcela CAIXA</span><span></span>
               </div>
               <div class="mt-outras" id="mt-outras"></div>
             </div>
@@ -220,6 +220,27 @@
     </dialog>
     <p class="mt-rodape mt-rodape-res">Valores estimados. Sujeitos à análise de crédito da CAIXA e à aprovação da Direcional.</p>
   </section>
+
+  <!-- abrir unidade: simulador associativo ou página do empreendimento (links montados em abrirUnidade()) -->
+  <dialog class="mt-dlg mt-dlg-un" id="mt-dlg-un" aria-labelledby="mt-un-tit" aria-describedby="mt-un-sub">
+    <div class="mt-dlg-form">
+      <h2 class="mt-dlg-tit" id="mt-un-tit">Abrir unidade</h2>
+      <p class="mt-dlg-sub" id="mt-un-sub"></p>
+      <div class="un-opcoes">
+        <a class="un-op" id="mt-un-assoc" href="#" target="_blank" rel="noopener">
+          <img class="mt-ic3d" src="assets/img/icones-3d/moedas.svg" alt="" width="48" height="48">
+          <span class="un-op-txt"><b>Simulador associativo</b><small>Com renda, valores e política desta simulação.</small></span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="un-op" id="mt-un-prod" href="#" target="_blank" rel="noopener">
+          <img class="mt-ic3d" src="assets/img/icones-3d/predio.svg" alt="" width="48" height="48">
+          <span class="un-op-txt"><b>Página do empreendimento</b><small>Já filtrada na torre, com a unidade em destaque.</small></span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+      <div class="mt-dlg-acoes"><button class="btn-sec" type="button" id="mt-un-fechar">Cancelar</button></div>
+    </div>
+  </dialog>
 
   <!-- detalhes da simulação CAIXA (revelação e resultado); corpo montado em abrirDetalhes() -->
   <dialog class="mt-dlg mt-dlg-det" id="mt-dlg-det" aria-labelledby="mt-det-tit">
@@ -410,7 +431,7 @@
       <div class="dado"><dt class="dado-rot">Parcela CAIXA</dt><dd class="dado-val" data-v="parcela"></dd></div>
     </dl>
     <div class="dest-acoes">
-      <a class="btn-sec dest-assoc" href="#" target="_blank" rel="noopener">Abrir no associativo<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <button type="button" class="btn-sec dest-assoc" aria-haspopup="dialog">Abrir unidade<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
       <button type="button" class="btn-sec btn-pdf" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="btn-pdf-mais" d="M12 5v14M5 12h14"/><path class="btn-pdf-ok" d="M5 12.5l4.5 4.5L19 7.5"/></svg>PDF</button>
     </div>
   </div>
@@ -432,7 +453,7 @@
           <div class="dado"><dt class="dado-rot">Pro Soluto</dt><dd class="dado-val" data-v="ps"></dd></div>
         </dl>
         <div class="row-acoes">
-          <a class="btn-sec row-assoc" href="#" target="_blank" rel="noopener">Abrir no associativo</a>
+          <button type="button" class="btn-sec row-assoc" aria-haspopup="dialog">Abrir unidade</button>
           <button type="button" class="btn-sec btn-pdf" aria-pressed="false">PDF</button>
         </div>
       </div>
@@ -445,8 +466,8 @@
       <span class="row-num" data-v="fin"></span>
       <span class="row-num mt-verde" data-v="subsidio"></span>
       <span class="row-num" data-v="ps"></span>
-      <span class="row-mes"><b class="row-mes-val"></b><span class="row-cr"></span></span>
-      <a class="go" href="#" target="_blank" rel="noopener" aria-label="" title="Abrir no associativo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <span class="row-mes"><b class="row-mes-val row-caixa"></b></span>
+      <button type="button" class="go" aria-haspopup="dialog" aria-label="" title="Abrir unidade"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
     </div>
   </div>
 </template>
