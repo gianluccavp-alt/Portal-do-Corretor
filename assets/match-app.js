@@ -676,6 +676,7 @@
     var lista = [{ id: '', nome: 'Todos', qtd: todos }].concat(EMPS.filter(function (e) {
       return e.cidade === r.cidade && p[e.id];
     }).map(function (e) { return { id: e.id, nome: e.nome, qtd: p[e.id].linhas.length, foto: F.fotoDe(e) }; }));
+    var rolagem = box.scrollLeft;   /* refazer os chips zera a rolagem horizontal da fileira (celular) */
     box.innerHTML = '';
     lista.forEach(function (o) {
       var b = document.createElement('button');
@@ -703,6 +704,14 @@
       });
       box.appendChild(b);
     });
+    /* devolve a rolagem e garante o chip escolhido visivel, sem mexer na rolagem vertical */
+    box.scrollLeft = rolagem;
+    var on = box.querySelector('.fil-on');
+    if (on && box.scrollWidth > box.clientWidth) {
+      var pad = 20, esq = on.offsetLeft - box.offsetLeft, dir = esq + on.offsetWidth;
+      if (esq - pad < box.scrollLeft) box.scrollLeft = esq - pad;
+      else if (dir + pad > box.scrollLeft + box.clientWidth) box.scrollLeft = dir + pad - box.clientWidth;
+    }
   }
 
   /* ordem fixa: menor parcela */
@@ -1042,8 +1051,8 @@
     if (ev.key !== 'Enter' || ev.isComposing || ev.defaultPrevented || estado.tela !== 'perguntas') return;
     var alvo = ev.target, tela = $('mt-perguntas');
     if (!alvo || !(tela.contains(alvo) || alvo === document.body || alvo === document.documentElement)) return;
-    if (ev.repeat) { ev.preventDefault(); return; }
     if (alvo.closest && alvo.closest('#mt-voltar, #mt-sair, .mt-tl-btn, #mt-continuar, a')) return;
+    if (ev.repeat) { ev.preventDefault(); return; }
     ev.preventDefault();
     continuar();
   });
