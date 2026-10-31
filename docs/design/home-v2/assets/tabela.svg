@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Tabela">
+<defs>
+<linearGradient id="r3d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF7186"/><stop offset="0.45" stop-color="#E4032B"/><stop offset="1" stop-color="#A3001B"/></linearGradient>
+<linearGradient id="w3d" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#DCE1E4"/></linearGradient>
+<linearGradient id="o3d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE08F"/><stop offset="0.5" stop-color="#F5AE1E"/><stop offset="1" stop-color="#C97C00"/></linearGradient>
+<radialGradient id="sh3d" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#3A4043" stop-opacity="0.28"/><stop offset="1" stop-color="#3A4043" stop-opacity="0"/></radialGradient>
+</defs>
+<ellipse cx="31" cy="58.5" rx="23" ry="4" fill="url(#sh3d)"/>
+<rect x="8" y="14" width="44" height="40" rx="7" fill="#B4BCC0"/>
+<rect x="8" y="10" width="44" height="40" rx="7" fill="url(#w3d)"/>
+<path d="M8 21 L8 17 Q8 10 15 10 L45 10 Q52 10 52 17 L52 21 Z" fill="url(#r3d)"/>
+<path d="M13 14.5 L30 14.5" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="2" stroke-linecap="round"/>
+<line x1="23" y1="21" x2="23" y2="47" stroke="#E2E6E8" stroke-width="1.2"/>
+<rect x="12" y="26" width="7.5" height="3.6" rx="1.8" fill="#C8D2D7"/>
+<rect x="26.5" y="26" width="20" height="3.6" rx="1.8" fill="#DCE1E4"/>
+<rect x="12" y="33" width="7.5" height="3.6" rx="1.8" fill="#C8D2D7"/>
+<rect x="26.5" y="33" width="15" height="3.6" rx="1.8" fill="#DCE1E4"/>
+<rect x="12" y="40" width="7.5" height="3.6" rx="1.8" fill="#C8D2D7"/>
+<rect x="26.5" y="40" width="10" height="3.6" rx="1.8" fill="#F2B8C2"/>
+<circle cx="49" cy="48.5" r="10.5" fill="#C97C00"/>
+<circle cx="49" cy="46" r="10.5" fill="url(#o3d)"/>
+<path d="M42.6 41.8 A8 8 0 0 1 49 38.2" fill="none" stroke="#FFFFFF" stroke-opacity="0.6" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="45.2" y1="50.2" x2="52.8" y2="41.8" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+<circle cx="45.6" cy="42.6" r="2" fill="#FFFFFF"/>
+<circle cx="52.4" cy="49.4" r="2" fill="#FFFFFF"/>
+</svg>

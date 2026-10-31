@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Portal do Corretor — Home mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F7}
+a{color:#3A4043;text-decoration:none}a:hover{color:#E4032B}
+*{box-sizing:border-box}
+
+/* Abertura (2s) */
+.m-splash{position:absolute;inset:0;z-index:50;background:#FFFFFF;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;animation:mSplashOut 2s cubic-bezier(.4,0,.2,1) forwards}
+.m-splash-logo{width:300px;height:auto;display:block;animation:mLogo 2s cubic-bezier(.22,1,.36,1) forwards}
+.m-splash-bar{height:3px;width:0;border-radius:3px;background:#E4032B;animation:mBar 2s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes mSplashOut{0%,74%{opacity:1;visibility:visible}100%{opacity:0;visibility:hidden}}
+@keyframes mLogo{0%{opacity:0;transform:scale(.94);filter:blur(8px)}32%{opacity:1;transform:scale(1);filter:blur(0)}74%{opacity:1;transform:scale(1.01)}100%{opacity:0;transform:scale(1.05)}}
+@keyframes mBar{0%,22%{width:0;opacity:1}58%,74%{width:90px;opacity:1}100%{width:90px;opacity:0}}
+.m-enter{animation:mUp .7s cubic-bezier(.22,1,.36,1) both}
+.m-after-splash .m-enter{animation-delay:1.55s}
+.m-after-splash .m-enter-2{animation-delay:1.68s}
+.m-after-splash .m-enter-3{animation-delay:1.8s}
+@keyframes mUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* Header + menu */
+.m-head{position:sticky;top:0;z-index:30;height:64px;padding:0 12px 0 20px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.9);backdrop-filter:saturate(1.6) blur(14px);-webkit-backdrop-filter:saturate(1.6) blur(14px);border-bottom:1px solid #E7E9EA}
+.m-menu-btn{width:44px;height:44px;border-radius:12px;border:1px solid #E7E9EA;background:#FFFFFF;color:#3A4043;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.m-menu-btn:focus-visible{outline:3px solid #E4032B;outline-offset:2px}
+.m-scrim{position:absolute;inset:64px 0 0 0;z-index:25;background:rgba(20,24,26,.35);animation:mFade .25s ease both}
+.m-sheet{position:absolute;top:64px;left:0;right:0;z-index:26;background:#FFFFFF;border-bottom:1px solid #E7E9EA;border-radius:0 0 22px 22px;padding:10px 12px 16px;display:flex;flex-direction:column;gap:4px;box-shadow:0 18px 40px rgba(58,64,67,.16);animation:mDrop .32s cubic-bezier(.22,1,.36,1) both}
+@keyframes mFade{from{opacity:0}to{opacity:1}}
+@keyframes mDrop{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+.m-sheet-link{display:flex;align-items:center;gap:14px;min-height:60px;padding:0 12px;border-radius:14px;font-size:16px;font-weight:700;color:#3A4043}
+.m-sheet-link:hover{background:#F5F6F7;color:#E4032B}
+.m-sheet-link img{width:36px;height:36px;flex:none}
+
+/* Hero */
+.m-hero{position:relative;background:#FFFFFF;border-bottom:1px solid #E7E9EA;padding:28px 20px 26px;overflow:hidden}
+.m-orbit{position:absolute;border-radius:50%;border:1px solid #E7E9EA}
+.m-float{position:absolute;filter:drop-shadow(0 12px 14px rgba(58,64,67,.16));animation:mFloat 6s ease-in-out infinite}
+.m-float-b{animation-duration:7s;animation-delay:-2s}
+@keyframes mFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-7px) rotate(-3deg)}}
+
+/* Cidades */
+.m-city{position:relative;display:block;width:100%;height:188px;padding:0;border:0;border-radius:18px;overflow:hidden;cursor:pointer;background:#3A4043;text-align:left;font:inherit;transition:transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s}
+.m-city-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.m-city::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.85) 0%,rgba(0,0,0,.5) 34%,rgba(0,0,0,0) 70%)}
+.m-city:active{transform:scale(.98)}
+.m-city:focus-visible{outline:3px solid #E4032B;outline-offset:3px}
+.m-city.is-on{box-shadow:0 0 0 3px #E4032B,0 14px 30px rgba(228,3,43,.18)}
+.m-city-body{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:16px 16px 16px 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.m-city-go{flex:none;width:44px;height:44px;border-radius:50%;background:#FFFFFF;color:#E4032B;display:flex;align-items:center;justify-content:center;transition:background .25s,color .25s,transform .35s cubic-bezier(.22,1,.36,1)}
+.m-city.is-on .m-city-go{background:#E4032B;color:#FFFFFF;transform:rotate(90deg)}
+.m-chip{position:absolute;top:14px;left:14px;z-index:2;display:flex;align-items:center;gap:6px;padding:5px 11px 5px 7px;border-radius:999px;background:rgba(255,255,255,.92);font-size:12.5px;font-weight:500;color:#3A4043}
+.m-chip img{width:18px;height:18px;display:block;flex:none}
+
+/* Carrossel */
+.m-car-view{overflow:hidden;margin:-10px -20px;padding:10px 20px}
+.m-car-track{display:flex;gap:14px;transition:transform .5s cubic-bezier(.22,1,.36,1)}
+.m-car-track>*{flex:0 0 84%;min-width:0}
+.m-car-btn{width:44px;height:44px;border-radius:50%;border:1px solid #E7E9EA;background:#FFFFFF;color:#3A4043;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.m-car-btn:hover:not(:disabled){background:#E4032B;border-color:#E4032B;color:#FFFFFF}
+.m-car-btn:disabled{opacity:.4;cursor:default}
+.m-car-btn:focus-visible{outline:3px solid #E4032B;outline-offset:2px}
+.m-emp{display:flex;flex-direction:column;background:#FFFFFF;border:1px solid #E7E9EA;border-radius:16px;overflow:hidden}
+.m-emp-img{aspect-ratio:4/3;overflow:hidden;background:#E7E9EA}
+.m-emp-img img{width:100%;height:100%;object-fit:cover;display:block}
+.m-emp-soon .m-emp-img img{filter:grayscale(1);opacity:.6}
+.m-dots{display:flex;justify-content:center;gap:6px;margin-top:14px}
+.m-dot{width:6px;height:6px;border-radius:999px;background:#D5DADC;transition:width .3s,background .3s}
+.m-dot.is-on{width:18px;background:#E4032B}
+
+/* Ferramentas */
+.m-tool{position:relative;display:flex;align-items:center;gap:14px;min-height:84px;padding:12px 14px 12px 12px;border-radius:18px;background:#FFFFFF;border:1px solid #E7E9EA;overflow:hidden}
+.m-tool:active{transform:scale(.99)}
+.m-tool-icon{flex:none;width:58px;height:58px;filter:drop-shadow(0 10px 12px rgba(58,64,67,.18))}
+.m-tool-go{flex:none;margin-left:auto;width:38px;height:38px;border-radius:50%;border:1px solid #E7E9EA;color:#E4032B;display:flex;align-items:center;justify-content:center}
+
+@media (prefers-reduced-motion:reduce){
+  .m-splash{display:none}
+  .m-enter,.m-float{animation:none}
+}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="position: relative; width: 390px; min-height: 2040px; background: #F5F6F7; color: #3A4043; font-family: 'DM Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+
+<sc-if value="{{showSplash}}" hint-placeholder-val="{{ false }}">
+<div class="m-splash" aria-hidden="true" style="height: 844px; bottom: auto">
+<img class="m-splash-logo" src="/_blob/3db7c65e095bd6ea038133a391cfdc8e" alt="">
+<div class="m-splash-bar"></div>
+</div>
+</sc-if>
+
+<header class="m-head">
+<a href="#inicio" aria-label="Portal do Corretor — início" style="display: flex; align-items: center; gap: 12px; min-height: 44px">
+<img src="/_blob/0eea1a6c128d90a2c643d32cd04c2a32" alt="Grupo Direcional" style="height: 28px; width: auto; display: block">
+<span style="width: 1px; height: 22px; background: #E7E9EA"></span>
+<span style="font-size: 10.5px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: #5F676A; line-height: 1.25">Portal do<br>Corretor</span>
+</a>
+<button class="m-menu-btn" type="button" aria-label="{{menuLabel}}" aria-expanded="{{menuExpanded}}" onClick="{{toggleMenu}}">
+<sc-if value="{{menuClosed}}" hint-placeholder-val="{{ true }}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="14" y2="17"></line></svg>
+</sc-if>
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>
+</sc-if>
+</button>
+</header>
+
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}">
+<div class="m-scrim" onClick="{{toggleMenu}}"></div>
+<nav class="m-sheet" aria-label="Ferramentas">
+<a class="m-sheet-link" href="#ferramentas"><img src="/_blob/160dee15f29fe64deeb5217248d5001f" alt="">Simulador Associativo</a>
+<a class="m-sheet-link" href="#ferramentas"><img src="/_blob/2d7fecebd5909f50cb266fdfb8db286a" alt="">Tabela Direta</a>
+<a class="m-sheet-link" href="MobileEmBreve.dc.html"><img src="/_blob/cfc350d5c321cc290d5b2c20a28b0ef9" alt="">Match de Unidades</a>
+</nav>
+</sc-if>
+
+<section class="m-hero" id="inicio">
+<div aria-hidden="true">
+<div class="m-orbit" style="width: 170px; height: 170px; right: -36px; top: -30px"></div>
+<div class="m-orbit" style="width: 112px; height: 112px; right: -6px; top: -1px; background: #F7F8F8"></div>
+<img class="m-float" src="/_blob/c939aea8505e1f74031bdc25630a9e01" alt="" style="width: 76px; height: 76px; right: 12px; top: 14px">
+<img class="m-float m-float-b" src="/_blob/c186f76a4077ac23893d545663d913c7" alt="" style="width: 40px; height: 40px; right: 92px; top: 8px">
+</div>
+<div class="m-enter" style="position: relative; padding-top: 58px">
+<h1 style="margin: 0; font-size: 36px; line-height: 1.04; letter-spacing: -0.035em; font-weight: 700; color: #3A4043">Grupo Direcional<br><span style="color: #E4032B">São Paulo Interior</span></h1>
+<p style="margin: 12px 0 0; font-size: 16px; line-height: 1.5; color: #5F676A">Unidades, valores, plantas e disponibilidade</p>
+</div>
+</section>
+
+<main id="conteudo" style="padding: 0 20px 48px">
+
+<section class="m-enter m-enter-2" aria-labelledby="m-cidades" style="padding-top: 32px">
+<h2 id="m-cidades" style="margin: 0 0 14px; font-size: 22px; letter-spacing: -0.02em; font-weight: 700; color: #3A4043">Cidades</h2>
+<div style="display: flex; flex-direction: column; gap: 14px">
+<sc-for list="{{cities}}" as="city" hint-placeholder-count="3">
+<button class="{{city.cls}}" type="button" aria-pressed="{{city.pressed}}" aria-controls="m-empreendimentos" onClick="{{city.pick}}">
+<img class="m-city-photo" src="{{city.photo}}" alt="">
+<span class="m-chip"><img src="/_blob/c939aea8505e1f74031bdc25630a9e01" alt=""><strong style="font-weight: 700">{{city.num}}</strong><span>{{city.word}}</span></span>
+<span class="m-city-body">
+<span style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 26px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; color: #FFFFFF">{{city.name}}</span>
+<span style="font-size: 12px; font-weight: 500; letter-spacing: .14em; color: rgba(255,255,255,.85)">SP</span>
+</span>
+<span class="m-city-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>
+</span>
+</button>
+</sc-for>
+</div>
+</section>
+
+<sc-if value="{{hasCity}}" hint-placeholder-val="{{ true }}">
+<section id="m-empreendimentos" aria-live="polite" style="padding-top: 32px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 14px">
+<div style="min-width: 0">
+<h2 style="margin: 0; font-size: 22px; letter-spacing: -0.02em; font-weight: 700; line-height: 1.2; color: #3A4043">{{cityName}}</h2>
+<span style="font-size: 14px; color: #5F676A">{{cityCount}}</span>
+</div>
+<sc-if value="{{showNav}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; gap: 8px; flex: none">
+<button class="m-car-btn" type="button" aria-label="Empreendimento anterior" disabled="{{prevDisabled}}" onClick="{{prev}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 5 8 12 15 19"></polyline></svg></button>
+<button class="m-car-btn" type="button" aria-label="Próximo empreendimento" disabled="{{nextDisabled}}" onClick="{{next}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 5 16 12 9 19"></polyline></svg></button>
+</div>
+</sc-if>
+</div>
+<div class="m-car-view">
+<div class="m-car-track" style="{{trackStyle}}">
+<sc-for list="{{emps}}" as="emp" hint-placeholder-count="2">
+<sc-if value="{{emp.soon}}" hint-placeholder-val="{{ false }}">
+<div class="m-emp m-emp-soon" aria-disabled="true">
+<div class="m-emp-img"><img src="{{emp.img}}" alt=""></div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 14px">
+<span style="font-size: 15px; font-weight: 700; line-height: 1.3; color: #5F676A">{{emp.name}}</span>
+<span style="flex: none; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8A5600; background: #FFF7E6; padding: 5px 9px; border-radius: 999px">Em breve</span>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{emp.live}}" hint-placeholder-val="{{ true }}">
+<a class="m-emp" href="#m-empreendimentos">
+<div class="m-emp-img"><img src="{{emp.img}}" alt=""></div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 14px">
+<span style="font-size: 15px; font-weight: 700; line-height: 1.3; color: #3A4043">{{emp.name}}</span>
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E4032B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+</div>
+</a>
+</sc-if>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{showNav}}" hint-placeholder-val="{{ true }}">
+<div class="m-dots" aria-hidden="true">
+<sc-for list="{{dots}}" as="dot" hint-placeholder-count="5">
+<span class="{{dot.cls}}"></span>
+</sc-for>
+</div>
+</sc-if>
+</section>
+</sc-if>
+
+<section class="m-enter m-enter-3" id="ferramentas" aria-labelledby="m-ferramentas" style="padding-top: 32px">
+<h2 id="m-ferramentas" style="margin: 0 0 14px; font-size: 22px; letter-spacing: -0.02em; font-weight: 700; color: #3A4043">Ferramentas</h2>
+<div style="display: flex; flex-direction: column; gap: 12px">
+<a class="m-tool" href="#ferramentas">
+<img class="m-tool-icon" src="/_blob/160dee15f29fe64deeb5217248d5001f" alt="">
+<span style="font-size: 17px; font-weight: 700; line-height: 1.25">Simulador Associativo</span>
+<span class="m-tool-go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>
+</a>
+<a class="m-tool" href="#ferramentas">
+<img class="m-tool-icon" src="/_blob/2d7fecebd5909f50cb266fdfb8db286a" alt="">
+<span style="font-size: 17px; font-weight: 700; line-height: 1.25">Simulador de Tabela Direta</span>
+<span class="m-tool-go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>
+</a>
+<a class="m-tool" href="MobileEmBreve.dc.html">
+<img class="m-tool-icon" src="/_blob/cfc350d5c321cc290d5b2c20a28b0ef9" alt="">
+<span style="font-size: 17px; font-weight: 700; line-height: 1.25">Match de Unidades</span>
+<span class="m-tool-go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>
+</a>
+</div>
+</section>
+
+</main>
+
+<footer style="background: #FFFFFF; border-top: 1px solid #E7E9EA; padding: 22px 20px; font-size: 13px; line-height: 1.5; color: #5F676A; text-align: center"><strong style="color: #3A4043; font-weight: 700">Produtos SPI</strong> · Grupo Direcional — São Paulo Interior</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"splash":{"editor":"boolean","default":true,"section":"Abertura"},"initialCity":{"editor":"enum","options":["nenhuma","campinas","ribeirao-preto","sorocaba"],"default":"campinas","section":"Estado inicial"},"$preview":{"width":390,"height":2040}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var B = '/_blob/';
+    var CITIES = [
+      { id: 'campinas', name: 'Campinas', photo: B + 'f6101898203383e9a20bada565e170db', emps: [
+        { name: 'Alta Vista Mangará', img: B + '6ab228875397e53de4cc48211771d871' },
+        { name: 'Cores da Mata Mangará', img: B + 'a82ba1bcec5c398e849598bc446820ae' },
+        { name: 'Casa Prado Residencial Riva', img: B + '23f28e4a382f663c70c464fb0c5a55fb' },
+        { name: 'Seleto Amoreiras', img: B + '247ce043274c8e2e6d349bb607938690' },
+        { name: 'Universo - Parque Alphaville', img: B + 'f457ad9530743f588cab79e435c07b1f', soon: true }
+      ] },
+      { id: 'ribeirao-preto', name: 'Ribeirão Preto', photo: B + 'b09c9c4e0675537db1ed546c55e611c6', emps: [
+        { name: 'Village Park', img: B + 'bbaa60170ddc594d21cdfb1820feb1da' },
+        { name: 'Village Gaia', img: B + '04c3ff6a92a5b2c0f7b753f8fd3b5874' },
+        { name: 'Reserva Direcional Jardim Botânico', img: B + '43748beffa55bad6f25a93621f97ddb8' },
+        { name: 'Conquista Clube Ipiranga', img: B + '320e0861ab5d863169d54bd00abc80c1' }
+      ] },
+      { id: 'sorocaba', name: 'Sorocaba', photo: B + '4d81a8c87c1520ff5c5ff3b175a0c97d', emps: [
+        { name: 'Conquista Vila da Mata', img: B + '033e57c10982aeb2702eb1e0d67de09b' }
+      ] }
+    ];
+    var st = this.state || {};
+    var self = this;
+    var initial = this.props.initialCity ?? 'campinas';
+    var sel = st.city !== undefined ? st.city : (initial === 'nenhuma' ? null : initial);
+    var label = function (n) { return n + (n === 1 ? ' empreendimento' : ' empreendimentos'); };
+
+    var cities = CITIES.map(function (c) {
+      var on = c.id === sel;
+      return {
+        name: c.name,
+        photo: c.photo,
+        num: String(c.emps.length),
+        word: c.emps.length === 1 ? 'empreendimento' : 'empreendimentos',
+        cls: on ? 'm-city is-on' : 'm-city',
+        pressed: on ? 'true' : 'false',
+        pick: function () { self.setState({ city: on ? null : c.id, slide: 0 }); }
+      };
+    });
+
+    var cur = CITIES.filter(function (c) { return c.id === sel; })[0];
+    var emps = cur ? cur.emps.map(function (e) {
+      return { name: e.name, img: e.img, soon: !!e.soon, live: !e.soon };
+    }) : [];
+
+    // Carrossel: um card por vez, com o próximo aparecendo na borda
+    var maxSlide = Math.max(0, emps.length - 1);
+    var slide = Math.min(st.slide || 0, maxSlide);
+    var menu = !!st.menu;
+    var showSplash = this.props.splash ?? true;
+
+    return {
+      showSplash: showSplash,
+      rootClass: showSplash ? 'm-after-splash' : '',
+      menuOpen: menu,
+      menuClosed: !menu,
+      menuExpanded: menu ? 'true' : 'false',
+      menuLabel: menu ? 'Fechar menu' : 'Abrir menu',
+      toggleMenu: function () { self.setState({ menu: !menu }); },
+      cities: cities,
+      hasCity: !!cur,
+      cityName: cur ? 'Empreendimentos em ' + cur.name : '',
+      cityCount: cur ? label(cur.emps.length) : '',
+      emps: emps,
+      showNav: emps.length > 1,
+      prevDisabled: slide <= 0,
+      nextDisabled: slide >= maxSlide,
+      prev: function () { self.setState({ slide: Math.max(0, slide - 1) }); },
+      next: function () { self.setState({ slide: Math.min(maxSlide, slide + 1) }); },
+      trackStyle: 'transform: translateX(calc((84% + 14px) * ' + (-slide) + '))',
+      dots: emps.map(function (e, i) { return { cls: i === slide ? 'm-dot is-on' : 'm-dot' }; })
+    };
+  }
+}
+</script>
+</body>
+</html>

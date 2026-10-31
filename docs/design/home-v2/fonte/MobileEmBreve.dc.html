@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Match de Unidades — Em breve (mobile)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F7}
+a{color:#3A4043;text-decoration:none}a:hover{color:#E4032B}
+*{box-sizing:border-box}
+
+.m-head{position:sticky;top:0;z-index:30;height:64px;padding:0 12px 0 20px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.9);backdrop-filter:saturate(1.6) blur(14px);-webkit-backdrop-filter:saturate(1.6) blur(14px);border-bottom:1px solid #E7E9EA}
+.m-back{width:44px;height:44px;border-radius:12px;border:1px solid #E7E9EA;background:#FFFFFF;color:#3A4043;display:flex;align-items:center;justify-content:center}
+.m-back:hover{color:#E4032B}
+
+.m-soon-in{display:flex;flex-direction:column;align-items:center;text-align:center;animation:mUp .7s cubic-bezier(.22,1,.36,1) both}
+.m-stage{position:relative;width:240px;height:200px}
+.m-orbit{position:absolute;left:50%;top:50%;border-radius:50%;border:1px solid #E7E9EA;transform:translate(-50%,-50%)}
+.m-orbit-dash{border-style:dashed;border-color:#E9C6CD;animation:mSpin 40s linear infinite}
+.m-float{position:absolute;filter:drop-shadow(0 18px 22px rgba(58,64,67,.18));animation:mFloat 6s ease-in-out infinite}
+.m-float-b{animation-duration:7s;animation-delay:-2s}
+.m-float-c{animation-duration:5.5s;animation-delay:-4s}
+@keyframes mFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-8px) rotate(-3deg)}}
+@keyframes mSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes mUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.m-dot{width:8px;height:8px;border-radius:50%;background:#E4032B;animation:mPulse 1.8s ease-out infinite}
+@keyframes mPulse{0%{box-shadow:0 0 0 0 rgba(228,3,43,.45)}100%{box-shadow:0 0 0 10px rgba(228,3,43,0)}}
+
+.m-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:52px;border-radius:999px;background:#E4032B;color:#FFFFFF;font-size:16px;font-weight:700}
+.m-btn:hover{background:#B8001F;color:#FFFFFF}
+.m-btn:focus-visible{outline:3px solid #E4032B;outline-offset:3px}
+
+@media (prefers-reduced-motion:reduce){
+  .m-float,.m-orbit-dash,.m-dot,.m-soon-in{animation:none}
+}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; display: flex; flex-direction: column; background: #F5F6F7; color: #3A4043; font-family: 'DM Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+
+<header class="m-head">
+<a href="MobileHome.dc.html" aria-label="Portal do Corretor — início" style="display: flex; align-items: center; gap: 12px; min-height: 44px">
+<img src="/_blob/0eea1a6c128d90a2c643d32cd04c2a32" alt="Grupo Direcional" style="height: 28px; width: auto; display: block">
+<span style="width: 1px; height: 22px; background: #E7E9EA"></span>
+<span style="font-size: 10.5px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: #5F676A; line-height: 1.25">Portal do<br>Corretor</span>
+</a>
+<a class="m-back" href="MobileHome.dc.html" aria-label="Voltar para o início"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg></a>
+</header>
+
+<main style="flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 24px 24px 20px">
+<div class="m-soon-in">
+<div class="m-stage" aria-hidden="true">
+<div class="m-orbit m-orbit-dash" style="width: 190px; height: 190px"></div>
+<div class="m-orbit" style="width: 126px; height: 126px; background: #FFFFFF"></div>
+<img class="m-float" src="/_blob/cfc350d5c321cc290d5b2c20a28b0ef9" alt="" style="width: 100px; height: 100px; left: 70px; top: 46px">
+<img class="m-float m-float-b" src="/_blob/c939aea8505e1f74031bdc25630a9e01" alt="" style="width: 50px; height: 50px; left: 14px; top: 14px">
+<img class="m-float m-float-c" src="/_blob/871e94845e0d8622e75b1eed37fe3103" alt="" style="width: 48px; height: 48px; left: 180px; top: 128px">
+</div>
+
+<span style="margin-top: 14px; display: inline-flex; align-items: center; gap: 10px; padding: 7px 14px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E7E9EA; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #B8001F"><span class="m-dot"></span>Em breve</span>
+
+<h1 style="margin: 16px 0 0; font-size: 34px; line-height: 1.06; letter-spacing: -0.035em; font-weight: 700; color: #3A4043">Match de Unidades</h1>
+<p style="margin: 12px 0 0; font-size: 16px; line-height: 1.55; color: #5F676A">Estamos finalizando essa ferramenta. Em breve ela estará disponível aqui no portal.</p>
+</div>
+</main>
+
+<div style="padding: 0 24px 28px">
+<a class="m-btn" href="MobileHome.dc.html">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+Voltar para o início
+</a>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
