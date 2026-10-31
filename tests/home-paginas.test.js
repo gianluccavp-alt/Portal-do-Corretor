@@ -44,3 +44,24 @@ test('redução de movimento desliga abertura e entrada', () => {
   assert.match(bloco, /\.abertura\s*\{[^}]*display:\s*none/);
   assert.match(bloco, /\.entra[^{]*\{[^}]*animation:\s*none/);
 });
+
+test('Match de Unidades leva para em-breve.html na home', () => {
+  const links = [...INDEX.matchAll(/<a\b[^>]*href="([^"]+)"[^>]*>(?:(?!<\/a>)[\s\S])*Match de Unidades/g)].map((m) => m[1]);
+  assert.ok(links.length >= 2);   /* navbar + card; a Task 7 soma o link da folha do menu */
+  assert.ok(links.every((h) => h === 'em-breve.html'));
+});
+
+test('em-breve.html tem o texto aprovado e volta para a home', () => {
+  assert.match(EMBREVE, /Em breve/);
+  assert.match(EMBREVE, /<h1[^>]*>Match de Unidades<\/h1>/);
+  assert.ok(EMBREVE.includes('Estamos finalizando essa ferramenta. Em breve ela estará disponível aqui no portal.'));
+  assert.match(EMBREVE, /href="index\.html"[^>]*>[\s\S]*?Voltar para o início/);
+  assert.match(EMBREVE, /href="em-breve\.html"[^>]*aria-current="page"/);
+});
+
+test('home sem Passo, sem descrições e sem aviso da planilha', () => {
+  assert.ok(!/Passo \d/.test(INDEX));
+  assert.ok(!INDEX.includes('Dados carregados diretamente da planilha oficial'));
+  assert.ok(!INDEX.includes('tool-desc'));
+  assert.ok(INDEX.includes('Unidades, valores, plantas e disponibilidade<'));
+});
