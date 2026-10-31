@@ -65,3 +65,11 @@ test('home sem Passo, sem descrições e sem aviso da planilha', () => {
   assert.ok(!INDEX.includes('tool-desc'));
   assert.ok(INDEX.includes('Unidades, valores, plantas e disponibilidade<'));
 });
+
+test('home e em-breve têm o botão do menu mobile ligado à folha', () => {
+  for (const [nome, html] of [['index', INDEX], ['em-breve', EMBREVE]]) {
+    assert.match(html, /<button[^>]*id="menu-btn"[^>]*aria-expanded="false"[^>]*aria-controls="menu-folha"[^>]*aria-label="Abrir menu"/, nome);
+    assert.match(html, /<nav[^>]*id="menu-folha"[^>]*hidden/, nome);
+    assert.ok(html.includes('assets/menu.js'), nome);
+  }
+});

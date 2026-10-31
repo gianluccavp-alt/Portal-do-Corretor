@@ -28,8 +28,18 @@
       <a class="header-link" href="simulador-tabela-direta.html"><img src="assets/img/icones-3d/tabela.svg" width="26" height="26" alt="">Tabela Direta</a>
       <a class="header-link" href="em-breve.html" aria-current="page"><img src="assets/img/icones-3d/alvo.svg" width="26" height="26" alt="">Match de Unidades</a>
     </nav>
+    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="menu-folha" aria-label="Abrir menu">
+      <svg class="menu-ico-abrir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="14" y2="17"></line></svg>
+      <svg class="menu-ico-fechar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>
+    </button>
   </div>
+  <nav class="menu-folha" id="menu-folha" aria-label="Ferramentas" hidden>
+    <a class="menu-link" href="simulador-associativo.html"><img src="assets/img/icones-3d/calculadora.svg" width="36" height="36" alt="">Simulador Associativo</a>
+    <a class="menu-link" href="simulador-tabela-direta.html"><img src="assets/img/icones-3d/tabela.svg" width="36" height="36" alt="">Tabela Direta</a>
+    <a class="menu-link" href="em-breve.html" aria-current="page"><img src="assets/img/icones-3d/alvo.svg" width="36" height="36" alt="">Match de Unidades</a>
+  </nav>
 </header>
+<div class="menu-fundo" id="menu-fundo" hidden></div>
 
 <main class="soon" id="conteudo">
   <div class="soon-in">
@@ -54,5 +64,6 @@
   <div class="wrap"><strong>Produtos SPI</strong> · Grupo Direcional — São Paulo Interior</div>
 </footer>
 
+<script src="assets/menu.js"></script>
 </body>
 </html>
