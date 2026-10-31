@@ -159,7 +159,9 @@
         /* so repasse: a venda ja chega com o valor promocional (associativoSemPremio) */
         promocional: un.promocional === true,
         /* so repasse: "Valor Final Com Kit" da planilha (valor cheio do imovel, so para o PDF) */
-        valorFinal: un.valorFinal
+        valorFinal: un.valorFinal,
+        /* valor de avaliacao: define a faixa do imovel no melhor match */
+        avaliacao: un.avaliacao
       }
     };
   }
@@ -202,6 +204,33 @@
     return { grupos: grupos, total: total, descartadas: desc, sugestao: sugestao };
   }
 
+  /* faixa do imovel pelo valor de avaliacao: 'F12' ate o teto da cidade, 'F3' ate 400 mil, 'F4' acima */
+  var BANDAS = ['F12', 'F3', 'F4'];
+  function bandaDoValor(valor, cidade) {
+    var m = Motor.CIDADES[Motor.MUNICIPIO_POR_CIDADE[cidade]];
+    if (m && valor <= m.tetoF12) return 'F12';
+    return valor <= 400000 ? 'F3' : 'F4';
+  }
+  function bandaDaFaixa(faixa) {
+    return faixa === 'Faixa 1' || faixa === 'Faixa 2' ? 'F12' : faixa === 'Faixa 3' ? 'F3' : 'F4';
+  }
+  /* melhor match: a menor parcela de Pro Soluto entre as unidades da faixa do cliente (pelo valor
+     do imovel). Sem unidade nessa faixa, desce (4 -> 3 -> 1/2) e, por ultimo, sobe. */
+  function melhorMatch(linhas, faixaCliente, cidade) {
+    if (!linhas.length) return null;
+    var i = BANDAS.indexOf(bandaDaFaixa(faixaCliente)), ordem = [];
+    for (var k = i; k >= 0; k--) ordem.push(BANDAS[k]);
+    for (k = i + 1; k < BANDAS.length; k++) ordem.push(BANDAS[k]);
+    for (var o = 0; o < ordem.length; o++) {
+      var na = linhas.filter(function (l) { return bandaDoValor(l.avaliacao || l.venda, cidade) === ordem[o]; });
+      if (na.length) return na.slice().sort(function (a, b) {
+        return (a.parcelaPS - b.parcelaPS) || ((a.parcelaFin + a.parcelaPS) - (b.parcelaFin + b.parcelaPS)) ||
+          (a.codigo < b.codigo ? -1 : a.codigo > b.codigo ? 1 : 0);
+      })[0];
+    }
+    return null;
+  }
+
   /* selo do cartao quando a unidade cai em faixa diferente da do resumo do cliente
      (ex.: renda de Faixa 3 em unidade vendida acima de 400 mil -> Faixa 4).
      A trava da Faixa 3 ja tem selo proprio. */
@@ -231,7 +260,7 @@
   }
 
   var api = {
-    numero: numero, temSubsidio: temSubsidio, atoDe: atoDe, atoCliente: atoCliente, seloFaixa: seloFaixa, validarCliente: validarCliente, resumoCliente: resumoCliente,
+    numero: numero, temSubsidio: temSubsidio, atoDe: atoDe, atoCliente: atoCliente, seloFaixa: seloFaixa, melhorMatch: melhorMatch, bandaDoValor: bandaDoValor, validarCliente: validarCliente, resumoCliente: resumoCliente,
     avaliarUnidade: avaliarUnidade, buscar: buscar, linhaPdf: linhaPdf, urlAssociativo: urlAssociativo,
     ORDEM_POLITICAS: ORDEM_POLITICAS
   };

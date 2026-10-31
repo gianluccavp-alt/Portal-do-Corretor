@@ -81,7 +81,8 @@
     if (empilhar) history.pushState({ tela: tela, etapa: estado.etapa }, '');
     if (iniciado) {
       window.scrollTo(0, 0);
-      var alvo = tela === 'perguntas' ? $('mt-etapa').querySelector('.mt-etapa-tit')
+      /* etapa com campo (renda, ato, nascimento): o cursor ja vai para o campo */
+      var alvo = tela === 'perguntas' ? ($('mt-etapa').querySelector('input') || $('mt-etapa').querySelector('.mt-etapa-tit'))
         : tela === 'revelacao' ? $('mt-rev-titulo') : tela === 'resultado' ? $('mt-res-titulo') : $('mt-comecar');
       if (alvo) alvo.focus({ preventScroll: true });
     }
@@ -589,9 +590,6 @@
   }
 
   /* ---------- detalhes da simulacao CAIXA (revelacao e resultado, mesmo sem unidades) ---------- */
-  function bonito(nome) {
-    return String(nome).toLowerCase().replace(/(^|\s)\S/g, function (c) { return c.toUpperCase(); });
-  }
   function pct(f) { return String(Math.round(f * 1000) / 10).replace('.', ',') + '%'; }
   function abrirDetalhes(origem) {
     var s = estado.busca.resumo, c = estado.busca.cliente, r = estado.r, hoje = estado.busca.hoje;
@@ -612,18 +610,13 @@
     var enq = [['Enquadramento', s.faixa || '-'], ['Juros nominal', juros(s.jurosNominal)],
       ['Juros efetivo', jurosNum(s.jurosEfetivo) + '% a.a.'],
       ['Prazo', s.prazo + ' meses (' + Math.round(s.prazo / 12 * 10) / 10 + ' anos)'],
-      ['Sistema', s.sistema === 'SAC' ? 'SAC (parcelas decrescentes)' : 'Price (parcelas fixas)'],
-      ['Taxa de administração', s.taxaAdm > 0 ? dinheiro(s.taxaAdm) + '/mês' : 'Sem taxa']];
+      ['Sistema', s.sistema === 'SAC' ? 'SAC (parcelas decrescentes)' : 'Price (parcelas fixas)']];
     var res = [['Financiamento até', dinheiro(s.financiamentoMax)],
       s.subsidio > 0 ? ['Subsídio estimado', dinheiro(s.subsidio), 'mt-verde'] : ['Subsídio estimado', 'Sem subsídio'],
       ['Parcela máxima (' + pct(s.comprometimento) + ' da renda)', dinheiro(s.parcelaMax)],
       ['Financia até ' + pct(s.cota) + ' do imóvel', 'Valor de referência ' + dinheiro(s.valorReferencia)]];
-    var seg = s.seguradoras.map(function (x) {
-      return [bonito(x.nome), dinheiro(x.primeira) + (x.ultima !== x.primeira ? ' → ' + dinheiro(x.ultima) : '')];
-    });
     $('mt-det-corpo').innerHTML = grupo('Cliente', cli) + grupo('Enquadramento CAIXA', enq) +
-      grupo('Resultado', res, 'Calculado para um imóvel de ' + dinheiro(s.valorReferencia) + ', o teto da faixa. Cada unidade é recalculada com o próprio valor de avaliação.') +
-      grupo('Parcela por seguradora (1ª → última)', seg, 'Já com taxa de administração e seguros, no financiamento máximo.');
+      grupo('Resultado', res, 'Calculado para um imóvel de ' + dinheiro(s.valorReferencia) + ', o teto da faixa. Cada unidade é recalculada com o próprio valor de avaliação.');
     $('mt-det-corpo').scrollTop = 0;
     dlg._origem = origem || null;
     if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
@@ -631,6 +624,8 @@
   }
 
   /* ---------- resultado ---------- */
+  /* card "Melhor match": menor Pro Soluto na faixa do cliente (regra em Match.melhorMatch) */
+  function melhor(linhas) { return M.melhorMatch(linhas, estado.busca.resumo.faixa, estado.r.cidade); }
   function desenhaResultado() {
     var b = estado.busca, s = b.resumo, r = estado.r, v = vista();
     $('mt-res-titulo').textContent = F.textoContagem(v.linhas.length);
@@ -649,7 +644,7 @@
     vazio.hidden = v.linhas.length > 0;
     vazio.textContent = 'Nenhuma unidade deste empreendimento cabe na política ' + nomePolitica(r.politicaId) + '.';
     desenhaFiltro();
-    desenhaDestaque(F.melhorMatch(v.linhas));
+    desenhaDestaque(melhor(v.linhas));
     desenhaOutras();
     desenhaLateral();
   }
@@ -765,8 +760,8 @@
 
   /* ordem fixa: menor parcela */
   function outrasOrdenadas() {
-    var linhas = vista().linhas, melhor = F.melhorMatch(linhas);
-    return F.ordenar(linhas.filter(function (l) { return l !== melhor; }), 'parcela');
+    var linhas = vista().linhas, destaque = melhor(linhas);
+    return F.ordenar(linhas.filter(function (l) { return l !== destaque; }), 'parcela');
   }
 
   function desenhaOutras() {

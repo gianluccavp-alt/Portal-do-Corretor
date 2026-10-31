@@ -651,8 +651,9 @@ a.brand-lockup{text-decoration:none}
   .mt-editar .mt-so-dk{display:inline}
   .mt-editar svg.mt-so-dk{display:block}
 
-  .mt-chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:28px;padding:0;overflow:visible}
-  .chip{padding:18px 20px;border-radius:20px;box-shadow:none}
+  /* uma linha só: quando falta largura, vira carrossel (rolagem lateral), nunca quebra */
+  .mt-chips{gap:12px;margin-top:28px;padding:0;scroll-padding-inline:0}
+  .chip{flex:1 0 auto;min-width:170px;padding:18px 20px;border-radius:20px;box-shadow:none}
   .chip-rot{font-size:13px}
   .chip-val{font-size:22px;font-weight:800;margin-top:4px}
 
