@@ -169,7 +169,8 @@
       produto: enq.produto, faixa: enq.faixa, jurosNominal: enq.jn,
       jurosEfetivo: r2((Math.pow(1 + i, 12) - 1) * 100), prazo: n,
       valorFinanciamento: fin, subsidio: sub, entrada: r2(e.valor - fin - sub),
-      taxaAdm: enq.taxaAdm, seguradoras: seguradoras
+      taxaAdm: enq.taxaAdm, seguradoras: seguradoras,
+      comprometimento: regra.comprometimento, cota: regra.cota, sistema: sac ? 'SAC' : 'PRICE'
     };
   }
 

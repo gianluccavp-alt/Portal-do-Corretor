@@ -334,6 +334,30 @@ a.brand-lockup{text-decoration:none}
   .rev-linha b{font-size:14px}
 }
 .mt-rev-acao:empty{padding-top:0}
+.mt-rev-det{display:flex;justify-content:flex-end;margin-top:8px}
+.mt-det-btn,.chip-det{font:inherit;cursor:pointer}
+.mt-det-btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 6px;font-size:14px;font-weight:700;color:var(--dir-red);border-radius:12px}
+.mt-det-btn:hover{text-decoration:underline}
+.chip-det{text-align:left;border:1.5px solid var(--dir-red)}
+.chip-det .chip-val{color:var(--dir-red)}
+/* popup de detalhes */
+.mt-dlg-det{max-width:520px}
+.mt-dlg-det[open]{display:flex;max-height:calc(100dvh - 32px)}
+.mt-dlg-det .mt-dlg-form{min-height:0;width:100%}
+.mt-det-corpo{margin-top:12px;overflow-y:auto;min-height:0;flex:1 1 auto;padding-right:2px}
+.det-grupo{margin-top:14px}
+.det-grupo:first-child{margin-top:0}
+.det-tit{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--texto-3)}
+.det-lista{margin-top:4px;border-radius:16px;background:var(--fundo);padding:2px 14px}
+.det-lin{display:flex;justify-content:space-between;align-items:baseline;gap:12px;min-height:40px;padding:8px 0;border-bottom:1px solid var(--linha)}
+.det-lin:last-child{border-bottom:0}
+.det-lin span{font-size:13.5px;color:var(--texto-2)}
+.det-lin b{font-size:14px;color:var(--ink);text-align:right}
+.det-lin b.mt-verde{color:var(--verde)}
+.det-nota{margin-top:8px;font-size:12.5px;line-height:1.45;color:var(--texto-3)}
+.mt-dlg-det .mt-dlg-acoes{flex:none}
+.mt-revelado .mt-rev-det{animation:enter .5s 3.1s var(--curva) both}
+.mt-buscando .mt-rev-det{opacity:0}
 
 /* buscando: anel girando, mensagem, textos guardados */
 .mt-buscando .mt-anel-prog{stroke-dashoffset:470;animation:spin 1.1s linear infinite}

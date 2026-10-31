@@ -588,6 +588,48 @@
     }, 1900));
   }
 
+  /* ---------- detalhes da simulacao CAIXA (revelacao e resultado, mesmo sem unidades) ---------- */
+  function bonito(nome) {
+    return String(nome).toLowerCase().replace(/(^|\s)\S/g, function (c) { return c.toUpperCase(); });
+  }
+  function pct(f) { return String(Math.round(f * 1000) / 10).replace('.', ',') + '%'; }
+  function abrirDetalhes(origem) {
+    var s = estado.busca.resumo, c = estado.busca.cliente, r = estado.r, hoje = estado.busca.hoje;
+    var dlg = $('mt-dlg-det');
+    function grupo(tit, linhas, nota) {
+      return '<div class="det-grupo"><h3 class="det-tit">' + esc(tit) + '</h3><div class="det-lista">' + linhas.map(function (x) {
+        return '<div class="det-lin"><span>' + esc(x[0]) + '</span><b' + (x[2] ? ' class="' + x[2] + '"' : '') + '>' + esc(x[1]) + '</b></div>';
+      }).join('') + '</div>' + (nota ? '<p class="det-nota">' + esc(nota) + '</p>' : '') + '</div>';
+    }
+    function sn(v) { return v ? 'Sim' : 'Não'; }
+    var cli = [['Renda bruta', dinheiro(r.renda) + '/mês'],
+      ['Idade', c.nascimento ? idade(c.nascimento, hoje) + ' anos' : '-'],
+      ['3 anos de FGTS', sn(c.fgts !== false)], ['Possui imóvel na cidade', sn(c.possuiImovel === true)]];
+    if (M.temSubsidio(r.renda, c.possuiImovel)) {
+      cli.push(['Mais de um comprador ou dependente', sn(c.fatorSocial === true)]);
+      cli.push(['Já recebeu subsídio', sn(c.subsidioAnterior === true)]);
+    }
+    var enq = [['Enquadramento', s.faixa || '-'], ['Juros nominal', juros(s.jurosNominal)],
+      ['Juros efetivo', jurosNum(s.jurosEfetivo) + '% a.a.'],
+      ['Prazo', s.prazo + ' meses (' + Math.round(s.prazo / 12 * 10) / 10 + ' anos)'],
+      ['Sistema', s.sistema === 'SAC' ? 'SAC (parcelas decrescentes)' : 'Price (parcelas fixas)'],
+      ['Taxa de administração', s.taxaAdm > 0 ? dinheiro(s.taxaAdm) + '/mês' : 'Sem taxa']];
+    var res = [['Financiamento até', dinheiro(s.financiamentoMax)],
+      s.subsidio > 0 ? ['Subsídio estimado', dinheiro(s.subsidio), 'mt-verde'] : ['Subsídio estimado', 'Sem subsídio'],
+      ['Parcela máxima (' + pct(s.comprometimento) + ' da renda)', dinheiro(s.parcelaMax)],
+      ['Financia até ' + pct(s.cota) + ' do imóvel', 'Valor de referência ' + dinheiro(s.valorReferencia)]];
+    var seg = s.seguradoras.map(function (x) {
+      return [bonito(x.nome), dinheiro(x.primeira) + (x.ultima !== x.primeira ? ' → ' + dinheiro(x.ultima) : '')];
+    });
+    $('mt-det-corpo').innerHTML = grupo('Cliente', cli) + grupo('Enquadramento CAIXA', enq) +
+      grupo('Resultado', res, 'Calculado para um imóvel de ' + dinheiro(s.valorReferencia) + ', o teto da faixa. Cada unidade é recalculada com o próprio valor de avaliação.') +
+      grupo('Parcela por seguradora (1ª → última)', seg, 'Já com taxa de administração e seguros, no financiamento máximo.');
+    $('mt-det-corpo').scrollTop = 0;
+    dlg._origem = origem || null;
+    if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+    $('mt-det-fechar').focus();
+  }
+
   /* ---------- resultado ---------- */
   function desenhaResultado() {
     var b = estado.busca, s = b.resumo, r = estado.r, v = vista();
@@ -600,6 +642,9 @@
       return '<div class="chip"><span class="chip-rot">' + esc(c[0]) + '</span><b class="chip-val' + (c[2] ? ' ' + c[2] : '') + '">' +
         esc(c[1]) + '</b></div>';
     }).join('');
+    $('mt-chips').insertAdjacentHTML('beforeend', '<button type="button" class="chip chip-det" id="mt-chip-det" ' +
+      'aria-haspopup="dialog"><span class="chip-rot">Simulação CAIXA</span><b class="chip-val">Detalhes →</b></button>');
+    $('mt-chip-det').addEventListener('click', function () { abrirDetalhes(this); });
     var vazio = $('mt-vazio');
     vazio.hidden = v.linhas.length > 0;
     vazio.textContent = 'Nenhuma unidade deste empreendimento cabe na política ' + nomePolitica(r.politicaId) + '.';
@@ -1027,6 +1072,11 @@
   $('mt-editar').addEventListener('click', editarPerfil);
   $('mt-res-voltar').addEventListener('click', editarPerfil);
   $('mt-pdf').addEventListener('click', abrirPdf);
+  $('mt-rev-detalhes').addEventListener('click', function () { abrirDetalhes(this); });
+  $('mt-det-fechar').addEventListener('click', function () { $('mt-dlg-det').close(); });
+  $('mt-dlg-det').addEventListener('close', function () { if (this._origem && this._origem.focus) this._origem.focus(); });
+  /* clique no fundo escuro fecha */
+  $('mt-dlg-det').addEventListener('click', function (ev) { if (ev.target === this) this.close(); });
   $('mt-dlg-form').addEventListener('submit', function (ev) {
     ev.preventDefault();
     var cliente = $('mt-dlg-cliente').value.trim(), corretor = $('mt-dlg-corretor').value.trim();

@@ -96,9 +96,14 @@
 
   function resumoCliente(cliente, cidade, hoje) {
     var municipio = Motor.MUNICIPIO_POR_CIDADE[cidade];
-    var r = simulaCaixa(cliente, municipio, valorReferencia(cliente.renda, municipio, ehSbpe(cliente)), hoje);
+    var ref = valorReferencia(cliente.renda, municipio, ehSbpe(cliente));
+    var r = simulaCaixa(cliente, municipio, ref, hoje);
     return { faixa: r.faixa, jurosNominal: r.jurosNominal, prazo: r.prazo,
-             financiamentoMax: r.valorFinanciamento, subsidio: r.subsidio };
+             financiamentoMax: r.valorFinanciamento, subsidio: r.subsidio,
+             /* detalhes da simulacao CAIXA (tela "Detalhes"), calculados no valor de referencia da faixa */
+             jurosEfetivo: r.jurosEfetivo, taxaAdm: r.taxaAdm, sistema: r.sistema, produto: r.produto,
+             comprometimento: r.comprometimento, cota: r.cota, valorReferencia: ref,
+             parcelaMax: r2(r.comprometimento * cliente.renda), seguradoras: r.seguradoras };
   }
 
   function avaliarUnidade(cliente, emp, un, politicaId, hoje) {

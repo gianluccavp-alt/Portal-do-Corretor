@@ -137,6 +137,9 @@
 
       <!-- Linhas: <div class="rev-linha"><span>Enquadramento</span><b>Faixa 2</b></div> -->
       <div class="mt-rev-resumo" id="mt-rev-resumo"></div>
+      <div class="mt-rev-det">
+        <button class="mt-det-btn" type="button" id="mt-rev-detalhes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.01"/></svg>Detalhes da simulação</button>
+      </div>
 
       <div class="mt-rev-acao" id="mt-rev-acao"></div>
     </div>
@@ -217,6 +220,16 @@
     </dialog>
     <p class="mt-rodape mt-rodape-res">Valores estimados. Sujeitos à análise de crédito da CAIXA e à aprovação da Direcional.</p>
   </section>
+
+  <!-- detalhes da simulação CAIXA (revelação e resultado); corpo montado em abrirDetalhes() -->
+  <dialog class="mt-dlg mt-dlg-det" id="mt-dlg-det" aria-labelledby="mt-det-tit">
+    <div class="mt-dlg-form">
+      <h2 class="mt-dlg-tit" id="mt-det-tit">Detalhes da simulação</h2>
+      <p class="mt-dlg-sub">Como a CAIXA calculou o financiamento deste cliente.</p>
+      <div class="mt-det-corpo" id="mt-det-corpo"></div>
+      <div class="mt-dlg-acoes"><button class="btn-pri" type="button" id="mt-det-fechar">Fechar</button></div>
+    </div>
+  </dialog>
 
 </main>
 
