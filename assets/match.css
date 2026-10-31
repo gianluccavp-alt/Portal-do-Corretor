@@ -667,8 +667,17 @@ a.brand-lockup{text-decoration:none}
 
   .mt-outras-cab{align-items:center;gap:16px;margin:36px 0 0}
   .mt-outras-tit{font-size:22px;letter-spacing:-.4px}
-  .mt-filtro{flex-wrap:wrap;overflow:visible;margin:0 0 20px;padding:0}
-  .mt-vazio{margin:0 0 20px}
+  /* grade do resultado: melhor match ao lado de "Como chegamos aqui"; abaixo, o filtro numa
+     linha so de largura total (rola na horizontal se nao couber) e a lista de outras unidades */
+  .mt-res-grade{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:0 28px;align-items:start}
+  .mt-res-main{display:contents}
+  .mt-destaque,.mt-vazio{grid-column:1;grid-row:1}
+  .mt-res-lado{grid-column:2;grid-row:1;max-width:none}
+  .mt-filtro,.mt-outras-cab,.mt-tabela,.mt-mais{grid-column:1 / -1;min-width:0}
+  .mt-mais{justify-self:start}
+  .mt-filtro{flex-wrap:nowrap;margin:28px 0 0;padding:2px 2px 6px;scroll-padding:0 2px}
+  .fil{max-width:340px}
+  .mt-vazio{margin:0}
 
   .mt-tabela{overflow-x:auto;margin-top:14px;padding:0 0 6px}
   .mt-tabela-in{min-width:860px;display:flex;flex-direction:column;gap:8px}

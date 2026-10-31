@@ -698,7 +698,11 @@
       b.addEventListener('click', function () {
         if (estado.filtro === o.id) return;
         estado.filtro = o.id; estado.aberta = ''; estado.mostrar = POR_PAGINA;
+        /* o filtro fica abaixo do melhor match: se o cartao some ou muda de altura, a pagina
+           acompanha para o filtro nao sair debaixo do dedo */
+        var antes = box.getBoundingClientRect().top;
         desenhaResultado();
+        window.scrollBy(0, box.getBoundingClientRect().top - antes);
         var novo = $('mt-filtro').children[lista.indexOf(o)];
         if (novo) novo.focus({ preventScroll: true });
       });
