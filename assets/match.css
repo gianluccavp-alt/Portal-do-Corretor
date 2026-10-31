@@ -311,7 +311,8 @@ a.brand-lockup{text-decoration:none}
 .mt-anel-busca,.mt-anel-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .mt-anel-busca{opacity:0}
 .mt-anel-busca .mt-ic3d{width:70px;height:70px}
-.mt-anel-msg{margin-top:10px;font-size:14px;font-weight:600;color:var(--texto-3)}
+/* mensagem abaixo do anel: só enquanto busca; some antes do título entrar */
+.mt-anel-msg{display:none;margin-top:min(14px,1.8vh);text-align:center;font-size:14px;font-weight:600;color:var(--texto-3);overflow:hidden}
 .mt-contagem{font-size:min(88px,11vh);line-height:1;font-weight:800;letter-spacing:-3px;color:var(--grafite);font-variant-numeric:tabular-nums}
 .mt-anel-box .twinkle{position:absolute}
 .mt-tw-1{top:6px;right:14px;fill:var(--ouro)}
@@ -341,10 +342,12 @@ a.brand-lockup{text-decoration:none}
 /* buscando: anel girando, mensagem, textos guardados */
 .mt-buscando .mt-anel-prog{stroke-dashoffset:470;animation:spin 1.1s linear infinite}
 .mt-buscando .mt-anel-busca{opacity:1}
+.mt-buscando .mt-anel-msg,.mt-revelado .mt-anel-msg{display:block}
 .mt-buscando .mt-anel-num,.mt-buscando .mt-rev-cab,.mt-buscando .mt-rev-resumo,.mt-buscando .mt-rev-acao{opacity:0}
 /* revelado: anel completa, número entra, resumo em cascata */
 .mt-revelado .mt-anel-prog{animation:ring 1.7s .3s cubic-bezier(.65,0,.25,1) both}
 .mt-revelado .mt-anel-busca{opacity:1;animation:out .35s 1.75s forwards}
+.mt-revelado .mt-anel-msg{animation:msgsai .6s 1.75s forwards}
 .mt-revelado .mt-anel-num{animation:inl .5s 1.85s var(--curva) both}
 .mt-revelado .mt-rev-cab{animation:enter .5s 2.5s var(--curva) both}
 .mt-revelado .mt-rev-resumo{animation:enter .5s 2.6s var(--curva) both}
@@ -682,6 +685,8 @@ a.brand-lockup{text-decoration:none}
   .mt-pdf-qtd{font-size:14px}
   .mt-pdf-barra .btn-pri{width:auto;height:52px;padding:0 24px;border-radius:16px;font-size:15px}
 }
+
+@keyframes msgsai{0%{opacity:1;max-height:40px}60%{opacity:0;max-height:40px}100%{opacity:0;max-height:0;margin-top:0}}
 
 /* ============================================================
    Movimento reduzido: tudo aparece no estado final
