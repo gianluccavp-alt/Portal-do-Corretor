@@ -1051,8 +1051,8 @@
     if (ev.key !== 'Enter' || ev.isComposing || ev.defaultPrevented || estado.tela !== 'perguntas') return;
     var alvo = ev.target, tela = $('mt-perguntas');
     if (!alvo || !(tela.contains(alvo) || alvo === document.body || alvo === document.documentElement)) return;
+    if (ev.repeat) { ev.preventDefault(); return; }   /* segurado: nunca pula etapas, nem nas exclusoes */
     if (alvo.closest && alvo.closest('#mt-voltar, #mt-sair, .mt-tl-btn, #mt-continuar, a')) return;
-    if (ev.repeat) { ev.preventDefault(); return; }
     ev.preventDefault();
     continuar();
   });
