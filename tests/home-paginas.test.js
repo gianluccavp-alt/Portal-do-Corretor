@@ -73,3 +73,18 @@ test('home e em-breve têm o botão do menu mobile ligado à folha', () => {
     assert.ok(html.includes('assets/menu.js'), nome);
   }
 });
+
+test('cabeçalho fica fixo: body não vira contêiner de rolagem', () => {
+  const semComentarios = CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.ok(!/(^|[\s,}])body\s*(,[^{]*)?\{[^}]*overflow-x:\s*hidden/.test(semComentarios), 'overflow-x:hidden no body quebra o position:sticky do cabeçalho');
+  assert.match(CSS, /\.site-header\{[^}]*position:sticky/);
+});
+
+test('escala-comercial-rp mantém o cabeçalho e o rodapé de antes da Home V2', () => {
+  const ESCALA = ler('escala-comercial-rp.html');
+  assert.ok(ESCALA.includes('assets/home.css'));
+  assert.match(ESCALA, /--wrap:\s*1100px/);
+  assert.match(ESCALA, /\.site-header\s*\{[^}]*height:\s*64px[^}]*background:\s*#fff/);
+  assert.match(ESCALA, /\.brand-logo\s*\{[^}]*height:\s*24px/);
+  assert.match(ESCALA, /\.home-foot\s*\{[^}]*margin-top:\s*3\.5rem/);
+});

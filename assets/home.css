@@ -22,7 +22,9 @@
 
 *,*::before,*::after{box-sizing:border-box}
 
-html,body{overflow-x:hidden}
+/* Só no html: no body, overflow-x vira contêiner de rolagem e quebra o
+   position:sticky do cabeçalho. */
+html{overflow-x:hidden}
 
 html{scroll-behavior:smooth}
 

@@ -18,6 +18,26 @@
    Estilos locais desta página; não altera assets/home.css.
    ============================================================ */
 
+/* Cabeçalho e rodapé como eram antes da Home V2: home.css agora traz o
+   visual novo da home, e esta página continua com o de sempre. */
+:root{--wrap:1100px;--pad:2rem;--grey:#6A7275}
+.site-header{height:64px;background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none}
+.site-header .wrap{
+  height:100%;min-height:0;flex-wrap:nowrap;justify-content:flex-start;gap:1rem;
+  padding-top:0;padding-bottom:0;padding-right:var(--pad);
+}
+.brand-lockup{gap:.9rem}
+.brand-logo{height:24px}
+.brand-rule{height:22px}
+.brand-name{font-size:.78rem;letter-spacing:.1em;line-height:1.5;white-space:nowrap;max-width:none}
+.home-foot{margin-top:3.5rem}
+.home-foot .wrap{
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding-top:1.5rem;padding-bottom:1.5rem;font-size:.8rem;text-align:left;
+}
+.home-foot strong{font-weight:500}
+@media(max-width:700px){:root{--pad:1.1rem}}
+
 :root{
   --esc-gab:#C4001C;   --esc-gab-bg:#FDEEF0;   --esc-gab-line:#F4CFD6;
   --esc-ju:#1E8E4A;    --esc-ju-bg:#EFF9F2;    --esc-ju-line:#C7E7D3;
