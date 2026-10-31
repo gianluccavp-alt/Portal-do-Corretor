@@ -43,7 +43,7 @@ a.brand-lockup{text-decoration:none}
 .mt-app input:focus{outline:none}
 .mt-app :focus-visible{outline:2px solid var(--dir-red);outline-offset:3px}
 /* dentro de faixas com rolagem o anel encosta para não ser cortado */
-.mt-app .hscroll > :focus-visible,.mt-app .mt-segs > :focus-visible{outline-offset:0}
+.mt-app .hscroll > :focus-visible{outline-offset:0}
 .mt-app [tabindex="-1"]:focus{outline:none}
 .mt-app kbd{font:inherit;font-size:12px;font-weight:700;padding:3px 7px;border-radius:7px;background:#fff;border:1px solid var(--linha);box-shadow:0 1px 0 var(--linha)}
 .mt-verde{color:var(--verde)}
@@ -137,10 +137,6 @@ a.brand-lockup{text-decoration:none}
 .chip-rot{display:block;font-size:11px;color:var(--texto-3)}
 .chip-val{display:block;font-size:14px;font-weight:700;margin-top:2px;color:var(--grafite);white-space:nowrap}
 .chip-val.mt-verde{color:var(--verde)}
-
-.seg{flex:none;height:44px;padding:0 14px;border-radius:99px;font-size:13px;font-weight:600;color:var(--texto-3);white-space:nowrap;text-align:center;transition:background .2s,color .2s}
-.seg:hover{color:var(--ink)}
-.seg-on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(58,64,67,.1),0 4px 12px -6px rgba(58,64,67,.3)}
 
 .selo{display:inline-block;align-self:flex-start;font-size:11px;font-weight:700;color:#7A4D00;background:#FFF7E6;padding:3px 8px;border-radius:99px}
 .selo-cinza{color:var(--ink);background:#EEF1F3}
@@ -414,9 +410,21 @@ a.brand-lockup{text-decoration:none}
 .mt-outras-cab{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:10px 12px;margin:24px 20px 10px}
 .mt-outras-tit{font-size:17px;font-weight:800;color:var(--grafite)}
 .mt-outras-leg{font-size:12px;color:var(--texto-3)}
-.mt-segs{display:flex;gap:4px;padding:4px;border-radius:99px;background:#E9ECEE;max-width:100%;overflow-x:auto;scrollbar-width:none;flex:none}
-.mt-segs::-webkit-scrollbar{display:none}
-.mt-segs:empty{display:none}
+
+/* filtro por empreendimento (mesmo visual dos cartões do passo Onde): fileira rolável no celular */
+.mt-filtro{gap:8px;margin:16px 0 0;padding:2px 20px 4px;scroll-padding:0 20px}
+.mt-filtro:empty{display:none}
+.fil{flex:none;scroll-snap-align:start;display:flex;align-items:center;gap:10px;min-height:60px;max-width:250px;padding:6px 14px 6px 6px;border-radius:16px;background:#fff;border:1.5px solid #fff;box-shadow:var(--sombra-1);text-align:left;transition:border-color .2s,background .2s,opacity .2s}
+.fil:hover{border-color:#F2C4CC}
+.fil-on,.fil-on:hover{border-color:var(--dir-red);background:var(--rosa)}
+.fil-zero{opacity:.55}
+.fil-zero.fil-on{opacity:1}
+.fil .opt-foto,.fil .opt-ic{width:48px;height:48px}
+.fil-txt{min-width:0;display:flex;flex-direction:column}
+.fil-nome{font-size:14px;font-weight:700;color:var(--grafite);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fil-qtd{font-size:12px;color:var(--texto-3);margin-top:1px;white-space:nowrap}
+.fil-on .fil-qtd{color:var(--dir-red);font-weight:600}
+.mt-vazio{margin:16px 20px 0;padding:18px 20px;border-radius:18px;background:#fff;box-shadow:var(--sombra-1);font-size:15px;font-weight:600;color:var(--texto-2)}
 
 .mt-tabela{padding:0 16px}
 .mt-outras{display:flex;flex-direction:column;gap:8px}
@@ -659,7 +667,8 @@ a.brand-lockup{text-decoration:none}
 
   .mt-outras-cab{align-items:center;gap:16px;margin:36px 0 0}
   .mt-outras-tit{font-size:22px;letter-spacing:-.4px}
-  .seg{height:38px;padding:0 16px;font-size:14px}
+  .mt-filtro{flex-wrap:wrap;overflow:visible;margin:0 0 20px;padding:0}
+  .mt-vazio{margin:0 0 20px}
 
   .mt-tabela{overflow-x:auto;margin-top:14px;padding:0 0 6px}
   .mt-tabela-in{min-width:860px;display:flex;flex-direction:column;gap:8px}

@@ -16,8 +16,9 @@
   var CHECK = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" ' +
     'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
+  /* filtro: empreendimento visto no resultado ('' = todos); e so visao, nao muda r.empId */
   var estado = { tela: 'abertura', etapa: 0, r: F.respostasIniciais(''), resultado: null,
-    ordem: 'parcela', aberta: '', marcadas: {} };
+    filtro: '', aberta: '', marcadas: {} };
   var iniciado = false;   /* depois da carga inicial, toda troca de tela move o foco */
 
   function esc(s) {
@@ -381,11 +382,6 @@
     'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
   var POR_PAGINA = 6;              /* linhas de "Outras" antes do "Ver mais" */
   var SELO_F3 = 'Simulada na Faixa 3: valor travado em R$ 400 mil no PCV';
-  var ORDENS = [
-    ['parcela', 'Menor parcela'],
-    ['cr', '<span class="mt-so-dk">Menor </span>% da renda'],
-    ['andar', 'Andar <span class="mt-so-dk">mais </span>alto']
-  ];
   var pendente = false;            /* busca esperando a planilha */
   var anim = { seq: 0, raf: 0, timers: [] };
 
@@ -409,7 +405,7 @@
   function andarFinal(l) { return (l.andar > 0 ? l.andar + 'º andar' : 'Térreo') + ' · final ' + dois(l.final); }
   function tipoArea(l) { return [l.tipoLabel, l.areaPriv ? l.areaPriv + '\u00a0m²' : ''].filter(Boolean).join(' · '); }
   /* nome unico da unidade para leitores de tela (o mesmo apto existe em varias torres) */
-  function nomeUn(l) { return apto(l) + ', Torre ' + l.torre + (estado.r.empId ? '' : ', ' + l.empNome); }
+  function nomeUn(l) { return apto(l) + ', Torre ' + l.torre + (estado.filtro ? '' : ', ' + l.empNome); }
   function editarPerfil() { irPara('perguntas', ETAPAS.indexOf('perfil'), true); }
 
   function botao(classe, html, fn) {
@@ -472,16 +468,18 @@
   }
 
   function calcula() {
-    var r = estado.r, h = hoje(), c = F.cliente(r), res;
+    var r = estado.r, h = hoje(), c = F.cliente(r), res, porEmp;
     try {
       res = M.buscar({ cliente: c, cidade: r.cidade, empId: r.empId, politicaId: r.politicaId, hoje: h, estoque: estoque(r.cidade) });
+      porEmp = porEmpreendimento(res, c, h);
     } catch (e) {
       mostraErro('Não foi possível cruzar as unidades com a planilha. Tente de novo.');
       return;
     }
     estado.resultado = res;
-    estado.busca = { cliente: c, hoje: h, resumo: M.resumoCliente(c, r.cidade, h), linhas: F.achatar(res),
+    estado.busca = { cliente: c, hoje: h, resumo: M.resumoCliente(c, r.cidade, h), porEmp: porEmp,
       respostas: JSON.stringify(r) };
+    estado.filtro = r.empId;
     estado.marcadas = {}; estado.aberta = ''; estado.mostrar = POR_PAGINA;
     try { sessionStorage.setItem('mt-ultima', JSON.stringify(r)); } catch (e) { /* sem sessionStorage */ }
     revela(!reduzido());
@@ -491,17 +489,42 @@
      (ou qualquer nova carga) avisa, a busca ja feita e refeita para nunca ficar com valor velho */
   function recalcula() {
     if (!resultadoValido()) return;
-    var r = estado.r, b = estado.busca, res;
+    var r = estado.r, b = estado.busca, res, porEmp;
     try {
       res = M.buscar({ cliente: b.cliente, cidade: r.cidade, empId: r.empId, politicaId: r.politicaId, hoje: b.hoje, estoque: estoque(r.cidade) });
+      porEmp = porEmpreendimento(res, b.cliente, b.hoje);
     } catch (e) { return; }
-    var antes = estado.resultado.total, linhas = F.achatar(res), porChave = {}, marcadas = {};
-    linhas.forEach(function (l) { porChave[chaveDe(l)] = l; });
+    var antes = estado.resultado.total, porChave = {}, marcadas = {};
+    Object.keys(porEmp).forEach(function (id) { porEmp[id].linhas.forEach(function (l) { porChave[chaveDe(l)] = l; }); });
     Object.keys(estado.marcadas).forEach(function (k) { if (porChave[k]) marcadas[k] = porChave[k]; });
     if (estado.aberta && !porChave[estado.aberta]) estado.aberta = '';
-    estado.resultado = res; b.linhas = linhas; estado.marcadas = marcadas;
+    estado.resultado = res; b.porEmp = porEmp; estado.marcadas = marcadas;
     if (estado.tela === 'resultado') desenhaResultado();
     else if (estado.tela === 'revelacao' && res.total !== antes) revela(false);
+  }
+
+  /* filtro do resultado: a busca de cada empreendimento da cidade, feita uma vez (sem animacao).
+     O empreendimento da propria busca reaproveita o resultado da revelacao: os numeros batem. */
+  function porEmpreendimento(res, c, h) {
+    var r = estado.r, est = estoque(r.cidade), out = {};
+    EMPS.filter(function (e) { return e.cidade === r.cidade; }).forEach(function (e) {
+      var x = r.empId === e.id ? res
+        : M.buscar({ cliente: c, cidade: r.cidade, empId: e.id, politicaId: r.politicaId, hoje: h, estoque: est });
+      out[e.id] = { linhas: F.achatar(x), descartadas: x.descartadas };
+    });
+    return out;
+  }
+  /* o que o filtro atual mostra: linhas e descartes do empreendimento (ou da cidade toda) */
+  function vista() {
+    var p = estado.busca.porEmp, ids = estado.filtro ? [estado.filtro] : Object.keys(p);
+    var v = { linhas: [], descartadas: { semAvaliacao: 0, foraEnquadramento: 0 } };
+    ids.forEach(function (id) {
+      if (!p[id]) return;
+      v.linhas = v.linhas.concat(p[id].linhas);
+      v.descartadas.semAvaliacao += p[id].descartadas.semAvaliacao;
+      v.descartadas.foraEnquadramento += p[id].descartadas.foraEnquadramento;
+    });
+    return v;
   }
 
   function revela(animar) {
@@ -567,17 +590,21 @@
 
   /* ---------- resultado ---------- */
   function desenhaResultado() {
-    var res = estado.resultado, b = estado.busca, s = b.resumo, r = estado.r;
-    $('mt-res-titulo').textContent = F.textoContagem(res.total);
-    $('mt-res-sub').textContent = recorte(r) + ' · ' + nomePolitica(r.politicaId) + ' · ' + dinheiro(r.renda) + '/mês';
+    var b = estado.busca, s = b.resumo, r = estado.r, v = vista();
+    $('mt-res-titulo').textContent = F.textoContagem(v.linhas.length);
+    $('mt-res-sub').textContent = recorte({ cidade: r.cidade, empId: estado.filtro }) + ' · ' + nomePolitica(r.politicaId) +
+      ' · ' + dinheiro(r.renda) + '/mês';
     $('mt-chips').innerHTML = [['Enquadramento', s.faixa || '-'], (s.subsidio > 0 ? ['Subsídio', dinheiro(s.subsidio), 'mt-verde'] : ['Subsídio', 'Sem subsídio']),
       ['Financ. até', dinheiro(s.financiamentoMax)], ['Juros CAIXA', juros(s.jurosNominal)],
       ['Prazo', s.prazo + ' meses']].map(function (c) {
       return '<div class="chip"><span class="chip-rot">' + esc(c[0]) + '</span><b class="chip-val' + (c[2] ? ' ' + c[2] : '') + '">' +
         esc(c[1]) + '</b></div>';
     }).join('');
-    desenhaDestaque(F.melhorMatch(b.linhas));
-    desenhaOrdem();
+    var vazio = $('mt-vazio');
+    vazio.hidden = v.linhas.length > 0;
+    vazio.textContent = 'Nenhuma unidade deste empreendimento cabe na política ' + nomePolitica(r.politicaId) + '.';
+    desenhaFiltro();
+    desenhaDestaque(F.melhorMatch(v.linhas));
     desenhaOutras();
     desenhaLateral();
   }
@@ -640,24 +667,46 @@
     ligaPdf(art.querySelector('.btn-pdf'), l);
   }
 
-  function desenhaOrdem() {
-    var box = $('mt-ordem');
+  /* filtro por empreendimento: "Todos" + cada empreendimento da cidade, com foto e quantas unidades cabem */
+  function desenhaFiltro() {
+    var box = $('mt-filtro'), p = estado.busca.porEmp, r = estado.r;
+    var todos = Object.keys(p).reduce(function (t, id) { return t + p[id].linhas.length; }, 0);
+    var lista = [{ id: '', nome: 'Todos', qtd: todos }].concat(EMPS.filter(function (e) {
+      return e.cidade === r.cidade && p[e.id];
+    }).map(function (e) { return { id: e.id, nome: e.nome, qtd: p[e.id].linhas.length, foto: F.fotoDe(e) }; }));
     box.innerHTML = '';
-    ORDENS.forEach(function (o) {
-      var b = botao('seg', o[1], function () {
-        if (estado.ordem === o[0]) return;
-        estado.ordem = o[0];
-        cada(box.children, function (x) { marca(x, x === b, 'seg-on'); });
-        desenhaOutras();
+    lista.forEach(function (o) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'fil' + (o.qtd ? '' : ' fil-zero');
+      b.title = o.nome;
+      b.setAttribute('aria-label', o.nome + ', ' + plural(o.qtd, 'unidade', 'unidades'));
+      b.innerHTML = (o.foto ? '<img class="opt-foto" src="' + esc(o.foto) + '" alt="" width="48" height="48">'
+          : '<span class="opt-ic"><img class="mt-ic3d" src="assets/img/icones-3d/pino.svg" alt="" width="34" height="34"></span>') +
+        '<span class="fil-txt"><span class="fil-nome">' + esc(o.nome) + '</span><span class="fil-qtd">' +
+        esc(plural(o.qtd, 'unidade', 'unidades')) + '</span></span>';
+      var img = b.querySelector('.opt-foto');
+      if (img) img.addEventListener('error', function () {
+        var ic = document.createElement('span');
+        ic.className = 'opt-ic';
+        ic.innerHTML = '<img class="mt-ic3d" src="assets/img/icones-3d/predio.svg" alt="" width="34" height="34">';
+        img.parentNode.replaceChild(ic, img);
       });
-      marca(b, o[0] === estado.ordem, 'seg-on');
+      marca(b, o.id === estado.filtro, 'fil-on');
+      b.addEventListener('click', function () {
+        if (estado.filtro === o.id) return;
+        estado.filtro = o.id; estado.aberta = ''; estado.mostrar = POR_PAGINA;
+        desenhaResultado();
+        var novo = $('mt-filtro').children[lista.indexOf(o)];
+        if (novo) novo.focus({ preventScroll: true });
+      });
       box.appendChild(b);
     });
   }
 
+  /* ordem fixa: menor parcela */
   function outrasOrdenadas() {
-    var linhas = estado.busca.linhas, melhor = F.melhorMatch(linhas);
-    return F.ordenar(linhas.filter(function (l) { return l !== melhor; }), estado.ordem);
+    var linhas = vista().linhas, melhor = F.melhorMatch(linhas);
+    return F.ordenar(linhas.filter(function (l) { return l !== melhor; }), 'parcela');
   }
 
   function desenhaOutras() {
@@ -675,7 +724,7 @@
   }
 
   function linha(l) {
-    var row = modelo('tpl-linha').querySelector('.row'), k = chaveDe(l), todos = !estado.r.empId;
+    var row = modelo('tpl-linha').querySelector('.row'), k = chaveDe(l), todos = !estado.filtro;
     var acima = acimaDoIdeal(l.crTotal), sub = andarFinal(l) + (tipoArea(l) ? ' · ' + tipoArea(l) : '');
     row.setAttribute('data-chave', k);
     cada(row.querySelectorAll('.row-cod'), function (el) {
@@ -715,7 +764,7 @@
   /* "Como chegamos aqui": a simulacao em frases curtas, com os numeros desta busca.
      Sem jargao: nada de folga, VCM, C.R. ou avaliacao bancaria. */
   function frasesSimulacao() {
-    var b = estado.busca, s = b.resumo, r = estado.r, d = estado.resultado.descartadas, fora = [];
+    var b = estado.busca, s = b.resumo, r = estado.r, v = vista(), d = v.descartadas, fora = [];
     var pol = window.MatchProSoluto.politicaPorId(r.politicaId);
     var anos = b.cliente.nascimento ? idade(b.cliente.nascimento, b.hoje) : null;
     var itens = ['Com renda de ' + dinheiro(r.renda) + (anos !== null ? ' e ' + anos + ' anos' : '') +
@@ -725,7 +774,7 @@
       : r.possuiImovel ? 'Sem subsídio: o cliente já tem imóvel na cidade.' : 'Sem subsídio para esta renda.');
     itens.push('O valor de cada unidade é o associativo da tabela de hoje. Unidades promocionais já entram com o preço promocional.');
     var ato = r.ato !== null ? 'ato de ' + dinheiro(r.ato)
-      : r.empId ? 'ato padrão de ' + dinheiro(M.atoDe(r.empId)) : 'ato padrão de cada empreendimento';
+      : estado.filtro ? 'ato padrão de ' + dinheiro(M.atoDe(estado.filtro)) : 'ato padrão de cada empreendimento';
     itens.push('Somamos financiamento, subsídio e ' + ato + '. O que falta vira Pro Soluto, pago em até ' + pol.prazo + ' parcelas.');
     itens.push('Só aparecem unidades em que o Pro Soluto e a parcela total cabem nos limites da política ' + pol.nome + '.');
     if (d.foraEnquadramento) fora.push(d.foraEnquadramento + ' fora do enquadramento da renda');
@@ -740,7 +789,7 @@
     box.appendChild(modelo('tpl-lateral'));
     box.querySelector('.lado-card').open = !!(window.matchMedia && window.matchMedia('(min-width:1024px)').matches);
     box.querySelector('.lado-lista').innerHTML = frasesSimulacao().map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('');
-    var mais = box.querySelector('.lado-mais'), sug = res.sugestao;
+    var mais = box.querySelector('.lado-mais'), sug = estado.filtro === estado.r.empId ? res.sugestao : null;
     mais.hidden = !sug;
     if (!sug) return;
     mais.querySelector('.lado-mais-tit').textContent = 'Na política ' + sug.nome + ', cabem ' + plural(sug.qtd, 'unidade', 'unidades');
@@ -831,7 +880,10 @@
     doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(TINTA[0], TINTA[1], TINTA[2]);
     doc.text('Unidades sugeridas', W / 2, y, { align: 'center' }); y += 5;
     doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(CINZA[0], CINZA[1], CINZA[2]);
-    var emp = r.empId && empDe(r.empId);
+    /* cabecalho: o empreendimento das unidades marcadas (podem vir de filtros diferentes) */
+    var empsPdf = Object.keys(estado.marcadas).map(function (k) { return estado.marcadas[k].empId; })
+      .filter(function (id, i, a) { return a.indexOf(id) === i; });
+    var emp = empsPdf.length === 1 && empDe(empsPdf[0]);
     doc.text(emp ? emp.nome + '  ·  ' + emp.cidade : r.cidade + '  ·  todos os empreendimentos', W / 2, y, { align: 'center' });
     y += 7;
 
