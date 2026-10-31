@@ -1,0 +1,40 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-10-30T15:00:00Z"},
+  "title": "Match de Unidades — Nova UX",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "Protótipo (clique em Play)", "is_interactive": true, "radius": 36},
+    "M1-Onde.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "1 · Onde", "radius": 36},
+    "M2-Renda.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "2 · Renda", "radius": 36},
+    "M5-Perfil.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "title": "5 · Perfil do cliente", "radius": 36},
+    "M6-Politica.dc.html": {"x": 1880, "y": 0, "w": 390, "h": 844, "title": "6 · Política", "radius": 36},
+    "M7-Revelacao.dc.html": {"x": 2350, "y": 0, "w": 390, "h": 844, "title": "Revelação", "radius": 36},
+    "M8-Resultado.dc.html": {"x": 2820, "y": 0, "w": 390, "h": 844, "title": "Resultado", "radius": 36},
+    "Desktop-Pergunta.dc.html": {"x": 0, "y": 1264, "w": 1440, "h": 900, "title": "Desktop · pergunta em andamento", "expand": "fill"},
+    "Desktop-Resultado.dc.html": {"x": 1520, "y": 1264, "w": 1440, "h": 1480, "title": "Desktop · resultado", "expand": "fill"},
+    "Padrao.dc.html": {"x": 0, "y": 3164, "w": 1440, "h": 1360, "title": "Padrão visual 2.0"},
+    "Icone.dc.html": {"x": 1520, "y": 3164, "w": 160, "h": 160, "title": "Componente · ícone 3D"}
+  },
+  "order": [
+    "Main.dc.html",
+    "Icone.dc.html",
+    "M1-Onde.dc.html",
+    "M2-Renda.dc.html",
+    "M5-Perfil.dc.html",
+    "M6-Politica.dc.html",
+    "M7-Revelacao.dc.html",
+    "M8-Resultado.dc.html",
+    "Desktop-Pergunta.dc.html",
+    "Desktop-Resultado.dc.html",
+    "Padrao.dc.html"
+  ],
+  "notes": {
+    "tMobile": {"x": 0, "y": -300, "text": "Celular · uma pergunta por vez, linha do tempo que cresce", "kind": "title1", "maxW": 3210},
+    "tDesktop": {"x": 0, "y": 964, "text": "Desktop · mesma trilha, mais espaço", "kind": "title1", "maxW": 2960},
+    "tPadrao": {"x": 0, "y": 2864, "text": "Padrão visual 2.0 · ícones 3D, componentes e movimento", "kind": "title1", "maxW": 1680},
+    "nota": {"x": 3290, "y": 0, "w": 360, "fill": "orange", "size": "m", "text": "Como ver: selecione o primeiro quadro e aperte Play para navegar pelo fluxo inteiro.\n\nOs números de unidades, valores e taxas são ilustrativos — no produto vêm da planilha e do motor CAIXA.\n\nCada etapa respondida vira uma linha na trilha; toque nela para voltar e editar."}
+  },
+  "designSystems": []
+}

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Localização">
+<defs>
+<linearGradient id="r3d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF7186"/><stop offset="0.45" stop-color="#E4032B"/><stop offset="1" stop-color="#A3001B"/></linearGradient>
+<linearGradient id="w3d" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#DCE1E4"/></linearGradient>
+<linearGradient id="g3d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#EEF1F2"/><stop offset="1" stop-color="#A9B2B6"/></linearGradient>
+<linearGradient id="o3d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE08F"/><stop offset="0.5" stop-color="#F5AE1E"/><stop offset="1" stop-color="#C97C00"/></linearGradient>
+<linearGradient id="k3d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6A7377"/><stop offset="1" stop-color="#2A2F32"/></linearGradient>
+<radialGradient id="sh3d" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#3A4043" stop-opacity="0.28"/><stop offset="1" stop-color="#3A4043" stop-opacity="0"/></radialGradient>
+</defs>
+<ellipse cx="32" cy="58" rx="13" ry="3.5" fill="url(#sh3d)"/>
+<path d="M32 6 C21 6 13 14 13 25 C13 38 32 54 32 54 C32 54 51 38 51 25 C51 14 43 6 32 6Z" fill="#8E0017" transform="translate(0 3)"/>
+<path d="M32 6 C21 6 13 14 13 25 C13 38 32 54 32 54 C32 54 51 38 51 25 C51 14 43 6 32 6Z" fill="url(#r3d)"/>
+<circle cx="32" cy="25" r="7.5" fill="url(#w3d)"/>
+<path d="M19.5 19 C21.5 13.5 26 10.5 30.5 10" fill="none" stroke="#FFFFFF" stroke-opacity="0.6" stroke-width="2.6" stroke-linecap="round"/>
+</svg>
