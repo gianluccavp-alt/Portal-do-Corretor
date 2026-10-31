@@ -616,17 +616,19 @@
     });
   }
 
+  /* pill curto do design ("Cai na Faixa 3"); o texto longo fica no title e em "Como chegamos aqui" */
   function selos(l) {
-    if (l.travaF3) return [SELO_F3];
+    if (l.travaF3) return [['Cai na Faixa 3', SELO_F3]];
     var sf = M.seloFaixa(l, estado.busca.resumo.faixa);
-    return sf ? [sf] : [];
+    return sf ? [['Cai na ' + l.faixa, sf]] : [];
   }
   function poeSelos(box, l) {
-    var lista = selos(l).map(function (t) { return ['selo', t]; });
+    var lista = selos(l).map(function (t) { return ['selo', t[0], t[1]]; });
     if (l.promocional) lista.unshift(['selo selo-promo', 'Promocional']);
     lista.forEach(function (x) {
       var s = document.createElement('span');
       s.className = x[0]; s.textContent = x[1];
+      if (x[2]) s.title = x[2];
       box.appendChild(s);
     });
   }
@@ -780,6 +782,15 @@
     if (d.foraEnquadramento) fora.push(d.foraEnquadramento + ' fora do enquadramento da renda');
     if (d.semAvaliacao) fora.push(d.semAvaliacao + ' sem valor de avaliação');
     if (fora.length) itens.push('Ficaram de fora: ' + fora.join(' · ') + '.');
+    /* selos curtos da lista, explicados em linguagem simples */
+    if (v.linhas.some(function (l) { return l.travaF3; }))
+      itens.push('Unidades marcadas com "Cai na Faixa 3" foram simuladas com o valor limitado a R$ 400 mil no financiamento da CAIXA.');
+    var outras = {};
+    v.linhas.forEach(function (l) { if (M.seloFaixa(l, s.faixa)) outras[l.faixa] = l.jurosNominal; });
+    Object.keys(outras).forEach(function (f) {
+      itens.push('Unidades marcadas com "Cai na ' + f + '" ficam na ' + f + ' da CAIXA pelo valor do imóvel, com juros de ' +
+        jurosNum(outras[f]) + '% ao ano.');
+    });
     return itens;
   }
 
