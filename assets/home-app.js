@@ -12,6 +12,7 @@
   var empNav     = document.getElementById('emp-nav');
   var btnPrev    = document.getElementById('emp-prev');
   var btnNext    = document.getElementById('emp-next');
+  var empDots    = document.getElementById('emp-dots');
 
   var reduceMotion = window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -58,6 +59,7 @@
     empCount.textContent = Home.rotuloEmpreendimentos(emps.length);
     empGrid.innerHTML = '';
     empGrid.scrollLeft = 0;
+    empDots.innerHTML = '';
 
     if (!emps.length) {
       empNav.hidden = true;
@@ -78,11 +80,13 @@
       else el.setAttribute('aria-disabled', 'true');
       el.innerHTML = card.html;
       empGrid.appendChild(el);
+      empDots.appendChild(document.createElement('span'));
     });
 
     mostrarSecao();
     fitColumns();
     updateNav();
+    desenharBolinhas();
   }
 
   function mostrarSecao() {
@@ -129,12 +133,19 @@
     return card.getBoundingClientRect().width + gapPx();
   }
 
+  /* Bolinhas de posição (só aparecem no celular, via CSS). */
+  function desenharBolinhas() {
+    var dots = empDots.children;
+    var atual = Home.indiceSlide(empGrid.scrollLeft, step(), dots.length);
+    for (var i = 0; i < dots.length; i++) dots[i].classList.toggle('is-on', i === atual);
+  }
+
   btnPrev.addEventListener('click', function () {
     empGrid.scrollBy({ left: -step(), behavior: scrollBehavior() });
   });
   btnNext.addEventListener('click', function () {
     empGrid.scrollBy({ left: step(), behavior: scrollBehavior() });
   });
-  empGrid.addEventListener('scroll', updateNav, { passive: true });
-  window.addEventListener('resize', function () { fitColumns(); updateNav(); });
+  empGrid.addEventListener('scroll', function () { updateNav(); desenharBolinhas(); }, { passive: true });
+  window.addEventListener('resize', function () { fitColumns(); updateNav(); desenharBolinhas(); });
 })();

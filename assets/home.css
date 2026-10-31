@@ -267,6 +267,10 @@ html.sem-abertura .entra-3{animation-delay:.24s}
 .emp-go svg{width:18px;height:18px}
 .emp-card:hover .emp-go{transform:translateX(3px)}
 
+.emp-dots{display:none;justify-content:center;gap:6px;margin-top:14px}
+.emp-dots span{width:6px;height:6px;border-radius:999px;background:#D5DADC;transition:width .3s,background .3s}
+.emp-dots span.is-on{width:18px;background:var(--dir-red)}
+
 /* Em breve — visual, não clicável */
 .emp-card-soon{cursor:default}
 .emp-card-soon:hover{transform:none;box-shadow:none;border-color:var(--line)}
@@ -362,6 +366,10 @@ html.sem-abertura .entra-3{animation-delay:.24s}
 
 /* ---------- Responsivo ---------- */
 @media(max-width:1000px){.carousel{--per:2;--gaps:1}}
+@media(max-width:560px){
+  .carousel{--per:1.19;--gaps:1;--gap:14px}
+  .emp-dots{display:flex}
+}
 
 @media(max-width:900px){
   :root{--pad:20px}
