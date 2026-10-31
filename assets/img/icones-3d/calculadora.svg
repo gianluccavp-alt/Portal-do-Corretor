@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Calculadora">
+<defs>
+<linearGradient id="r3d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF7186"/><stop offset="0.45" stop-color="#E4032B"/><stop offset="1" stop-color="#A3001B"/></linearGradient>
+<linearGradient id="w3d" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#DCE1E4"/></linearGradient>
+<linearGradient id="o3d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE08F"/><stop offset="0.5" stop-color="#F5AE1E"/><stop offset="1" stop-color="#C97C00"/></linearGradient>
+<radialGradient id="sh3d" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#3A4043" stop-opacity="0.28"/><stop offset="1" stop-color="#3A4043" stop-opacity="0"/></radialGradient>
+</defs>
+<ellipse cx="32" cy="58.5" rx="20" ry="4" fill="url(#sh3d)"/>
+<rect x="14" y="9" width="36" height="47" rx="8" fill="#8E0017"/>
+<rect x="14" y="5" width="36" height="47" rx="8" fill="url(#r3d)"/>
+<path d="M18 13 Q18 9 22 9 L36 9" fill="none" stroke="#FFFFFF" stroke-opacity="0.5" stroke-width="2.2" stroke-linecap="round"/>
+<rect x="19" y="12" width="26" height="11" rx="3" fill="#8E0017" opacity="0.45"/>
+<rect x="19" y="11" width="26" height="11" rx="3" fill="url(#w3d)"/>
+<rect x="31" y="15" width="10" height="3.4" rx="1.7" fill="#A9B2B6"/>
+<g fill="#7A0014" opacity="0.5">
+<rect x="19" y="28" width="7" height="6" rx="2"/><rect x="28.5" y="28" width="7" height="6" rx="2"/><rect x="38" y="28" width="7" height="6" rx="2"/>
+<rect x="19" y="36.5" width="7" height="6" rx="2"/><rect x="28.5" y="36.5" width="7" height="6" rx="2"/><rect x="38" y="36.5" width="7" height="15" rx="2"/>
+<rect x="19" y="45" width="7" height="6" rx="2"/><rect x="28.5" y="45" width="7" height="6" rx="2"/>
+</g>
+<g fill="url(#w3d)">
+<rect x="19" y="27" width="7" height="6" rx="2"/><rect x="28.5" y="27" width="7" height="6" rx="2"/><rect x="38" y="27" width="7" height="6" rx="2"/>
+<rect x="19" y="35.5" width="7" height="6" rx="2"/><rect x="28.5" y="35.5" width="7" height="6" rx="2"/>
+<rect x="19" y="44" width="7" height="6" rx="2"/><rect x="28.5" y="44" width="7" height="6" rx="2"/>
+</g>
+<rect x="38" y="35.5" width="7" height="14.5" rx="2" fill="url(#o3d)"/>
+<line x1="39.8" y1="41" x2="43.2" y2="41" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round"/>
+<line x1="39.8" y1="44.5" x2="43.2" y2="44.5" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round"/>
+</svg>
