@@ -369,7 +369,7 @@
             areaPriv: d.areaPriv, avaliacao: d.avaliacao,
             /* spec 4.2: valor associativo SEM premio (sem a Folga Volta ao Caixa);
                unidade promocional ja vem com o Valor Comercial Minimo */
-            associativo: d.associativoSemPremio, promocional: !!d.promocional });
+            associativo: d.associativoSemPremio, promocional: !!d.promocional, valorFinal: d.valorFinal });
         });
       });
       return { emp: emp, unidades: unidades };
@@ -862,27 +862,66 @@
     doc.text(AVISO_ESTIMATIVA, Mg + 1.4, y); y += 5;
 
     var linhas = Object.keys(estado.marcadas).map(function (k) { return M.linhaPdf(estado.marcadas[k]); });
+    /* A4 retrato: 182 mm uteis (helvetica 7pt: "R$ 999.999,99" = 16,1 mm + 2,8 de margem interna). Unidade abreviada (30 mm); a coluna Subsidio so entra
+       quando alguma unidade do PDF tem subsidio. Larguras fixas: nenhum valor quebra linha. */
+    var comSub = linhas.some(function (l) { return l.subsidio > 0; });
+    var COLS = [
+      ['Unidade', 30, null],
+      ['Valor do imóvel', 19.5, function (l) { return dinheiro(l.valorImovel); }],
+      ['Desconto', 18, function (l) { return l.desconto > 0 ? dinheiro(l.desconto) : '-'; }],
+      ['Valor com desconto', 19.5, function (l) { return dinheiro(l.venda); }],
+      ['Financiamento', 19.5, function (l) { return dinheiro(l.financiamento); }],
+      ['Subsídio', 18, function (l) { return l.subsidio > 0 ? dinheiro(l.subsidio) : '-'; }],
+      ['Ato', 17.5, function (l) { return dinheiro(l.ato); }],
+      ['Pro Soluto', 22, function (l) { return F.textoPS(l) + (l.parcelaPS > 0 && l.carne === 'escalonado' ? '\n(escalonado)' : ''); }],
+      ['Parcela CAIXA', 18, function (l) { return dinheiro(l.parcelaFin); }]
+    ].filter(function (c) { return comSub || c[0] !== 'Subsídio'; });
+    /* sem a coluna de subsidio, a sobra (18 mm) e repartida entre as colunas de valor */
+    var sobra = W - 2 * Mg - COLS.reduce(function (t, c) { return t + c[1]; }, 0), nVal = COLS.length - 1;
+    var colStyles = {};
+    COLS.forEach(function (c, i) {
+      colStyles[i] = i === 0 ? { cellWidth: c[1] }
+        : { cellWidth: c[1] + sobra / nVal, halign: 'right', overflow: 'visible' };
+    });
+    var FONTE = 7, PAD = 1.4;
+    /* celula da unidade: ate 3 linhas curtas (nome em negrito, codigo · area, selo) desenhadas a mao */
+    function unidadeLinhas(l) {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(FONTE);
+      var nome = doc.splitTextToSize(l.empNome || '', COLS[0][1] - 2 * PAD);
+      var cod = l.codigo + (l.areaPriv ? ' · ' + l.areaPriv + ' m²' : '');
+      return { nome: nome, cod: cod, promo: l.promocional };
+    }
+    var celUn = linhas.map(unidadeLinhas);
     doc.autoTable({
       startY: y, margin: { left: Mg, right: Mg, bottom: 22 }, theme: 'grid',
-      head: [['Empreendimento / unidade', 'Valor', 'Financiamento', 'Subsídio', 'Ato', 'Pro Soluto', 'Parcela CAIXA']],
-      body: linhas.map(function (l) {
-        /* a ultima linha vazia guarda o espaco do selo "Condição especial", desenhado depois */
-        return [l.empNome + '\n' + l.codigo + ' · ' + (l.tipoLabel || '') + (l.areaPriv ? ' · ' + l.areaPriv + ' m²' : '') +
-            (l.promocional ? '\n ' : ''),
-          dinheiro(l.venda), dinheiro(l.financiamento), dinheiro(l.subsidio), dinheiro(l.ato),
-          F.textoPS(l) + (l.parcelaPS > 0 && l.carne === 'escalonado' ? '\n(escalonado)' : ''), dinheiro(l.parcelaFin)];
+      head: [COLS.map(function (c) { return c[0]; })],
+      body: linhas.map(function (l, i) {
+        var u = celUn[i];
+        /* texto so para medir a altura; o desenho real vem em didDrawCell */
+        return [u.nome.concat([u.cod]).concat(u.promo ? ['Condição especial'] : []).join('\n')]
+          .concat(COLS.slice(1).map(function (c) { return c[2](l); }));
       }),
-      styles: { fontSize: 7.5, cellPadding: 1.8, textColor: TINTA, lineColor: [231, 233, 234] },
-      headStyles: { fillColor: [228, 3, 43], textColor: 255, fontStyle: 'bold' },
+      styles: { font: 'helvetica', fontSize: FONTE, cellPadding: PAD, textColor: TINTA, lineColor: [231, 233, 234], valign: 'middle' },
+      headStyles: { fillColor: [228, 3, 43], textColor: 255, fontStyle: 'bold', fontSize: 6.8, halign: 'center' },
       alternateRowStyles: { fillColor: [250, 251, 251] },
-      /* valores em uma linha so: a coluna da unidade absorve a quebra */
-      columnStyles: { 0: { cellWidth: 46 }, 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' },
-                      4: { halign: 'right' }, 5: { halign: 'right' }, 6: { halign: 'right' } },
+      columnStyles: colStyles,
+      willDrawCell: function (d) {
+        if (d.section === 'body' && d.column.index === 0) d.cell.text = [];
+      },
       didDrawCell: function (d) {
-        if (d.section !== 'body' || d.column.index !== 0 || !linhas[d.row.index] || !linhas[d.row.index].promocional) return;
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(181, 114, 0);
-        doc.text('Condição especial', d.cell.x + d.cell.padding('left'), d.cell.y + d.cell.height - d.cell.padding('bottom'),
-          { baseline: 'bottom' });
+        if (d.section !== 'body' || d.column.index !== 0 || !celUn[d.row.index]) return;
+        var u = celUn[d.row.index], x = d.cell.x + PAD, alt = FONTE * 0.3528 * 1.15;
+        var linhasCel = u.nome.length + 1 + (u.promo ? 1 : 0);
+        var yy = d.cell.y + (d.cell.height - linhasCel * alt) / 2 + alt * 0.8;
+        doc.setFontSize(FONTE); doc.setTextColor(TINTA[0], TINTA[1], TINTA[2]);
+        doc.setFont('helvetica', 'bold');
+        u.nome.forEach(function (t) { doc.text(t, x, yy); yy += alt; });
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(CINZA[0], CINZA[1], CINZA[2]);
+        doc.text(u.cod, x, yy); yy += alt;
+        if (u.promo) {
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(181, 114, 0);
+          doc.text('Condição especial', x, yy);
+        }
       }
     });
 

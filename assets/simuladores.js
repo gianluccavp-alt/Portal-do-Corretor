@@ -464,7 +464,9 @@ window.SimUnidades = (function () {
         areaPriv: areaPriv, vagas: vagas, avaliacao: avaliacao,
         tabelaDireta: tabelaExibida, associativo: assocExibido, promocional: promocional,
         /* valor do "Sem Premio" do site de produtos (associativoOf): promocional usa o VCM */
-        associativoSemPremio: promocional ? vcm : associativo - folgaVoltaCx
+        associativoSemPremio: promocional ? vcm : associativo - folgaVoltaCx,
+        /* "Valor Final Com Kit": valor cheio do imovel (o PDF do Match mostra o desconto ate a venda) */
+        valorFinal: valorFinal
       };
     }
 

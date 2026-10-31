@@ -152,7 +152,9 @@
         jurosNominal: cx.jurosNominal, prazoFin: cx.prazo, politicaId: pol.id,
         faixa: cx.faixa, travaF3: trava,
         /* so repasse: a venda ja chega com o valor promocional (associativoSemPremio) */
-        promocional: un.promocional === true
+        promocional: un.promocional === true,
+        /* so repasse: "Valor Final Com Kit" da planilha (valor cheio do imovel, so para o PDF) */
+        valorFinal: un.valorFinal
       }
     };
   }
@@ -203,8 +205,11 @@
     return 'Enquadrada na ' + l.faixa + ' (' + String(l.jurosNominal).replace('.', ',') + '% a.a.)';
   }
 
+  /* valor do imovel = Valor Final Com Kit (ausente ou abaixo da venda: usa a venda);
+     desconto = total agregado ate o valor com desconto (a venda simulada) */
   function linhaPdf(l) {
-    return { empNome: l.empNome, codigo: l.codigo, tipoLabel: l.tipoLabel, areaPriv: l.areaPriv,
+    var valorImovel = Math.max(l.valorFinal || 0, l.venda);
+    return { valorImovel: valorImovel, desconto: r2(valorImovel - l.venda), empNome: l.empNome, codigo: l.codigo, tipoLabel: l.tipoLabel, areaPriv: l.areaPriv,
              venda: l.venda, financiamento: l.financiamento, subsidio: l.subsidio, ato: l.ato,
              parcelaPS: l.parcelaPS, prazoPS: l.prazoPS, carne: l.carne, parcelaFin: l.parcelaFin,
              promocional: l.promocional === true };

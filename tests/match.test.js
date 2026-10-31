@@ -174,9 +174,42 @@ test('linhaPdf não carrega nenhum campo interno', () => {
   const { linha } = Match.avaliarUnidade(CLIENTE, emp, UN('BL01-0301', 260000, 225000), 'diamante', HOJE);
   const pdf = Match.linhaPdf(linha);
   assert.deepEqual(Object.keys(pdf).sort(), ['areaPriv', 'ato', 'carne', 'codigo', 'empNome', 'financiamento',
-    'parcelaFin', 'parcelaPS', 'prazoPS', 'promocional', 'subsidio', 'tipoLabel', 'venda'].sort());
+    'parcelaFin', 'parcelaPS', 'prazoPS', 'promocional', 'subsidio', 'tipoLabel', 'venda', 'valorImovel', 'desconto'].sort());
   const texto = JSON.stringify(pdf);
   assert.ok(!/politica|crTotal|avaliacao|folga/i.test(texto));
+});
+
+/* ---------- PDF: valor do imovel, desconto e valor com desconto (ajustes 2) ---------- */
+
+test('avaliarUnidade repassa o Valor Final Com Kit (valorFinal) para a linha', () => {
+  const emp = EMP('park', 'Ribeirão Preto');
+  const { linha } = Match.avaliarUnidade(CLIENTE, emp, UN('BL01-0301', 260000, 225000, { valorFinal: 270000 }), 'diamante', HOJE);
+  assert.equal(linha.valorFinal, 270000);
+  assert.equal(linha.venda, 225000);
+});
+
+test('linhaPdf: valor do imóvel é o Valor Final Com Kit e o desconto é a diferença para a venda', () => {
+  const pdf = Match.linhaPdf({ empNome: 'Village Gaia', codigo: 'BL02-0202', venda: 312800, valorFinal: 366000 });
+  assert.equal(pdf.valorImovel, 366000);
+  assert.equal(pdf.desconto, 53200);
+  assert.equal(pdf.venda, 312800);
+});
+
+test('linhaPdf: sem valorFinal, valor do imóvel é a venda e o desconto é zero', () => {
+  const pdf = Match.linhaPdf({ empNome: 'X', codigo: 'BL01-0101', venda: 312800 });
+  assert.equal(pdf.valorImovel, 312800);
+  assert.equal(pdf.desconto, 0);
+});
+
+test('linhaPdf: valorFinal menor que a venda é tratado como ausente', () => {
+  const pdf = Match.linhaPdf({ empNome: 'X', codigo: 'BL01-0101', venda: 312800, valorFinal: 300000 });
+  assert.equal(pdf.valorImovel, 312800);
+  assert.equal(pdf.desconto, 0);
+});
+
+test('linhaPdf: desconto com centavos é arredondado em 2 casas', () => {
+  const pdf = Match.linhaPdf({ empNome: 'X', codigo: 'BL01-0101', venda: 200000.1, valorFinal: 250000.3 });
+  assert.equal(pdf.desconto, 50000.2);
 });
 
 test('urlAssociativo leva os dados para o simulador associativo', () => {
