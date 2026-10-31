@@ -82,6 +82,38 @@ test('resumoCliente devolve o enquadramento da renda', () => {
   assert.ok(r.financiamentoMax > 0);
 });
 
+test('resumoCliente traz os detalhes da simulação CAIXA', () => {
+  const r = Match.resumoCliente(CLIENTE, 'Ribeirão Preto', HOJE);
+  assert.equal(r.comprometimento, 0.3);
+  assert.equal(r.cota, 0.8);
+  assert.equal(r.sistema, 'PRICE');
+  assert.equal(r.parcelaMax, Math.round(0.3 * CLIENTE.renda * 100) / 100);
+  assert.ok(r.valorReferencia > 0 && r.jurosEfetivo > r.jurosNominal && r.taxaAdm >= 0);
+  assert.equal(r.seguradoras.length, 3);
+  assert.ok(r.seguradoras.every(s => s.nome && s.primeira > 0 && s.ultima > 0));
+  /* SBPE (possui imóvel): Price compromete 25% da renda */
+  assert.equal(Match.resumoCliente({ ...CLIENTE, possuiImovel: true }, 'Ribeirão Preto', HOJE).comprometimento, 0.25);
+});
+
+test('melhorMatch: menor Pro Soluto na faixa do cliente pelo valor do imóvel', () => {
+  const L = (codigo, avaliacao, parcelaPS, parcelaFin = 1000) => ({ codigo, avaliacao, venda: avaliacao, parcelaPS, parcelaFin });
+  const linhas = [L('barata', 220000, 100), L('f3', 380000, 600), L('f4a', 480000, 900), L('f4b', 520000, 700)];
+  assert.equal(Match.bandaDoValor(264000, 'Ribeirão Preto'), 'F12');
+  assert.equal(Match.bandaDoValor(264001, 'Ribeirão Preto'), 'F3');
+  assert.equal(Match.bandaDoValor(400001, 'Ribeirão Preto'), 'F4');
+  assert.equal(Match.melhorMatch(linhas, 'Faixa 4', 'Ribeirão Preto').codigo, 'f4b');
+  assert.equal(Match.melhorMatch(linhas, 'SBPE', 'Ribeirão Preto').codigo, 'f4b');
+  assert.equal(Match.melhorMatch(linhas, 'Faixa 3', 'Ribeirão Preto').codigo, 'f3');
+  assert.equal(Match.melhorMatch(linhas, 'Faixa 1', 'Ribeirão Preto').codigo, 'barata');
+  /* sem unidade na faixa: desce para a faixa abaixo */
+  assert.equal(Match.melhorMatch([L('barata', 220000, 100), L('f3', 380000, 600)], 'Faixa 4', 'Ribeirão Preto').codigo, 'f3');
+  /* nada abaixo: sobe */
+  assert.equal(Match.melhorMatch([L('f4a', 480000, 900)], 'Faixa 2', 'Ribeirão Preto').codigo, 'f4a');
+  /* empate no Pro Soluto (sem Pro Soluto): menor parcela total */
+  assert.equal(Match.melhorMatch([L('x', 480000, 0, 3000), L('y', 500000, 0, 2500)], 'Faixa 4', 'Ribeirão Preto').codigo, 'y');
+  assert.equal(Match.melhorMatch([], 'Faixa 4', 'Ribeirão Preto'), null);
+});
+
 test('avaliarUnidade: descarta sem avaliação e fora do enquadramento', () => {
   const emp = EMP('park', 'Ribeirão Preto');
   assert.equal(Match.avaliarUnidade(CLIENTE, emp, UN('BL01-0101', 0, 220000), 'diamante', HOJE).status, 'sem-avaliacao');

@@ -81,7 +81,8 @@
     if (empilhar) history.pushState({ tela: tela, etapa: estado.etapa }, '');
     if (iniciado) {
       window.scrollTo(0, 0);
-      var alvo = tela === 'perguntas' ? $('mt-etapa').querySelector('.mt-etapa-tit')
+      /* etapa com campo (renda, ato, nascimento): o cursor ja vai para o campo */
+      var alvo = tela === 'perguntas' ? ($('mt-etapa').querySelector('input') || $('mt-etapa').querySelector('.mt-etapa-tit'))
         : tela === 'revelacao' ? $('mt-rev-titulo') : tela === 'resultado' ? $('mt-res-titulo') : $('mt-comecar');
       if (alvo) alvo.focus({ preventScroll: true });
     }
@@ -588,7 +589,43 @@
     }, 1900));
   }
 
+  /* ---------- detalhes da simulacao CAIXA (revelacao e resultado, mesmo sem unidades) ---------- */
+  function pct(f) { return String(Math.round(f * 1000) / 10).replace('.', ',') + '%'; }
+  function abrirDetalhes(origem) {
+    var s = estado.busca.resumo, c = estado.busca.cliente, r = estado.r, hoje = estado.busca.hoje;
+    var dlg = $('mt-dlg-det');
+    function grupo(tit, linhas, nota) {
+      return '<div class="det-grupo"><h3 class="det-tit">' + esc(tit) + '</h3><div class="det-lista">' + linhas.map(function (x) {
+        return '<div class="det-lin"><span>' + esc(x[0]) + '</span><b' + (x[2] ? ' class="' + x[2] + '"' : '') + '>' + esc(x[1]) + '</b></div>';
+      }).join('') + '</div>' + (nota ? '<p class="det-nota">' + esc(nota) + '</p>' : '') + '</div>';
+    }
+    function sn(v) { return v ? 'Sim' : 'Não'; }
+    var cli = [['Renda bruta', dinheiro(r.renda) + '/mês'],
+      ['Idade', c.nascimento ? idade(c.nascimento, hoje) + ' anos' : '-'],
+      ['3 anos de FGTS', sn(c.fgts !== false)], ['Possui imóvel na cidade', sn(c.possuiImovel === true)]];
+    if (M.temSubsidio(r.renda, c.possuiImovel)) {
+      cli.push(['Mais de um comprador ou dependente', sn(c.fatorSocial === true)]);
+      cli.push(['Já recebeu subsídio', sn(c.subsidioAnterior === true)]);
+    }
+    var enq = [['Enquadramento', s.faixa || '-'], ['Juros nominal', juros(s.jurosNominal)],
+      ['Juros efetivo', jurosNum(s.jurosEfetivo) + '% a.a.'],
+      ['Prazo', s.prazo + ' meses (' + Math.round(s.prazo / 12 * 10) / 10 + ' anos)'],
+      ['Sistema', s.sistema === 'SAC' ? 'SAC (parcelas decrescentes)' : 'Price (parcelas fixas)']];
+    var res = [['Financiamento até', dinheiro(s.financiamentoMax)],
+      s.subsidio > 0 ? ['Subsídio estimado', dinheiro(s.subsidio), 'mt-verde'] : ['Subsídio estimado', 'Sem subsídio'],
+      ['Parcela máxima (' + pct(s.comprometimento) + ' da renda)', dinheiro(s.parcelaMax)],
+      ['Financia até ' + pct(s.cota) + ' do imóvel', 'Valor de referência ' + dinheiro(s.valorReferencia)]];
+    $('mt-det-corpo').innerHTML = grupo('Cliente', cli) + grupo('Enquadramento CAIXA', enq) +
+      grupo('Resultado', res, 'Calculado para um imóvel de ' + dinheiro(s.valorReferencia) + ', o teto da faixa. Cada unidade é recalculada com o próprio valor de avaliação.');
+    $('mt-det-corpo').scrollTop = 0;
+    dlg._origem = origem || null;
+    if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+    $('mt-det-fechar').focus();
+  }
+
   /* ---------- resultado ---------- */
+  /* card "Melhor match": menor Pro Soluto na faixa do cliente (regra em Match.melhorMatch) */
+  function melhor(linhas) { return M.melhorMatch(linhas, estado.busca.resumo.faixa, estado.r.cidade); }
   function desenhaResultado() {
     var b = estado.busca, s = b.resumo, r = estado.r, v = vista();
     $('mt-res-titulo').textContent = F.textoContagem(v.linhas.length);
@@ -600,11 +637,14 @@
       return '<div class="chip"><span class="chip-rot">' + esc(c[0]) + '</span><b class="chip-val' + (c[2] ? ' ' + c[2] : '') + '">' +
         esc(c[1]) + '</b></div>';
     }).join('');
+    $('mt-chips').insertAdjacentHTML('beforeend', '<button type="button" class="chip chip-det" id="mt-chip-det" ' +
+      'aria-haspopup="dialog"><span class="chip-rot">Simulação CAIXA</span><b class="chip-val">Detalhes →</b></button>');
+    $('mt-chip-det').addEventListener('click', function () { abrirDetalhes(this); });
     var vazio = $('mt-vazio');
     vazio.hidden = v.linhas.length > 0;
     vazio.textContent = 'Nenhuma unidade deste empreendimento cabe na política ' + nomePolitica(r.politicaId) + '.';
     desenhaFiltro();
-    desenhaDestaque(F.melhorMatch(v.linhas));
+    desenhaDestaque(melhor(v.linhas));
     desenhaOutras();
     desenhaLateral();
   }
@@ -633,10 +673,23 @@
     });
   }
 
-  function linkAssoc(a, l, rotulo) {
-    var b = estado.busca;
-    a.href = M.urlAssociativo(l, b.cliente, b.hoje);
-    a.setAttribute('aria-label', rotulo + ' (abre em nova aba)');
+  /* "Abrir unidade": popup com o simulador associativo e a página do empreendimento */
+  function ligaAbrir(btn, l) {
+    btn.setAttribute('aria-label', 'Abrir ' + nomeUn(l));
+    btn.addEventListener('click', function () { abrirUnidade(l, btn); });
+  }
+  function desktop() { return !!(window.matchMedia && window.matchMedia('(min-width:1024px)').matches); }
+  function abrirUnidade(l, origem) {
+    var b = estado.busca, dlg = $('mt-dlg-un'), pag = window.SimUnidades.idPagina(l.empId);
+    $('mt-un-tit').textContent = apto(l) + ' · Torre ' + l.torre;
+    $('mt-un-sub').textContent = l.empNome + ' · ' + andarFinal(l);
+    $('mt-un-assoc').href = M.urlAssociativo(l, b.cliente, b.hoje);
+    var prod = $('mt-un-prod');
+    prod.hidden = !pag;
+    if (pag) prod.href = 'empreendimento.html?e=' + encodeURIComponent(pag) + '&un=' + encodeURIComponent(l.codigo);
+    dlg._origem = origem || null;
+    if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+    $('mt-un-assoc').focus();
   }
 
   function desenhaDestaque(l) {
@@ -665,7 +718,7 @@
     fill.classList.toggle('mt-ambar', acima);
     preenche(art, { valor: dinheiro(l.venda), fin: dinheiro(l.financiamento), subsidio: dinheiro(l.subsidio),
       ato: dinheiro(l.ato), ps: F.textoPS(l), parcela: dinheiro(l.parcelaFin) });
-    linkAssoc(art.querySelector('.dest-assoc'), l, 'Abrir ' + nomeUn(l) + ' no associativo');
+    ligaAbrir(art.querySelector('.dest-assoc'), l);
     ligaPdf(art.querySelector('.btn-pdf'), l);
   }
 
@@ -720,8 +773,8 @@
 
   /* ordem fixa: menor parcela */
   function outrasOrdenadas() {
-    var linhas = vista().linhas, melhor = F.melhorMatch(linhas);
-    return F.ordenar(linhas.filter(function (l) { return l !== melhor; }), 'parcela');
+    var linhas = vista().linhas, destaque = melhor(linhas);
+    return F.ordenar(linhas.filter(function (l) { return l !== destaque; }), 'parcela');
   }
 
   function desenhaOutras() {
@@ -749,14 +802,22 @@
       el.appendChild(sm);
     });
     cada(row.querySelectorAll('.row-sub'), function (el) { el.textContent = sub; poeSelos(el.parentNode, l); });
-    cada(row.querySelectorAll('.row-mes-val'), function (el) { el.textContent = dinheiro(F.mensal(l)); });
+    /* celular: total por mês; desktop: coluna "Parcela CAIXA" */
+    cada(row.querySelectorAll('.row-mes-val'), function (el) {
+      el.textContent = dinheiro(el.classList.contains('row-caixa') ? l.parcelaFin : F.mensal(l));
+    });
     cada(row.querySelectorAll('.row-cr'), function (el) {
-      el.textContent = pctRenda(l.crTotal) + (el.closest('.row-dk') ? ' da renda' : '');
+      el.textContent = pctRenda(l.crTotal);
       el.classList.toggle('mt-ambar', acima);
     });
     preenche(row, { valor: dinheiro(l.venda), fin: dinheiro(l.financiamento), subsidio: dinheiro(l.subsidio), ps: F.textoPS(l) });
-    linkAssoc(row.querySelector('.row-assoc'), l, 'Abrir ' + nomeUn(l) + ' no associativo');
-    linkAssoc(row.querySelector('.go'), l, 'Abrir ' + nomeUn(l) + ' no associativo');
+    ligaAbrir(row.querySelector('.row-assoc'), l);
+    ligaAbrir(row.querySelector('.go'), l);
+    /* desktop: clicar em qualquer lugar da linha abre o mesmo popup (menos checkbox e botões) */
+    row.addEventListener('click', function (ev) {
+      if (!desktop() || ev.target.closest('button, a')) return;
+      abrirUnidade(l, row.querySelector('.go'));
+    });
     ligaPdf(row.querySelector('.row-det .btn-pdf'), l);
     ligaPdf(row.querySelector('.cb'), l);
 
@@ -1027,6 +1088,16 @@
   $('mt-editar').addEventListener('click', editarPerfil);
   $('mt-res-voltar').addEventListener('click', editarPerfil);
   $('mt-pdf').addEventListener('click', abrirPdf);
+  $('mt-un-fechar').addEventListener('click', function () { $('mt-dlg-un').close(); });
+  /* escolher uma opção abre a nova aba e fecha o popup */
+  cada([$('mt-un-assoc'), $('mt-un-prod')], function (a) { a.addEventListener('click', function () { $('mt-dlg-un').close(); }); });
+  $('mt-dlg-un').addEventListener('close', function () { if (this._origem && this._origem.focus) this._origem.focus(); });
+  $('mt-dlg-un').addEventListener('click', function (ev) { if (ev.target === this) this.close(); });
+  $('mt-rev-detalhes').addEventListener('click', function () { abrirDetalhes(this); });
+  $('mt-det-fechar').addEventListener('click', function () { $('mt-dlg-det').close(); });
+  $('mt-dlg-det').addEventListener('close', function () { if (this._origem && this._origem.focus) this._origem.focus(); });
+  /* clique no fundo escuro fecha */
+  $('mt-dlg-det').addEventListener('click', function (ev) { if (ev.target === this) this.close(); });
   $('mt-dlg-form').addEventListener('submit', function (ev) {
     ev.preventDefault();
     var cliente = $('mt-dlg-cliente').value.trim(), corretor = $('mt-dlg-corretor').value.trim();

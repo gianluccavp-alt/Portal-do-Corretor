@@ -491,7 +491,9 @@ window.SimUnidades = (function () {
     aoMudar: function (fn) { ouvintes.push(fn); fn(estado, erroMsg); },
     estado: function () { return estado; },
     erro: function () { return erroMsg; },
-    normKey: normKey
+    normKey: normKey,
+    /* id da pagina do empreendimento (empreendimento.html?e=<id>) a partir do id do simulador */
+    idPagina: function (simId) { return SIM_ID_TO_CONFIG_ID[simId] || null; }
   };
 })();
 
