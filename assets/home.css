@@ -119,8 +119,35 @@ body{
 .hero-alvo{width:54px;height:54px;left:252px;top:22px}
 @keyframes heroFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-10px) rotate(-3deg)}}
 
+/* ---------- Abertura (2 s, uma vez por aba — ver Home.deveMostrarAbertura) ---------- */
+.abertura{
+  position:fixed;inset:0;z-index:200;background:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
+  animation:aberturaSai 2s cubic-bezier(.4,0,.2,1) forwards;
+}
+.abertura-logo{width:min(560px,78vw);height:auto;display:block;animation:aberturaLogo 2s var(--ease) forwards}
+.abertura-barra{height:3px;width:0;border-radius:3px;background:var(--dir-red);animation:aberturaBarra 2s var(--ease) forwards}
+@keyframes aberturaSai{0%,74%{opacity:1;visibility:visible}100%{opacity:0;visibility:hidden}}
+@keyframes aberturaLogo{
+  0%{opacity:0;transform:scale(.94);filter:blur(8px)}
+  32%{opacity:1;transform:scale(1);filter:blur(0)}
+  74%{opacity:1;transform:scale(1.01)}
+  100%{opacity:0;transform:scale(1.05)}
+}
+@keyframes aberturaBarra{
+  0%,22%{width:0;opacity:1}
+  58%,74%{width:min(140px,22vw);opacity:1}
+  100%{width:min(140px,22vw);opacity:0}
+}
+html.sem-abertura .abertura{display:none}
+
 /* ---------- Entrada do conteúdo ---------- */
 .entra{animation:entraSobe .7s var(--ease) both}
+html:not(.sem-abertura) .entra{animation-delay:1.55s}
+html:not(.sem-abertura) .entra-2{animation-delay:1.68s}
+html:not(.sem-abertura) .entra-3{animation-delay:1.8s}
+html.sem-abertura .entra-2{animation-delay:.12s}
+html.sem-abertura .entra-3{animation-delay:.24s}
 @keyframes entraSobe{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
 /* ---------- Seções ---------- */
@@ -312,6 +339,8 @@ body{
 }
 
 @media(prefers-reduced-motion:reduce){
+  .abertura{display:none}
+  .entra,.entra-2,.entra-3,.hero-float{animation:none}
   html{scroll-behavior:auto}
   .carousel-viewport{scroll-behavior:auto}
   .city-card:hover,.emp-card:hover,.tool-card:hover{transform:none}

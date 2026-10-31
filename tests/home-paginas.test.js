@@ -31,3 +31,16 @@ test('cada cidade tem foto 1200 e 640 no repositório', () => {
 test('ícones 3D dos simuladores existem', () => {
   for (const n of ['calculadora', 'tabela']) assert.ok(fs.existsSync(path.join(RAIZ, `assets/img/icones-3d/${n}.svg`)));
 });
+
+test('index tem abertura com logo grande e decide antes do primeiro desenho', () => {
+  assert.match(INDEX, /<div class="abertura" aria-hidden="true">\s*<img[^>]*src="assets\/img\/logo-direcional\.jpg"/);
+  assert.ok(INDEX.indexOf('Home.deveMostrarAbertura') > 0);
+  assert.ok(INDEX.indexOf('Home.deveMostrarAbertura') < INDEX.indexOf('class="site-header"'));
+  assert.ok(INDEX.indexOf('assets/home.js') < INDEX.indexOf('</head>'));
+});
+
+test('redução de movimento desliga abertura e entrada', () => {
+  const bloco = CSS.slice(CSS.indexOf('prefers-reduced-motion'));
+  assert.match(bloco, /\.abertura\s*\{[^}]*display:\s*none/);
+  assert.match(bloco, /\.entra[^{]*\{[^}]*animation:\s*none/);
+});
