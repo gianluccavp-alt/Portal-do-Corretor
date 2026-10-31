@@ -972,10 +972,15 @@
     if (!alvo || !alvo.offsetParent) alvo = row.querySelector('.cb');
     if (alvo) alvo.focus();
   });
-  /* Enter nos campos avanca; em botoes, links e no titulo da etapa nao */
-  $('mt-perguntas').addEventListener('keydown', function (ev) {
-    if (ev.key !== 'Enter' || ev.isComposing || ev.defaultPrevented) return;
-    if (!ev.target || ev.target.tagName !== 'INPUT') return;
+  /* Enter avanca (como "Continuar", com validacao) em toda etapa: nos campos, cartoes, pilulas, tiles,
+     politicas, titulo e corpo da etapa; Espaco segue alternando a selecao. Voltar, Sair, trilha, o proprio
+     Continuar (clique nativo) e links ficam com o Enter nativo. Tecla segurada (repeat) nao pula etapas. */
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Enter' || ev.isComposing || ev.defaultPrevented || estado.tela !== 'perguntas') return;
+    var alvo = ev.target, tela = $('mt-perguntas');
+    if (!alvo || !(tela.contains(alvo) || alvo === document.body || alvo === document.documentElement)) return;
+    if (ev.repeat) { ev.preventDefault(); return; }
+    if (alvo.closest && alvo.closest('#mt-voltar, #mt-sair, .mt-tl-btn, #mt-continuar, a')) return;
     ev.preventDefault();
     continuar();
   });
