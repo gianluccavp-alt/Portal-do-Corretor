@@ -47,6 +47,7 @@ window.CITIES = [
     id: 'campinas',
     name: 'Campinas',
     uf: 'SP',
+    foto: 'assets/img/cidades/campinas.webp',
     empreendimentos: [
       {
         id: 'alta-vista-mangara',
@@ -270,6 +271,7 @@ window.CITIES = [
     id: 'ribeirao-preto',
     name: 'Ribeirão Preto',
     uf: 'SP',
+    foto: 'assets/img/cidades/ribeirao-preto.webp',
     empreendimentos: [
       {
         id: 'village-park',
@@ -514,6 +516,7 @@ window.CITIES = [
     id: 'sorocaba',
     name: 'Sorocaba',
     uf: 'SP',
+    foto: 'assets/img/cidades/sorocaba.webp',
     empreendimentos: [
       {
         id: 'conquista-vila-da-mata',

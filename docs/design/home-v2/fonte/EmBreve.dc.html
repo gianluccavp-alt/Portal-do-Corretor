@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Match de Unidades — Em breve</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F7}
+a{color:#3A4043;text-decoration:none}a:hover{color:#E4032B}
+*{box-sizing:border-box}
+
+.pc-nav{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.86);backdrop-filter:saturate(1.6) blur(14px);-webkit-backdrop-filter:saturate(1.6) blur(14px);border-bottom:1px solid #E7E9EA}
+.pc-nav-in{max-width:1280px;margin:0 auto;padding:14px 32px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px}
+.pc-links{display:flex;gap:4px;padding:5px;border-radius:999px;background:#F2F3F4;border:1px solid #E7E9EA;overflow-x:auto;max-width:100%}
+.pc-link{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 16px 0 10px;border-radius:999px;font-size:14.5px;font-weight:500;color:#3A4043;white-space:nowrap;transition:background .2s,box-shadow .2s,color .2s}
+.pc-link img{width:26px;height:26px;transition:transform .3s cubic-bezier(.22,1,.36,1)}
+.pc-link:hover,.pc-link.is-on{background:#FFFFFF;color:#E4032B;box-shadow:0 1px 2px rgba(58,64,67,.06),0 4px 14px rgba(58,64,67,.08)}
+.pc-link:hover img{transform:translateY(-2px) rotate(-6deg) scale(1.08)}
+
+.pc-soon{flex:1;display:flex;align-items:center;justify-content:center;padding:64px 24px 80px}
+.pc-soon-in{max-width:560px;display:flex;flex-direction:column;align-items:center;text-align:center;animation:pcUp .7s cubic-bezier(.22,1,.36,1) both}
+.pc-stage{position:relative;width:260px;height:220px}
+.pc-orbit{position:absolute;left:50%;top:50%;border-radius:50%;border:1px solid #E7E9EA;transform:translate(-50%,-50%)}
+.pc-orbit-dash{border-style:dashed;border-color:#E9C6CD;animation:pcSpin 40s linear infinite}
+.pc-float{position:absolute;filter:drop-shadow(0 20px 24px rgba(58,64,67,.18));animation:pcFloat 6s ease-in-out infinite}
+.pc-float-b{animation-duration:7s;animation-delay:-2s}
+.pc-float-c{animation-duration:5.5s;animation-delay:-4s}
+@keyframes pcFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-10px) rotate(-3deg)}}
+@keyframes pcSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes pcUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.pc-dot{width:8px;height:8px;border-radius:50%;background:#E4032B;box-shadow:0 0 0 0 rgba(228,3,43,.45);animation:pcPulse 1.8s ease-out infinite}
+@keyframes pcPulse{0%{box-shadow:0 0 0 0 rgba(228,3,43,.45)}100%{box-shadow:0 0 0 10px rgba(228,3,43,0)}}
+
+.pc-btn{display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:0 22px;border-radius:999px;background:#E4032B;color:#FFFFFF;font-size:15px;font-weight:700;transition:background .2s,box-shadow .2s,transform .2s}
+.pc-btn:hover{background:#B8001F;color:#FFFFFF;box-shadow:0 10px 22px rgba(228,3,43,.25);transform:translateY(-1px)}
+.pc-btn:focus-visible{outline:3px solid #E4032B;outline-offset:3px}
+
+@media (max-width:900px){
+  .pc-nav-in{padding-left:20px;padding-right:20px}
+  .pc-brand-label{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .pc-float,.pc-orbit-dash,.pc-dot,.pc-soon-in{animation:none}
+}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-direction: column; background: #F5F6F7; color: #3A4043; font-family: 'DM Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+
+<header class="pc-nav">
+<div class="pc-nav-in">
+<a href="Main.dc.html" aria-label="Portal do Corretor — início" style="display: flex; align-items: center; gap: 16px; min-height: 44px">
+<img src="/_blob/0eea1a6c128d90a2c643d32cd04c2a32" alt="Grupo Direcional" style="height: 34px; width: auto; display: block">
+<span class="pc-brand-label" style="display: flex; align-items: center; gap: 16px">
+<span style="width: 1px; height: 26px; background: #E7E9EA"></span>
+<span style="font-size: 12px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; color: #5F676A">Portal do Corretor</span>
+</span>
+</a>
+<nav class="pc-links" aria-label="Ferramentas">
+<a class="pc-link" href="Main.dc.html#ferramentas"><img src="/_blob/160dee15f29fe64deeb5217248d5001f" alt="">Simulador Associativo</a>
+<a class="pc-link" href="Main.dc.html#ferramentas"><img src="/_blob/2d7fecebd5909f50cb266fdfb8db286a" alt="">Tabela Direta</a>
+<a class="pc-link is-on" href="EmBreve.dc.html" aria-current="page"><img src="/_blob/cfc350d5c321cc290d5b2c20a28b0ef9" alt="">Match de Unidades</a>
+</nav>
+</div>
+</header>
+
+<main class="pc-soon">
+<div class="pc-soon-in">
+<div class="pc-stage" aria-hidden="true">
+<div class="pc-orbit pc-orbit-dash" style="width: 210px; height: 210px"></div>
+<div class="pc-orbit" style="width: 140px; height: 140px; background: #FFFFFF"></div>
+<img class="pc-float" src="/_blob/cfc350d5c321cc290d5b2c20a28b0ef9" alt="" style="width: 112px; height: 112px; left: 74px; top: 50px">
+<img class="pc-float pc-float-b" src="/_blob/c939aea8505e1f74031bdc25630a9e01" alt="" style="width: 58px; height: 58px; left: 8px; top: 18px">
+<img class="pc-float pc-float-c" src="/_blob/871e94845e0d8622e75b1eed37fe3103" alt="" style="width: 56px; height: 56px; left: 196px; top: 138px">
+</div>
+
+<span style="margin-top: 18px; display: inline-flex; align-items: center; gap: 10px; padding: 7px 14px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E7E9EA; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #B8001F"><span class="pc-dot"></span>Em breve</span>
+
+<h1 style="margin: 18px 0 0; font-size: clamp(34px, 4.6vw, 52px); line-height: 1.06; letter-spacing: -0.035em; font-weight: 700; color: #3A4043">Match de Unidades</h1>
+<p style="margin: 14px 0 0; font-size: 18px; line-height: 1.55; color: #5F676A">Estamos finalizando essa ferramenta. Em breve ela estará disponível aqui no portal.</p>
+
+<a class="pc-btn" href="Main.dc.html" style="margin-top: 32px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+Voltar para o início
+</a>
+</div>
+</main>
+
+<footer style="background: #FFFFFF; border-top: 1px solid #E7E9EA">
+<div style="max-width: 1280px; margin: 0 auto; padding: 26px 32px; font-size: 14px; color: #5F676A; text-align: center"><strong style="color: #3A4043; font-weight: 700">Produtos SPI</strong> · Grupo Direcional — São Paulo Interior</div>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
