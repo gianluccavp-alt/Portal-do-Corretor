@@ -306,20 +306,32 @@ async function iniciar(emp) {
     if (!texto.trim()) { msg.hidden = true; return; }
     const b = M.interpretarBusca(texto);
     let idx = -1;
+    let hint = null;
     if (b) {
       if (b.torre !== null) idx = M.indice(gcfg, b.torre, b.andar, b.final);
       else {
         /* sem torre: primeira torre a venda que tenha essa unidade */
         const torres = st.grade.torresAVenda.length ? st.grade.torresAVenda : gcfg.torres;
+        const achadas = [];
         for (const t of torres) {
           const i = M.indice(gcfg, t, b.andar, b.final);
-          if (i !== -1) { idx = i; break; }
+          if (i !== -1 && st.grade.celulas[i].estado !== 'fora') achadas.push({ t, i });
+        }
+        if (achadas.length) { idx = achadas[0].i; hint = achadas; }
+        else {
+          for (const t of torres) {
+            const i = M.indice(gcfg, t, b.andar, b.final);
+            if (i !== -1) { idx = i; break; }
+          }
         }
       }
     }
     if (idx === -1) { avisar('Unidade não encontrada'); return; }
     if (st.grade.celulas[idx].estado === 'fora') { avisar('Torre fora de venda'); return; }
-    msg.hidden = true;
+    if (hint && hint.length > 1) {
+      avisar('Mostrando Torre ' + hint[0].t + ' · também existe na ' +
+        hint.slice(1).map((x) => 'Torre ' + x.t).join(', '));
+    } else msg.hidden = true;
     abrir(idx);
   }
 

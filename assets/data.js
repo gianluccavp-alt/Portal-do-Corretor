@@ -373,7 +373,8 @@ function rowsToUnits(rows, empSheetName, opts) {
     var isExtra = normKey(empVal) !== normKey(empSheetName); // veio de um nome agregado
 
     // so entram as unidades Disponivel ou Mirror; Reservada e Reservada aguardando
-    // revisao de proposta (e qualquer outro status) ficam de fora do site
+    // revisao de proposta (e qualquer outro status) ficam de fora do site,
+    // exceto quando opts.todosStatus esta ligado (ex: maquete 3D), que pula o filtro
     var statusRaw = findFirst(r, [['status', 'unidade'], ['status']]);
     var statusU = normKey(statusRaw);
     if (!(opts && opts.todosStatus) && statusU !== 'disponivel' && statusU !== 'mirror') continue;
