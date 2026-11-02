@@ -186,6 +186,17 @@ export async function criarCena(container, cfg, ev = {}) {
   renderer.domElement.style.touchAction = 'none';
   container.appendChild(renderer.domElement);
 
+  try {
+    return await montar(renderer, container, cfg, grade, total, onProgresso, onHover, onClick);
+  } catch (e) {
+    renderer.dispose();
+    renderer.forceContextLoss();
+    renderer.domElement.remove();
+    throw e;
+  }
+}
+
+async function montar(renderer, container, cfg, grade, total, onProgresso, onHover, onClick) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(40, 1, 0.5, 4000);
   const ceu = criarCeu();
@@ -318,7 +329,7 @@ export async function criarCena(container, cfg, ev = {}) {
     const pos = info.centro.clone().addScaledVector(info.normal, 1.2);
     pos.y = info.centro.y + 0.2;
     const alvo = info.centro.clone().addScaledVector(info.normal, 60);
-    alvo.y = info.centro.y - 6; // olha levemente para baixo (respeita maxPolarAngle)
+    alvo.y = Math.max(0.5, info.centro.y - 6); // olha levemente para baixo, nunca abaixo do chao
     animarPara(pos, alvo);
   }
 
@@ -349,14 +360,17 @@ export async function criarCena(container, cfg, ev = {}) {
 
   let hoverPend = null;
   let hoverIdx = null;
+  let ultimoMouse = null; // ultima posicao do mouse sobre o canvas
   let baixo = null;
 
   function onMove(e) {
     if (e.pointerType !== 'mouse') return;
-    hoverPend = { x: e.clientX, y: e.clientY };
+    ultimoMouse = { x: e.clientX, y: e.clientY };
+    hoverPend = ultimoMouse;
   }
   function onLeave() {
     hoverPend = null;
+    ultimoMouse = null;
     if (hoverIdx !== null) {
       hoverIdx = null;
       uni.uHover.value = -1;
@@ -364,9 +378,20 @@ export async function criarCena(container, cfg, ev = {}) {
       onHover(null, 0, 0);
     }
   }
-  function onDown(e) { baixo = { x: e.clientX, y: e.clientY, t: performance.now() }; }
+  const ativos = new Set();
+  function onDown(e) {
+    ativos.add(e.pointerId);
+    /* botao direito/meio ou segundo dedo (pinca) nao viram clique */
+    if (e.button !== 0 || ativos.size > 1) { baixo = null; return; }
+    baixo = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
+  }
+  function onCancel(e) {
+    ativos.delete(e.pointerId);
+    if (baixo && baixo.id === e.pointerId) baixo = null;
+  }
   function onUp(e) {
-    if (!baixo) return;
+    ativos.delete(e.pointerId);
+    if (!baixo || baixo.id !== e.pointerId) return;
     const dx = e.clientX - baixo.x;
     const dy = e.clientY - baixo.y;
     const curto = performance.now() - baixo.t < 600;
@@ -378,6 +403,7 @@ export async function criarCena(container, cfg, ev = {}) {
   el.addEventListener('pointerleave', onLeave);
   el.addEventListener('pointerdown', onDown);
   el.addEventListener('pointerup', onUp);
+  el.addEventListener('pointercancel', onCancel);
 
   function processarHover() {
     if (!hoverPend) return;
@@ -415,6 +441,7 @@ export async function criarCena(container, cfg, ev = {}) {
   function quadro(agora) {
     if (!rodando) return;
     requestAnimationFrame(quadro);
+    let camMudou = false;
     if (anim) {
       const t = Math.min(1, (agora - anim.t0) / DUR_ANIM);
       const k = suavizar(t);
@@ -422,8 +449,12 @@ export async function criarCena(container, cfg, ev = {}) {
       controls.target.lerpVectors(anim.deAlvo, anim.paraAlvo, k);
       if (t >= 1) anim = null;
       sujo = true;
+      camMudou = true;
     }
-    if (controls.update()) sujo = true;
+    if (controls.update()) { sujo = true; camMudou = true; }
+    if (controls.target.y < 0) { controls.target.y = 0; camMudou = true; }
+    /* camera andou com o mouse parado: refaz o picking para a etiqueta nao ficar velha */
+    if (camMudou && ultimoMouse) hoverPend = ultimoMouse;
     processarHover();
     if (uni.uSel.value >= 0) {
       uni.uPulso.value = 0.5 + 0.5 * Math.sin(agora / 260);
@@ -445,6 +476,7 @@ export async function criarCena(container, cfg, ev = {}) {
     el.removeEventListener('pointerleave', onLeave);
     el.removeEventListener('pointerdown', onDown);
     el.removeEventListener('pointerup', onUp);
+    el.removeEventListener('pointercancel', onCancel);
     controls.dispose();
     scene.traverse((o) => {
       if (o.geometry) o.geometry.dispose();
