@@ -2276,6 +2276,18 @@ $('b-pdf').addEventListener('click', function(){
 /* =========================================================
    INIT
    ========================================================= */
+/* Vindo do Match de Unidades / Maquete 3D: preenche empreendimento, torre e unidade
+   a partir da URL. So popula o estado - nenhuma conta muda. Ausente/invalido e ignorado.
+   A unidade sobrevive ate a planilha carregar: atualizaUnidades() so valida S.unidade
+   contra a lista quando ela ja chegou (carregando/inicial retornam antes). */
+(function aplicaParametrosUrl(){
+  var q = new URLSearchParams(location.search);
+  if(!q.has('emp')) return;
+  var id = q.get('emp');
+  if(EMPS.some(function(e){ return e.id===id; })) S.empId = id;
+  var u = q.get('unidade');
+  if(S.empId && u && /^BL\d+-\d+$/.test(u)){ S.unidade = u; S.blocoId = u.slice(0, u.indexOf('-')); }
+})();
 initCombos();
 sincronizaCampos();
 render();
