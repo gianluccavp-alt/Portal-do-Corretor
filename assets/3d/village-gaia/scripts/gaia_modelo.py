@@ -1,4 +1,6 @@
-# gaia_modelo.py -- reconstroi do zero a cena do Village Gaia (Task 7, rodada 2).
+# gaia_modelo.py -- reconstroi do zero a cena do Village Gaia (Task 7, rodada 3).
+# Rodada 3: arvores menores com cachos de folhas, chao texturizado com meio-fio, janelas de
+# dormitorio meia veneziana/meio vidro com luz noturna (emissao) e portas de 2 folhas nas varandas.
 # Roda DENTRO do Blender (via bl.py). Unidades em metros, Z para cima, origem no centro do terreno.
 # Fontes das medidas: ver task-7a-report.md. Mudancas da rodada 2: ver task-7b-report.md
 #  - cores do book (grafite / cinza medio / prumada escura / guarda-corpo branco)
@@ -165,35 +167,54 @@ def tex_vidro():
     a[:, w // 2 - 2:w // 2 + 2] = 0.80
     return img_from_array('vidro', np.clip(a, 0, 1), 'PNG')
 
+def _reflexo(h, w):
+    """vidro escuro com reflexo do ceu (degrade vertical + faixa diagonal)."""
+    y = (np.arange(h)[:, None] / max(1, h - 1)).astype(np.float32)
+    x = (np.arange(w)[None, :] / max(1, w - 1)).astype(np.float32)
+    t = 1 - y
+    base = np.stack([0.10 + 0.20 * t, 0.12 + 0.25 * t, 0.15 + 0.30 * t], 2) * np.ones((h, w, 1))
+    return base + np.exp(-((x * 0.9 + y * 0.6 - 0.55) / 0.10) ** 2)[..., None] * 0.10
+
 def tex_veneziana():
-    """Janela de dormitorio (1,20 x 1,20 m): caixilho branco, 2 folhas de veneziana de correr
-    (laminas horizontais) e contramarco escuro em volta (sombra do vao)."""
-    w, h = 128, 128
-    a = np.ones((h, w, 3), np.float32) * 0.94
-    for yy in range(10, h - 8, 5):          # laminas: sombra embaixo de cada uma
-        a[yy:yy + 1, 7:-7] = 0.62
-        a[yy + 1:yy + 2, 7:-7] = 0.78
-    a[:, 62:66] = 0.84                       # encontro das folhas
-    a[:, 60:62] = 0.70
-    a[:7], a[-7:], a[:, :7], a[:, -7:] = 0.99, 0.99, 0.99, 0.99    # caixilho
-    a[:2], a[-2:], a[:, :2], a[:, -2:] = 0.35, 0.35, 0.35, 0.35    # contramarco/sombra do vao
-    return img_from_array('veneziana', a, 'PNG')
+    """Janela de dormitorio (1,20 x 1,20 m), como nos renders do book: 2 folhas de correr,
+    uma de veneziana (laminas horizontais, fechada) e uma de vidro. Devolve (cor, luz):
+    'luz' e o mapa de emissao (so o vidro), ligado pela pagina no modo noite."""
+    n, f, c = 256, 12, 128
+    a = np.ones((n, n, 3), np.float32) * 0.94
+    for yy in range(f + 4, n - f - 2, 9):          # laminas: sombra embaixo de cada uma
+        a[yy:yy + 2, f:c] = 0.62
+        a[yy + 2:yy + 4, f:c] = 0.78
+    a[f:n - f, c:n - f] = _reflexo(n - 2 * f, n - f - c)
+    a[:, c - 4:c + 4] = 0.97                        # encontro das folhas (montantes)
+    a[:, c + 4:c + 6] = 0.55
+    a[:f], a[-f:], a[:, :f], a[:, -f:] = 0.99, 0.99, 0.99, 0.99    # caixilho
+    a[:3], a[-3:], a[:, :3], a[:, -3:] = 0.35, 0.35, 0.35, 0.35    # contramarco/sombra do vao
+    luz = np.zeros((n, n, 3), np.float32)
+    yv = (np.arange(n - 2 * f)[:, None] / (n - 2 * f)).astype(np.float32)
+    quente = np.array([1.0, 0.80, 0.52], np.float32)
+    luz[f:n - f, c + 6:n - f] = quente * (0.78 + 0.22 * yv[..., None])   # mais forte embaixo (abajur/teto)
+    return img_from_array('veneziana', np.clip(a, 0, 1), 'PNG'), img_from_array('veneziana_luz', luz, 'PNG')
 
 def tex_basculante():
     """Janela de banheiro (0,60 x 0,60 m, alta): caixilho branco e 2 basculantes de vidro
-    mini-boreal (translucido, cinza-azulado), sem veneziana."""
+    mini-boreal (translucido, cinza-azulado), sem veneziana. Devolve (cor, luz)."""
     w, h = 64, 64
     y = (np.arange(h)[:, None] / (h - 1)).astype(np.float32)
     rng = np.random.default_rng(9)
     tx = blur_wrap(rng.normal(0, 1, (h, w)), 1) * 0.03                 # textura do vidro
     v = np.stack([0.30 + 0.10 * (1 - y) + tx, 0.34 + 0.10 * (1 - y) + tx, 0.39 + 0.10 * (1 - y) + tx], 2)
     a = (v * np.ones((h, w, 1))).astype(np.float32)
+    vidro = np.zeros((h, w), bool); vidro[4:-4, 4:-4] = True
     a[:4], a[-4:], a[:, :4], a[:, -4:] = 0.97, 0.97, 0.97, 0.97      # caixilho
     a[h // 2 - 1:h // 2 + 1] = 0.92                                   # travessa entre basculantes
+    vidro[h // 2 - 1:h // 2 + 3] = False
     a[h // 2 + 1:h // 2 + 3, 4:-4] = 0.22                             # sombra da folha basculada
     a[4:6, 4:-4] = 0.24
     a[:2], a[-2:], a[:, :2], a[:, -2:] = 0.35, 0.35, 0.35, 0.35
-    return img_from_array('basculante', np.clip(a, 0, 1), 'PNG')
+    luz = np.zeros((h, w, 3), np.float32)
+    luz[vidro] = np.array([0.96, 0.93, 0.84], np.float32)             # luz fria/neutra filtrada pelo boreal
+    luz *= (0.85 + 0.15 * np.clip(tx / 0.03, -1, 1))[..., None]
+    return img_from_array('basculante', np.clip(a, 0, 1), 'PNG'), img_from_array('basculante_luz', np.clip(luz, 0, 1), 'PNG')
 
 def tex_guarda_corpo():
     w, h = 256, 64
@@ -206,23 +227,101 @@ def tex_guarda_corpo():
     a[:, :3, 3] = 1; a[:, -3:, 3] = 1
     return img_from_array('guarda_corpo', a, 'PNG', alpha=True)
 
+# portas do fundo da varanda, pelas plantas tipo (meio e ponta): u = 0 na divisa entre as duas
+# varandas do quadrante (Y_DIV), onde fica a cozinha. Cada porta e de correr com 2 folhas.
+PORTAS_VARANDA = ((0.12, 0.37, 'cozinha / area de servico'), (0.48, 0.92, 'sala'))
+PORTA_TOPO = 2.10    # altura da porta acima do piso do andar
+
 def tex_porta_unidade():
-    """Fundo da varanda (malha 'unidades'): parede (0.55), porta de correr de vidro (1.0),
-    caixilhos (0.30). Cinza: a pagina multiplica pela cor do estado da unidade."""
-    w, h = 256, 160
+    """Fundo da varanda (malha 'unidades'): parede (0.55), duas portas de vidro de 2 folhas
+    (vidro 1.0, caixilhos 0.30, puxadores). Cinza: a pagina multiplica pela cor do estado."""
+    w, h = 512, 256
     a = np.full((h, w), 0.55, np.float32)
-    x0, x1 = int(0.17 * w), int(0.83 * w)
-    ytop = int(0.10 * h)
-    a[ytop:, x0:x1] = 1.0
-    fr = 3
-    a[ytop:ytop + fr, x0:x1] = 0.30
-    a[ytop:, x0:x0 + fr] = 0.30; a[ytop:, x1 - fr:x1] = 0.30
-    for u in (0.335, 0.5, 0.665):
-        c = int(u * w); a[ytop:, c - 2:c + 2] = 0.30
-    a[-3:, x0:x1] = 0.30
+    alt = (PD - 0.15) - 0.35                               # altura do quad (z_rel 0,35 a PD - 0,15)
+    ytop = int(round((1 - (PORTA_TOPO - 0.35) / alt) * h))
     yy = (np.arange(h)[:, None] / h)
-    a[ytop:, x0:x1] *= (0.92 + 0.08 * (1 - yy[ytop:]))     # leve degrade no vidro
+    fr = 5
+    for u0, u1, _amb in PORTAS_VARANDA:
+        x0, x1 = int(u0 * w), int(u1 * w)
+        a[ytop - 3:, x0 - 3:x1 + 3] = 0.42                 # sombra do vao/contramarco
+        a[ytop:, x0:x1] = 1.0 * (0.90 + 0.10 * (1 - yy[ytop:]))
+        a[ytop:ytop + fr, x0:x1] = 0.30
+        a[ytop:, x0:x0 + fr] = 0.30; a[ytop:, x1 - fr:x1] = 0.30
+        a[-fr:, x0:x1] = 0.30
+        c = (x0 + x1) // 2                                 # encontro das 2 folhas (sobreposicao)
+        a[ytop:, c - 4:c + 4] = 0.30
+        a[ytop:, c + 4:c + 6] = 0.45
+        pm = ytop + int(0.45 * (h - ytop))                 # puxadores
+        a[pm - 10:pm + 10, c - 9:c - 6] = 0.22
+        a[pm - 10:pm + 10, c + 6:c + 9] = 0.22
     return img_from_array('porta_unidade', np.stack([a] * 3, 2), 'PNG')
+
+def tex_grama():
+    """Grama colorida (sRGB), 1024 px = 8 m: folhas finas, touceiras e manchas secas."""
+    n = 1024
+    rng = np.random.default_rng(21)
+    fino = norm01(blur_wrap(rng.normal(0, 1, (n, n)), 0, 1))
+    touceira = norm01(blur_wrap(rng.normal(0, 1, (n, n)), 5))
+    mancha = norm01(blur_wrap(blur_wrap(rng.normal(0, 1, (n, n)), 45), 45))
+    seco = np.clip(0.5 + 0.35 * mancha + 0.12 * touceira, 0, 1)[..., None]
+    verde = np.array([0.31, 0.41, 0.19], np.float32)
+    palha = np.array([0.50, 0.48, 0.30], np.float32)
+    cor = verde * (1 - seco * 0.45) + palha * (seco * 0.45)
+    luz = 1 + 0.16 * fino + 0.09 * touceira
+    return img_from_array('grama', np.clip(cor * luz[..., None], 0, 1).astype(np.float32), 'JPEG', quality=84)
+
+def tex_asfalto():
+    """Asfalto (sRGB), 512 px = 8 m: agregado claro/escuro, remendos e desgaste."""
+    n = 512
+    rng = np.random.default_rng(22)
+    sal = (rng.random((n, n)) > 0.985) * 0.18 - (rng.random((n, n)) > 0.98) * 0.10
+    g = norm01(blur_wrap(rng.normal(0, 1, (n, n)), 1))
+    m = norm01(blur_wrap(blur_wrap(rng.normal(0, 1, (n, n)), 25), 25))
+    v = 0.33 + 0.03 * g + 0.035 * m + sal
+    cor = np.stack([v * 1.00, v * 1.00, v * 1.03], 2)
+    return img_from_array('asfalto', np.clip(cor, 0, 1).astype(np.float32), 'JPEG', quality=82)
+
+def tex_piso():
+    """Passeio de placas de concreto 0,5 x 0,5 m (sRGB), 512 px = 8 m, tom variando por placa."""
+    n, p = 512, 32
+    rng = np.random.default_rng(23)
+    tons = rng.normal(0, 0.025, (n // p, n // p))
+    v = 0.74 + np.kron(tons, np.ones((p, p)))
+    v += 0.02 * norm01(blur_wrap(rng.normal(0, 1, (n, n)), 1))
+    v += 0.025 * norm01(blur_wrap(blur_wrap(rng.normal(0, 1, (n, n)), 30), 30))
+    r = np.arange(n)
+    junta = ((r % p) < 2)
+    v[junta, :] -= 0.16; v[:, junta] -= 0.16
+    cor = np.stack([v, v * 0.98, v * 0.93], 2)
+    return img_from_array('piso', np.clip(cor, 0, 1).astype(np.float32), 'JPEG', quality=82)
+
+def tex_folhas():
+    """Cacho de folhas com alfa (512 px, cinza: tingido pela especie). Usado nos cartoes da copa."""
+    n = 512
+    rng = np.random.default_rng(24)
+    a = np.zeros((n, n, 4), np.float32)
+    yy, xx = np.mgrid[0:n, 0:n].astype(np.float32)
+    cx = cy = n / 2
+    for _ in range(520):
+        rr = n * 0.46 * math.sqrt(rng.random())          # mais densas no meio do cacho
+        th = rng.random() * 6.283
+        px, py = cx + rr * math.cos(th), cy + rr * math.sin(th)
+        L, W = rng.uniform(14, 26), rng.uniform(5, 9)
+        ang = rng.random() * 3.1416
+        ca, sa = math.cos(ang), math.sin(ang)
+        x0, x1 = int(max(0, px - L)), int(min(n, px + L + 1))
+        y0, y1 = int(max(0, py - L)), int(min(n, py + L + 1))
+        dx, dy = xx[y0:y1, x0:x1] - px, yy[y0:y1, x0:x1] - py
+        u = (dx * ca + dy * sa) / L
+        w_ = (-dx * sa + dy * ca) / W
+        dentro = (u * u + w_ * w_) <= 1
+        tom = rng.uniform(0.62, 1.0) * (0.92 + 0.08 * (1 - rr / (n * 0.46)))
+        lado = np.where(w_ > 0, 1.0, 0.86)                # nervura: metade da folha mais escura
+        bloco = a[y0:y1, x0:x1]
+        bloco[..., :3] = np.where(dentro[..., None], (tom * lado)[..., None], bloco[..., :3])
+        bloco[..., 3] = np.where(dentro, 1.0, bloco[..., 3])
+    a[..., :3] = np.where(a[..., 3:] > 0, a[..., :3], 0.75)   # fundo com a cor media (sem halo escuro no mipmap)
+    return img_from_array('folhas', a, 'PNG', alpha=True)
 
 # ------------------------------------------------------------------ materiais
 MATS = {}
@@ -236,7 +335,7 @@ def lin(v):
     return ((v + 0.055) / 1.055) ** 2.4
 
 def mat(name, rgb, rough=0.85, img=None, tint=False, nrm=None, nrm_str=1.0, emit=None, emit_str=0.0,
-        alpha_img=False, metal=0.0, double=False, img_mean=0.9):
+        alpha_img=False, metal=0.0, double=False, img_mean=0.9, emit_img=None):
     """rgb linear. tint=True: imagem cinza multiplicada pela cor (baseColorFactor no glTF);
     a cor e compensada pela media da imagem para o resultado medio dar ~rgb."""
     m = bpy.data.materials.new(name)
@@ -276,6 +375,11 @@ def mat(name, rgb, rough=0.85, img=None, tint=False, nrm=None, nrm_str=1.0, emit
     if emit is not None:
         p.inputs['Emission Color'].default_value = (*emit, 1)
         p.inputs['Emission Strength'].default_value = emit_str
+    if emit_img is not None:
+        # glTF: emissiveTexture + emissiveFactor 1; a pagina zera a intensidade no modo dia
+        te = nt.nodes.new('ShaderNodeTexImage'); te.image = emit_img; te.location = (-700, -650)
+        nt.links.new(te.outputs['Color'], p.inputs['Emission Color'])
+        p.inputs['Emission Strength'].default_value = 1.0
     m.use_backface_culling = not double
     MATS[name] = m
     return m
@@ -291,28 +395,32 @@ def criar_materiais():
     mat('varanda_forro', srgb('#d3c9ba'), 0.9)
     mat('varanda_parede', srgb('#b9b1a9'), 0.9)
     mat('vidro', (1, 1, 1), 0.15, img=tex_vidro())
-    mat('janela_veneziana', (1, 1, 1), 0.7, img=tex_veneziana())          # dormitorios
-    mat('janela_banheiro', (1, 1, 1), 0.3, img=tex_basculante())          # banheiros (basculante)
+    ven, ven_luz = tex_veneziana()
+    bas, bas_luz = tex_basculante()
+    mat('janela_veneziana', (1, 1, 1), 0.45, img=ven, emit_img=ven_luz)    # dormitorios: meia veneziana, meio vidro
+    mat('janela_banheiro', (1, 1, 1), 0.3, img=bas, emit_img=bas_luz)      # banheiros (basculante)
     mat('guarda_corpo', (1, 1, 1), 0.45, img=tex_guarda_corpo(), alpha_img=True)
     mat('cobertura', srgb('#77757a'), 0.95, img=reb, tint=True)
     mat('muro', srgb('#6a6870'), 0.95, img=reb, tint=True)
-    mat('unidade', srgb('#2b3440'), 0.2, img=tex_porta_unidade(), tint=True, img_mean=0.8,
+    mat('unidade', srgb('#2b3440'), 0.2, img=tex_porta_unidade(), tint=True, img_mean=0.7,
         emit=srgb('#ffc77a'), emit_str=0.0)
-    # chao
-    mat('grama', srgb('#5f8a3c'), 0.95, img=ch, tint=True)
-    mat('asfalto', srgb('#5c5e63'), 0.9, img=ch, tint=True)
-    mat('passeio', srgb('#bdb8ae'), 0.9, img=ch, tint=True)
-    mat('faixa', srgb('#ececea'), 0.8)
+    # chao (rodada 3: texturas coloridas no lugar de cor chapada + detalhe neutro)
+    gra = tex_grama()
+    mat('grama', (1, 1, 1), 0.95, img=gra)
+    mat('asfalto', (1, 1, 1), 0.9, img=tex_asfalto())
+    mat('passeio', (1, 1, 1), 0.9, img=tex_piso())
+    mat('meio_fio', srgb('#c4bfb5'), 0.9, img=ch, tint=True)
+    mat('faixa', srgb('#e4e4e0'), 0.8, img=ch, tint=True)
     mat('agua', srgb('#4fb0c6'), 0.1)
     mat('quadra', srgb('#3e5a8c'), 0.8)
-    mat('entorno', srgb('#7d9257'), 0.95, img=ch, tint=True)
-    # arvores
+    mat('entorno', (0.50, 0.50, 0.42), 0.95, img=gra, tint=True, img_mean=0.9)   # pasto mais seco e fosco
+    # arvores: miolo opaco (sombra interna) + cartoes de folhas com alfa, tingidos por especie
+    fol = tex_folhas()
     mat('tronco', srgb('#5b4a3a'), 0.95)
-    mat('copa_verde', srgb('#4d7a35'), 0.9)
-    mat('copa_verde_clara', srgb('#6f9440'), 0.9)
-    mat('copa_verde_escura', srgb('#355a2a'), 0.9)
-    mat('ipe_rosa', srgb('#b65f97'), 0.9)
-    mat('ipe_amarelo', srgb('#d9b53a'), 0.9)
+    for nome, cor in (('verde', '#4f7a33'), ('verde_clara', '#6d923e'), ('verde_escura', '#3a5e2b'),
+                      ('ipe_rosa', '#c27d9f'), ('ipe_amarelo', '#ddb83c')):
+        mat('miolo_' + nome, tuple(c * 0.45 for c in srgb(cor)), 0.95)
+        mat('folha_' + nome, srgb(cor), 0.8, img=fol, tint=True, alpha_img=True, img_mean=0.8)
     mat('palmeira', srgb('#5d8236'), 0.9, double=True)
 
 # ------------------------------------------------------------------ geometria
@@ -508,7 +616,9 @@ def unidades():
                 k = len(verts)
                 verts += cs
                 faces.append((k, k + 1, k + 2, k + 3))
-                uvs += [(0, 0), (1, 0), (1, 1), (0, 1)]
+                # u = 0 na divisa Y_DIV (lado da cozinha) em todas as unidades (espelhadas ou nao)
+                larg = abs(yb - ya) - 0.20
+                uvs += [((abs(abs(p[1] - cy) - Y_DIV) - 0.10) / larg, 0 if p[2] == z0 else 1) for p in cs]
                 unit += [float(indice(t, andar, int(fin)))] * 4
     me = bpy.data.meshes.new('unidades')
     me.from_pydata(verts, [], faces)
@@ -832,6 +942,22 @@ def terreno(cls, linha):
             uvl.data[li].uv = (co.x / 8.0, co.y / 8.0)
         for v in me.vertices:
             v.co.z = z
+        if mname == 'passeio':
+            # calcada elevada 12 cm com meio-fio (a borda pega luz e sombra: deixa de ser "adesivo")
+            bt = bmesh.new(); bt.from_mesh(me)
+            ret = bmesh.ops.extrude_face_region(bt, geom=list(bt.faces))
+            for v in (e for e in ret['geom'] if isinstance(e, bmesh.types.BMVert)):
+                v.co.z += 0.12
+            uvt = bt.loops.layers.uv.active
+            mf = b.mi(MATS['meio_fio'])
+            for f in bt.faces:
+                f.normal_update()
+                if abs(f.normal.z) < 0.5:
+                    f.material_index = mf
+                    for l in f.loops:
+                        co = l.vert.co
+                        l[uvt].uv = ((co.x + co.y) / 8.0, co.z / 8.0)
+            bt.to_mesh(me); bt.free()
         bm.from_mesh(me)
         bpy.data.meshes.remove(me)
     # faixas brancas
@@ -851,7 +977,12 @@ def terreno(cls, linha):
     ob = b.to_object()
     return ob, stats
 
-# ------------------------------------------------------------------ arvores organicas
+# ------------------------------------------------------------------ arvores (rodada 3)
+# Rodada 2 reprovada ("parece videogame", copas de 7-10 m tapando a vista do terreo). Agora:
+#  - porte de arvore jovem de condominio: 4-6 m de altura, copa de 2,6-4 m de diametro
+#  - copa = miolo escuro (sombra interna) + ~30 cartoes de folhas recortadas (alfa), com
+#    normais apontando para fora da copa (luz de "bola" suave) e cor por vertice (AO falso:
+#    mais escuro embaixo e no miolo). Exportado com COLOR_0 so nesta malha.
 def _ruido(rnd):
     ds = []
     for _ in range(4):
@@ -859,60 +990,132 @@ def _ruido(rnd):
         ds.append((v, rnd.uniform(1.6, 3.2), rnd.uniform(0, 6.28)))
     return lambda p: sum(math.sin(w * float(np.dot(p, d)) + ph) for d, w, ph in ds) / 4.0
 
-def copa(bm, b, rnd, c, rad, esc_z, mname, sub=2, amp=0.16):
-    ret = bmesh.ops.create_icosphere(bm, subdivisions=sub, radius=1.0)
+class Malha:
+    """Acumula faces com UV, material, normal e cor por canto; vira objeto com normais custom."""
+    def __init__(self, name):
+        self.name, self.v, self.f, self.uv, self.fm, self.n, self.c, self.mats = name, [], [], [], [], [], [], []
+
+    def mi(self, nome):
+        m = MATS[nome]
+        if m not in self.mats:
+            self.mats.append(m)
+        return self.mats.index(m)
+
+    def face(self, cos, uvs, mname, nrms, cols):
+        k = len(self.v)
+        self.v += [tuple(map(float, c)) for c in cos]
+        self.f.append(tuple(range(k, k + len(cos))))
+        self.uv += uvs; self.n += [tuple(map(float, n)) for n in nrms]; self.c += cols
+        self.fm.append(self.mi(mname))
+
+    def to_object(self):
+        me = bpy.data.meshes.new(self.name)
+        me.from_pydata(self.v, [], self.f)
+        me.update()
+        uvl = me.uv_layers.new(name='UVMap')
+        uvl.data.foreach_set('uv', np.array([self.uv[l.vertex_index] for l in me.loops], np.float32).ravel())
+        me.polygons.foreach_set('material_index', self.fm)
+        col = me.color_attributes.new('Col', 'BYTE_COLOR', 'CORNER')
+        col.data.foreach_set('color', np.array([(*self.c[l.vertex_index], 1.0) for l in me.loops], np.float32).ravel())
+        me.color_attributes.active_color = col
+        me.shade_smooth()
+        me.normals_split_custom_set([self.n[l.vertex_index] for l in me.loops])
+        for m in self.mats:
+            me.materials.append(m)
+        ob = bpy.data.objects.new(self.name, me)
+        bpy.context.scene.collection.objects.link(ob)
+        return ob
+
+_ICO = None
+def _ico():
+    global _ICO
+    if _ICO is None:
+        bt = bmesh.new()
+        bmesh.ops.create_icosphere(bt, subdivisions=1, radius=1.0)
+        bt.verts.ensure_lookup_table()
+        _ICO = ([np.array(v.co[:]) for v in bt.verts], [[v.index for v in f.verts] for f in bt.faces])
+        bt.free()
+    return _ICO
+
+def _unit(v):
+    return v / (np.linalg.norm(v) + 1e-9)
+
+def _ao(p, c, rad, ez):
+    """sombra de oclusao falsa: base da copa e miolo mais escuros."""
+    alt = np.clip((p[2] - (c[2] - rad * ez)) / (2 * rad * ez), 0, 1)
+    fora = np.clip(np.linalg.norm((p - c) / np.array([rad, rad, rad * ez])), 0, 1)
+    k = 0.42 + 0.38 * alt + 0.20 * fora
+    return (k, k, k)
+
+def copa(m, rnd, c, rad, ez, esp):
+    c = np.array(c, float)
+    esc = np.array([rad, rad, rad * ez])
+    # miolo: icosfera irregular, escura (preenche os furos entre os cartoes)
+    vs, fs = _ico()
     f = _ruido(rnd)
-    for v in ret['verts']:
-        p = np.array(v.co[:])
-        k = 1 + amp * f(p * 1.0)
-        v.co.x = c[0] + p[0] * rad * k
-        v.co.y = c[1] + p[1] * rad * k
-        v.co.z = c[2] + p[2] * rad * k * esc_z
-        if v.co.z < c[2] - rad * esc_z * 0.55:          # base mais achatada
-            v.co.z = c[2] - rad * esc_z * 0.55 + (v.co.z - (c[2] - rad * esc_z * 0.55)) * 0.35
-    for ff in {f_ for v in ret['verts'] for f_ in v.link_faces}:
-        ff.material_index = b.mi(MATS[mname]); ff.smooth = True
-        b._uv(ff, (5, 5))
+    pts = [c + p * esc * 0.72 * (1 + 0.18 * f(p)) for p in vs]
+    for idx in fs:
+        cos = [pts[i] for i in idx]
+        m.face(cos, [(0, 0)] * 3, 'miolo_' + esp, [_unit((p - c) / esc) for p in cos], [_ao(p, c, rad, ez) for p in cos])
+    # cartoes de folhas espalhados na casca da copa, mais densos em cima
+    for _ in range(30):
+        while True:
+            d = np.array([rnd.gauss(0, 1), rnd.gauss(0, 1), rnd.gauss(0, 1)])
+            d = _unit(d)
+            if d[2] > -0.55:
+                break
+        p0 = c + d * esc * rnd.uniform(0.62, 0.98)
+        s = rad * rnd.uniform(0.55, 0.80)
+        n = _unit(d + np.array([rnd.gauss(0, 0.6), rnd.gauss(0, 0.6), rnd.gauss(0, 0.6)]))
+        t = _unit(np.cross(n, (0, 0, 1)) if abs(n[2]) < 0.95 else np.cross(n, (1, 0, 0)))
+        bt = np.cross(n, t)
+        rot = rnd.uniform(0, 6.283)
+        t, bt = t * math.cos(rot) + bt * math.sin(rot), -t * math.sin(rot) + bt * math.cos(rot)
+        cos = [p0 - t * s - bt * s, p0 + t * s - bt * s, p0 + t * s + bt * s, p0 - t * s + bt * s]
+        nrm = [_unit(0.75 * _unit((q - c) / esc) + 0.25 * n) for q in cos]
+        m.face(cos, [(0, 0), (1, 0), (1, 1), (0, 1)], 'folha_' + esp, nrm, [_ao(q, c, rad, ez) for q in cos])
 
-def tronco(bm, b, x, y, h, r0, r1, inc=(0, 0)):
-    ret = bmesh.ops.create_cone(bm, cap_ends=False, segments=6, radius1=r0, radius2=r1, depth=h)
-    for v in ret['verts']:
-        t = (v.co.z + h / 2) / h
-        v.co.x += x + inc[0] * t * h; v.co.y += y + inc[1] * t * h; v.co.z += h / 2
-    for ff in {f for v in ret['verts'] for f in v.link_faces}:
-        ff.material_index = b.mi(MATS['tronco']); ff.smooth = True
-        b._uv(ff, (2, 2))
+def tronco(m, x, y, h, r0, r1, inc=(0, 0), seg=6):
+    for k in range(seg):
+        a0, a1 = 2 * math.pi * k / seg, 2 * math.pi * (k + 1) / seg
+        cos, nrm = [], []
+        for (a, z, r) in ((a0, 0, r0), (a1, 0, r0), (a1, h, r1), (a0, h, r1)):
+            t = z / h
+            cos.append((x + inc[0] * t * h + r * math.cos(a), y + inc[1] * t * h + r * math.sin(a), z))
+            nrm.append((math.cos(a), math.sin(a), 0))
+        cols = [(0.6, 0.6, 0.6) if q[2] == 0 else (1, 1, 1) for q in cos]
+        m.face(cos, [(0, 0), (1, 0), (1, 1), (0, 1)], 'tronco', nrm, cols)
 
-def palmeira(bm, b, rnd, x, y):
-    h = rnd.uniform(8.0, 11.5)
+def palmeira(m, rnd, x, y):
+    h = rnd.uniform(6.0, 8.5)
     inc = (rnd.uniform(-0.04, 0.04), rnd.uniform(-0.04, 0.04))
-    tronco(bm, b, x, y, h, 0.22, 0.16, inc)
+    tronco(m, x, y, h, 0.18, 0.13, inc)
     top = np.array([x + inc[0] * h, y + inc[1] * h, h])
-    n = 9
+    n = 10
     a0 = rnd.uniform(0, 6.28)
-    mi = b.mi(MATS['palmeira'])
     for k in range(n):
         a = a0 + k * 2 * math.pi / n + rnd.uniform(-0.15, 0.15)
-        Lf = rnd.uniform(3.0, 4.0)
-        up = rnd.uniform(0.6, 1.2)
+        Lf = rnd.uniform(2.3, 3.0)
+        up = rnd.uniform(0.5, 1.0)
         d = np.array([math.cos(a), math.sin(a), 0.0]); s = np.array([-d[1], d[0], 0.0])
         segs = 5
         row = []
         for i in range(segs + 1):
             t = i / segs
-            c = top + d * Lf * t + np.array([0, 0, up * t - (up + 1.6) * t * t])
-            w = 0.55 * math.sin(math.pi * min(1, t * 1.1)) + 0.04
-            row.append((c - s * w + np.array([0, 0, -0.12 * w]), c, c + s * w + np.array([0, 0, -0.12 * w])))
+            cc = top + d * Lf * t + np.array([0, 0, up * t - (up + 1.3) * t * t])
+            w = 0.42 * math.sin(math.pi * min(1, t * 1.1)) + 0.03
+            row.append((cc - s * w + np.array([0, 0, -0.12 * w]), cc, cc + s * w + np.array([0, 0, -0.12 * w])))
         for i in range(segs):
             for (pa, pb) in ((0, 1), (1, 2)):
-                vs = [bm.verts.new(row[i][pa]), bm.verts.new(row[i][pb]),
-                      bm.verts.new(row[i + 1][pb]), bm.verts.new(row[i + 1][pa])]
-                f = bm.faces.new(vs); f.material_index = mi; f.smooth = True
-                b._uv(f, (3, 3))
+                cos = [row[i][pa], row[i][pb], row[i + 1][pb], row[i + 1][pa]]
+                nn = _unit(np.cross(cos[1] - cos[0], cos[3] - cos[0]))
+                if nn[2] < 0:
+                    nn = -nn
+                k_ = 0.65 + 0.35 * (i / segs)
+                m.face(cos, [(0, 0), (1, 0), (1, 1), (0, 1)], 'palmeira', [nn] * 4, [(k_, k_, k_)] * 4)
 
 def arvores_obj(arvores):
-    b = Builder('arvores')
-    bm = b.bm
+    m = Malha('arvores')
     rnd = random.Random(11)
     cont = {}
     for sc, kind, px, py in arvores:
@@ -925,24 +1128,21 @@ def arvores_obj(arvores):
         elif kind == 'amarela':
             esp = 'ipe_amarelo'
         else:
-            esp = rnd.choice(['copa_verde', 'copa_verde', 'copa_verde_clara', 'copa_verde_escura'])
+            esp = rnd.choice(['verde', 'verde', 'verde_clara', 'verde_escura'])
         cont[esp] = cont.get(esp, 0) + 1
+        x += rnd.uniform(-0.6, 0.6); y += rnd.uniform(-0.6, 0.6)
         if esp == 'palmeira':
-            palmeira(bm, b, rnd, x, y)
+            palmeira(m, rnd, x, y)
             continue
-        # fuste curto (2-3 m ate a base da copa) e copa larga, como nos renders do book
         if esp.startswith('ipe'):
-            fuste = rnd.uniform(2.4, 3.2); rad = rnd.uniform(2.7, 3.4); ez = 0.62
+            fuste = rnd.uniform(1.9, 2.5); rad = rnd.uniform(1.5, 2.0); ez = 0.70
         else:
-            fuste = rnd.uniform(1.8, 2.8); rad = rnd.uniform(2.5, 3.4); ez = 0.82
-        cz = fuste + rad * ez * 0.55
-        tronco(bm, b, x, y, cz + rad * ez * 0.2, 0.22, 0.12)
-        copa(bm, b, rnd, (x, y, cz), rad, ez, esp, sub=3)
-        for _ in range(3):                    # lobulos laterais (silhueta irregular)
-            a = rnd.uniform(0, 6.28); dd = rad * rnd.uniform(0.40, 0.62)
-            copa(bm, b, rnd, (x + dd * math.cos(a), y + dd * math.sin(a), cz + rad * ez * rnd.uniform(-0.3, 0.25)),
-                 rad * rnd.uniform(0.48, 0.62), ez, esp, sub=2, amp=0.12)
-    return b.to_object(), cont
+            fuste = rnd.uniform(1.6, 2.3); rad = rnd.uniform(1.3, 1.9); ez = 0.85
+        cz = fuste + rad * ez * 0.7
+        inc = (rnd.uniform(-0.03, 0.03), rnd.uniform(-0.03, 0.03))
+        tronco(m, x, y, cz, 0.11 + 0.02 * rad, 0.06, inc)
+        copa(m, rnd, (x + inc[0] * cz, y + inc[1] * cz, cz), rad, ez, esp)
+    return m.to_object(), cont
 
 # ------------------------------------------------------------------ layout das unidades (referencia)
 def layout_unidades():

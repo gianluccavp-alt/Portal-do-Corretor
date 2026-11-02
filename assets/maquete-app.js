@@ -119,7 +119,9 @@ async function iniciar(emp) {
       criarCena($('maquete-cena'), cfg, {
         onProgresso: (p) => { pModelo = p; progresso(); },
         onHover: aoPassar,
-        onClick: aoClicar
+        onClick: aoClicar,
+        onSelecao: posicionarSelecao,
+        onRumo: girarBussola
       }),
       pDados
     ]);
@@ -160,8 +162,8 @@ async function iniciar(emp) {
 
   function renderLegenda() {
     const itens = st.modo === 'noite'
-      ? [['acesa', 'Disponível'], ['apagada', 'Indisponível'], ['fora', 'Fora de venda']]
-      : [['disp', 'Disponível'], ['res', 'Reservada'], ['vend', 'Vendida'], ['fora', 'Fora de venda']];
+      ? [['acesa', 'Disponível'], ['apagada', 'Indisponível'], ['fora', 'Fora de venda'], ['sel', 'Selecionada']]
+      : [['disp', 'Disponível'], ['res', 'Reservada'], ['vend', 'Vendida'], ['fora', 'Fora de venda'], ['sel', 'Selecionada']];
     $('mq-legenda').innerHTML = itens.map(([c, t]) => '<span><i class="mq-dot ' + c + '"></i>' + t + '</span>').join('');
   }
 
@@ -213,6 +215,37 @@ async function iniciar(emp) {
     tip.style.transform = 'translate(' + Math.max(8, left) + 'px,' + Math.max(8, top) + 'px)';
   }
 
+  /* ---------- badge da selecionada + bussola (posicoes vindas da cena) ---------- */
+  function posicionarSelecao(p) {
+    const b = $('mq-sel');
+    if (!p || st.sel === null) { b.hidden = true; return; }
+    b.hidden = false;
+    const x = Math.round(p.x - b.offsetWidth / 2);
+    const y = Math.round(p.y - b.offsetHeight - 10);
+    b.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+  }
+
+  function girarBussola(graus) {
+    $('mq-bussola-disco').style.transform = 'rotate(' + (-graus) + 'deg)';
+  }
+
+  /* ---------- planta ampliada (na propria pagina) ---------- */
+  let focoAntesPlanta = null;
+  function abrirPlanta(src, titulo) {
+    focoAntesPlanta = document.activeElement;
+    $('mq-planta-img').src = src;
+    $('mq-planta-img').alt = 'Planta ' + titulo;
+    $('mq-planta-titulo').textContent = titulo;
+    $('mq-planta-modal').hidden = false;
+    $('mq-planta-fechar').focus();
+  }
+  function fecharPlanta() {
+    if ($('mq-planta-modal').hidden) return false;
+    $('mq-planta-modal').hidden = true;
+    if (focoAntesPlanta && focoAntesPlanta.focus) focoAntesPlanta.focus();
+    return true;
+  }
+
   /* ---------- selecao ---------- */
   function aoClicar(idx) {
     if (idx == null) { fecharPainel(); return; }
@@ -226,6 +259,8 @@ async function iniciar(emp) {
     st.vista = false;
     $('mq-tip').hidden = true;
     if (cena) { cena.destacar(idx); cena.focarUnidade(idx); }
+    const i = info(idx);
+    $('mq-sel-txt').textContent = 'T' + i.c.torre + ' ' + i.numero + ' · ' + M.posicaoLabel(i.tipo);
     renderPainel();
     $('mq-painel').hidden = false;
     document.body.classList.add('painel-aberto');
@@ -235,6 +270,7 @@ async function iniciar(emp) {
     if (st.sel === null) return;
     st.sel = null;
     if (cena) cena.destacar(null);
+    $('mq-sel').hidden = true;
     $('mq-painel').hidden = true;
     document.body.classList.remove('painel-aberto');
   }
@@ -255,9 +291,10 @@ async function iniciar(emp) {
       (promo ? '<span class="mq-pill promo">Promocional</span>' : '') + '</div></div>';
 
     if (planta) {
-      h += '<a class="mq-planta" href="' + esc(planta.img) + '" target="_blank" rel="noopener">' +
+      h += '<button type="button" class="mq-planta" data-acao="planta" data-src="' + esc(planta.img) + '" data-titulo="' +
+        esc(planta.title || tipoLabel) + '">' +
         '<img src="' + esc(planta.img) + '" alt="Planta ' + esc(planta.title || tipoLabel) + '" loading="lazy">' +
-        '<span>' + esc(planta.title || tipoLabel) + '<em>Ampliar</em></span></a>';
+        '<span>' + esc(planta.title || tipoLabel) + '<em>Ampliar</em></span></button>';
     }
 
     h += '<div class="mq-p-meta">' +
@@ -447,7 +484,11 @@ async function iniciar(emp) {
     $('mq-painel-fechar').addEventListener('click', fecharPainel);
     $('mq-ant').addEventListener('click', () => navegar(-1));
     $('mq-prox').addEventListener('click', () => navegar(1));
+    $('mq-planta-fechar').addEventListener('click', fecharPlanta);
+    $('mq-planta-modal').addEventListener('click', (e) => { if (e.target === e.currentTarget) fecharPlanta(); });
     $('mq-painel-corpo').addEventListener('click', (e) => {
+      const pl = e.target.closest('[data-acao="planta"]');
+      if (pl) { abrirPlanta(pl.dataset.src, pl.dataset.titulo); return; }
       const b = e.target.closest('[data-acao="vista"]');
       if (!b || st.sel === null || !cena) return;
       st.vista = !st.vista;
@@ -459,10 +500,11 @@ async function iniciar(emp) {
     document.addEventListener('keydown', (e) => {
       const campo = /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName);
       if (e.key === 'Escape') {
+        if (fecharPlanta()) return;
         if (campo) { e.target.blur(); return; }
         if (!$('mq-filtros').hidden) { btnF.click(); return; }
         fecharPainel();
-      } else if (!campo && st.sel !== null && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      } else if (!campo && st.sel !== null && $('mq-planta-modal').hidden && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
         navegar(e.key === 'ArrowLeft' ? -1 : 1);
       }
     });

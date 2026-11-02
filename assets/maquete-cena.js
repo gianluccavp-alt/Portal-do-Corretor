@@ -7,6 +7,9 @@
    Cena = { pintar(estados, visiveis, modo), destacar(idx|null),
             focarUnidade(idx), irPara(nomeCamera), vistaDaUnidade(idx),
             dispose() }
+   ev tambem aceita onSelecao({x, y}|null) - ponto da tela acima da unidade
+   selecionada (badge) - e onRumo(graus) - azimute da camera (0 = olhando
+   para o norte, 90 = para o leste), para a bussola.
 
    Pintura: um unico DataTexture (1 texel por idx) lido no shader
    pelo atributo de vertice "_unit" da malha "unidades" (sem um
@@ -19,11 +22,18 @@
    ============================================================ */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Line2 } from 'three/addons/lines/Line2.js';
+import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { criarModeloProvisorio } from './maquete-provisoria.js';
 
 const DRACO_PATH = 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/';
 const DUR_ANIM = 800;
-const VERMELHO = '#E4032B';
+/* norte da cena: a face +x das torres (finais 1, 2, 7 e 8) e a do nascente, entao leste = +x
+   e norte = -z (glTF Y-up). Aproximacao suficiente para a bussola. */
+const NORTE = new THREE.Vector3(0, 0, -1);
+/* afastamento do fundo da varanda ate o plano da fachada (1,1 m de loggia) + folga */
+const ATE_FACHADA = 1.13;
 
 /* cor e forca do emissivo por estado, em cada modo */
 /* env*: ceu (PMREM) refletido nos materiais lisos (vidro, guarda-corpo, agua, unidades); envInt = forca.
@@ -34,6 +44,7 @@ const MODOS = {
     envTopo: '#1a2440', envHorizonte: '#3a4a74', envChao: '#0b0e15', envInt: 0.6,
     hemiCeu: '#5a6c9c', hemiChao: '#10131a', hemi: 0.9,
     sol: '#a9bcff', solInt: 0.5, exposicao: 1.15, emissivo: 1.6, sombra: false,
+    corSel: '#3DDC84', luzJanelas: 1.15,
     estados: {
       disponivel: ['#FFC872', 1],
       reservada: ['#232a38', 0],
@@ -49,9 +60,10 @@ const MODOS = {
     /* fachadas na sombra nao podem virar preto (modelo real e grafite): ceu (env) + hemi */
     hemiCeu: '#dfeaf7', hemiChao: '#a3a892', hemi: 1.5,
     sol: '#fff1dc', solInt: 4.5, exposicao: 0.9, emissivo: 0.35, sombra: true,
+    corSel: '#FFD23F', luzJanelas: 0,
     estados: {
       disponivel: ['#2FA866', 0.5],
-      reservada: ['#F2A93B', 0.4],
+      reservada: ['#D9323F', 0.35],
       vendida: ['#8D9197', 0],
       fora: ['#C7CBD0', 0],
       'sem-dados': ['#C7CBD0', 0]
@@ -200,6 +212,8 @@ function malhasDeUnidades(modelo) {
 function mapearUnidades(malhas, total) {
   const soma = new Float32Array(total * 3);
   const norm = new Float32Array(total * 3);
+  const min = new Float32Array(total * 3).fill(Infinity);
+  const max = new Float32Array(total * 3).fill(-Infinity);
   const cont = new Uint32Array(total);
   const v = new THREE.Vector3();
   const n = new THREE.Vector3();
@@ -215,6 +229,11 @@ function mapearUnidades(malhas, total) {
       v.fromBufferAttribute(p, i).applyMatrix4(m.matrixWorld);
       n.fromBufferAttribute(no, i).applyMatrix3(nm);
       soma[u * 3] += v.x; soma[u * 3 + 1] += v.y; soma[u * 3 + 2] += v.z;
+      for (let k = 0; k < 3; k++) {
+        const c = v.getComponent(k);
+        if (c < min[u * 3 + k]) min[u * 3 + k] = c;
+        if (c > max[u * 3 + k]) max[u * 3 + k] = c;
+      }
       norm[u * 3] += n.x; norm[u * 3 + 1] += n.y; norm[u * 3 + 2] += n.z;
       cont[u]++;
     }
@@ -224,7 +243,8 @@ function mapearUnidades(malhas, total) {
     const c = new THREE.Vector3(soma[idx * 3], soma[idx * 3 + 1], soma[idx * 3 + 2]).divideScalar(cont[idx]);
     const nn = new THREE.Vector3(norm[idx * 3], 0, norm[idx * 3 + 2]);
     if (nn.lengthSq() < 1e-6) nn.set(0, 0, 1);
-    return { centro: c, normal: nn.normalize() };
+    const caixa = new THREE.Box3(new THREE.Vector3().fromArray(min, idx * 3), new THREE.Vector3().fromArray(max, idx * 3));
+    return { centro: c, normal: nn.normalize(), caixa };
   };
 }
 
@@ -236,6 +256,7 @@ export async function criarCena(container, cfg, ev = {}) {
   const onProgresso = ev.onProgresso || (() => {});
   const onHover = ev.onHover || (() => {});
   const onClick = ev.onClick || (() => {});
+  const extras = { onSelecao: ev.onSelecao || (() => {}), onRumo: ev.onRumo || (() => {}) };
   const grade = cfg.grade;
   const total = grade.torres.length * grade.andares * grade.finais;
 
@@ -252,7 +273,7 @@ export async function criarCena(container, cfg, ev = {}) {
   container.appendChild(renderer.domElement);
 
   try {
-    return await montar(renderer, container, cfg, grade, total, onProgresso, onHover, onClick);
+    return await montar(renderer, container, cfg, grade, total, onProgresso, onHover, onClick, extras);
   } catch (e) {
     renderer.dispose();
     renderer.forceContextLoss();
@@ -261,7 +282,7 @@ export async function criarCena(container, cfg, ev = {}) {
   }
 }
 
-async function montar(renderer, container, cfg, grade, total, onProgresso, onHover, onClick) {
+async function montar(renderer, container, cfg, grade, total, onProgresso, onHover, onClick, extras) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(40, 1, 0.5, 4000);
   const ceu = criarCeu();
@@ -296,7 +317,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
   tex.needsUpdate = true;
   const uni = {
     uSel: { value: -1 }, uHover: { value: -1 }, uEmissivo: { value: 1 }, uPulso: { value: 0 },
-    uCorSel: { value: new THREE.Color(VERMELHO) }
+    uCorSel: { value: new THREE.Color(MODOS.noite.corSel) }
   };
   const matUnidades = criarMaterialUnidades(tex, uni);
 
@@ -328,10 +349,13 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
   /* materiais lisos que ganham reflexo do ceu (o resto e reboco/chao fosco: so luz difusa) */
   const LISOS = /vidro|guarda|agua|veneziana|unidade/i;
   const matsReflexo = new Set([matUnidades]);
+  /* janelas de dormitorio (parte de vidro) e banheiro: emissao do modelo, acesa so a noite */
+  const matsJanela = new Set();
   modelo.traverse((o) => {
     if (!o.isMesh) return;
     (Array.isArray(o.material) ? o.material : [o.material]).forEach((mt) => {
       if (mt && mt.isMeshStandardMaterial && LISOS.test(mt.name || '')) matsReflexo.add(mt);
+      if (mt && mt.emissiveMap && /janela/i.test(mt.name || '')) matsJanela.add(mt);
     });
   });
   ajustarSombra(modelo);
@@ -387,6 +411,57 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     pedirRender();
   }
 
+  /* ---------- contorno da unidade selecionada (varanda inteira, no plano da fachada) ---------- */
+  const contorno = new Line2(new LineGeometry(), new LineMaterial({
+    color: MODOS.noite.corSel, linewidth: 3, transparent: true, opacity: 0.95, depthWrite: false
+  }));
+  contorno.visible = false;
+  contorno.renderOrder = 2;
+  scene.add(contorno);
+  const ancoraSel = new THREE.Vector3(); // topo do contorno: onde a badge aparece
+  let vendoDeDentro = false;
+
+  function montarContorno(idx) {
+    const info = unidadeInfo(idx);
+    if (!info) { contorno.visible = false; return; }
+    const n = info.normal;
+    const t = new THREE.Vector3(0, 1, 0).cross(n).normalize(); // horizontal no plano da fachada
+    const tam = info.caixa.getSize(new THREE.Vector3());
+    const meia = Math.abs(tam.dot(t)) / 2 + 0.1;              // quad tem 10 cm de folga de cada lado
+    const base = info.caixa.min.y - 0.5;                       // laje + peitoril abaixo do quad
+    const topo = info.caixa.max.y;
+    const c = info.centro.clone().addScaledVector(n, ATE_FACHADA);
+    const p = (s, y) => c.clone().addScaledVector(t, s).setY(y);
+    const pts = [p(-meia, base), p(meia, base), p(meia, topo), p(-meia, topo), p(-meia, base)];
+    contorno.geometry.dispose();
+    contorno.geometry = new LineGeometry().setPositions(pts.flatMap((v) => v.toArray()));
+    contorno.computeLineDistances();
+    ancoraSel.copy(c).setY(topo);
+    contorno.visible = !vendoDeDentro;
+  }
+
+  const projetado = new THREE.Vector3();
+  function avisarSelecao() {
+    if (uni.uSel.value < 0 || vendoDeDentro) { extras.onSelecao(null); return; }
+    projetado.copy(ancoraSel).project(camera);
+    if (projetado.z > 1 || Math.abs(projetado.x) > 1.2 || Math.abs(projetado.y) > 1.2) { extras.onSelecao(null); return; }
+    const r = el.getBoundingClientRect();
+    extras.onSelecao({ x: r.left + (projetado.x + 1) / 2 * r.width, y: r.top + (1 - projetado.y) / 2 * r.height });
+  }
+
+  const frente = new THREE.Vector3();
+  let rumoAnterior = null;
+  function avisarRumo() {
+    camera.getWorldDirection(frente);
+    frente.y = 0;
+    if (frente.lengthSq() < 1e-6) return;
+    frente.normalize();
+    /* 0 = olhando para o norte, cresce no sentido horario (leste = 90) */
+    const leste = new THREE.Vector3().crossVectors(NORTE, new THREE.Vector3(0, 1, 0)); // +x
+    const g = Math.round(THREE.MathUtils.radToDeg(Math.atan2(frente.dot(leste), frente.dot(NORTE))));
+    if (g !== rumoAnterior) { rumoAnterior = g; extras.onRumo(g); }
+  }
+
   /* ---------- modo (noite/cores) ---------- */
   let modoAtual = null;
   function aplicarModo(modo) {
@@ -410,6 +485,9 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     });
     renderer.toneMappingExposure = m.exposicao;
     uni.uEmissivo.value = m.emissivo;
+    uni.uCorSel.value.set(m.corSel);
+    matsJanela.forEach((mt) => { mt.emissive.set('#ffffff'); mt.emissiveIntensity = m.luzJanelas; });
+    contorno.material.color.set(m.corSel);
   }
 
   const semRealce = new Uint8Array(total); // unidades 'fora' nao clareiam no hover
@@ -437,6 +515,9 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
 
   function destacar(idx) {
     uni.uSel.value = idx == null ? -1 : idx;
+    vendoDeDentro = false;
+    if (idx == null) contorno.visible = false; else montarContorno(idx);
+    avisarSelecao();
     pedirRender();
   }
 
@@ -445,6 +526,8 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     if (!info) return;
     const pos = info.centro.clone().addScaledVector(info.normal, 42);
     pos.y = Math.max(4, info.centro.y + 10);
+    vendoDeDentro = false;
+    contorno.visible = uni.uSel.value === idx;
     animarPara(pos, info.centro);
   }
 
@@ -455,6 +538,8 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     pos.y = info.centro.y + 0.2;
     const alvo = info.centro.clone().addScaledVector(info.normal, 60);
     alvo.y = Math.max(0.5, info.centro.y - 6); // olha levemente para baixo, nunca abaixo do chao
+    vendoDeDentro = true;                       // de dentro da varanda nao ha contorno nem badge
+    contorno.visible = false;
     animarPara(pos, alvo);
   }
 
@@ -555,6 +640,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     el.style.height = '100%';
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    contorno.material.resolution.set(w, h);
     pedirRender();
   }
   const ro = new ResizeObserver(redimensionar);
@@ -588,6 +674,8 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     if (sujo) {
       sujo = false;
       renderer.render(scene, camera);
+      if (uni.uSel.value >= 0) avisarSelecao();
+      if (camMudou || rumoAnterior === null) avisarRumo();
     }
   }
 
