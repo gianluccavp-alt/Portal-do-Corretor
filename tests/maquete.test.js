@@ -117,3 +117,13 @@ test('urlsSimuladores', () => {
     tabelaDireta: 'simulador-tabela-direta.html?emp=gaia&unidade=BL01-1204'
   });
 });
+
+test('filtrar por sol: nascente usa solNascente do cfg, poente o resto', () => {
+  const g = M.montarGrade(CFG, [U('BL-01', 3, 1, 'Disponível'), U('BL-01', 3, 4, 'Disponível'), U('BL-02', 3, 8, 'Disponível')]);
+  const base = { soDisponiveis: true, tipos: [], andarMin: 0, andarMax: 19 };
+  const nasc = M.filtrar(g, Object.assign({ sol: 'nascente' }, base), CFG);
+  assert.deepEqual([...nasc].sort((a, b) => a - b), [M.indice(CFG, 1, 3, 1), M.indice(CFG, 2, 3, 8)]);
+  const poen = M.filtrar(g, Object.assign({ sol: 'poente' }, base), CFG);
+  assert.deepEqual([...poen], [M.indice(CFG, 1, 3, 4)]);
+  assert.equal(M.filtrar(g, base, CFG).size, 3, 'sem sol: nao filtra');
+});

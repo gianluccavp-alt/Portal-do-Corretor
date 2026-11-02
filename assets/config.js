@@ -360,6 +360,8 @@ window.CITIES = [
            (Y para cima, origem no centro do terreno). modelo null = modelo
            provisorio gerado em codigo (assets/maquete-provisoria.js) */
         maquete: {
+          // false = maquete so por link direto (maquete.html?e=village-gaia), sem botao na pagina do empreendimento
+          botaoVisivel: false,
           simId: 'gaia',
           modelo: 'assets/3d/village-gaia/gaia.glb',
           grade: { torres: [1, 2, 3], andares: 20, finais: 8 },

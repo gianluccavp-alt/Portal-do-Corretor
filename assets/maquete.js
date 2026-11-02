@@ -121,7 +121,8 @@
     return { torre: m[1] ? parseInt(m[1], 10) : null, andar: Math.floor(n / 100), final: n % 100 };
   }
 
-  function filtrar(grade, f) {
+  /* f.sol: 'nascente' | 'poente' | vazio (todos); precisa do cfg para ler solNascente */
+  function filtrar(grade, f, cfg) {
     var saida = new Set();
     var tipos = f.tipos || [];
     grade.celulas.forEach(function (c) {
@@ -129,6 +130,7 @@
       if (f.soDisponiveis && c.estado !== 'disponivel') return;
       if (tipos.length && !(c.u && tipos.indexOf(c.u.tipo) >= 0)) return;
       if (c.andar < f.andarMin || c.andar > f.andarMax) return;
+      if (f.sol && cfg && nascente(cfg, c.torre, c.final) !== (f.sol === 'nascente')) return;
       saida.add(c.idx);
     });
     return saida;

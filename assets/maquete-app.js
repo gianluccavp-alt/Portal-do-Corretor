@@ -58,7 +58,7 @@ async function iniciar(emp) {
     sel: null,
     vista: false,
     visiveis: null,
-    filtros: { soDisponiveis: false, tipos: [], andarMin: 0, andarMax: ANDAR_MAX }
+    filtros: { soDisponiveis: false, tipos: [], sol: '', andarMin: 0, andarMax: ANDAR_MAX }
   };
   let cena = null;
 
@@ -136,11 +136,11 @@ async function iniciar(emp) {
   /* ---------- estado -> cena + DOM ---------- */
   function filtroAtivo() {
     const f = st.filtros;
-    return f.soDisponiveis || f.tipos.length > 0 || f.andarMin > 0 || f.andarMax < ANDAR_MAX;
+    return f.soDisponiveis || f.tipos.length > 0 || !!f.sol || f.andarMin > 0 || f.andarMax < ANDAR_MAX;
   }
 
   function atualizar() {
-    st.visiveis = filtroAtivo() ? M.filtrar(st.grade, st.filtros) : null;
+    st.visiveis = filtroAtivo() ? M.filtrar(st.grade, st.filtros, gcfg) : null;
     if (cena) cena.pintar(M.estados(st.grade), st.visiveis, st.modo);
     renderResumo();
     renderLegenda();
@@ -154,9 +154,8 @@ async function iniciar(emp) {
     const el = $('mq-resumo');
     if (!st.dados) { el.textContent = 'Disponibilidade não carregada'; return; }
     const r = M.resumo(st.grade);
-    const pct = r.pctVendido.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
     el.innerHTML = '<b class="mq-resumo-disp">' + r.disponiveis + '</b> ' +
-      (r.disponiveis === 1 ? 'disponível' : 'disponíveis') + ' · <b>' + esc(pct) + '%</b> vendido';
+      (r.disponiveis === 1 ? 'unidade disponível' : 'unidades disponíveis');
   }
 
   function renderLegenda() {
@@ -167,7 +166,7 @@ async function iniciar(emp) {
   }
 
   function renderContagemFiltro() {
-    const n = (st.filtros.soDisponiveis ? 1 : 0) + (st.filtros.tipos.length ? 1 : 0) +
+    const n = (st.filtros.soDisponiveis ? 1 : 0) + (st.filtros.tipos.length ? 1 : 0) + (st.filtros.sol ? 1 : 0) +
       (st.filtros.andarMin > 0 || st.filtros.andarMax < ANDAR_MAX ? 1 : 0);
     const badge = $('mq-filtros-n');
     badge.hidden = !n;
@@ -392,6 +391,15 @@ async function iniciar(emp) {
       });
       tiposBox.appendChild(b);
     });
+    /* sol: nascente e poente sao exclusivos; clicar no ativo desliga */
+    const solBox = $('mq-f-sol');
+    const solBtns = solBox.querySelectorAll('.mq-chip');
+    const marcarSol = () => solBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.sol === st.filtros.sol)));
+    solBtns.forEach((b) => b.addEventListener('click', () => {
+      st.filtros.sol = st.filtros.sol === b.dataset.sol ? '' : b.dataset.sol;
+      marcarSol();
+      atualizar();
+    }));
     const sMin = $('mq-f-min');
     const sMax = $('mq-f-max');
     for (let a = 0; a <= ANDAR_MAX; a++) {
@@ -414,8 +422,9 @@ async function iniciar(emp) {
     sMin.addEventListener('change', () => aoMudarAndar(sMin));
     sMax.addEventListener('change', () => aoMudarAndar(sMax));
     $('mq-f-limpar').addEventListener('click', () => {
-      st.filtros = { soDisponiveis: false, tipos: [], andarMin: 0, andarMax: ANDAR_MAX };
+      st.filtros = { soDisponiveis: false, tipos: [], sol: '', andarMin: 0, andarMax: ANDAR_MAX };
       fDisp.setAttribute('aria-pressed', 'false');
+      marcarSol();
       tiposBox.querySelectorAll('.mq-chip').forEach((b) => b.setAttribute('aria-pressed', 'false'));
       sMin.value = '0';
       sMax.value = String(ANDAR_MAX);
