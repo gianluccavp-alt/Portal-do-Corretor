@@ -11,6 +11,11 @@
    Pintura: um unico DataTexture (1 texel por idx) lido no shader
    pelo atributo de vertice "_unit" da malha "unidades" (sem um
    material por unidade). Texel = rgb da cor + a = forca do emissivo.
+
+   Qualidade de render: pixel ratio ate 2, ACES Filmic, anisotropia maxima nas
+   texturas do modelo, luz de ambiente por PMREM (ceu procedural do
+   modo) para reflexos suaves, sombra PCF suave ajustada ao terreno e
+   renderizada so quando a luz muda (o modelo e estatico).
    ============================================================ */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -21,11 +26,14 @@ const DUR_ANIM = 800;
 const VERMELHO = '#E4032B';
 
 /* cor e forca do emissivo por estado, em cada modo */
+/* env*: ceu (PMREM) refletido nos materiais lisos (vidro, guarda-corpo, agua, unidades); envInt = forca.
+   A luz difusa de ceu fica com a hemisferica: env em todo o modelo custava ~2x o tempo de GPU. */
 const MODOS = {
   noite: {
     ceuTopo: '#050913', ceuBase: '#1c2541', nevoa: '#1c2541',
-    hemiCeu: '#5a6c9c', hemiChao: '#10131a', hemi: 0.55,
-    sol: '#a9bcff', solInt: 0.45, exposicao: 1.0, emissivo: 1.15, sombra: false,
+    envTopo: '#1a2440', envHorizonte: '#3a4a74', envChao: '#0b0e15', envInt: 0.6,
+    hemiCeu: '#5a6c9c', hemiChao: '#10131a', hemi: 0.9,
+    sol: '#a9bcff', solInt: 0.5, exposicao: 1.15, emissivo: 1.6, sombra: false,
     estados: {
       disponivel: ['#FFC872', 1],
       reservada: ['#232a38', 0],
@@ -37,8 +45,10 @@ const MODOS = {
   },
   cores: {
     ceuTopo: '#7FA9D9', ceuBase: '#E8EEF3', nevoa: '#E8EEF3',
-    hemiCeu: '#dfeaf7', hemiChao: '#a3a892', hemi: 1.9, // fachadas na sombra nao podem virar preto (modelo real e grafite)
-    sol: '#fff1dc', solInt: 2.4, exposicao: 1.0, emissivo: 0.35, sombra: true,
+    envTopo: '#6f9fd6', envHorizonte: '#eef3f7', envChao: '#8f9a7c', envInt: 1.0,
+    /* fachadas na sombra nao podem virar preto (modelo real e grafite): ceu (env) + hemi */
+    hemiCeu: '#dfeaf7', hemiChao: '#a3a892', hemi: 1.5,
+    sol: '#fff1dc', solInt: 4.5, exposicao: 0.9, emissivo: 0.35, sombra: true,
     estados: {
       disponivel: ['#2FA866', 0.5],
       reservada: ['#F2A93B', 0.4],
@@ -65,6 +75,58 @@ function criarCeu() {
   ceu.name = 'ceu';
   ceu.renderOrder = -1;
   return ceu;
+}
+
+/* mapa de ambiente (PMREM) a partir de um ceu procedural: luz de ceu suave + reflexos */
+function criarAmbiente(renderer, m) {
+  const cena = new THREE.Scene();
+  const mat = new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite: false,
+    uniforms: {
+      topo: { value: new THREE.Color(m.envTopo) },
+      horiz: { value: new THREE.Color(m.envHorizonte) },
+      chao: { value: new THREE.Color(m.envChao) }
+    },
+    vertexShader: `varying vec3 vDir;
+      void main() { vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `uniform vec3 topo; uniform vec3 horiz; uniform vec3 chao; varying vec3 vDir;
+      void main() {
+        float y = vDir.y;
+        vec3 c = y > 0.0 ? mix(horiz, topo, pow(smoothstep(0.0, 0.7, y), 0.8)) : mix(horiz, chao, smoothstep(0.0, 0.12, -y));
+        gl_FragColor = vec4(c, 1.0);
+      }`
+  });
+  cena.add(new THREE.Mesh(new THREE.SphereGeometry(10, 48, 24), mat));
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const rt = pmrem.fromScene(cena, 0.02);
+  pmrem.dispose();
+  mat.dispose();
+  cena.children[0].geometry.dispose();
+  return rt;
+}
+
+/* nitidez das texturas do modelo: anisotropia maxima + mipmaps + espaco de cor correto */
+const MAPAS_COR = ['map', 'emissiveMap'];
+const MAPAS_DADOS = ['normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'bumpMap'];
+function afinarTexturas(modelo, aniso) {
+  const vistas = new Set();
+  modelo.traverse((o) => {
+    if (!o.isMesh) return;
+    (Array.isArray(o.material) ? o.material : [o.material]).forEach((mt) => {
+      if (!mt) return;
+      [...MAPAS_COR, ...MAPAS_DADOS].forEach((k) => {
+        const t = mt[k];
+        if (!t || vistas.has(t)) return;
+        vistas.add(t);
+        t.anisotropy = aniso;
+        t.generateMipmaps = true;
+        t.minFilter = THREE.LinearMipmapLinearFilter;
+        t.magFilter = THREE.LinearFilter;
+        if (MAPAS_COR.includes(k)) t.colorSpace = THREE.SRGBColorSpace;
+        t.needsUpdate = true;
+      });
+    });
+  });
 }
 
 /* material compartilhado da malha "unidades": cor por texel do DataTexture */
@@ -181,9 +243,10 @@ export async function criarCena(container, cfg, ev = {}) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; // contraste e cores de estado mais vivas que o AgX
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.autoUpdate = false; // cena estatica: sombra so e refeita quando a luz muda
   renderer.domElement.style.display = 'block';
   renderer.domElement.style.touchAction = 'none';
   container.appendChild(renderer.domElement);
@@ -208,13 +271,22 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
   const hemi = new THREE.HemisphereLight();
   scene.add(hemi);
   const sol = new THREE.DirectionalLight();
-  sol.position.set(170, 200, 40); // do leste (manha): ilumina as varandas +x vistas pelas cameras padrao
+  const SOL_DIR = new THREE.Vector3(170, 200, 40).normalize(); // do leste (manha): ilumina as varandas +x
+  sol.position.copy(SOL_DIR).multiplyScalar(300);
   sol.castShadow = true;
-  sol.shadow.mapSize.set(2048, 2048);
+  const maxTex = renderer.capabilities.maxTextureSize || 4096;
+  const tamSombra = Math.min(4096, maxTex);
+  sol.shadow.mapSize.set(tamSombra, tamSombra);
   Object.assign(sol.shadow.camera, { left: -170, right: 170, top: 170, bottom: -170, near: 10, far: 600 });
-  sol.shadow.bias = -0.0004;
-  sol.shadow.normalBias = 0.6;
+  sol.shadow.bias = -0.0002;
+  sol.shadow.normalBias = 0.35;
+  sol.shadow.radius = 3;
   scene.add(sol);
+  scene.add(sol.target);
+
+  /* luz de ambiente por modo (PMREM do ceu procedural) */
+  const ambientes = {};
+  Object.keys(MODOS).forEach((k) => { ambientes[k] = criarAmbiente(renderer, MODOS[k]); });
 
   /* ---------- texture de estados + uniforms compartilhados ---------- */
   const dados = new Float32Array(total * 4);
@@ -228,6 +300,21 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
   };
   const matUnidades = criarMaterialUnidades(tex, uni);
 
+  /* camera de sombra justa no terreno + torres (sem a moldura de entorno): mais texels por metro */
+  function ajustarSombra(raiz) {
+    const caixa = new THREE.Box3();
+    raiz.children.forEach((o) => { if (!/^entorno/.test(o.name)) caixa.expandByObject(o); });
+    if (caixa.isEmpty()) return;
+    const esfera = caixa.getBoundingSphere(new THREE.Sphere());
+    const r = Math.max(20, esfera.radius * 1.02);
+    sol.target.position.copy(esfera.center);
+    sol.position.copy(esfera.center).addScaledVector(SOL_DIR, r + 60);
+    Object.assign(sol.shadow.camera, { left: -r, right: r, top: r, bottom: -r, near: 1, far: 2 * r + 120 });
+    sol.shadow.camera.updateProjectionMatrix();
+    sol.target.updateMatrixWorld();
+    renderer.shadowMap.needsUpdate = true;
+  }
+
   /* ---------- modelo ---------- */
   let modelo;
   if (typeof cfg.modelo === 'string' && cfg.modelo) {
@@ -237,6 +324,17 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     modelo = criarModeloProvisorio(grade);
   }
   scene.add(modelo);
+  afinarTexturas(modelo, renderer.capabilities.getMaxAnisotropy());
+  /* materiais lisos que ganham reflexo do ceu (o resto e reboco/chao fosco: so luz difusa) */
+  const LISOS = /vidro|guarda|agua|veneziana|unidade/i;
+  const matsReflexo = new Set([matUnidades]);
+  modelo.traverse((o) => {
+    if (!o.isMesh) return;
+    (Array.isArray(o.material) ? o.material : [o.material]).forEach((mt) => {
+      if (mt && mt.isMeshStandardMaterial && LISOS.test(mt.name || '')) matsReflexo.add(mt);
+    });
+  });
+  ajustarSombra(modelo);
   const malhasUn = malhasDeUnidades(modelo);
   malhasUn.forEach((m) => {
     /* aproveita a textura de detalhe da malha (porta/caixilho) no material da cena */
@@ -304,6 +402,12 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     sol.color.set(m.sol);
     sol.intensity = m.solInt;
     sol.castShadow = m.sombra;
+    renderer.shadowMap.needsUpdate = true;
+    matsReflexo.forEach((mt) => {
+      if (!mt.envMap) mt.needsUpdate = true;
+      mt.envMap = ambientes[modo].texture;
+      mt.envMapIntensity = m.envInt;
+    });
     renderer.toneMappingExposure = m.exposicao;
     uni.uEmissivo.value = m.emissivo;
   }
@@ -508,6 +612,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
       });
     });
     tex.dispose();
+    Object.values(ambientes).forEach((rt) => rt.dispose());
     renderer.dispose();
     el.remove();
   }
