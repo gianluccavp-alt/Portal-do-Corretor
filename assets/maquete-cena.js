@@ -37,7 +37,7 @@ const MODOS = {
   },
   cores: {
     ceuTopo: '#7FA9D9', ceuBase: '#E8EEF3', nevoa: '#E8EEF3',
-    hemiCeu: '#dfeaf7', hemiChao: '#6d7a5a', hemi: 1.1,
+    hemiCeu: '#dfeaf7', hemiChao: '#a3a892', hemi: 1.9, // fachadas na sombra nao podem virar preto (modelo real e grafite)
     sol: '#fff1dc', solInt: 2.4, exposicao: 1.0, emissivo: 0.35, sombra: true,
     estados: {
       disponivel: ['#2FA866', 0.5],
@@ -85,12 +85,14 @@ function criarMaterialUnidades(tex, uni) {
         uniform float uPulso;
         uniform vec3 uCorSel;`)
       .replace('#include <color_fragment>', `#include <color_fragment>
+        /* detalhe do modelo (porta/caixilho em cinza, se houver map) modula a cor do estado */
+        vec3 detalhe = diffuseColor.rgb;
         vec4 est = texelFetch(uEstados, ivec2(int(vUnit + 0.5), 0), 0);
-        vec3 emissUn = est.rgb * est.a * uEmissivo;
-        diffuseColor.rgb = est.rgb;
+        vec3 emissUn = est.rgb * est.a * uEmissivo * detalhe;
+        diffuseColor.rgb = est.rgb * detalhe;
         if (abs(vUnit - uSel) < 0.5) {
-          diffuseColor.rgb = uCorSel;
-          emissUn = uCorSel * (0.55 + 0.45 * uPulso);
+          diffuseColor.rgb = uCorSel * detalhe;
+          emissUn = uCorSel * (0.55 + 0.45 * uPulso) * detalhe;
         } else if (abs(vUnit - uHover) < 0.5) {
           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0), 0.45);
           emissUn += vec3(0.22);
@@ -206,7 +208,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
   const hemi = new THREE.HemisphereLight();
   scene.add(hemi);
   const sol = new THREE.DirectionalLight();
-  sol.position.set(-140, 210, 120);
+  sol.position.set(170, 200, 40); // do leste (manha): ilumina as varandas +x vistas pelas cameras padrao
   sol.castShadow = true;
   sol.shadow.mapSize.set(2048, 2048);
   Object.assign(sol.shadow.camera, { left: -170, right: 170, top: 170, bottom: -170, near: 10, far: 600 });
@@ -236,8 +238,25 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
   }
   scene.add(modelo);
   const malhasUn = malhasDeUnidades(modelo);
-  malhasUn.forEach((m) => { m.material = matUnidades; m.castShadow = false; });
+  malhasUn.forEach((m) => {
+    /* aproveita a textura de detalhe da malha (porta/caixilho) no material da cena */
+    if (!matUnidades.map && m.material && m.material.map) {
+      matUnidades.map = m.material.map;
+      matUnidades.needsUpdate = true;
+    }
+    m.material = matUnidades;
+    m.castShadow = false;
+  });
   const setUn = new Set(malhasUn);
+  /* alvos do picking: so o que pode tapar uma unidade (torres). Chao, entorno, arvores e
+     guarda-corpos (vazados) ficam de fora - tambem deixa o raycast barato */
+  const SEM_PICK = /^(terreno|entorno|arvores|guarda-corpo)/;
+  const alvosPick = [];
+  modelo.traverse((o) => {
+    if (!o.isMesh) return;
+    for (let p = o; p && p !== modelo; p = p.parent) if (SEM_PICK.test(p.name)) return;
+    alvosPick.push(o);
+  });
   const unidadeInfo = mapearUnidades(malhasUn, total);
   onProgresso(1);
 
@@ -289,6 +308,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     uni.uEmissivo.value = m.emissivo;
   }
 
+  const semRealce = new Uint8Array(total); // unidades 'fora' nao clareiam no hover
   const cor = new THREE.Color();
   const corEsm = new THREE.Color();
   function pintar(estados, visiveis, modo) {
@@ -297,6 +317,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     const tab = MODOS[m];
     corEsm.set(tab.esmaecido[0]);
     for (let i = 0; i < total; i++) {
+      semRealce[i] = estados[i] === 'fora' ? 1 : 0;
       const par = tab.estados[estados[i]] || tab.estados['sem-dados'];
       cor.set(par[0]);
       let forca = par[1];
@@ -348,7 +369,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     const r = el.getBoundingClientRect();
     ponteiro.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ponteiro, camera);
-    const hits = ray.intersectObject(modelo, true);
+    const hits = ray.intersectObjects(alvosPick, false);
     for (const h of hits) {
       if (!h.object.visible) continue;
       if (!setUn.has(h.object) || !h.face) return null; // algo na frente da unidade
@@ -413,7 +434,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     const mudou = idx !== hoverIdx;
     if (mudou) {
       hoverIdx = idx;
-      uni.uHover.value = idx == null ? -1 : idx;
+      uni.uHover.value = idx == null || semRealce[idx] ? -1 : idx;
       el.style.cursor = idx == null ? '' : 'pointer';
       pedirRender();
     }
@@ -452,7 +473,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
       camMudou = true;
     }
     if (controls.update()) { sujo = true; camMudou = true; }
-    if (controls.target.y < 0) { controls.target.y = 0; camMudou = true; }
+    if (controls.target.y < 0) { controls.target.y = 0; camMudou = true; sujo = true; }
     /* camera andou com o mouse parado: refaz o picking para a etiqueta nao ficar velha */
     if (camMudou && ultimoMouse) hoverPend = ultimoMouse;
     processarHover();
