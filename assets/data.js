@@ -352,8 +352,10 @@ function parseCSV(text) {
   return rows;
 }
 
-/* Converte linhas -> unidades, filtrando pelo empreendimento */
-function rowsToUnits(rows, empSheetName) {
+/* Converte linhas -> unidades, filtrando pelo empreendimento.
+   opts.todosStatus === true: nao descarta linha por status (ex.: maquete 3D mostra Reservada).
+   Toda unidade devolvida traz u.status = texto cru da coluna "Status da unidade". */
+function rowsToUnits(rows, empSheetName, opts) {
   var result = [];
   // nomes aceitos: o do empreendimento + eventuais nomes agregados (sheetNamesExtra)
   var wantNorms = [normKey(empSheetName)];
@@ -372,8 +374,9 @@ function rowsToUnits(rows, empSheetName) {
 
     // so entram as unidades Disponivel ou Mirror; Reservada e Reservada aguardando
     // revisao de proposta (e qualquer outro status) ficam de fora do site
-    var statusU = normKey(findFirst(r, [['status', 'unidade'], ['status']]));
-    if (statusU !== 'disponivel' && statusU !== 'mirror') continue;
+    var statusRaw = findFirst(r, [['status', 'unidade'], ['status']]);
+    var statusU = normKey(statusRaw);
+    if (!(opts && opts.todosStatus) && statusU !== 'disponivel' && statusU !== 'mirror') continue;
 
     var produto = findFirst(r, [['produto'], ['direcional']]);
     var apMatch = produto ? produto.match(/BL\d+-(\d+)/) : null;
@@ -437,6 +440,7 @@ function rowsToUnits(rows, empSheetName) {
 
     result.push({
       ap: apStr, num: apNum, bl: bl, f: final, andar: andar,
+      status: statusRaw || '',
       tipo: tipo, tipoLabel: tipoLabelFor(window.CURRENT_EMP, tipo),
       area: areaPriv > 0 ? areaPriv : (AREA_MAP[tipo] || 48),
       tabelaDireta: tabelaDireta, associativo: associativo,
