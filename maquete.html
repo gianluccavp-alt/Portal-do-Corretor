@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquete 3D · Portal do Corretor</title>
+<link rel="icon" type="image/webp" href="assets/img/favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* estilo minimo do esqueleto; a interface completa vem em assets/maquete.css */
+  html,body{margin:0;height:100%;overflow:hidden;background:#0b1020;font-family:'DM Sans',sans-serif;color:#fff}
+  #maquete-cena{position:fixed;inset:0}
+  #maquete-voltar{position:fixed;top:16px;left:16px;z-index:10;display:flex;align-items:center;gap:6px;
+    padding:0 14px;height:36px;border-radius:9px;background:rgba(10,14,26,.6);color:#fff;
+    text-decoration:none;font-size:13px;font-weight:500;backdrop-filter:blur(8px)}
+  #maquete-voltar:hover{background:#E4032B}
+  #maquete-carregando{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:14px;background:#0b1020;transition:opacity .4s}
+  #maquete-carregando.fim{opacity:0;pointer-events:none}
+  #maquete-carregando p{margin:0;font-size:14px;color:rgba(255,255,255,.75)}
+  .maquete-barra{width:min(260px,70vw);height:4px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden}
+  #maquete-progresso{display:block;height:100%;width:0;background:#E4032B;transition:width .2s}
+  #maquete-erro{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:12px;padding:16px;text-align:center;background:#0b1020}
+  #maquete-erro[hidden]{display:none}
+  #maquete-erro a{color:#fff;background:#E4032B;padding:10px 18px;border-radius:9px;text-decoration:none;font-weight:500}
+</style>
+<script type="importmap">{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
+</head>
+<body>
+
+<div id="maquete-cena"></div>
+<a id="maquete-voltar" href="index.html">&larr; Voltar para o empreendimento</a>
+
+<div id="maquete-carregando">
+  <div class="maquete-barra"><span id="maquete-progresso"></span></div>
+  <p>Carregando maquete…</p>
+</div>
+
+<div id="maquete-erro" hidden>
+  <p id="maquete-erro-msg">Seu navegador não suporta a maquete 3D</p>
+  <a id="maquete-erro-link" href="index.html">Voltar para o empreendimento</a>
+</div>
+
+<script src="assets/config.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/maquete.js"></script>
+
+<!-- BOOTSTRAP PROVISORIO (Task 4): a Task 5 troca este bloco por
+     <script type="module" src="assets/maquete-app.js"></script> -->
+<script type="module">
+  import { criarCena } from './assets/maquete-cena.js';
+
+  const empId = new URLSearchParams(location.search).get('e');
+  const emp = empId ? window.findEmpreendimento(empId) : null;
+  const voltar = emp ? 'empreendimento.html?e=' + encodeURIComponent(emp.id) : 'index.html';
+  document.getElementById('maquete-voltar').href = voltar;
+  document.getElementById('maquete-erro-link').href = voltar;
+
+  function erro(msg) {
+    document.getElementById('maquete-erro-msg').textContent = msg;
+    document.getElementById('maquete-erro').hidden = false;
+    document.getElementById('maquete-carregando').classList.add('fim');
+  }
+
+  if (!emp || !emp.maquete) {
+    erro('Maquete 3D não disponível para este empreendimento');
+  } else if (!window.WebGL2RenderingContext) {
+    erro('Seu navegador não suporta a maquete 3D');
+  } else {
+    document.title = 'Maquete 3D · ' + emp.nome + ' · Portal do Corretor';
+    const barra = document.getElementById('maquete-progresso');
+    try {
+      const cena = await criarCena(document.getElementById('maquete-cena'), emp.maquete, {
+        onProgresso: (p) => { barra.style.width = Math.round(p * 100) + '%'; },
+        onHover: (idx, x, y) => { window.__hover = { idx, x, y }; },
+        onClick: (idx) => { window.__click = idx; cena.destacar(idx); }
+      });
+      window.__cena = cena; // gancho de depuracao (Task 4)
+      document.getElementById('maquete-carregando').classList.add('fim');
+    } catch (e) {
+      console.error('[maquete]', e);
+      erro(/webgl/i.test(String(e && e.message)) ? 'Seu navegador não suporta a maquete 3D'
+        : 'Não foi possível carregar a maquete 3D');
+    }
+  }
+</script>
+</body>
+</html>

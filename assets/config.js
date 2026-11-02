@@ -356,6 +356,22 @@ window.CITIES = [
         hideVagas: true,
         tipoRule: 'village-gaia',
         solNascente: { default: [1, 2, 7, 8] },
+        /* maquete 3D (maquete.html): grade de unidades + cameras em metros
+           (Y para cima, origem no centro do terreno). modelo null = modelo
+           provisorio gerado em codigo (assets/maquete-provisoria.js) */
+        maquete: {
+          simId: 'gaia',
+          modelo: null,
+          grade: { torres: [1, 2, 3], andares: 20, finais: 8 },
+          cameras: {
+            geral:     { pos: [120, 105, 185], alvo: [0, 22, 0] },
+            'torre-1': { pos: [127, 50, 85],   alvo: [57, 28, 0] },
+            'torre-2': { pos: [70, 50, 85],    alvo: [0, 28, 0] },
+            'torre-3': { pos: [-127, 50, 85],  alvo: [-57, 28, 0] },
+            frente:    { pos: [0, 35, 175],    alvo: [0, 28, 0] },
+            fundos:    { pos: [0, 35, -175],   alvo: [0, 28, 0] }
+          }
+        },
         tipos: [
           { key: 'tipo-ponta',       label: '2Q C/S Tipo - Ponta' },
           { key: 'office-tipo-meio', label: '1Q Office Tipo - Meio' },
