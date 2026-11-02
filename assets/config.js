@@ -356,6 +356,26 @@ window.CITIES = [
         hideVagas: true,
         tipoRule: 'village-gaia',
         solNascente: { default: [1, 2, 7, 8] },
+        /* maquete 3D (maquete.html): grade de unidades + cameras em metros
+           (Y para cima, origem no centro do terreno). modelo null = modelo
+           provisorio gerado em codigo (assets/maquete-provisoria.js) */
+        maquete: {
+          // false = maquete so por link direto (maquete.html?e=village-gaia), sem botao na pagina do empreendimento
+          botaoVisivel: false,
+          simId: 'gaia',
+          modelo: 'assets/3d/village-gaia/gaia.glb',
+          grade: { torres: [1, 2, 3], andares: 20, finais: 8 },
+          /* torres do modelo real: centros em x = 31.9 (T1), -26.2 (T2), -84.5 (T3), z = -19.7;
+             varandas (unidades) nas faces +x (finais 1, 2, 7, 8) e -x (finais 3 a 6) */
+          cameras: {
+            geral:     { pos: [135, 110, 145],  alvo: [-26, 20, -20] },
+            'torre-1': { pos: [117, 45, 40],    alvo: [31.9, 28, -19.7] },
+            'torre-2': { pos: [14, 40, 65],     alvo: [-26.2, 28, -19.7] },
+            'torre-3': { pos: [-170, 45, 40],   alvo: [-84.5, 28, -19.7] },
+            frente:    { pos: [60, 28, 150],    alvo: [-20, 28, -20] },
+            fundos:    { pos: [-26, 40, -200],  alvo: [-26, 28, -20] }
+          }
+        },
         tipos: [
           { key: 'tipo-ponta',       label: '2Q C/S Tipo - Ponta' },
           { key: 'office-tipo-meio', label: '1Q Office Tipo - Meio' },

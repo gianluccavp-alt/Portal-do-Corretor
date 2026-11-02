@@ -1,0 +1,8 @@
+# Fora do deploy (nao sao servidos publicamente)
+assets/3d/village-gaia/gaia.blend
+assets/3d/village-gaia/scripts/
+docs/
+.superpowers/
+.impeccable/
+# tests/fixtures/vendas.json e buscado em runtime (modo demo de pendencias): manter
+tests/*.test.js

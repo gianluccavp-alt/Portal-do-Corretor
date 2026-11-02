@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Maquete 3D · Portal do Corretor</title>
+<link rel="icon" type="image/webp" href="assets/img/favicon.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/maquete.css">
+<script type="importmap">{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
+</head>
+<body data-modo="noite">
+
+<div id="maquete-cena" aria-label="Maquete 3D do empreendimento"></div>
+
+<!-- topo: voltar, nome, resumo, modo -->
+<header class="mq-topo">
+  <div class="mq-esq">
+  <div class="mq-card mq-id">
+    <a id="maquete-voltar" class="mq-voltar" href="index.html">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+      <span class="mq-voltar-txt">Voltar para o empreendimento</span><span class="mq-voltar-curto">Voltar</span>
+    </a>
+    <div class="mq-id-txt">
+      <span class="mq-eyebrow">Maquete 3D</span>
+      <h1 id="mq-nome">Carregando…</h1>
+      <p id="mq-resumo" class="mq-resumo" aria-live="polite"></p>
+    </div>
+  </div>
+  <!-- busca + filtros -->
+  <section class="mq-ferramentas" aria-label="Busca e filtros">
+    <form id="mq-busca" class="mq-card mq-busca" role="search" autocomplete="off">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="mq-busca-input" type="search" placeholder="Buscar · ex.: T1 1204" aria-label="Buscar unidade" enterkeyhint="search">
+      <button type="button" id="mq-filtros-btn" class="mq-filtros-btn" aria-expanded="false" aria-controls="mq-filtros">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+        Filtros<span id="mq-filtros-n" class="mq-badge" hidden></span>
+      </button>
+    </form>
+    <p id="mq-busca-msg" class="mq-busca-msg" role="status" hidden></p>
+    <div id="mq-filtros" class="mq-card mq-filtros" hidden>
+      <button type="button" id="mq-f-disp" class="mq-chip" aria-pressed="false">Só disponíveis</button>
+      <div class="mq-f-grupo">
+        <span class="mq-lab">Tipologia</span>
+        <div id="mq-f-tipos" class="mq-chips"></div>
+      </div>
+      <div class="mq-f-grupo">
+        <span class="mq-lab">Sol</span>
+        <div id="mq-f-sol" class="mq-chips">
+          <button type="button" class="mq-chip" data-sol="nascente" aria-pressed="false">Nascente · manhã</button>
+          <button type="button" class="mq-chip" data-sol="poente" aria-pressed="false">Poente · tarde</button>
+        </div>
+      </div>
+      <div class="mq-f-grupo">
+        <span class="mq-lab">Andar</span>
+        <div class="mq-f-andar">
+          <select id="mq-f-min" aria-label="Andar mínimo"></select>
+          <span>até</span>
+          <select id="mq-f-max" aria-label="Andar máximo"></select>
+        </div>
+      </div>
+      <div class="mq-f-pe">
+        <span id="mq-f-cont"></span>
+        <button type="button" id="mq-f-limpar" class="mq-link">Limpar filtros</button>
+      </div>
+    </div>
+  </section>
+  </div>
+  <div class="mq-seg mq-modo" role="group" aria-label="Modo de exibição">
+    <button type="button" data-modo="noite" aria-pressed="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>Noite</button>
+    <button type="button" data-modo="cores" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Dia</button>
+  </div>
+</header>
+
+
+
+<!-- aviso de planilha -->
+<div id="mq-aviso" class="mq-aviso" role="alert" hidden>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <div>
+    <strong>Não foi possível carregar a disponibilidade</strong>
+    <span>Nenhuma unidade está sendo mostrada como disponível.</span>
+  </div>
+  <button type="button" id="mq-aviso-btn" class="mq-btn mq-btn-sm">Tentar de novo</button>
+</div>
+
+<!-- rodape: legenda + cameras -->
+<footer class="mq-rodape">
+  <div id="mq-legenda" class="mq-card mq-legenda" aria-label="Legenda"></div>
+  <nav id="mq-cameras" class="mq-seg mq-cameras" aria-label="Câmeras"></nav>
+</footer>
+
+<!-- etiqueta de hover -->
+<div id="mq-tip" class="mq-tip" hidden><i class="mq-dot"></i><span id="mq-tip-txt"></span></div>
+
+<!-- painel da unidade -->
+<aside id="mq-painel" class="mq-painel" aria-label="Unidade selecionada" hidden>
+  <button type="button" id="mq-painel-fechar" class="mq-fechar" aria-label="Fechar">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <div id="mq-painel-corpo" class="mq-painel-corpo"></div>
+  <div class="mq-painel-nav">
+    <button type="button" id="mq-ant" class="mq-btn mq-btn-ghost">&lsaquo; Anterior disponível</button>
+    <button type="button" id="mq-prox" class="mq-btn mq-btn-ghost">Próxima disponível &rsaquo;</button>
+  </div>
+</aside>
+
+<div id="maquete-carregando">
+  <span class="mq-eyebrow">Maquete 3D</span>
+  <strong id="mq-carregando-nome"></strong>
+  <div class="maquete-barra"><span id="maquete-progresso"></span></div>
+  <p>Carregando modelo e disponibilidade…</p>
+</div>
+
+<div id="maquete-erro" hidden>
+  <p id="maquete-erro-msg">Seu navegador não suporta a maquete 3D</p>
+  <a id="maquete-erro-link" href="index.html">Voltar para o empreendimento</a>
+</div>
+
+<script src="assets/config.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/maquete.js"></script>
+<script type="module" src="assets/maquete-app.js"></script>
+</body>
+</html>

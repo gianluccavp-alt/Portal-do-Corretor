@@ -1,0 +1,448 @@
+{
+ "schema": "gaia-unidades-layout/2",
+ "unidades_medida": "metros; Z para cima (Blender). No glTF Y-up: (x, y, z)_blender -> (x, z, -y)_gltf",
+ "pe_direito": 2.9,
+ "pavimentos": 20,
+ "andar_z": "z0 = andar*pe_direito + z_rel[0], z1 = (andar+1)*pe_direito + z_rel[1]",
+ "z_rel": [
+  0.35,
+  -0.15
+ ],
+ "plano": "fundo da varanda: x_plano = centro + normal*(4,9 + 0,05)",
+ "janelas_quadrante_local": [
+  {
+   "tipo": "face",
+   "plano": "x",
+   "coord": 6.0,
+   "faixa": [
+    17.5,
+    18.69
+   ],
+   "material": "janela_veneziana",
+   "ambiente": "ponta: dormitorio 1 (casal)"
+  },
+  {
+   "tipo": "face",
+   "plano": "x",
+   "coord": 6.0,
+   "faixa": [
+    15.87,
+    16.48
+   ],
+   "material": "janela_banheiro",
+   "ambiente": "ponta: banheiro 1"
+  },
+  {
+   "tipo": "face",
+   "plano": "x",
+   "coord": 6.0,
+   "faixa": [
+    14.47,
+    15.09
+   ],
+   "material": "janela_banheiro",
+   "ambiente": "ponta: banheiro 2"
+  },
+  {
+   "tipo": "recorte",
+   "plano": "y",
+   "coord": 17.5,
+   "faixa": [
+    0.82,
+    1.98
+   ],
+   "material": "janela_veneziana",
+   "ambiente": "ponta: dormitorio 2 (no recorte, sobre a laje tecnica)"
+  },
+  {
+   "tipo": "saliencia",
+   "plano": "x",
+   "coord": 7.0,
+   "faixa": [
+    3.92,
+    5.12
+   ],
+   "material": "janela_veneziana",
+   "ambiente": "meio: dormitorio 2 (saliencia)"
+  },
+  {
+   "tipo": "laje_tec",
+   "plano": "x",
+   "coord": 5.4,
+   "faixa": [
+    1.29,
+    2.45
+   ],
+   "material": "janela_veneziana",
+   "ambiente": "meio: dormitorio 1 (sobre a laje tecnica)"
+  }
+ ],
+ "torres": {
+  "torre-1": {
+   "centro": [
+    31.886,
+    19.661,
+    0.0
+   ],
+   "rotacao_z_graus": 0.0,
+   "finais": {
+    "06": {
+     "elemento": "varanda (fundo)",
+     "face": "-x",
+     "normal": [
+      -1,
+      0,
+      0
+     ],
+     "x_plano": 26.936,
+     "y_faixa": [
+      5.761,
+      9.661
+     ]
+    },
+    "05": {
+     "elemento": "varanda (fundo)",
+     "face": "-x",
+     "normal": [
+      -1,
+      0,
+      0
+     ],
+     "x_plano": 26.936,
+     "y_faixa": [
+      9.861,
+      13.611
+     ]
+    },
+    "04": {
+     "elemento": "varanda (fundo)",
+     "face": "-x",
+     "normal": [
+      -1,
+      0,
+      0
+     ],
+     "x_plano": 26.936,
+     "y_faixa": [
+      25.711,
+      29.461
+     ]
+    },
+    "03": {
+     "elemento": "varanda (fundo)",
+     "face": "-x",
+     "normal": [
+      -1,
+      0,
+      0
+     ],
+     "x_plano": 26.936,
+     "y_faixa": [
+      29.661,
+      33.561
+     ]
+    },
+    "07": {
+     "elemento": "varanda (fundo)",
+     "face": "+x",
+     "normal": [
+      1,
+      0,
+      0
+     ],
+     "x_plano": 36.836,
+     "y_faixa": [
+      5.761,
+      9.661
+     ]
+    },
+    "08": {
+     "elemento": "varanda (fundo)",
+     "face": "+x",
+     "normal": [
+      1,
+      0,
+      0
+     ],
+     "x_plano": 36.836,
+     "y_faixa": [
+      9.861,
+      13.611
+     ]
+    },
+    "01": {
+     "elemento": "varanda (fundo)",
+     "face": "+x",
+     "normal": [
+      1,
+      0,
+      0
+     ],
+     "x_plano": 36.836,
+     "y_faixa": [
+      25.711,
+      29.461
+     ]
+    },
+    "02": {
+     "elemento": "varanda (fundo)",
+     "face": "+x",
+     "normal": [
+      1,
+      0,
+      0
+     ],
+     "x_plano": 36.836,
+     "y_faixa": [
+      29.661,
+      33.561
+     ]
+    }
+   }
+  },
+  "torre-2": {
+   "centro": [
+    -26.174,
+    19.661,
+    0.0
+   ],
+   "rotacao_z_graus": 0.0,
+   "finais": {
+    "06": {
+     "elemento": "varanda (fundo)",
+     "face": "-x",
+     "normal": [
+      -1,
+      0,
+      0
+     ],
+     "x_plano": -31.124,
+     "y_faixa": [
+      5.761,
+      9.661
+     ]
+    },
+    "05": {
+     "elemento": "varanda (fundo)",
+     "face": "-x",
+     "normal": [
+      -1,
+      0,
+      0
+     ],
+     "x_plano": -31.124,
+     "y_faixa": [
+      9.861,
+      13.611
+     ]
+    },
+    "04": {
+     "elemento": "varanda (fundo)",
+     "face": "-x",
+     "normal": [
+      -1,
+      0,
+      0
+     ],
+     "x_plano": -31.124,
+     "y_faixa": [
+      25.711,
+      29.461
+     ]
+    },
+    "03": {
+     "elemento": "varanda (fundo)",
+     "face": "-x",
+     "normal": [
+      -1,
+      0,
+      0
+     ],
+     "x_plano": -31.124,
+     "y_faixa": [
+      29.661,
+      33.561
+     ]
+    },
+    "07": {
+     "elemento": "varanda (fundo)",
+     "face": "+x",
+     "normal": [
+      1,
+      0,
+      0
+     ],
+     "x_plano": -21.224,
+     "y_faixa": [
+      5.761,
+      9.661
+     ]
+    },
+    "08": {
+     "elemento": "varanda (fundo)",
+     "face": "+x",
+     "normal": [
+      1,
+      0,
+      0
+     ],
+     "x_plano": -21.224,
+     "y_faixa": [
+      9.861,
+      13.611
+     ]
+    },
+    "01": {
+     "elemento": "varanda (fundo)",
+     "face": "+x",
+     "normal": [
+      1,
+      0,
+      0
+     ],
+     "x_plano": -21.224,
+     "y_faixa": [
+      25.711,
+      29.461
+     ]
+    },
+    "02": {
+     "elemento": "varanda (fundo)",
+     "face": "+x",
+     "normal": [
+      1,
+      0,
+      0
+     ],
+     "x_plano": -21.224,
+     "y_faixa": [
+      29.661,
+      33.561
+     ]
+    }
+   }
+  },
+  "torre-3": {
+   "centro": [
+    -84.534,
+    19.661,
+    0.0
+   ],
+   "rotacao_z_graus": 0.0,
+   "finais": {
+    "06": {
+     "elemento": "varanda (fundo)",
+     "face": "-x",
+     "normal": [
+      -1,
+      0,
+      0
+     ],
+     "x_plano": -89.484,
+     "y_faixa": [
+      5.761,
+      9.661
+     ]
+    },
+    "05": {
+     "elemento": "varanda (fundo)",
+     "face": "-x",
+     "normal": [
+      -1,
+      0,
+      0
+     ],
+     "x_plano": -89.484,
+     "y_faixa": [
+      9.861,
+      13.611
+     ]
+    },
+    "04": {
+     "elemento": "varanda (fundo)",
+     "face": "-x",
+     "normal": [
+      -1,
+      0,
+      0
+     ],
+     "x_plano": -89.484,
+     "y_faixa": [
+      25.711,
+      29.461
+     ]
+    },
+    "03": {
+     "elemento": "varanda (fundo)",
+     "face": "-x",
+     "normal": [
+      -1,
+      0,
+      0
+     ],
+     "x_plano": -89.484,
+     "y_faixa": [
+      29.661,
+      33.561
+     ]
+    },
+    "07": {
+     "elemento": "varanda (fundo)",
+     "face": "+x",
+     "normal": [
+      1,
+      0,
+      0
+     ],
+     "x_plano": -79.584,
+     "y_faixa": [
+      5.761,
+      9.661
+     ]
+    },
+    "08": {
+     "elemento": "varanda (fundo)",
+     "face": "+x",
+     "normal": [
+      1,
+      0,
+      0
+     ],
+     "x_plano": -79.584,
+     "y_faixa": [
+      9.861,
+      13.611
+     ]
+    },
+    "01": {
+     "elemento": "varanda (fundo)",
+     "face": "+x",
+     "normal": [
+      1,
+      0,
+      0
+     ],
+     "x_plano": -79.584,
+     "y_faixa": [
+      25.711,
+      29.461
+     ]
+    },
+    "02": {
+     "elemento": "varanda (fundo)",
+     "face": "+x",
+     "normal": [
+      1,
+      0,
+      0
+     ],
+     "x_plano": -79.584,
+     "y_faixa": [
+      29.661,
+      33.561
+     ]
+    }
+   }
+  }
+ }
+}
