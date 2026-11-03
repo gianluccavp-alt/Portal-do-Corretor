@@ -193,6 +193,13 @@ function promoBadgeHtml(u) {
   return '<span class="u-badge-promo">Promocional' + INFO_SVG +
     '<span class="u-tooltip">Unidades promocionais n&atilde;o podem ser vendidas com Pr&ecirc;mio.</span></span>';
 }
+/* Selo de status da unidade. Em Ribeirao Preto, unidades com status MIRROR na planilha
+   (coluna "Status da unidade") aparecem como "Mirror" no lugar de "Disponivel". */
+function statusBadgeHtml(u) {
+  var emp = window.CURRENT_EMP;
+  var mirror = !!(emp && emp._cityId === 'ribeirao-preto') && normKey(u.status) === 'mirror';
+  return '<span class="u-badge-disp">' + (mirror ? 'Mirror' : 'Disponivel') + '</span>';
+}
 function getSolIcon(u) { return unitNascente(u) ? '&#9728;' : '&#9790;'; }
 /* Valores monetarios sempre com centavos, exatamente como vem da planilha.
    NUNCA arredondar para inteiro: B.A., Folga de Tabela, Campanha G etc. tem centavos. */
@@ -689,7 +696,7 @@ function unitMobileHtml(u, idx) {
   var clickable = unitClickAttr(idx);
   var html = '<div class="u-m"' + clickable + '>';
   html += '<div class="u-m-main">';
-  html += '<div class="u-m-top"><span class="u-tipo">' + u.tipoLabel + '</span>' + d.promoBadge + '<span class="u-badge-disp">Disponivel</span></div>';
+  html += '<div class="u-m-top"><span class="u-tipo">' + u.tipoLabel + '</span>' + d.promoBadge + statusBadgeHtml(u) + '</div>';
   html += '<div class="u-m-id"><span class="u-ap">' + d.apLabel + '</span></div>';
   html += '<div class="u-m-vals">';
   html += '<div class="u-m-price"><div class="u-price-lbl">Associativo/Investidor</div>';
@@ -725,7 +732,7 @@ function unitCardHtml(u, idx) {
   html += '<div class="u-top"><div class="u-top-info">';
   html += '<div class="u-tipo">' + u.tipoLabel + '</div>';
   html += '<div class="u-ap">' + d.apLabel + '</div>';
-  html += '</div><div class="u-top-tags"><span class="u-badge-disp">Disponivel</span>' + d.promoBadge + d.vagasBadge + '</div></div>';
+  html += '</div><div class="u-top-tags">' + statusBadgeHtml(u) + d.promoBadge + d.vagasBadge + '</div></div>';
   html += '<hr class="u-hr">';
   html += '<div class="u-price-row">';
   html += '<div><div class="u-price-lbl">Valor Tabela Direta</div><div class="u-price">' + fmt(d.vTabela) + '</div></div>';
@@ -749,7 +756,7 @@ function unitRowHtml(u, idx) {
   var d = unitDisplayData(u);
   var html = '<div class="u-row"' + unitClickAttr(idx) + '>';
   html += '<div class="u-row-id">';
-  html += '<span class="u-badge-disp">Disponivel</span>' + d.promoBadge;
+  html += statusBadgeHtml(u) + d.promoBadge;
   html += '<div class="u-row-tipo-line"><div class="u-tipo">' + u.tipoLabel + '</div>' + d.vagasBadge + '</div>';
   html += '<div class="u-ap">' + d.apLabel + '</div>';
   html += '</div>';
