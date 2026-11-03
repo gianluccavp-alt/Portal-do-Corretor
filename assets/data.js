@@ -707,6 +707,18 @@ function unitMobileHtml(u, idx) {
   return html;
 }
 
+// O texto "(Desconto de ...)" confunde o time de vendas em Ribeirao Preto: so aparece nos demais
+function showDescontoAssoc() {
+  var emp = window.CURRENT_EMP;
+  return !(emp && emp._cityId === 'ribeirao-preto');
+}
+function descontoCardHtml(d) {
+  return showDescontoAssoc() ? ' (Desconto de ' + fmt(d.desconto) + ')' : '';
+}
+function descontoRowHtml(d) {
+  return showDescontoAssoc() ? '<span class="u-desc-off">(Desconto de ' + fmt(d.desconto) + ')</span>' : '';
+}
+
 function unitCardHtml(u, idx) {
   var d = unitDisplayData(u);
   var html = '<div class="u-card"' + unitClickAttr(idx) + '>';
@@ -728,7 +740,7 @@ function unitCardHtml(u, idx) {
     html += '<div class="u-meta-v" style="color:' + d.solColor + '">' + d.solIcon + ' ' + d.sol + '</div></div>';
   }
   html += '</div>';
-  html += '<div class="u-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(d.vAssoc) + ' (Desconto de ' + fmt(d.desconto) + ')</span></div>';
+  html += '<div class="u-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(d.vAssoc) + descontoCardHtml(d) + '</span></div>';
   html += '</div>';
   return html;
 }
@@ -750,7 +762,7 @@ function unitRowHtml(u, idx) {
     html += '<div class="u-row-stat"><div class="u-meta-k" style="color:' + d.solColor + '">Sol</div><div class="u-meta-v" style="color:' + d.solColor + '">' + d.solIcon + ' ' + d.sol + '</div></div>';
   }
   html += '</div>';
-  html += '<div class="u-row-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(d.vAssoc) + '</span><span class="u-desc-off">(Desconto de ' + fmt(d.desconto) + ')</span></div>';
+  html += '<div class="u-row-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(d.vAssoc) + '</span>' + descontoRowHtml(d) + '</div>';
   html += '<div class="u-row-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>';
   html += '</div>';
   return html;
