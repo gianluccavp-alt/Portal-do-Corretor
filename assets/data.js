@@ -778,7 +778,9 @@ var PDF_LOGO = null;
   img.src = 'assets/img/logo-direcional.jpg';
 })();
 
-function exportarUnidadesPdf() {
+/* comValores = false omite todas as colunas de preco (tabela para divulgacao) */
+function exportarUnidadesPdf(comValores) {
+  comValores = comValores !== false;
   var emp = window.CURRENT_EMP;
   if (!emp) return;
   if (!window.jspdf || !window.jspdf.jsPDF) {
@@ -814,7 +816,7 @@ function exportarUnidadesPdf() {
 
   var head = ['Tipologia', 'Unidade', 'Area Privativa'];
   if (!hideSol) head.push('Sol');
-  head.push('Valor Tabela Direta', 'Valor de Avaliacao', 'Valor Associativo/Investidor');
+  if (comValores) head.push('Valor Tabela Direta', 'Valor de Avaliacao', 'Valor Associativo/Investidor');
 
   var body = list.map(function (u) {
     var d = unitDisplayData(u);
@@ -822,11 +824,11 @@ function exportarUnidadesPdf() {
     var unidadeTxt = (u.identificador || u.bl) + ' - ' + andarTxt + ' - Final ' + u.f;
     var row = [u.tipoLabel, unidadeTxt, u.area + ' m2'];
     if (!hideSol) row.push(d.sol);
-    row.push(fmt(d.vTabela), (u.avaliacao && u.avaliacao > 0) ? fmt(u.avaliacao) : '-', fmt(d.vAssoc));
+    if (comValores) row.push(fmt(d.vTabela), (u.avaliacao && u.avaliacao > 0) ? fmt(u.avaliacao) : '-', fmt(d.vAssoc));
     return row;
   });
 
-  var moneyCols = hideSol ? [3, 4, 5] : [4, 5, 6];
+  var moneyCols = !comValores ? [] : (hideSol ? [3, 4, 5] : [4, 5, 6]);
   var columnStyles = { 2: { halign: 'right' } };
   moneyCols.forEach(function (i) { columnStyles[i] = { halign: 'right' }; });
 
@@ -847,12 +849,12 @@ function exportarUnidadesPdf() {
     var H = doc.internal.pageSize.getHeight();
     doc.setDrawColor(231, 233, 234); doc.line(M, H - 12, W - M, H - 12);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(114, 122, 125);
-    doc.text('Valores sujeitos a confirmacao e disponibilidade.', M, H - 7);
+    doc.text(comValores ? 'Valores sujeitos a confirmacao e disponibilidade.' : 'Unidades sujeitas a confirmacao de disponibilidade.', M, H - 7);
     doc.text('Gerado em ' + dataStr + '  -  Pagina ' + p + ' de ' + total, W - M, H - 7, { align: 'right' });
   }
 
   var slug = (emp.id || emp.nome).toString().trim().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').toLowerCase();
-  doc.save('unidades-disponiveis-' + slug + '.pdf');
+  doc.save('unidades-disponiveis-' + slug + (comValores ? '' : '-sem-valores') + '.pdf');
 }
 
 /* ---------- tabs + zoom ---------- */

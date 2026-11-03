@@ -115,6 +115,7 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
 .sim-modal-opts{display:flex;flex-direction:column;gap:.7rem}
 .sim-opt{display:flex;align-items:center;gap:.9rem;padding:1rem 1.05rem;border-radius:14px;
       border:1px solid var(--border);text-decoration:none;color:inherit;transition:all .15s}
+button.sim-opt{width:100%;background:none;font:inherit;text-align:left;cursor:pointer}
 .sim-opt:hover{border-color:var(--gold);background:var(--cream);transform:translateY(-1px)}
 .sim-opt-ic{flex:0 0 auto;width:42px;height:42px;border-radius:11px;background:var(--cream);
       color:var(--gold);display:flex;align-items:center;justify-content:center}

@@ -43,6 +43,34 @@
   </div>
 </div>
 
+<div class="sim-modal-overlay" id="pdf-modal-overlay">
+  <div class="sim-modal">
+    <button class="sim-modal-close" id="pdf-modal-close" type="button" aria-label="Fechar">&times;</button>
+    <div class="sim-modal-head">
+      <h2>Baixar tabela</h2>
+      <p>O PDF sai com as unidades dos filtros selecionados.</p>
+    </div>
+    <div class="sim-modal-opts">
+      <button class="sim-opt" type="button" data-valores="1">
+        <span class="sim-opt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></span>
+        <span class="sim-opt-txt">
+          <span class="sim-opt-tit">Com valores</span>
+          <span class="sim-opt-sub">Tabela Direta, Avaliação e Associativo/Investidor.</span>
+        </span>
+        <span class="sim-opt-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+      </button>
+      <button class="sim-opt" type="button" data-valores="0">
+        <span class="sim-opt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V8l7-5 7 5v13"></path><path d="M10 21v-6h4v6"></path></svg></span>
+        <span class="sim-opt-txt">
+          <span class="sim-opt-tit">Sem valores</span>
+          <span class="sim-opt-sub">Só tipologia, unidade, área e sol, sem nenhum preço.</span>
+        </span>
+        <span class="sim-opt-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="unit-modal-overlay" id="unit-modal-overlay">
   <div class="unit-modal">
     <button class="unit-modal-close" id="unit-modal-close" type="button" aria-label="Fechar">&times;</button>
@@ -398,7 +426,7 @@
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>' +
       '</button>' +
       (emp._cityId === 'ribeirao-preto'
-        ? '<button class="view-btn" id="view-btn-pdf" title="Baixar PDF das unidades filtradas" onclick="exportarUnidadesPdf()">' +
+        ? '<button class="view-btn" id="view-btn-pdf" title="Baixar PDF das unidades filtradas" onclick="abrirModalPdf()">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>' +
           '</button>'
         : '') +
@@ -709,6 +737,28 @@
   simOverlay.addEventListener('click', function (e) { if (e.target === simOverlay) fecharModalSimulador(); });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && simOverlay.classList.contains('open')) fecharModalSimulador();
+  });
+
+  // popup "Baixar tabela" - escolhe PDF com ou sem valores
+  var pdfOverlay = document.getElementById('pdf-modal-overlay');
+  window.abrirModalPdf = function () {
+    pdfOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+  function fecharModalPdf() {
+    pdfOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('pdf-modal-close').addEventListener('click', fecharModalPdf);
+  pdfOverlay.addEventListener('click', function (e) { if (e.target === pdfOverlay) fecharModalPdf(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && pdfOverlay.classList.contains('open')) fecharModalPdf();
+  });
+  pdfOverlay.querySelectorAll('[data-valores]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      fecharModalPdf();
+      exportarUnidadesPdf(btn.getAttribute('data-valores') === '1');
+    });
   });
 
   // popup de detalhes da unidade (somente Ribeirao Preto) - carater informativo
