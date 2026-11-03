@@ -48,6 +48,9 @@ async function iniciar(emp) {
   $('mq-carregando-nome').textContent = emp.nome;
 
   const cfg = emp.maquete;
+  /* area de lazer: fotos do book (galeria do empreendimento), sem fachada/torre */
+  const fotosLazer = ((emp.galeria && emp.galeria.items) || [])
+    .filter((it) => it.img && !/^(fachada|torre)$/i.test(it.title || ''));
   const gcfg = Object.assign({ solNascente: emp.solNascente }, cfg.grade);
   const ANDAR_MAX = gcfg.andares - 1;
 
@@ -119,7 +122,9 @@ async function iniciar(emp) {
       criarCena($('maquete-cena'), cfg, {
         onProgresso: (p) => { pModelo = p; progresso(); },
         onHover: aoPassar,
-        onClick: aoClicar
+        onClick: aoClicar,
+        onSelecao: posicionarSelecao,
+        onRumo: girarBussola
       }),
       pDados
     ]);
@@ -134,13 +139,18 @@ async function iniciar(emp) {
   $('maquete-carregando').classList.add('fim');
 
   /* ---------- estado -> cena + DOM ---------- */
+  /* a noite as disponiveis ja sao as unicas acesas: "So disponiveis" nao muda nada e some */
+  function soDispAplica() { return st.modo !== 'noite'; }
+
   function filtroAtivo() {
     const f = st.filtros;
-    return f.soDisponiveis || f.tipos.length > 0 || !!f.sol || f.andarMin > 0 || f.andarMax < ANDAR_MAX;
+    return (f.soDisponiveis && soDispAplica()) || f.tipos.length > 0 || !!f.sol || f.andarMin > 0 || f.andarMax < ANDAR_MAX;
   }
 
   function atualizar() {
-    st.visiveis = filtroAtivo() ? M.filtrar(st.grade, st.filtros, gcfg) : null;
+    $('mq-f-disp').hidden = !soDispAplica();
+    const f = soDispAplica() ? st.filtros : Object.assign({}, st.filtros, { soDisponiveis: false });
+    st.visiveis = filtroAtivo() ? M.filtrar(st.grade, f, gcfg) : null;
     if (cena) cena.pintar(M.estados(st.grade), st.visiveis, st.modo);
     renderResumo();
     renderLegenda();
@@ -160,13 +170,13 @@ async function iniciar(emp) {
 
   function renderLegenda() {
     const itens = st.modo === 'noite'
-      ? [['acesa', 'Disponível'], ['apagada', 'Indisponível'], ['fora', 'Fora de venda']]
+      ? [['acesa', 'Disponível'], ['res', 'Reservada'], ['apagada', 'Vendida'], ['fora', 'Fora de venda']]
       : [['disp', 'Disponível'], ['res', 'Reservada'], ['vend', 'Vendida'], ['fora', 'Fora de venda']];
     $('mq-legenda').innerHTML = itens.map(([c, t]) => '<span><i class="mq-dot ' + c + '"></i>' + t + '</span>').join('');
   }
 
   function renderContagemFiltro() {
-    const n = (st.filtros.soDisponiveis ? 1 : 0) + (st.filtros.tipos.length ? 1 : 0) + (st.filtros.sol ? 1 : 0) +
+    const n = (st.filtros.soDisponiveis && soDispAplica() ? 1 : 0) + (st.filtros.tipos.length ? 1 : 0) + (st.filtros.sol ? 1 : 0) +
       (st.filtros.andarMin > 0 || st.filtros.andarMax < ANDAR_MAX ? 1 : 0);
     const badge = $('mq-filtros-n');
     badge.hidden = !n;
@@ -213,6 +223,68 @@ async function iniciar(emp) {
     tip.style.transform = 'translate(' + Math.max(8, left) + 'px,' + Math.max(8, top) + 'px)';
   }
 
+  /* ---------- badge da selecionada + bussola (posicoes vindas da cena) ---------- */
+  function posicionarSelecao(p) {
+    const b = $('mq-sel');
+    if (!p || st.sel === null) { b.hidden = true; return; }
+    b.hidden = false;
+    const x = Math.round(p.x - b.offsetWidth / 2);
+    const y = Math.round(p.y - b.offsetHeight - 10);
+    b.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+  }
+
+  function girarBussola(graus) {
+    $('mq-bussola-disco').style.transform = 'rotate(' + (-graus) + 'deg)';
+  }
+
+  /* ---------- imagem ampliada (na propria pagina): planta ou galeria da area de lazer ---------- */
+  let focoAntesPlanta = null;
+  let galeria = null; // { itens, i } quando a galeria esta aberta
+  function mostrarImagem(src, titulo, alt, sub) {
+    $('mq-planta-img').src = src;
+    $('mq-planta-img').alt = alt;
+    $('mq-planta-titulo').textContent = titulo;
+    $('mq-planta-sub').textContent = sub || '';
+    $('mq-planta-sub').hidden = !sub;
+  }
+  function abrirModal() {
+    focoAntesPlanta = document.activeElement;
+    $('mq-planta-modal').hidden = false;
+    $('mq-planta-fechar').focus();
+  }
+  function ajustarGaleria(com) {
+    ['mq-gal-ant', 'mq-gal-prox', 'mq-planta-cont'].forEach((id) => { $(id).hidden = !com; });
+  }
+  function abrirPlanta(src, titulo) {
+    galeria = null;
+    ajustarGaleria(false);
+    mostrarImagem(src, titulo, 'Planta ' + titulo);
+    abrirModal();
+  }
+  function fotoGaleria(i) {
+    const n = galeria.itens.length;
+    galeria.i = (i + n) % n;
+    const it = galeria.itens[galeria.i];
+    mostrarImagem(it.img, it.title, it.title + (it.sub ? ' · ' + it.sub : ''), it.sub);
+    $('mq-planta-cont').textContent = (galeria.i + 1) + ' / ' + n;
+    /* pre-carrega a proxima para a troca ser instantanea */
+    new Image().src = galeria.itens[(galeria.i + 1) % n].img;
+  }
+  function abrirLazer() {
+    if (!fotosLazer.length) return;
+    galeria = { itens: fotosLazer, i: 0 };
+    ajustarGaleria(true);
+    fotoGaleria(0);
+    abrirModal();
+  }
+  function fecharPlanta() {
+    if ($('mq-planta-modal').hidden) return false;
+    $('mq-planta-modal').hidden = true;
+    galeria = null;
+    if (focoAntesPlanta && focoAntesPlanta.focus) focoAntesPlanta.focus();
+    return true;
+  }
+
   /* ---------- selecao ---------- */
   function aoClicar(idx) {
     if (idx == null) { fecharPainel(); return; }
@@ -226,6 +298,8 @@ async function iniciar(emp) {
     st.vista = false;
     $('mq-tip').hidden = true;
     if (cena) { cena.destacar(idx); cena.focarUnidade(idx); }
+    const i = info(idx);
+    $('mq-sel-txt').textContent = 'T' + i.c.torre + ' ' + i.numero + ' · ' + M.posicaoLabel(i.tipo);
     renderPainel();
     $('mq-painel').hidden = false;
     document.body.classList.add('painel-aberto');
@@ -235,6 +309,7 @@ async function iniciar(emp) {
     if (st.sel === null) return;
     st.sel = null;
     if (cena) cena.destacar(null);
+    $('mq-sel').hidden = true;
     $('mq-painel').hidden = true;
     document.body.classList.remove('painel-aberto');
   }
@@ -255,9 +330,10 @@ async function iniciar(emp) {
       (promo ? '<span class="mq-pill promo">Promocional</span>' : '') + '</div></div>';
 
     if (planta) {
-      h += '<a class="mq-planta" href="' + esc(planta.img) + '" target="_blank" rel="noopener">' +
+      h += '<button type="button" class="mq-planta" data-acao="planta" data-src="' + esc(planta.img) + '" data-titulo="' +
+        esc(planta.title || tipoLabel) + '">' +
         '<img src="' + esc(planta.img) + '" alt="Planta ' + esc(planta.title || tipoLabel) + '" loading="lazy">' +
-        '<span>' + esc(planta.title || tipoLabel) + '<em>Ampliar</em></span></a>';
+        '<span>' + esc(planta.title || tipoLabel) + '<em>Ampliar</em></span></button>';
     }
 
     h += '<div class="mq-p-meta">' +
@@ -447,7 +523,25 @@ async function iniciar(emp) {
     $('mq-painel-fechar').addEventListener('click', fecharPainel);
     $('mq-ant').addEventListener('click', () => navegar(-1));
     $('mq-prox').addEventListener('click', () => navegar(1));
+    $('mq-planta-fechar').addEventListener('click', fecharPlanta);
+    $('mq-gal-ant').addEventListener('click', () => galeria && fotoGaleria(galeria.i - 1));
+    $('mq-gal-prox').addEventListener('click', () => galeria && fotoGaleria(galeria.i + 1));
+    $('mq-lazer').hidden = !fotosLazer.length;
+    $('mq-lazer').addEventListener('click', abrirLazer);
+    /* celular: arrastar para o lado troca a foto */
+    let toqueX = null;
+    const foto = document.querySelector('.mq-modal-foto');
+    foto.addEventListener('touchstart', (e) => { toqueX = e.touches[0].clientX; }, { passive: true });
+    foto.addEventListener('touchend', (e) => {
+      if (!galeria || toqueX === null) return;
+      const dx = e.changedTouches[0].clientX - toqueX;
+      toqueX = null;
+      if (Math.abs(dx) > 40) fotoGaleria(galeria.i + (dx > 0 ? -1 : 1));
+    });
+    $('mq-planta-modal').addEventListener('click', (e) => { if (e.target === e.currentTarget) fecharPlanta(); });
     $('mq-painel-corpo').addEventListener('click', (e) => {
+      const pl = e.target.closest('[data-acao="planta"]');
+      if (pl) { abrirPlanta(pl.dataset.src, pl.dataset.titulo); return; }
       const b = e.target.closest('[data-acao="vista"]');
       if (!b || st.sel === null || !cena) return;
       st.vista = !st.vista;
@@ -458,11 +552,16 @@ async function iniciar(emp) {
     /* teclado: Esc fecha, setas navegam (fora de campos) */
     document.addEventListener('keydown', (e) => {
       const campo = /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName);
+      if (galeria && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        fotoGaleria(galeria.i + (e.key === 'ArrowLeft' ? -1 : 1));
+        return;
+      }
       if (e.key === 'Escape') {
+        if (fecharPlanta()) return;
         if (campo) { e.target.blur(); return; }
         if (!$('mq-filtros').hidden) { btnF.click(); return; }
         fecharPainel();
-      } else if (!campo && st.sel !== null && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      } else if (!campo && st.sel !== null && $('mq-planta-modal').hidden && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
         navegar(e.key === 'ArrowLeft' ? -1 : 1);
       }
     });
