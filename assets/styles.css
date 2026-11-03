@@ -45,17 +45,7 @@ body{background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;
 .nav-tab{padding:1.1rem 1.4rem;font-size:12px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--muted);cursor:pointer;border:none;border-bottom:2px solid transparent;background:none;font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap}
 .nav-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
 .nav-tab:hover{color:var(--text)}
-.upd{margin-left:auto;display:flex;align-items:center;gap:8px}
-.btn-update{display:flex;align-items:center;gap:7px;padding:9px 20px;background:var(--dark);color:#fff;border:none;border-radius:100px;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;letter-spacing:.5px;white-space:nowrap}
-.btn-update:hover{background:var(--gold);transform:translateY(-1px);box-shadow:0 4px 12px rgba(158,107,46,0.35)}
-.btn-update:disabled{opacity:.6;cursor:not-allowed;transform:none}
-.btn-update svg{width:14px;height:14px;flex-shrink:0;transition:transform .5s}
-.btn-update.loading svg{animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.update-status{font-size:12px;color:var(--muted);white-space:nowrap}
-.last-update{font-size:11px;color:var(--muted);white-space:nowrap;opacity:0.7}
-.update-status.ok{color:var(--green)}
-.update-status.err{color:#c0392b}
 
 /* ---------- SECTIONS ---------- */
 .section{display:none;max-width:1100px;margin:0 auto;padding:2.5rem 2rem}
@@ -409,21 +399,10 @@ button.sim-opt{width:100%;background:none;font:inherit;text-align:left;cursor:po
     mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='15 18 9 12 15 6'/></svg>") center/contain no-repeat}
 
   /* ---- NAV: abas saem do topo e viram tab bar inferior ----
-     A barra some, mas o bloco de atualizacao da planilha continua vivo,
-     flutuando sobre o hero. */
+     A barra some. */
   .nav{position:static;background:none;border-bottom:0;height:0;overflow:visible}
   .nav-inner{padding:0;overflow:visible;display:block}
   .nav-tab{display:none}
-  .upd{position:absolute;top:12px;right:12px;z-index:210;margin-left:0;
-    gap:8px;align-items:center;max-width:calc(100% - 24px)}
-  .btn-update{height:44px;padding:0 16px;border:1px solid rgba(255,255,255,0.18);
-    background:rgba(28,22,16,0.38);backdrop-filter:blur(6px);color:rgba(255,255,255,0.92)}
-  .btn-update:hover{background:rgba(28,22,16,0.55);transform:none;box-shadow:none}
-  /* espaco curto: fica so o horario da ultima carga, a contagem some */
-  .last-update{color:rgba(255,255,255,0.75);font-size:11px;max-width:104px;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:1}
-  .update-status{display:none}
-  .update-status.ok{color:#B7D9C2}
 
   /* ---- SECOES ---- */
   .section{padding:1.25rem 1rem 1.5rem}

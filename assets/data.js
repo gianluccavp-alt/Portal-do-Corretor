@@ -632,7 +632,7 @@ function renderUnits() {
   if (cnt) cnt.textContent = list.length;
 
   if (!list.length) {
-    grid.innerHTML = '<div class="empty"><div class="empty-icon">&#128269;</div><p>Nenhuma unidade para esse filtro. Clique em "Atualizar planilha" para carregar os dados.</p></div>';
+    grid.innerHTML = '<div class="empty"><div class="empty-icon">&#128269;</div><p>Nenhuma unidade para esse filtro.</p></div>';
     return;
   }
 
@@ -907,44 +907,38 @@ function fetchSheetCsv(csvUrl, onText, onErr) {
   });
 }
 
+/* Carrega a planilha e renderiza as unidades. Roda sozinha ao abrir a pagina;
+   se falhar, mostra o erro no lugar da lista, com link para tentar de novo. */
 function doUpdate() {
-  var btn    = document.getElementById('btn-update');
-  var status = document.getElementById('update-status');
   var emp = window.CURRENT_EMP;
-  btn.disabled = true; btn.classList.add('loading');
-  status.className = 'update-status';
-  status.textContent = 'Buscando dados...';
-  var luEl2 = document.getElementById('last-update'); if (luEl2) luEl2.textContent = '';
-
   var finished = false;
-  function finish(ok, msg) {
+  function fail(msg) {
     if (finished) return; finished = true;
-    status.className = ok ? 'update-status ok' : 'update-status err';
-    status.textContent = ok ? msg : ('Erro: ' + msg);
-    btn.disabled = false; btn.classList.remove('loading');
+    if (units.length) return;   // ja ha dados na tela: mantem
+    var grid = document.getElementById('units-grid');
+    if (grid) grid.innerHTML = '<div class="empty"><div class="empty-icon">&#9888;</div><p>Erro ao carregar as unidades: ' + msg +
+      ' <a href="#" onclick="doUpdate();return false">Tentar novamente</a></p></div>';
   }
   setTimeout(function () {
-    if (!finished) finish(false, 'Tempo esgotado. Verifique a conexão ou o link da planilha.');
+    if (!finished) fail('tempo esgotado. Verifique a conexao ou o link da planilha.');
   }, 15000);
 
   function processCSV(text) {
+    if (finished) return;
     var rows = parseCSV(text);
-    if (!rows || rows.length === 0) { finish(false, 'Planilha vazia ou formato inesperado.'); return; }
+    if (!rows || rows.length === 0) { fail('planilha vazia ou formato inesperado.'); return; }
     var newUnits = rowsToUnits(rows, emp.sheetName);
     if (newUnits.length === 0) {
       var sampleHeaders = rows.length ? Object.keys(rows[0]).join(' | ') : 'nenhum';
-      finish(false, '0 unidades para "' + emp.sheetName + '" (de ' + rows.length + ' linhas). Colunas: ' + sampleHeaders);
+      fail('0 unidades para "' + emp.sheetName + '" (de ' + rows.length + ' linhas). Colunas: ' + sampleHeaders);
       return;
     }
+    finished = true;
     units = newUnits;
     updatePremioVisibility();
     updateVagaVisibility();
     renderUnits();
     focaUnidadeAlvo();
-    var now = new Date();
-    var hm = now.getHours() + ':' + (now.getMinutes() < 10 ? '0' : '') + now.getMinutes();
-    var luEl = document.getElementById('last-update'); if (luEl) luEl.textContent = 'Atualizado as ' + hm;
-    finish(true, newUnits.length + ' unidades carregadas');
   }
-  fetchSheetCsv(processCSV, function (msg) { finish(false, msg); });
+  fetchSheetCsv(processCSV, fail);
 }
