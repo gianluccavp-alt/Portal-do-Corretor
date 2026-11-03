@@ -567,26 +567,9 @@ function tabelaDiretaOf(u) { return isPromo(u) ? (u.vcm + u.folgaTabela) : (u.ta
 function associativoOf(u)  { return isPromo(u) ? u.vcm                   : (u.associativo - premioAdj(u)); }
 
 /* ---------- render ---------- */
-function renderUnits() {
-  var grid = document.getElementById('units-grid');
-  var plantaBox = document.getElementById('planta-destaque');
-  var sortEl = document.getElementById('sort');
-  var sortVal = sortEl ? sortEl.value : 'num-asc';
-
-  if (plantaBox) {
-    var allPlantas = document.querySelectorAll('.planta-card');
-    for (var p = 0; p < allPlantas.length; p++) allPlantas[p].style.display = 'none';
-    plantaBox.style.display = 'none';
-    if (activeFilter !== 'todos') {
-      for (var pd = 0; pd < allPlantas.length; pd++) {
-        if (allPlantas[pd].getAttribute('data-tipo') === activeFilter) {
-          allPlantas[pd].style.display = 'block';
-          plantaBox.style.display = 'block';
-        }
-      }
-    }
-  }
-
+/* unidades que passam pelos filtros ativos, na ordenacao escolhida.
+   Usada pela listagem e pelo PDF, para o download sair igual ao que esta na tela. */
+function unidadesFiltradas(sortVal) {
   var list = [];
   for (var i = 0; i < units.length; i++) {
     var u = units[i];
@@ -619,6 +602,31 @@ function renderUnits() {
     if (sortVal === 'venda-desc') return tabelaDiretaOf(b) - tabelaDiretaOf(a);
     return 0;
   });
+
+  return list;
+}
+
+function renderUnits() {
+  var grid = document.getElementById('units-grid');
+  var plantaBox = document.getElementById('planta-destaque');
+  var sortEl = document.getElementById('sort');
+  var sortVal = sortEl ? sortEl.value : 'num-asc';
+
+  if (plantaBox) {
+    var allPlantas = document.querySelectorAll('.planta-card');
+    for (var p = 0; p < allPlantas.length; p++) allPlantas[p].style.display = 'none';
+    plantaBox.style.display = 'none';
+    if (activeFilter !== 'todos') {
+      for (var pd = 0; pd < allPlantas.length; pd++) {
+        if (allPlantas[pd].getAttribute('data-tipo') === activeFilter) {
+          allPlantas[pd].style.display = 'block';
+          plantaBox.style.display = 'block';
+        }
+      }
+    }
+  }
+
+  var list = unidadesFiltradas(sortVal);
 
   var cnt = document.getElementById('count-label');
   if (cnt) cnt.textContent = list.length;
@@ -755,7 +763,7 @@ function setView(mode, btn) {
   renderUnits();
 }
 
-/* ---------- export PDF (todas as unidades disponiveis do empreendimento) ---------- */
+/* ---------- export PDF (unidades disponiveis com os filtros ativos) ---------- */
 var PDF_LOGO = null;
 (function carregaLogoPdf() {
   var img = new Image();
@@ -783,12 +791,12 @@ function exportarUnidadesPdf() {
   }
 
   var hideSol = !!emp.hideSol;
-  var list = units.slice().sort(function (a, b) {
-    var tA = blocoNum(a.bl), tB = blocoNum(b.bl);
-    if (tA !== tB) return tA - tB;
-    if (a.andar !== b.andar) return a.andar - b.andar;
-    return a.f - b.f;
-  });
+  var sortEl = document.getElementById('sort');
+  var list = unidadesFiltradas(sortEl ? sortEl.value : 'num-asc');
+  if (!list.length) {
+    alert('Nenhuma unidade para os filtros selecionados.');
+    return;
+  }
 
   var doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
   var W = doc.internal.pageSize.getWidth(), M = 12, y = 12;
