@@ -48,6 +48,9 @@ async function iniciar(emp) {
   $('mq-carregando-nome').textContent = emp.nome;
 
   const cfg = emp.maquete;
+  /* area de lazer: fotos do book (galeria do empreendimento), sem fachada/torre */
+  const fotosLazer = ((emp.galeria && emp.galeria.items) || [])
+    .filter((it) => it.img && !/^(fachada|torre)$/i.test(it.title || ''));
   const gcfg = Object.assign({ solNascente: emp.solNascente }, cfg.grade);
   const ANDAR_MAX = gcfg.andares - 1;
 
@@ -136,13 +139,18 @@ async function iniciar(emp) {
   $('maquete-carregando').classList.add('fim');
 
   /* ---------- estado -> cena + DOM ---------- */
+  /* a noite as disponiveis ja sao as unicas acesas: "So disponiveis" nao muda nada e some */
+  function soDispAplica() { return st.modo !== 'noite'; }
+
   function filtroAtivo() {
     const f = st.filtros;
-    return f.soDisponiveis || f.tipos.length > 0 || !!f.sol || f.andarMin > 0 || f.andarMax < ANDAR_MAX;
+    return (f.soDisponiveis && soDispAplica()) || f.tipos.length > 0 || !!f.sol || f.andarMin > 0 || f.andarMax < ANDAR_MAX;
   }
 
   function atualizar() {
-    st.visiveis = filtroAtivo() ? M.filtrar(st.grade, st.filtros, gcfg) : null;
+    $('mq-f-disp').hidden = !soDispAplica();
+    const f = soDispAplica() ? st.filtros : Object.assign({}, st.filtros, { soDisponiveis: false });
+    st.visiveis = filtroAtivo() ? M.filtrar(st.grade, f, gcfg) : null;
     if (cena) cena.pintar(M.estados(st.grade), st.visiveis, st.modo);
     renderResumo();
     renderLegenda();
@@ -162,13 +170,13 @@ async function iniciar(emp) {
 
   function renderLegenda() {
     const itens = st.modo === 'noite'
-      ? [['acesa', 'Disponível'], ['apagada', 'Indisponível'], ['fora', 'Fora de venda'], ['sel', 'Selecionada']]
-      : [['disp', 'Disponível'], ['res', 'Reservada'], ['vend', 'Vendida'], ['fora', 'Fora de venda'], ['sel', 'Selecionada']];
+      ? [['acesa', 'Disponível'], ['res', 'Reservada'], ['apagada', 'Vendida'], ['fora', 'Fora de venda']]
+      : [['disp', 'Disponível'], ['res', 'Reservada'], ['vend', 'Vendida'], ['fora', 'Fora de venda']];
     $('mq-legenda').innerHTML = itens.map(([c, t]) => '<span><i class="mq-dot ' + c + '"></i>' + t + '</span>').join('');
   }
 
   function renderContagemFiltro() {
-    const n = (st.filtros.soDisponiveis ? 1 : 0) + (st.filtros.tipos.length ? 1 : 0) + (st.filtros.sol ? 1 : 0) +
+    const n = (st.filtros.soDisponiveis && soDispAplica() ? 1 : 0) + (st.filtros.tipos.length ? 1 : 0) + (st.filtros.sol ? 1 : 0) +
       (st.filtros.andarMin > 0 || st.filtros.andarMax < ANDAR_MAX ? 1 : 0);
     const badge = $('mq-filtros-n');
     badge.hidden = !n;
@@ -229,19 +237,50 @@ async function iniciar(emp) {
     $('mq-bussola-disco').style.transform = 'rotate(' + (-graus) + 'deg)';
   }
 
-  /* ---------- planta ampliada (na propria pagina) ---------- */
+  /* ---------- imagem ampliada (na propria pagina): planta ou galeria da area de lazer ---------- */
   let focoAntesPlanta = null;
-  function abrirPlanta(src, titulo) {
-    focoAntesPlanta = document.activeElement;
+  let galeria = null; // { itens, i } quando a galeria esta aberta
+  function mostrarImagem(src, titulo, alt, sub) {
     $('mq-planta-img').src = src;
-    $('mq-planta-img').alt = 'Planta ' + titulo;
+    $('mq-planta-img').alt = alt;
     $('mq-planta-titulo').textContent = titulo;
+    $('mq-planta-sub').textContent = sub || '';
+    $('mq-planta-sub').hidden = !sub;
+  }
+  function abrirModal() {
+    focoAntesPlanta = document.activeElement;
     $('mq-planta-modal').hidden = false;
     $('mq-planta-fechar').focus();
+  }
+  function ajustarGaleria(com) {
+    ['mq-gal-ant', 'mq-gal-prox', 'mq-planta-cont'].forEach((id) => { $(id).hidden = !com; });
+  }
+  function abrirPlanta(src, titulo) {
+    galeria = null;
+    ajustarGaleria(false);
+    mostrarImagem(src, titulo, 'Planta ' + titulo);
+    abrirModal();
+  }
+  function fotoGaleria(i) {
+    const n = galeria.itens.length;
+    galeria.i = (i + n) % n;
+    const it = galeria.itens[galeria.i];
+    mostrarImagem(it.img, it.title, it.title + (it.sub ? ' · ' + it.sub : ''), it.sub);
+    $('mq-planta-cont').textContent = (galeria.i + 1) + ' / ' + n;
+    /* pre-carrega a proxima para a troca ser instantanea */
+    new Image().src = galeria.itens[(galeria.i + 1) % n].img;
+  }
+  function abrirLazer() {
+    if (!fotosLazer.length) return;
+    galeria = { itens: fotosLazer, i: 0 };
+    ajustarGaleria(true);
+    fotoGaleria(0);
+    abrirModal();
   }
   function fecharPlanta() {
     if ($('mq-planta-modal').hidden) return false;
     $('mq-planta-modal').hidden = true;
+    galeria = null;
     if (focoAntesPlanta && focoAntesPlanta.focus) focoAntesPlanta.focus();
     return true;
   }
@@ -485,6 +524,20 @@ async function iniciar(emp) {
     $('mq-ant').addEventListener('click', () => navegar(-1));
     $('mq-prox').addEventListener('click', () => navegar(1));
     $('mq-planta-fechar').addEventListener('click', fecharPlanta);
+    $('mq-gal-ant').addEventListener('click', () => galeria && fotoGaleria(galeria.i - 1));
+    $('mq-gal-prox').addEventListener('click', () => galeria && fotoGaleria(galeria.i + 1));
+    $('mq-lazer').hidden = !fotosLazer.length;
+    $('mq-lazer').addEventListener('click', abrirLazer);
+    /* celular: arrastar para o lado troca a foto */
+    let toqueX = null;
+    const foto = document.querySelector('.mq-modal-foto');
+    foto.addEventListener('touchstart', (e) => { toqueX = e.touches[0].clientX; }, { passive: true });
+    foto.addEventListener('touchend', (e) => {
+      if (!galeria || toqueX === null) return;
+      const dx = e.changedTouches[0].clientX - toqueX;
+      toqueX = null;
+      if (Math.abs(dx) > 40) fotoGaleria(galeria.i + (dx > 0 ? -1 : 1));
+    });
     $('mq-planta-modal').addEventListener('click', (e) => { if (e.target === e.currentTarget) fecharPlanta(); });
     $('mq-painel-corpo').addEventListener('click', (e) => {
       const pl = e.target.closest('[data-acao="planta"]');
@@ -499,6 +552,10 @@ async function iniciar(emp) {
     /* teclado: Esc fecha, setas navegam (fora de campos) */
     document.addEventListener('keydown', (e) => {
       const campo = /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName);
+      if (galeria && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        fotoGaleria(galeria.i + (e.key === 'ArrowLeft' ? -1 : 1));
+        return;
+      }
       if (e.key === 'Escape') {
         if (fecharPlanta()) return;
         if (campo) { e.target.blur(); return; }

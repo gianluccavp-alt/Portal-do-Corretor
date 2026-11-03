@@ -47,7 +47,7 @@ const MODOS = {
     corSel: '#3DDC84', luzJanelas: 1.15,
     estados: {
       disponivel: ['#FFC872', 1],
-      reservada: ['#232a38', 0],
+      reservada: ['#D9323F', 0.55],
       vendida: ['#232a38', 0],
       fora: ['#323846', 0],
       'sem-dados': ['#323846', 0]

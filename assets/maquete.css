@@ -172,7 +172,8 @@ svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width:
 .mq-voltar svg { width: 14px; height: 14px; transition: transform .35s var(--mola); }
 .mq-voltar:hover svg { transform: translateX(-2px); }
 .mq-voltar-curto { display: none; }
-.mq-id-txt { padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, .10); }
+.mq-id-linha { display: flex; align-items: center; gap: 12px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, .10); }
+.mq-id-txt { flex: 1; min-width: 0; }
 .mq-id h1 { margin: 4px 0 0; font-size: 1.22rem; font-weight: 700; letter-spacing: -.4px; line-height: 1.2; color: #fff; }
 .mq-resumo { margin: 3px 0 0; font-size: .84rem; color: var(--tx2); white-space: nowrap; }
 .mq-resumo b { color: #fff; font-weight: 700; }
@@ -304,7 +305,6 @@ svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width:
 .mq-dot.apagada { background: var(--st-apagada); border-color: rgba(255, 255, 255, .4); }
 .mq-dot.disp { background: var(--st-disp); box-shadow: 0 0 6px rgba(47, 168, 102, .7); }
 .mq-dot.res { background: var(--st-res); box-shadow: 0 0 6px rgba(217, 50, 63, .65); }
-.mq-dot.sel { background: var(--st-sel); box-shadow: 0 0 0 2px rgba(0, 0, 0, .25), 0 0 8px var(--st-sel); border-color: rgba(255, 255, 255, .7); }
 body { --st-sel: var(--st-sel-noite); }
 body[data-modo="cores"] { --st-sel: var(--st-sel-dia); }
 .mq-dot.vend { background: var(--st-vend); }
@@ -339,14 +339,8 @@ body[data-modo="cores"] { --st-sel: var(--st-sel-dia); }
   border-right: 1px solid rgba(255, 255, 255, .6); border-bottom: 1px solid rgba(255, 255, 255, .6);
 }
 
-/* ---------- bussola (topo, ao lado do Noite/Dia) ---------- */
-.mq-dir { display: flex; align-items: flex-start; gap: 10px; }
-.mq-bussola {
-  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 8px 5px;
-  border-radius: 22px; background: var(--brilho), var(--veu), var(--tint);
-  -webkit-backdrop-filter: var(--vidro-blur); backdrop-filter: var(--vidro-blur);
-  border: 1px solid var(--fio); box-shadow: var(--sombra-vidro);
-}
+/* ---------- bussola (no card do nome, a direita) ---------- */
+.mq-bussola { flex: none; display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .mq-bussola svg { width: 52px; height: 52px; stroke: none; transition: transform .15s linear; }
 .mq-b-aro { fill: rgba(255, 255, 255, .06); stroke: rgba(255, 255, 255, .28); stroke-width: 1.5; }
 .mq-b-marcas line { stroke: rgba(255, 255, 255, .45); stroke-width: 2; }
@@ -361,7 +355,17 @@ body[data-modo="cores"] { --st-sel: var(--st-sel-dia); }
 .mq-b-leg i.nascente { background: #FFC24A; }
 .mq-b-leg i.poente { background: #FF7A45; margin-left: 4px; }
 
-/* ---------- planta ampliada ---------- */
+/* ---------- botao area de lazer (rodape, a direita das cameras) ---------- */
+.mq-lazer {
+  justify-self: start; display: inline-flex; align-items: center; gap: 8px;
+  padding: .62rem 1.05rem; border-radius: 999px; font: inherit; font-size: .84rem; font-weight: 600; cursor: pointer;
+  transition: border-color .2s, transform .35s var(--mola);
+}
+.mq-lazer:hover { border-color: var(--fio-forte); }
+.mq-lazer:active { transform: scale(.96); }
+.mq-lazer[hidden] { display: none; }
+
+/* ---------- imagem ampliada (planta / galeria) ---------- */
 .mq-modal {
   position: fixed; inset: 0; z-index: 25; display: grid; place-items: center; padding: 24px;
   background: rgba(6, 9, 16, .62); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
@@ -374,10 +378,24 @@ body[data-modo="cores"] { --st-sel: var(--st-sel-dia); }
   background: var(--brilho), var(--tint-forte); border: 1px solid var(--fio); box-shadow: var(--sombra-vidro);
 }
 .mq-modal-cab { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 2px 4px 0 8px; }
-.mq-modal-cab strong { font-size: .95rem; font-weight: 700; color: #fff; }
-.mq-modal-fechar { position: static; flex: none; }
+.mq-modal-cab strong { flex: 1; font-size: .95rem; font-weight: 700; color: #fff; }
+.mq-modal-cont { font-size: .8rem; color: var(--tx2); font-variant-numeric: tabular-nums; }
+.mq-modal-foto { position: relative; }
+.mq-modal-sub { margin: 0 8px 2px; font-size: .82rem; color: var(--tx2); }
+.mq-gal-seta {
+  position: absolute; top: 50%; width: 46px; height: 46px; margin-top: -23px; display: grid; place-items: center;
+  border: 1px solid var(--fio-forte); border-radius: 50%; color: #fff; cursor: pointer;
+  background: var(--brilho), var(--tint-forte); -webkit-backdrop-filter: var(--vidro-blur); backdrop-filter: var(--vidro-blur);
+  box-shadow: var(--sombra-vidro); transition: transform .35s var(--mola), background-color .2s;
+}
+.mq-gal-seta svg { width: 22px; height: 22px; }
+.mq-gal-seta.ant { left: 12px; }
+.mq-gal-seta.prox { right: 12px; }
+.mq-gal-seta:hover { transform: scale(1.08); }
+.mq-gal-seta[hidden] { display: none; }
+.mq-modal-cab .mq-modal-fechar { position: static; flex: none; }
 .mq-modal img {
-  display: block; width: 100%; max-height: calc(100vh - 130px); object-fit: contain;
+  display: block; width: 100%; max-height: calc(100vh - 150px); object-fit: contain;
   background: #fff; border-radius: 16px;
 }
 
@@ -530,9 +548,8 @@ body.painel-aberto .mq-rodape { right: calc(var(--painel) + 2 * var(--gap)); }
   .mq-resumo { font-size: .78rem; }
   .mq-modo button { padding: .5rem .62rem; font-size: 0; gap: 0; }
   .mq-modo button svg { width: 18px; height: 18px; }
-  .mq-dir { flex-direction: column-reverse; align-items: flex-end; gap: 8px; }
-  .mq-bussola { padding: 4px; }
-  .mq-bussola svg { width: 40px; height: 40px; }
+  .mq-bussola svg { width: 38px; height: 38px; }
+  .mq-lazer { grid-column: 1; padding: .5rem .9rem; font-size: .78rem; }
   .mq-b-leg { display: none; }
   .mq-modal { padding: 10px; }
   .mq-sel { font-size: .7rem; }
