@@ -2,12 +2,13 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Empreendimento · Portal do Corretor</title>
 <link rel="icon" type="image/webp" href="assets/img/favicon.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/empreendimento.css">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
@@ -15,22 +16,14 @@
 
 <div id="app"><!-- montado por JS --></div>
 
-<div class="sim-modal-overlay" id="sim-modal-overlay">
+<div class="sim-modal-overlay" id="sim-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="sim-modal-title">
   <div class="sim-modal">
     <button class="sim-modal-close" id="sim-modal-close" type="button" aria-label="Fechar">&times;</button>
     <div class="sim-modal-head">
-      <h2>Simular Fluxo</h2>
-      <p>Escolha o tipo de simulação para esta unidade.</p>
+      <h2 id="sim-modal-title">Simular fluxo</h2>
+      <p>Escolha o tipo de simulação.</p>
     </div>
     <div class="sim-modal-opts">
-      <a class="sim-opt" href="simulador-tabela-direta.html" target="_blank" rel="noopener">
-        <span class="sim-opt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg></span>
-        <span class="sim-opt-txt">
-          <span class="sim-opt-tit">Tabela Direta</span>
-          <span class="sim-opt-sub">Fluxo de pagamento direto com a construtora — ato, sinais, mensais e pós-obra.</span>
-        </span>
-        <span class="sim-opt-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
-      </a>
       <a class="sim-opt" href="simulador-associativo.html" target="_blank" rel="noopener">
         <span class="sim-opt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V8l7-5 7 5v13"></path><path d="M10 21v-6h4v6"></path></svg></span>
         <span class="sim-opt-txt">
@@ -39,15 +32,23 @@
         </span>
         <span class="sim-opt-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
       </a>
+      <a class="sim-opt" href="simulador-tabela-direta.html" target="_blank" rel="noopener">
+        <span class="sim-opt-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg></span>
+        <span class="sim-opt-txt">
+          <span class="sim-opt-tit">Tabela Direta</span>
+          <span class="sim-opt-sub">Fluxo de pagamento direto com a construtora — ato, sinais, mensais e pós-obra.</span>
+        </span>
+        <span class="sim-opt-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+      </a>
     </div>
   </div>
 </div>
 
-<div class="sim-modal-overlay" id="pdf-modal-overlay">
+<div class="sim-modal-overlay" id="pdf-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="pdf-modal-title">
   <div class="sim-modal">
     <button class="sim-modal-close" id="pdf-modal-close" type="button" aria-label="Fechar">&times;</button>
     <div class="sim-modal-head">
-      <h2>Baixar tabela</h2>
+      <h2 id="pdf-modal-title">Baixar tabela</h2>
       <p>O PDF sai com as unidades dos filtros selecionados.</p>
     </div>
     <div class="sim-modal-opts">
@@ -71,15 +72,19 @@
   </div>
 </div>
 
-<div class="unit-modal-overlay" id="unit-modal-overlay">
-  <div class="unit-modal">
-    <button class="unit-modal-close" id="unit-modal-close" type="button" aria-label="Fechar">&times;</button>
-    <div class="unit-modal-head">
-      <h2 id="unit-modal-title"></h2>
-      <p id="unit-modal-sub"></p>
-    </div>
-    <table class="unit-modal-table" id="unit-modal-table"></table>
-  </div>
+<!-- popup da unidade: montado em abrirUnidadeModal() -->
+<div class="umo" id="unit-modal-overlay" role="dialog" aria-modal="true" aria-label="Unidade selecionada">
+  <button type="button" class="umo-scrim" id="unit-modal-scrim" aria-label="Fechar" tabindex="-1"></button>
+  <div class="umo-card lg" id="unit-modal-card"></div>
+</div>
+
+<!-- tela cheia de imagens (plantas, implantacao, vagas, galeria) -->
+<div class="lbx" id="lbx" role="dialog" aria-modal="true" aria-label="Imagem em tela cheia">
+  <img class="lbx-img" id="lbx-img" alt="">
+  <button type="button" class="lbx-btn lbx-close dg" id="lbx-close" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+  <button type="button" class="lbx-btn lbx-prev dg" id="lbx-prev" aria-label="Anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+  <button type="button" class="lbx-btn lbx-next dg" id="lbx-next" aria-label="Próxima"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+  <div class="lbx-cap dg" id="lbx-cap"></div>
 </div>
 
 <script src="assets/config.js"></script>
@@ -90,432 +95,471 @@
     var m = new RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
     return m ? decodeURIComponent(m[1]) : null;
   }
+  function esc(s) {
+    return ('' + (s == null ? '' : s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
   var empId = qs('e');
   var emp = empId ? window.findEmpreendimento(empId) : null;
   var app = document.getElementById('app');
 
   if (!emp) {
-    app.innerHTML = '<div style="max-width:600px;margin:6rem auto;text-align:center;padding:2rem">' +
-      '<h1 style="font-family:Playfair Display,serif;font-size:2rem;margin-bottom:1rem">Empreendimento não encontrado</h1>' +
-      '<p style="color:var(--muted);margin-bottom:2rem">O link acessado não corresponde a nenhum empreendimento cadastrado.</p>' +
-      '<a href="index.html" style="color:var(--gold)">&larr; Voltar para a página inicial</a></div>';
+    app.innerHTML = '<div class="ev"><div class="sec on" style="max-width:600px;text-align:center;padding-top:6rem">' +
+      '<h1 class="sec-title" style="margin-bottom:1rem">Empreendimento não encontrado</h1>' +
+      '<p class="sec-sub" style="margin-bottom:2rem">O link acessado não corresponde a nenhum empreendimento cadastrado.</p>' +
+      '<a class="gbtn lg" href="index.html">&larr; Voltar para a página inicial</a></div></div>';
     return;
   }
   window.CURRENT_EMP = emp;
   document.title = emp.nome + ' · Portal do Corretor';
 
-  /* paleta por empreendimento (escopo: esta pagina) */
+  var RP = emp._cityId === 'ribeirao-preto';
+
+  /* paleta por empreendimento: so as cores de marca; o resto o CSS deriva.
+     accent = cor principal | accentLight = destaque claro (titulo/pontos)
+     brand = tom escuro da marca | assoc = card do Associativo/Investidor */
   var THEMES = {
-    // Seleto = vinho + terracota do logo
-    'seleto':
-      ':root{--gold:#BE6A3B;--gold-light:#D08C5E;--dark:#5F2B37;--green:#8A3E4C;--green-light:#F5EAEC;}' +
-      '.stag{background:rgba(190,106,59,.10);border-color:rgba(190,106,59,.30)}' +
-      '.u-desc{border-color:#E3C9CE}',
-    // Casa Prado = verde oliva + dourado do mapa de vagas
-    'casa-prado':
-      ':root{--gold:#B4923F;--gold-light:#CDA85C;--dark:#3E4736;--green:#4F5A45;--green-light:#EBEEE4;}' +
-      '.stag{background:rgba(180,146,63,.12);border-color:rgba(180,146,63,.30)}' +
-      '.u-desc{border-color:#D7DCC9}',
-    // Ipiranga = azul + dourado + vermelho do logo Conquista
-    'ipiranga':
-      ':root{--gold:#1E86C4;--gold-light:#55AFE4;--dark:#0F4C6B;--green:#B4890A;--green-light:#FBF3D2;}' +
-      '.hero-eyebrow::before{background:#CB0935}' +
-      '.stag{background:rgba(30,134,196,.10);border-color:rgba(30,134,196,.30)}' +
-      '.u-desc{border-color:#CFE6F5}',
-    // Village Park = verde pistache + verde novus + ocre novus
-    'village-park':
-      ':root{--gold:#B79332;--gold-light:#8FA658;--dark:#394A20;--green:#4F6B2E;--green-light:#EAF1DD;}' +
-      '.stag{background:rgba(124,147,69,.12);border-color:rgba(124,147,69,.30)}' +
-      '.u-desc{border-color:#D8E2C6}',
-    // Village Gaia = coral + teal escuro do logo
-    'village-gaia':
-      ':root{--gold:#D8695D;--gold-light:#F28B82;--dark:#2C4444;--green:#3A5A56;--green-light:#E5EFEC;}' +
-      '.stag{background:rgba(242,139,130,.14);border-color:rgba(242,139,130,.35)}' +
-      '.u-desc{border-color:#F3D4CF}',
-    // Jardim Botanico = verde escuro do logo (paleta monocromatica)
-    'jardim-botanico':
-      ':root{--gold:#5E6B54;--gold-light:#A9B89F;--dark:#3F473D;--green:#4A5842;--green-light:#E9EDE5;}' +
-      '.stag{background:rgba(63,71,61,.10);border-color:rgba(63,71,61,.28)}' +
-      '.u-desc{border-color:#D5DBCD}'
+    'seleto':          { accent: '#BE6A3B', accentLight: '#D08C5E', brand: '#5F2B37', assoc: '#8A3E4C' },  // vinho + terracota
+    'casa-prado':      { accent: '#B4923F', accentLight: '#CDA85C', brand: '#3E4736', assoc: '#4F5A45' },  // oliva + dourado
+    'ipiranga':        { accent: '#1E86C4', accentLight: '#55AFE4', brand: '#0F4C6B', assoc: '#0F4C6B' },  // azul Conquista
+    'village-park':    { accent: '#B79332', accentLight: '#8FA658', brand: '#394A20', assoc: '#4F6B2E' },  // pistache + ocre
+    'village-gaia':    { accent: '#D8695D', accentLight: '#F28B82', brand: '#2C4444', assoc: '#3A5A56' },  // coral + teal
+    'jardim-botanico': { accent: '#5E6B54', accentLight: '#A9B89F', brand: '#3F473D', assoc: '#4A5842' }   // verde do logo
   };
-  if (emp.theme && THEMES[emp.theme]) {
-    var _themeEl = document.createElement('style');
-    _themeEl.textContent = THEMES[emp.theme];
-    document.head.appendChild(_themeEl);
+  var th = THEMES[emp.theme];
+  var rootStyle = document.documentElement.style;
+  if (th) {
+    rootStyle.setProperty('--accent', th.accent);
+    rootStyle.setProperty('--accent-light', th.accentLight);
+    rootStyle.setProperty('--brand', th.brand);
+    rootStyle.setProperty('--assoc', th.assoc);
   }
+  // URL absoluta: dentro do CSS um caminho relativo seria resolvido a partir de assets/
+  if (emp.heroImg) rootStyle.setProperty('--amb-img', "url('" + new URL(emp.heroImg, location.href).href + "')");
 
-  /* ---------- helpers de HTML ---------- */
-  function heroStyle() {
-    if (!emp.heroImg) return "";
-    var s = "background-image:url('" + emp.heroImg + "')";
-    if (emp.heroBlur) s += ";filter:brightness(0.42) blur(3px);transform:scale(1.05)";
-    return s;
+  /* ---------- icones ---------- */
+  function svg(d, extra) {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' + (extra || '') + '>' + d + '</svg>';
   }
+  var IC = {
+    back: svg('<polyline points="15 18 9 12 15 6"></polyline>', ' stroke-width="2.2"'),
+    next: svg('<polyline points="9 18 15 12 9 6"></polyline>', ' stroke-width="2.4"'),
+    arrowUp: svg('<line x1="7" y1="17" x2="17" y2="7"></line><polyline points="8 7 17 7 17 16"></polyline>', ' stroke-width="2.4"'),
+    download: svg('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>'),
+    chart: svg('<line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line>', ' stroke-width="2.2"'),
+    house: svg('<path d="M3 21h18"></path><path d="M5 21V8l7-5 7 5v13"></path><path d="M10 21v-6h4v6"></path>'),
+    cube: svg('<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>'),
+    cal: svg('<rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>'),
+    pin: svg('<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle>'),
+    list: svg('<line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line>'),
+    grid: svg('<rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect>'),
+    expand: svg('<polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line>', ' stroke-width="2.2"'),
+    plus: svg('<line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>', ' stroke-width="2.4"'),
+    minus: svg('<line x1="5" y1="12" x2="19" y2="12"></line>', ' stroke-width="2.4"'),
+    close: svg('<line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line>', ' stroke-width="2.4"'),
+    check: svg('<polyline points="20 6 9 17 4 12"></polyline>', ' stroke-width="2.6"'),
+    chev: '<svg class="fdd-chev" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>',
+    trash: svg('<polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>'),
+    image: svg('<rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline>')
+  };
+  /* icones coloridos dos filtros */
+  function fIcon(path, color) {
+    return '<svg class="fdd-ic" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + path + '"></path></svg>';
+  }
+  var F_ICONS = {
+    tipo: fIcon('M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z', '#3A8F86'),
+    sol: fIcon('M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4', '#B9770E'),
+    premio: fIcon('M12 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12zM15.5 13 17 22l-5-3-5 3 1.5-9', '#9E6B2E'),
+    torre: fIcon('M5 2h14v20H5zM9 6h.01M15 6h.01M9 10h.01M15 10h.01M9 14h.01M15 14h.01M10 22v-4h4v4', '#5B7FA0'),
+    vaga: fIcon('M5 17h14v-5l-2-5H7l-2 5zM8 15a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM16 15a2 2 0 1 0 0 4 2 2 0 0 0 0-4z', '#6B5BB5'),
+    promo: fIcon('M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8zM7 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z', '#D8695D'),
+    sort: fIcon('M3 6h18M6 12h12M10 18h4', '#B0568A')
+  };
   var PROX_ICONS = {
-    shopping: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>',
-    lake: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7s6 5.4 6 10.3a6 6 0 0 1-12 0c0-4.9 6-10.3 6-10.3z"></path></svg>',
-    road: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22 8 2"></path><path d="M20 22 16 2"></path><line x1="12" y1="6" x2="12" y2="8"></line><line x1="12" y1="12" x2="12" y2="14"></line><line x1="12" y1="18" x2="12" y2="20"></line></svg>',
-    school: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5z"></path><path d="M6 12v5c0 1 2.7 3 6 3s6-2 6-3v-5"></path></svg>',
-    hospital: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>'
+    shopping: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path>',
+    lake: '<path d="M12 2.7s6 5.4 6 10.3a6 6 0 0 1-12 0c0-4.9 6-10.3 6-10.3z"></path>',
+    road: '<path d="M4 22 8 2"></path><path d="M20 22 16 2"></path><line x1="12" y1="6" x2="12" y2="8"></line><line x1="12" y1="12" x2="12" y2="14"></line><line x1="12" y1="18" x2="12" y2="20"></line>',
+    school: '<path d="M22 10 12 5 2 10l10 5 10-5z"></path><path d="M6 12v5c0 1 2.7 3 6 3s6-2 6-3v-5"></path>',
+    hospital: '<rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line>'
   };
-  function proximidadesHtml() {
-    if (!emp.proximidades || !emp.proximidades.length) return '';
-    return '<div class="prox"><span class="prox-lbl">Próximo à:</span><div class="prox-items">' +
-      emp.proximidades.map(function (p) {
-        return '<div class="prox-item"><span class="prox-ic">' + (PROX_ICONS[p.icon] || '') + '</span>' +
-          '<span class="prox-name">' + p.label + '</span></div>';
-      }).join('') + '</div></div>';
-  }
-  function badgesHtml() {
-    if (!emp.badges || !emp.badges.length) return '';
-    return '<div class="hero-loc">' + emp.badges.map(function (b) {
-      return '<div class="loc-badge"><span class="loc-dot"></span>' + b + '</div>';
-    }).join('') + '</div>';
-  }
+
+  /* ---------- HERO ---------- */
   var MESES_ABREV = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  function entregaBadgeHtml() {
-    if (!emp.entrega || emp._cityId !== 'ribeirao-preto') return '';
+  function entregaLabel() {
+    if (!emp.entrega || !RP) return '';
     var p = emp.entrega.split('-');
-    var label = MESES_ABREV[parseInt(p[1], 10) - 1] + '/' + p[0];
-    return '<div class="entrega-badge">' +
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>' +
-      '<span>Entrega prevista &middot; <strong>' + label + '</strong></span></div>';
+    return MESES_ABREV[parseInt(p[1], 10) - 1] + '/' + p[0];
   }
-  function pillsHtml() {
-    if (!emp.pills || !emp.pills.length) return '';
-    return '<div class="pills">' + emp.pills.map(function (p) {
-      return '<div class="pill"><div class="pill-num">' + p.num + '</div><div class="pill-lbl">' + p.lbl + '</div></div>';
-    }).join('') + '</div>';
+  // chips de proximidade (com icone) + badges de localizacao
+  function locChips() {
+    var out = [];
+    (emp.proximidades || []).forEach(function (p) { out.push({ icon: PROX_ICONS[p.icon] ? svg(PROX_ICONS[p.icon]) : IC.pin, label: p.label }); });
+    (emp.badges || []).forEach(function (b) { out.push({ icon: IC.pin, label: b }); });
+    return out;
   }
-  var CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-  var CHEV_SVG = '<svg class="fdd-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
-  var TRASH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>';
+  function plainText(html) { var d = document.createElement('div'); d.innerHTML = html || ''; return d.textContent; }
+  // imagem do card da maquete: a vista aerea da galeria, se houver
+  function maqueteImg() {
+    var items = (emp.galeria && emp.galeria.items) || [];
+    for (var i = 0; i < items.length; i++) if (/a[eé]rea/i.test(items[i].title || '')) return items[i].img;
+    return emp.heroImg;
+  }
+  function maqueteHref() { return 'maquete.html?e=' + encodeURIComponent(emp.id); }
+  function maqueteSub() {
+    var n = (emp.maquete && emp.maquete.grade && emp.maquete.grade.torres) ? emp.maquete.grade.torres.length : (emp.torres || 0);
+    return n > 1 ? 'Explore as ' + n + ' torres e as unidades' : 'Explore o empreendimento e as unidades';
+  }
+  var temMaquete = !!(emp.maquete && emp.maquete.botaoVisivel);
 
-  function ddOpt(label, active, onclick) {
-    return '<button class="fdd-opt' + (active ? ' on' : '') + '" onclick="' + onclick + '"><span>' + label + '</span>' + CHECK_SVG + '</button>';
+  function heroHtml() {
+    var ent = entregaLabel();
+    var chips = '';
+    if (ent) chips += '<span class="chip-d dg">' + IC.cal + 'Entrega prevista &middot; <strong>' + ent + '</strong></span>';
+    locChips().forEach(function (c) { chips += '<span class="chip-d dg chip-prox">' + c.icon + esc(c.label) + '</span>'; });
+
+    var side = '';
+    if (temMaquete) {
+      side = '<a class="hx-maq dg" href="' + maqueteHref() + '">' +
+        '<span class="hx-maq-img"><img src="' + esc(maqueteImg()) + '" alt="" loading="lazy">' +
+        '<span class="hx-maq-tag dg">' + IC.cube + '3D interativo</span></span>' +
+        '<span class="hx-maq-row"><span><span class="hx-maq-t">Maquete 3D</span><span class="hx-maq-s">' + maqueteSub() + '</span></span>' +
+        '<span class="hx-maq-go">' + IC.arrowUp + '</span></span></a>';
+    } else if (emp.pills && emp.pills.length) {
+      side = '<div class="hx-stats dg">' + emp.pills.map(function (p) {
+        return '<div class="hx-stat"><div class="hx-stat-n">' + p.num + '</div><div class="hx-stat-l">' + plainText(p.lbl.replace(/<br\s*\/?>/gi, ' ')) + '</div></div>';
+      }).join('') + '</div>';
+    }
+
+    return '<header class="hx">' +
+      (emp.heroImg ? '<img class="hx-bg" src="' + esc(emp.heroImg) + '" alt="Fachada do ' + esc(emp.nome) + '" fetchpriority="high">' : '') +
+      '<div class="hx-shade" aria-hidden="true"></div>' +
+      '<div class="hx-top">' +
+        '<a class="hx-back dg" href="index.html" aria-label="Voltar para empreendimentos">' + IC.back + '<span>Empreendimentos</span></a>' +
+        (emp.book ? '<a class="hx-back hx-book dg" href="' + esc(emp.book) + '" download>' + IC.download + 'Book</a>' : '') +
+      '</div>' +
+      '<div class="hx-body"><div class="hx-main">' +
+        '<div class="hx-badge"><span class="hx-dot"></span>' + esc(emp.eyebrow || (emp.nome + ' · ' + emp.cidade)) + '</div>' +
+        '<h1 class="hx-title">' + emp.titleHtml + '</h1>' +
+        (emp.sub ? '<p class="hx-sub">' + esc(emp.sub) + '</p>' : '') +
+        (chips ? '<div class="hx-chips">' + chips + '</div>' : '') +
+      '</div>' + (side ? '<div class="hx-side">' + side + '</div>' : '') + '</div>' +
+    '</header>';
   }
 
-  function dropdown(lbl, valId, panelHtml) {
-    return '<div class="fdd">' +
-      '<button class="fdd-btn" type="button"><span class="fdd-lbl">' + lbl + '</span>' +
-      '<span class="fdd-val" id="' + valId + '">Todos</span>' + CHEV_SVG + '</button>' +
-      '<div class="fdd-panel">' + panelHtml + '</div>' +
+  // bloco "sobre" do celular: descricao, localizacao, numeros e maquete
+  function aboutHtml() {
+    var chips = locChips();
+    var h = '';
+    if (emp.sub) {
+      h += '<p class="about-txt" id="about-txt">' + esc(emp.sub) + '</p>' +
+        '<button type="button" class="about-more" id="about-more" aria-expanded="false">Ler mais</button>';
+    }
+    if (chips.length) {
+      h += '<div class="about-chips">' + chips.map(function (c) { return '<span class="about-chip">' + c.icon + esc(c.label) + '</span>'; }).join('') + '</div>';
+    }
+    if (emp.pills && emp.pills.length) {
+      h += '<div class="about-stats">' + emp.pills.map(function (p) {
+        return '<div class="about-stat"><b>' + p.num + '</b><span>' + plainText(p.lbl.replace(/<br\s*\/?>/gi, ' ')) + '</span></div>';
+      }).join('') + '</div>';
+    }
+    if (temMaquete) {
+      h += '<a class="about-maq" href="' + maqueteHref() + '"><img src="' + esc(maqueteImg()) + '" alt="" loading="lazy">' +
+        '<span class="about-maq-t"><b>Maquete 3D</b><span>' + maqueteSub() + '</span></span>' + IC.next + '</a>';
+    }
+    return h ? '<section class="about lg" id="about">' + h + '</section>' : '';
+  }
+
+  /* ---------- FILTROS ---------- */
+  function ddOpt(id, label, active, onclick) {
+    return '<button type="button" class="fdd-opt' + (active ? ' on' : '') + '" id="' + id + '" onclick="' + onclick + '"><span>' + label + '</span>' + IC.check + '</button>';
+  }
+  function ddClear(fn) {
+    return '<div class="fdd-sep"></div><button type="button" class="fdd-clear" onclick="' + fn + '()"><span>Limpar filtros</span>' + IC.trash + '</button>';
+  }
+  function dropdown(o) {
+    return '<div class="fdd"' + (o.rowId ? ' id="' + o.rowId + '"' : '') + '>' +
+      '<button class="fdd-btn" type="button" aria-haspopup="listbox">' + o.icon +
+        '<span class="fdd-lbl">' + o.label + '</span><span class="fdd-val" id="' + o.valId + '">' + o.value + '</span>' + IC.chev + '</button>' +
+      '<div class="fdd-panel"><div class="fdd-panel-in" role="listbox">' + o.opts + '</div></div>' +
     '</div>';
   }
-
   function torresList() {
     if (emp.torresVisiveis && emp.torresVisiveis.length) return emp.torresVisiveis;
     var n = emp.torres || 1, list = [];
     for (var t = 1; t <= n; t++) list.push(t);
     return list;
   }
-  function torreOptsHtml() {
-    var list = torresList(), h = '';
-    for (var i = 0; i < list.length; i++) {
-      var t = list[i];
-      h += ddOpt('Torre ' + t, false, "setTorre('" + t + "',this)").replace('class="fdd-opt', 'id="torre-opt-' + t + '" class="fdd-opt');
-    }
-    return h;
-  }
-  function torreDropdownHtml() {
-    if (torresList().length < 2) return '';
-    var opts = ddOpt('Todas', true, "setTorre('todos',this)").replace('class="fdd-opt', 'id="torre-opt-todos" class="fdd-opt') +
-      torreOptsHtml() +
-      '<button class="fdd-clear" onclick="clearTorre()"><span>Limpar filtros</span>' + TRASH_SVG + '</button>';
-    return dropdown('Torre', 'torre-val', opts).replace('id="torre-val">Todos', 'id="torre-val">Todas');
-  }
-
-  // filtro Com vaga / Sem vaga (apenas produtos de Ribeirao Preto)
-  function vagaDropdownHtml() {
-    if (!showVagasQtd()) return '';
-    var opts = ddOpt('Todas', true, "setVaga('todos',this)").replace('class="fdd-opt', 'id="vaga-opt-todos" class="fdd-opt') +
-      ddOpt('Com vaga', false, "setVaga('com',this)").replace('class="fdd-opt', 'id="vaga-opt-com" class="fdd-opt') +
-      ddOpt('Sem vaga', false, "setVaga('sem',this)").replace('class="fdd-opt', 'id="vaga-opt-sem" class="fdd-opt') +
-      '<button class="fdd-clear" onclick="clearVaga()"><span>Limpar filtros</span>' + TRASH_SVG + '</button>';
-    return dropdown('Vaga', 'vaga-val', opts)
-      .replace('id="vaga-val">Todos', 'id="vaga-val">Todas')
-      .replace('<div class="fdd">', '<div class="fdd" id="vaga-row">');
-  }
-
-  // opcoes do filtro Tipo: usa emp.tipos quando definido (ex.: Seleto), senao o padrao
   function tipoDropdownHtml() {
-    var opts = ddOpt('Todos', true, "setFilter('todos',this)").replace('class="fdd-opt', 'id="tipo-opt-todos" class="fdd-opt');
     var list = (emp.tipos && emp.tipos.length) ? emp.tipos : [
       { key: '2q-meio', label: '2Q C/S Meio' },
       { key: '2q-ponta', label: '2Q C/S Ponta' },
-      { key: 'terreo-meio', label: 'Terreo Meio' },
-      { key: 'terreo-ponta', label: 'Terreo Ponta' },
+      { key: 'terreo-meio', label: 'Térreo Meio' },
+      { key: 'terreo-ponta', label: 'Térreo Ponta' },
       { key: '1q', label: 'Studio 1Q' }
     ];
-    list.forEach(function (t) {
-      opts += ddOpt(t.label, false, "setFilter('" + t.key + "',this)").replace('class="fdd-opt', 'id="tipo-opt-' + t.key + '" class="fdd-opt');
-    });
-    opts += '<button class="fdd-clear" onclick="clearTipo()"><span>Limpar filtros</span>' + TRASH_SVG + '</button>';
-    return dropdown('Tipo', 'tipo-val', opts);
+    var opts = ddOpt('tipo-opt-todos', 'Todos', true, "setFilter('todos',this)");
+    list.forEach(function (t) { opts += ddOpt('tipo-opt-' + t.key, t.label, false, "setFilter('" + t.key + "',this)"); });
+    return dropdown({ icon: F_ICONS.tipo, label: 'Tipologia', valId: 'tipo-val', value: 'Todos', opts: opts + ddClear('clearTipo') });
   }
-
   function solDropdownHtml() {
-    var opts = ddOpt('Todos', true, "setSol('todos',this)").replace('class="fdd-opt', 'id="sol-opt-todos" class="fdd-opt') +
-      ddOpt('&#9728; Nascente', false, "setSol('nascente',this)").replace('class="fdd-opt', 'id="sol-opt-nascente" class="fdd-opt') +
-      ddOpt('&#9790; Poente', false, "setSol('poente',this)").replace('class="fdd-opt', 'id="sol-opt-poente" class="fdd-opt') +
-      '<button class="fdd-clear" onclick="clearSol()"><span>Limpar filtros</span>' + TRASH_SVG + '</button>';
-    return dropdown('Sol', 'sol-val', opts);
+    if (emp.hideSol) return '';
+    var opts = ddOpt('sol-opt-todos', 'Todos', true, "setSol('todos',this)") +
+      ddOpt('sol-opt-nascente', 'Nascente', false, "setSol('nascente',this)") +
+      ddOpt('sol-opt-poente', 'Poente', false, "setSol('poente',this)");
+    return dropdown({ icon: F_ICONS.sol, label: 'Sol', valId: 'sol-val', value: 'Todos', opts: opts + ddClear('clearSol') });
   }
-
   function premioDropdownHtml() {
-    var opts = ddOpt('Com Prêmio', true, "setPremio('com',this)").replace('class="fdd-opt', 'id="premio-opt-com" class="fdd-opt') +
-      ddOpt('Sem Prêmio', false, "setPremio('sem',this)").replace('class="fdd-opt', 'id="premio-opt-sem" class="fdd-opt') +
-      '<button class="fdd-clear" onclick="clearPremio()"><span>Limpar filtros</span>' + TRASH_SVG + '</button>';
-    return dropdown('Prêmio', 'premio-val', opts).replace('id="premio-val">Todos', 'id="premio-val">Com Prêmio').replace('<div class="fdd">', '<div class="fdd" id="premio-row">');
+    var opts = ddOpt('premio-opt-com', 'Com Prêmio', true, "setPremio('com',this)") +
+      ddOpt('premio-opt-sem', 'Sem Prêmio', false, "setPremio('sem',this)");
+    return dropdown({ rowId: 'premio-row', icon: F_ICONS.premio, label: 'Prêmio', valId: 'premio-val', value: 'Com Prêmio', opts: opts + ddClear('clearPremio') });
   }
-
+  function torreDropdownHtml() {
+    var list = torresList();
+    if (list.length < 2) return '';
+    var opts = ddOpt('torre-opt-todos', 'Todas', true, "setTorre('todos',this)");
+    list.forEach(function (t) { opts += ddOpt('torre-opt-' + t, 'Torre ' + t, false, "setTorre('" + t + "',this)"); });
+    return dropdown({ icon: F_ICONS.torre, label: 'Torre', valId: 'torre-val', value: 'Todas', opts: opts + ddClear('clearTorre') });
+  }
+  // filtro Com vaga / Sem vaga (apenas produtos de Ribeirao Preto)
+  function vagaDropdownHtml() {
+    if (!showVagasQtd()) return '';
+    var opts = ddOpt('vaga-opt-todos', 'Todas', true, "setVaga('todos',this)") +
+      ddOpt('vaga-opt-com', 'Com vaga', false, "setVaga('com',this)") +
+      ddOpt('vaga-opt-sem', 'Sem vaga', false, "setVaga('sem',this)");
+    return dropdown({ rowId: 'vaga-row', icon: F_ICONS.vaga, label: 'Vaga', valId: 'vaga-val', value: 'Todas', opts: opts + ddClear('clearVaga') });
+  }
+  // filtro Promocional (apenas produtos de Ribeirao Preto)
+  function promoDropdownHtml() {
+    if (!showPromoFilter()) return '';
+    var opts = ddOpt('promo-opt-todos', 'Todas', true, "setPromo('todos',this)") +
+      ddOpt('promo-opt-promo', 'Promocional', false, "setPromo('promo',this)");
+    return dropdown({ rowId: 'promo-row', icon: F_ICONS.promo, label: 'Promocional', valId: 'promo-val', value: 'Todas', opts: opts + ddClear('clearPromo') });
+  }
   function sortDropdownHtml() {
-    var opts = ddOpt('Numeração', true, "setSortOpt('num-asc',this)").replace('class="fdd-opt', 'id="sort-opt-num-asc" class="fdd-opt') +
-      ddOpt('Menor preço', false, "setSortOpt('venda-asc',this)").replace('class="fdd-opt', 'id="sort-opt-venda-asc" class="fdd-opt') +
-      ddOpt('Maior preço', false, "setSortOpt('venda-desc',this)").replace('class="fdd-opt', 'id="sort-opt-venda-desc" class="fdd-opt');
-    return dropdown('Ordenar', 'sort-val', opts).replace('id="sort-val">Todos', 'id="sort-val">Numeração') +
+    var opts = ddOpt('sort-opt-num-asc', 'Numeração', true, "setSortOpt('num-asc',this)") +
+      ddOpt('sort-opt-venda-asc', 'Menor preço', false, "setSortOpt('venda-asc',this)") +
+      ddOpt('sort-opt-venda-desc', 'Maior preço', false, "setSortOpt('venda-desc',this)");
+    return dropdown({ icon: F_ICONS.sort, label: 'Ordenar', valId: 'sort-val', value: 'Numeração', opts: opts }) +
       '<input type="hidden" id="sort" value="num-asc">';
   }
 
-  // filtro Promocional (apenas produtos de Ribeirao Preto): exibe so as unidades marcadas em /promocionais
-  function promoDropdownHtml() {
-    if (!showPromoFilter()) return '';
-    var opts = ddOpt('Todas', true, "setPromo('todos',this)").replace('class="fdd-opt', 'id="promo-opt-todos" class="fdd-opt') +
-      ddOpt('Promocional', false, "setPromo('promo',this)").replace('class="fdd-opt', 'id="promo-opt-promo" class="fdd-opt') +
-      '<button class="fdd-clear" onclick="clearPromo()"><span>Limpar filtros</span>' + TRASH_SVG + '</button>';
-    return dropdown('Promocional', 'promo-val', opts)
-      .replace('id="promo-val">Todos', 'id="promo-val">Todas')
-      .replace('<div class="fdd">', '<div class="fdd" id="promo-row">');
+  /* ---------- placeholders ---------- */
+  function placeholder(txt) {
+    return '<div class="ph lg">' + IC.image + '<strong>Imagens em breve</strong><small>' + txt + '</small></div>';
   }
 
-  function placeholder(txt) {
-    return '<div class="ph"><div class="ph-icon">&#128247;</div><div>Imagens em breve</div><small>' + txt + '</small></div>';
-  }
+  /* ---------- lista de imagens para a tela cheia ---------- */
+  var LBX = {};   // grupos: plantas, implantacao, vagas, galeria
+  function zoomIc() { return '<span class="zoom-ic dg" aria-hidden="true">' + IC.expand + '</span>'; }
 
   /* ---------- PLANTAS ---------- */
   function plantasHtml() {
-    if (emp.plantas && emp.plantas.length) {
-      var cards = emp.plantas.map(function (p) {
-        return '<div class="planta-item"><div class="zoom-box"><img class="zoom-img" src="' + p.img + '" alt="' + p.title + '"><div class="zoom-hint">&#128269; Zoom</div></div>' +
-          '<div class="planta-item-cap"><div class="planta-item-title">' + p.title + '</div><div class="planta-item-sub">' + (p.sub || '') + '</div></div></div>';
-      }).join('');
-      return '<div class="plantas-grid">' + cards + '</div>';
-    }
-    return placeholder('Envie as imagens das plantas deste empreendimento para exibi-las aqui.');
+    var list = emp.plantas || [];
+    if (!list.length) return placeholder('Envie as imagens das plantas deste empreendimento para exibi-las aqui.');
+    LBX.plantas = list.map(function (p) { return { src: p.img, title: p.title, sub: p.sub }; });
+    var n = list.length, rem = n % 3;
+    // grade de 6 colunas: linhas de 3 cards; as sobras viram 2 cards largos
+    var largos = rem === 2 ? 2 : (rem === 1 && n >= 4 ? 4 : 0);
+    return '<div class="pl-grid">' + list.map(function (p, i) {
+      var w3 = i >= n - largos;
+      return '<figure class="pl-card lg' + (w3 ? ' w3' : '') + '">' +
+        '<button type="button" class="pl-img" data-lbx="plantas" data-i="' + i + '" aria-label="Ampliar ' + esc(p.title) + '">' +
+          '<img src="' + esc(p.img) + '" alt="' + esc(p.title) + '" loading="lazy">' + zoomIc() + '</button>' +
+        '<figcaption class="pl-cap"><span class="pl-txt"><span class="pl-t">' + esc(p.title) + '</span>' +
+          (p.sub ? '<span class="pl-s">' + esc(p.sub) + '</span>' : '') + '</span>' +
+          (p.tipo ? '<button type="button" class="pl-go" data-tipo="' + esc(p.tipo) + '" aria-label="Ver unidades desta planta"><span>Ver unidades</span>' + IC.next + '</button>' : '') +
+        '</figcaption></figure>';
+    }).join('') + '</div>';
   }
-  // cards de planta exibidos acima das unidades quando um tipo e filtrado
-  function plantaDestaqueHtml() {
-    if (!emp.plantas || !emp.plantas.length) return '';
-    return emp.plantas.filter(function (p) { return p.tipo; }).map(function (p) {
-      return '<div class="planta-card" data-tipo="' + p.tipo + '">' +
-        '<p class="planta-title">' + p.title + '</p>' +
-        '<p class="planta-sub">' + (p.sub || '') + '</p>' +
-        '<div class="zoom-box"><img class="zoom-img" src="' + p.img + '" alt="' + p.title + '"><div class="zoom-hint">&#128269; Zoom</div></div>' +
-      '</div>';
-    }).join('');
+
+  /* ---------- VISOR COM ZOOM ---------- */
+  function viewerHtml(group, i, src, alt) {
+    return '<div class="viewer lg"><div class="viewer-stage" data-lbx="' + group + '" data-i="' + i + '">' +
+      '<img src="' + esc(src) + '" alt="' + esc(alt) + '" draggable="false" loading="lazy">' +
+      '<div class="viewer-ctl dg">' +
+        '<button type="button" class="vz" data-z="-1" aria-label="Diminuir zoom">' + IC.minus + '</button>' +
+        '<span class="viewer-pct">100%</span>' +
+        '<button type="button" class="vz" data-z="1" aria-label="Aumentar zoom">' + IC.plus + '</button>' +
+        '<span class="viewer-sep"></span>' +
+        '<button type="button" class="vfull" aria-label="Abrir em tela cheia">' + IC.expand + '</button>' +
+      '</div></div></div>';
   }
 
   /* ---------- IMPLANTACAO ---------- */
   function implantacaoHtml() {
-    var img = emp.implantacao && emp.implantacao.img
-      ? '<div class="zoom-box" style="border-radius:0"><img class="zoom-img" src="' + emp.implantacao.img + '" alt="Implantacao" style="background:#F5F0E8"><div class="zoom-hint">&#128269; Passe o mouse para zoom</div></div>'
-      : placeholder('Envie a planta de implantação deste empreendimento.');
-    var leg = (emp.implantacao && emp.implantacao.legenda && emp.implantacao.legenda.length)
-      ? '<div style="padding:1.5rem 2rem .5rem"><span class="stag">Legenda</span><h3 style="font-family:Playfair Display,serif;font-size:1.2rem;margin-bottom:1rem">Itens de lazer e comodidade</h3></div>' +
-        '<div class="am-grid">' + emp.implantacao.legenda.map(function (nome, i) {
-          var n = (i + 1 < 10 ? '0' : '') + (i + 1);
-          return '<div class="am-item"><span class="am-num">' + n + '</span><span class="am-name">' + nome + '</span></div>';
-        }).join('') + '</div>'
-      : '';
-    return '<div class="impl-wrap">' + img + leg + '</div>';
+    var impl = emp.implantacao || {};
+    var h = '';
+    if (impl.img) {
+      LBX.implantacao = [{ src: impl.img, title: 'Implantação', sub: emp.nome }];
+      h += viewerHtml('implantacao', 0, impl.img, 'Implantação do ' + emp.nome);
+    } else {
+      h += placeholder('Envie a planta de implantação deste empreendimento.');
+    }
+    if (impl.legenda && impl.legenda.length) {
+      h += '<div class="legend lg"><span class="eyebrow">Legenda</span><h3 class="legend-t">Itens de lazer e comodidade</h3><div class="legend-grid">' +
+        impl.legenda.map(function (nome, i) {
+          return '<div class="legend-i"><span class="legend-n">' + (i + 1 < 10 ? '0' : '') + (i + 1) + '</span><span>' + esc(nome) + '</span></div>';
+        }).join('') + '</div></div>';
+    }
+    return h;
   }
 
   /* ---------- GALERIA ---------- */
   function galeriaHtml() {
     var g = emp.galeria || {};
-    if (g.items && g.items.length) {
-      var hero = g.heroImg
-        ? '<div class="gallery-hero"><img src="' + g.heroImg + '" alt="Fachada"><div class="ghc"><div class="ghc-title">' + (g.heroTitle || '') + '</div><div class="ghc-sub">' + (g.heroSub || '') + '</div></div></div>'
-        : '';
-      var cards = g.items.map(function (it) {
-        return '<div class="g-card"><img src="' + it.img + '" alt="' + it.title + '" class="g-img"><div class="g-cap"><div class="g-cap-title">' + it.title + '</div><div class="g-cap-sub">' + (it.sub || '') + '</div></div></div>';
-      }).join('');
-      return hero + '<div class="g-grid">' + cards + '</div>';
-    }
-    return placeholder('Envie os renders/fotos da galeria deste empreendimento.');
+    var items = (g.items || []).slice();
+    if (g.heroImg) items.unshift({ img: g.heroImg, title: g.heroTitle || 'Fachada', sub: g.heroSub || '' });
+    if (!items.length) return placeholder('Envie os renders/fotos da galeria deste empreendimento.');
+    LBX.galeria = items.map(function (it) { return { src: it.img, title: it.title, sub: it.sub, photo: true }; });
+    // mosaico: alguns destaques largos/altos, o resto preenche (grid-auto-flow:dense)
+    return '<div class="gal-grid">' + items.map(function (it, i) {
+      var k = i % 10, cls = k === 0 ? ' w2 h2' : (k === 5 ? ' w2' : (k === 7 ? ' h2' : ''));
+      return '<button type="button" class="gal-i' + cls + '" data-lbx="galeria" data-i="' + i + '" aria-label="Ampliar ' + esc(it.title) + '">' +
+        '<img src="' + esc(it.img) + '" alt="' + esc(it.title) + '" loading="lazy">' +
+        '<span class="gal-cap dg"><span class="gal-t">' + esc(it.title) + '</span>' + (it.sub ? '<span class="gal-s">' + esc(it.sub) + '</span>' : '') + '</span></button>';
+    }).join('') + '</div>';
   }
 
   /* ---------- VAGAS ---------- */
   function vagasHtml() {
     if (emp.vagasPdf) {
-      return '<div class="impl-wrap">' +
-        '<iframe class="vagas-pdf" src="' + emp.vagasPdf + '#view=FitH" title="Mapa de Vagas" loading="lazy"></iframe>' +
-        '<div class="pdf-actions"><a class="pdf-link" href="' + emp.vagasPdf + '" target="_blank" rel="noopener">Abrir em nova aba &rarr;</a></div>' +
-      '</div>';
+      return '<div class="viewer lg"><iframe class="viewer-pdf" src="' + esc(emp.vagasPdf) + '#view=FitH" title="Mapa de Vagas" loading="lazy"></iframe>' +
+        '<div class="viewer-foot"><a class="gbtn" href="' + esc(emp.vagasPdf) + '" target="_blank" rel="noopener">Abrir em nova aba ' + IC.next + '</a></div></div>';
     }
-    if (emp.vagasImgs && emp.vagasImgs.length) {
-      return '<div class="impl-wrap">' + emp.vagasImgs.map(function (src, i) {
-        return '<div class="zoom-box" style="border-radius:0' + (i ? ';margin-top:1rem' : '') + '"><img class="zoom-img" src="' + src + '" alt="Mapa de Vagas ' + (i + 1) + '" style="background:#F5F0E8"><div class="zoom-hint">&#128269; Passe o mouse para zoom</div></div>';
-      }).join('') + '</div>';
-    }
-    return emp.vagasImg
-      ? '<div class="impl-wrap"><div class="zoom-box" style="border-radius:0"><img class="zoom-img" src="' + emp.vagasImg + '" alt="Mapa de Vagas" style="background:#F5F0E8"><div class="zoom-hint">&#128269; Passe o mouse para zoom</div></div></div>'
-      : placeholder('Envie o mapa de vagas deste empreendimento.');
+    var imgs = (emp.vagasImgs && emp.vagasImgs.length) ? emp.vagasImgs : (emp.vagasImg ? [emp.vagasImg] : []);
+    if (!imgs.length) return placeholder('Envie o mapa de vagas deste empreendimento.');
+    LBX.vagas = imgs.map(function (src, i) { return { src: src, title: 'Mapa de Vagas' + (imgs.length > 1 ? ' ' + (i + 1) : ''), sub: emp.nome }; });
+    return imgs.map(function (src, i) { return viewerHtml('vagas', i, src, 'Mapa de Vagas ' + (i + 1)); }).join('');
   }
 
   /* ---------- MONTAGEM ---------- */
+  var TABS = [
+    { id: 'unidades', label: 'Unidades' },
+    { id: 'plantas', label: 'Plantas' },
+    { id: 'implantacao', label: 'Implantação' },
+    { id: 'galeria', label: 'Galeria' }
+  ];
+  if (!emp.hideVagas) TABS.push({ id: 'vagas', label: 'Mapa de Vagas', short: 'Vagas' });
+
+  function secHead(eyebrow, title, sub) {
+    return '<div class="sec-head"><span class="eyebrow">' + eyebrow + '</span><h2 class="sec-title">' + title + '</h2>' +
+      (sub ? '<p class="sec-sub">' + sub + '</p>' : '') + '</div>';
+  }
+  var nPlantas = (emp.plantas || []).length;
+  var nGaleria = ((emp.galeria && emp.galeria.items) || []).length + (emp.galeria && emp.galeria.heroImg ? 1 : 0);
+
   app.innerHTML =
-  '<div class="hero"><div class="hero-bg" style="' + heroStyle() + '"></div><div class="hero-grad"></div>' +
-    '<a class="hero-back" href="index.html">&larr; Todos os empreendimentos</a>' +
-    '<div class="hero-inner">' +
-      '<div class="hero-eyebrow">' + emp.eyebrow + '</div>' +
-      '<h1 class="hero-title">' + emp.titleHtml + '</h1>' +
-      '<p class="hero-sub">' + (emp.sub || '') + '</p>' +
-      entregaBadgeHtml() +
-      proximidadesHtml() + badgesHtml() + pillsHtml() +
-    '</div></div>' +
+  '<div class="ev">' +
+    '<div class="ev-amb" aria-hidden="true"></div>' +
+    heroHtml() +
+    aboutHtml() +
 
-  '<nav class="nav"><div class="nav-inner">' +
-    '<button class="nav-tab active" onclick="switchTab(\'unidades\',this)">Unidades</button>' +
-    '<button class="nav-tab" onclick="switchTab(\'plantas\',this)">Plantas</button>' +
-    '<button class="nav-tab" onclick="switchTab(\'implantacao\',this)">Implantacao</button>' +
-    '<button class="nav-tab" onclick="switchTab(\'galeria\',this)">Galeria</button>' +
-    (emp.hideVagas ? '' : '<button class="nav-tab" onclick="switchTab(\'vagas\',this)">Mapa de Vagas</button>') +
-  '</div></nav>' +
+    '<nav class="segnav" aria-label="Seções do empreendimento"><div class="segnav-in lg">' +
+      TABS.map(function (t, i) {
+        return '<button type="button" class="seg' + (i === 0 ? ' on' : '') + '" data-tab="' + t.id + '"' + (i === 0 ? ' aria-current="page"' : '') +
+          ' onclick="switchTab(\'' + t.id + '\',this)">' + t.label +
+          (t.id === 'unidades' ? '<span class="seg-n" id="seg-count" style="display:none"></span>' : '') + '</button>';
+      }).join('') +
+    '</div></nav>' +
 
-  '<div class="section active" id="tab-unidades">' +
-    '<div class="filter-bar">' +
-      tipoDropdownHtml() +
-      (emp.hideSol ? '' : solDropdownHtml()) +
-      premioDropdownHtml() +
-      torreDropdownHtml() +
-      vagaDropdownHtml() +
-      sortDropdownHtml() +
-      promoDropdownHtml() +
-      '<div class="fcount"><strong id="count-label">0</strong> unidades</div>' +
-    '</div>' +
-    '<div class="view-toggle">' +
-      '<div class="vt-left">' +
-      (emp._cityId === 'ribeirao-preto'
-        ? '<button type="button" class="btn-simulador" onclick="window.abrirModalSimulador()">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>' +
-            'Simular Fluxo</button>'
-        : '') +
-      (emp.book
-        ? '<a class="btn-book" href="' + emp.book + '" download title="Baixar o book de mesa deste empreendimento">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>' +
-            'Book</a>'
-        : '') +
-      (emp.maquete && emp.maquete.botaoVisivel
-        ? '<a class="btn-book" href="maquete.html?e=' + encodeURIComponent(emp.id) + '" title="Abrir a maquete 3D interativa deste empreendimento">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>' +
-            'Maquete 3D</a>'
-        : '') +
+    '<section class="sec on" id="tab-unidades" aria-label="Unidades">' +
+      '<div class="fbar lg">' +
+        '<div class="fbar-chips">' +
+          tipoDropdownHtml() + solDropdownHtml() + premioDropdownHtml() + torreDropdownHtml() +
+          vagaDropdownHtml() + promoDropdownHtml() + sortDropdownHtml() +
+        '</div>' +
+        '<div class="fcount"><strong id="count-label">0</strong> unidades</div>' +
       '</div>' +
-      '<button class="view-btn" id="view-btn-cards" title="Ver em cards" onclick="setView(\'cards\',this)">' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>' +
-      '</button>' +
-      '<button class="view-btn on" id="view-btn-list" title="Ver em lista" onclick="setView(\'list\',this)">' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>' +
-      '</button>' +
-      (emp._cityId === 'ribeirao-preto'
-        ? '<button class="view-btn" id="view-btn-pdf" title="Baixar PDF das unidades filtradas" onclick="abrirModalPdf()">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>' +
-          '</button>'
-        : '') +
-    '</div>' +
-    '<div id="planta-destaque">' + plantaDestaqueHtml() + '</div>' +
-    '<div class="units-grid" id="units-grid"></div>' +
-  '</div>' +
+      '<div class="acts">' +
+        (RP ? '<button type="button" class="gbtn lg" onclick="window.abrirModalSimulador()">' + IC.chart + 'Simular fluxo</button>' : '') +
+        (emp.book ? '<a class="gbtn lg act-book" href="' + esc(emp.book) + '" download title="Baixar o book de mesa deste empreendimento">' + IC.download + 'Book</a>' : '') +
+        '<span class="acts-sp"></span>' +
+        (RP ? '<span class="tipw"><button type="button" class="gbtn lg icon" id="view-btn-pdf" aria-label="Baixar tabela em PDF" onclick="abrirModalPdf()">' + IC.download + '</button>' +
+              '<span class="tip nw" role="tooltip">Baixar tabela (PDF)</span></span>' : '') +
+        '<div class="vt lg" role="group" aria-label="Modo de visualização">' +
+          '<button type="button" class="view-btn on" id="view-btn-list" aria-label="Ver em lista" aria-pressed="true" onclick="setView(\'list\',this)">' + IC.list + '</button>' +
+          '<button type="button" class="view-btn" id="view-btn-cards" aria-label="Ver em cards" aria-pressed="false" onclick="setView(\'cards\',this)">' + IC.grid + '</button>' +
+        '</div>' +
+        '<span class="acts-count"><strong id="count-label-m">0</strong> unidades</span>' +
+      '</div>' +
+      '<div class="ulist' + (emp.hideSol ? ' no-sol' : '') + '" id="units-grid"><div class="uload">Carregando unidades&hellip;</div></div>' +
+    '</section>' +
 
-  '<div class="section" id="tab-plantas">' +
-    '<span class="stag">Tipologias do projeto</span>' +
-    '<h2 class="stitle">Plantas dos Apartamentos</h2>' +
-    '<p class="ssub">Passe o mouse sobre cada planta para dar zoom.</p>' +
-    plantasHtml() +
-  '</div>' +
+    '<section class="sec" id="tab-plantas" aria-label="Plantas">' +
+      secHead('Tipologias do projeto' + (nPlantas ? ' &middot; ' + nPlantas : ''), 'Plantas', 'Clique em uma planta para ampliar.') +
+      plantasHtml() +
+    '</section>' +
 
-  '<div class="section" id="tab-implantacao">' +
-    '<span class="stag">Planta oficial do terreno</span>' +
-    '<h2 class="stitle">Implantacao do Empreendimento</h2>' +
-    '<p class="ssub">Passe o mouse para zoom.</p>' +
-    implantacaoHtml() +
-  '</div>' +
+    '<section class="sec" id="tab-implantacao" aria-label="Implantação">' +
+      secHead('Planta oficial do terreno', 'Implantação', 'Use os controles para dar zoom e arraste para navegar.') +
+      implantacaoHtml() +
+    '</section>' +
 
-  '<div class="section" id="tab-galeria">' +
-    '<span class="stag">Imagens do projeto</span>' +
-    '<h2 class="stitle">' + emp.nome + '</h2>' +
-    '<p class="ssub">Renders e perspectivas arquitetônicas. Imagens ilustrativas.</p>' +
-    galeriaHtml() +
-  '</div>' +
+    '<section class="sec" id="tab-galeria" aria-label="Galeria">' +
+      secHead('Imagens do projeto' + (nGaleria ? ' &middot; ' + nGaleria : ''), 'Galeria', 'Renders e perspectivas arquitetônicas. Imagens ilustrativas.') +
+      galeriaHtml() +
+    '</section>' +
 
-  (emp.hideVagas ? '' :
-  '<div class="section" id="tab-vagas">' +
-    '<h2 class="stitle">Mapa de Vagas</h2>' +
-    '<p class="ssub">Localização das vagas de garagem por torre e por unidade.</p>' +
-    vagasHtml() +
-  '</div>');
+    (emp.hideVagas ? '' :
+    '<section class="sec" id="tab-vagas" aria-label="Mapa de Vagas">' +
+      secHead('Garagem', 'Mapa de Vagas', 'Localização das vagas de garagem por torre e por unidade.') +
+      vagasHtml() +
+    '</section>') +
+  '</div>';
 
   renderUnits();
-  initZoom();
   doUpdate();
   loadPromocionais();   // lista de unidades promocionais (so Ribeirao Preto)
 
-  // mede a altura real do menu de abas para o filtro grudar logo abaixo dele
-  function syncNavHeight() {
-    var nav = document.querySelector('.nav');
-    if (nav) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px');
-  }
-  syncNavHeight();
-  window.addEventListener('resize', syncNavHeight);
-
-  /* =====================================================================
-     EXPERIENCIA DE APP NO CELULAR (< 768px)
-     Nada abaixo altera o desktop: o CSS correspondente vive todo dentro da
-     media query (max-width:767px). Aqui so preparamos o DOM (faixa de chips,
-     cabecalho dos bottom sheets e tab bar inferior) e sincronizamos estados.
-     ===================================================================== */
   var mqPhone = window.matchMedia('(max-width:767px)');
+  var mqTouch = window.matchMedia('(hover:none)');
 
-  // 1) agrupa os dropdowns numa faixa rolavel de chips.
-  //    No desktop .fbar-chips e display:contents, entao o layout nao muda.
-  var filterBar = document.querySelector('.filter-bar');
-  if (filterBar && !filterBar.querySelector('.fbar-chips')) {
-    var chipsWrap = document.createElement('div');
-    chipsWrap.className = 'fbar-chips';
-    filterBar.insertBefore(chipsWrap, filterBar.firstChild);
-    Array.prototype.forEach.call(filterBar.querySelectorAll('.fdd'), function (f) {
-      chipsWrap.appendChild(f);
+  /* ---------- "Ler mais" do bloco sobre (celular) ---------- */
+  var aboutMore = document.getElementById('about-more');
+  if (aboutMore) {
+    aboutMore.addEventListener('click', function () {
+      var about = document.getElementById('about');
+      var open = about.classList.toggle('open');
+      aboutMore.textContent = open ? 'Ler menos' : 'Ler mais';
+      aboutMore.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
   }
 
-  // 2) cabecalho de bottom sheet (grabber + titulo) e registro de cada painel
+  /* ---------- tooltip da badge Promocional no toque ----------
+     No toque nao ha hover: o primeiro toque na badge mostra o aviso (e nao abre
+     o popup da linha); tocar em qualquer outro lugar esconde. */
+  document.addEventListener('click', function (e) {
+    var tw = e.target.closest && e.target.closest('.tipw');
+    var abertos = document.querySelectorAll('.tipw.show');
+    for (var i = 0; i < abertos.length; i++) if (abertos[i] !== tw) abertos[i].classList.remove('show');
+    if (tw && mqTouch.matches && tw.querySelector('.u-promo, .pchip.promo')) {
+      e.preventDefault();
+      e.stopPropagation();
+      tw.classList.toggle('show');
+    }
+  }, true);
+
+  /* =====================================================================
+     FILTROS: abrir/fechar no clique (no desktop tambem abre no hover, via CSS).
+     No celular o painel vira bottom sheet e e "teleportado" para o <body>:
+     no iOS um position:fixed dentro de um ancestral sticky nao gruda na tela.
+     ===================================================================== */
+  var sheetBackdrop = document.createElement('div');
+  sheetBackdrop.className = 'sheet-backdrop';
+  document.body.appendChild(sheetBackdrop);
+
   var fddList = [];
   Array.prototype.forEach.call(document.querySelectorAll('.fdd'), function (fdd) {
     var panel = fdd.querySelector('.fdd-panel');
     var lbl = fdd.querySelector('.fdd-lbl');
     if (!panel) return;
-    if (!panel.querySelector('.fdd-sheet-head')) {
-      var head = document.createElement('div');
-      head.className = 'fdd-sheet-head';
-      head.innerHTML = '<span class="fdd-grab"></span><strong></strong>';
-      head.querySelector('strong').textContent = lbl ? lbl.textContent : '';
-      panel.insertBefore(head, panel.firstChild);
-    }
+    var inner = panel.querySelector('.fdd-panel-in');
+    var head = document.createElement('div');
+    head.className = 'fdd-sheet-head';
+    head.innerHTML = '<span class="fdd-grab"></span><strong></strong>';
+    head.querySelector('strong').textContent = lbl ? lbl.textContent : '';
+    inner.insertBefore(head, inner.firstChild);
     fddList.push({ fdd: fdd, panel: panel });
   });
-
-  // 2b) abre/fecha os dropdowns no toque (o :hover sozinho nao e confiavel em
-  //     telas touch). No mobile, o painel aberto (bottom sheet) e o backdrop
-  //     sao "teleportados" para dentro do <body> em vez de ficarem dentro da
-  //     .filter-bar (que e position:sticky) - no iOS real um position:fixed
-  //     descendente de um ancestral sticky nao gruda na tela de verdade (bug
-  //     conhecido do WebKit; o emulador de mobile do desktop nao reproduz).
-  //     No desktop nada disso roda: o painel nunca sai do lugar.
-  var sheetBackdrop = document.createElement('div');
-  sheetBackdrop.className = 'sheet-backdrop';
-  document.body.appendChild(sheetBackdrop);
-
   function closeFdd(entry) {
     entry.fdd.classList.remove('open');
     entry.panel.classList.remove('open');
@@ -536,187 +580,294 @@
   }
   fddList.forEach(function (entry) {
     var btn = entry.fdd.querySelector('.fdd-btn');
-    if (!btn) return;
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
-      var wasOpen = entry.fdd.classList.contains('open');
-      if (wasOpen) closeAllFdd(); else openFdd(entry);
+      if (entry.fdd.classList.contains('open')) closeAllFdd(); else openFdd(entry);
     });
   });
   sheetBackdrop.addEventListener('click', closeAllFdd);
-  document.addEventListener('click', function () { closeAllFdd(); });
+  document.addEventListener('click', function (e) {
+    // escolher uma opcao fecha o painel (ddSelect ja tira .open do .fdd, mas o painel pode estar no <body>)
+    if (e.target.closest && e.target.closest('.fdd-opt, .fdd-clear')) { closeAllFdd(); return; }
+    if (e.target.closest && e.target.closest('.fdd-panel')) return;
+    closeAllFdd();
+  });
+  // ao sair do hover no desktop, um painel aberto por clique tambem fecha
+  fddList.forEach(function (entry) {
+    entry.fdd.addEventListener('mouseleave', function () { if (!mqPhone.matches) closeFdd(entry); });
+  });
 
-  // 3) chip preenchido quando o filtro sai do padrao (guarda o valor inicial)
+  // pilula preenchida quando o filtro sai do padrao
   var chipState = fddList.map(function (entry) {
     var val = entry.fdd.querySelector('.fdd-val');
-    return val ? { fdd: entry.fdd, padrao: val.textContent } : null;
+    return val ? { fdd: entry.fdd, val: val, padrao: val.textContent } : null;
   }).filter(Boolean);
   function syncChips() {
-    chipState.forEach(function (c) {
-      var val = c.fdd.querySelector('.fdd-val');
-      c.fdd.classList.toggle('on', !!val && val.textContent !== c.padrao);
-    });
+    chipState.forEach(function (c) { c.fdd.classList.toggle('on', c.val.textContent !== c.padrao); });
   }
-  // trava o scroll do fundo enquanto um sheet estiver aberto
   function syncSheetLock() {
-    var aberto = !!document.querySelector('.fdd.open');
-    if (mqPhone.matches) {
-      document.body.style.overflow = aberto ? 'hidden' : '';
-    } else {
-      document.body.style.overflow = '';
-    }
+    var aberto = mqPhone.matches && (!!document.querySelector('.fdd-panel.open') || UMO.classList.contains('open') || LB.el.classList.contains('open'));
+    document.body.style.overflow = aberto ? 'hidden' : '';
   }
-  document.addEventListener('click', function () {
-    setTimeout(function () { syncChips(); syncSheetLock(); }, 0);
-  });
-  syncChips();
+  document.addEventListener('click', function () { setTimeout(function () { syncChips(); }, 0); });
 
-  // 4) tab bar inferior espelhando as abas existentes
+  /* =====================================================================
+     POPUP DA UNIDADE
+     ===================================================================== */
+  var UMO = document.getElementById('unit-modal-overlay');
+  var UMO_CARD = document.getElementById('unit-modal-card');
+  var UNIT_FIELDS = [
+    ['Valor de Avaliação Bancária', 'avaliacao'],
+    ['Valor de Tabela', 'valorFinal'],
+    ['Bônus Adimplência', 'ba'],
+    ['Desconto Volta ao Caixa', 'folgaVoltaCx'],
+    ['Desconto Associativo', 'folgaTabela'],
+    ['Desconto Campanha G', 'folgaCampG']
+  ];
+  function plantaDoTipo(tipo) {
+    var list = emp.plantas || [];
+    for (var i = 0; i < list.length; i++) if (list[i].tipo === tipo) return { p: list[i], i: i };
+    return null;
+  }
+  function simUrl(base, u) {
+    var id = (u.identificador || '').trim().toUpperCase();
+    return base + '?emp=' + encodeURIComponent(emp.id) + (/^BL\d+-\d+$/.test(id) ? '&unidade=' + encodeURIComponent(id) : '');
+  }
+  var lastFocus = null;
+
+  window.abrirUnidadeModal = function (idx) {
+    var u = (window.CURRENT_UNITS_LIST || [])[idx];
+    if (!u) return;
+    var d = unitDisplayData(u);
+    var pl = plantaDoTipo(u.tipo);
+    var desc = descontoTxt(d);
+    var closeBtn = function (cls) { return '<button type="button" class="umo-close ' + cls + '" data-close aria-label="Fechar">' + IC.close + '</button>'; };
+
+    var colData = '<div class="umo-col c-data">' +
+      '<div class="umo-head-row" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">' +
+        '<div class="umo-head">' +
+          '<span class="umo-eyebrow">' + d.bloco + ' &middot; Unidade selecionada</span>' +
+          '<span class="umo-title">' + d.locLabel + '</span>' +
+          '<span class="umo-chips">' + statusBadgeHtml(u, true) + promoBadgeHtml(u, true) + vagaTagHtml(u, true) +
+            '<span class="pchip tipo">' + esc(u.tipoLabel) + '</span></span>' +
+        '</div>' + closeBtn(pl ? 'm-only' : '') +
+      '</div>' +
+      '<div class="acard"><div class="acard-k">Associativo / Investidor</div><div class="acard-v">' + fmt(d.vAssoc) + '</div>' +
+        (desc ? '<div class="acard-d">' + desc + '</div>' : '') + '</div>' +
+      '<div class="tline"><span>Tabela direta</span><strong>' + fmt(d.vTabela) + '</strong></div>' +
+      '<dl class="dlist">' +
+        '<div><dt>Valor de avaliação</dt><dd>' + avaliacaoTxt(u) + '</dd></div>' +
+        '<div><dt>Área privativa</dt><dd>' + u.area + ' m&sup2;</dd></div>' +
+        (d.hideSol ? '' : '<div><dt>Sol</dt><dd>' + solChipHtml(u) + '</dd></div>') +
+      '</dl>' +
+    '</div>';
+
+    var colComp = '';
+    if (RP) {
+      colComp = '<div class="umo-col c-comp">' +
+        '<div class="comp-wrap"><div class="comp-t">Composição do valor</div><dl class="comp">' +
+          UNIT_FIELDS.map(function (f) {
+            var v = u[f[1]] || 0;
+            return '<div><dt>' + f[0] + '</dt><dd' + (v ? '' : ' class="zero"') + '>' + fmt(v) + '</dd></div>';
+          }).join('') +
+        '</dl></div>' +
+        '<div class="sim-wrap" style="display:flex;flex-direction:column;gap:8px"><div class="comp-t">Simular fluxo desta unidade</div><div class="simgrid">' +
+          '<a class="simbtn lg" href="' + simUrl('simulador-associativo.html', u) + '" target="_blank" rel="noopener"><span class="simbtn-ic">' + IC.house + '</span><span class="simbtn-t">Associativo</span></a>' +
+          '<a class="simbtn lg" href="' + simUrl('simulador-tabela-direta.html', u) + '" target="_blank" rel="noopener"><span class="simbtn-ic">' + IC.chart + '</span><span class="simbtn-t">Tabela Direta</span></a>' +
+        '</div></div>' +
+      '</div>';
+    }
+
+    var colPlanta = '';
+    if (pl) {
+      colPlanta = '<div class="umo-col c-planta">' +
+        '<div class="umo-top">' + closeBtn('') + '</div>' +
+        '<figure class="pfig"><button type="button" class="pfig-btn" data-lbx="plantas" data-i="' + pl.i + '" aria-label="Ampliar planta">' +
+          '<img src="' + esc(pl.p.img) + '" alt="Planta ' + esc(pl.p.title) + '">' + zoomIc() + '</button>' +
+          '<figcaption><span class="pfig-t">' + esc(pl.p.title) + '</span>' + (pl.p.sub ? '<span class="pfig-s">' + esc(pl.p.sub) + '</span>' : '') + '</figcaption></figure>' +
+      '</div>';
+    }
+
+    var ncols = 1 + (colComp ? 1 : 0) + (colPlanta ? 1 : 0);
+    UMO_CARD.className = 'umo-card lg' + (ncols === 3 ? '' : ' c' + ncols);
+    UMO_CARD.innerHTML = '<span class="umo-grab" aria-hidden="true"></span>' + colData + colComp + colPlanta;
+    lastFocus = document.activeElement;
+    UMO.classList.add('open');
+    UMO_CARD.scrollTop = 0;
+    syncSheetLock();
+    var fc = UMO_CARD.querySelector('.umo-close:not(.m-only)') || UMO_CARD.querySelector('.umo-close');
+    if (fc && !mqTouch.matches) fc.focus({ preventScroll: true });
+  };
+  function fecharModalUnidade() {
+    if (!UMO.classList.contains('open')) return;
+    UMO.classList.remove('open');
+    syncSheetLock();
+    if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
+  }
+  document.getElementById('unit-modal-scrim').addEventListener('click', fecharModalUnidade);
+  UMO_CARD.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) fecharModalUnidade(); });
+
+  /* =====================================================================
+     TELA CHEIA (lightbox) com navegacao entre as imagens do mesmo grupo
+     ===================================================================== */
+  var LB = { el: document.getElementById('lbx'), img: document.getElementById('lbx-img'), cap: document.getElementById('lbx-cap'),
+             prev: document.getElementById('lbx-prev'), next: document.getElementById('lbx-next'), list: [], i: 0 };
+  function lbShow() {
+    var it = LB.list[LB.i];
+    if (!it) return;
+    LB.img.src = it.src;
+    LB.img.alt = it.title || '';
+    LB.img.classList.toggle('photo', !!it.photo);
+    LB.cap.innerHTML = esc(it.title || '') + (LB.list.length > 1 ? ' <span>' + (LB.i + 1) + ' / ' + LB.list.length + '</span>' : '');
+    var multi = LB.list.length > 1;
+    LB.prev.hidden = !multi;
+    LB.next.hidden = !multi;
+  }
+  function abrirLightbox(group, i) {
+    LB.list = LBX[group] || [];
+    if (!LB.list.length) return;
+    LB.i = Math.max(0, Math.min(i || 0, LB.list.length - 1));
+    lbShow();
+    LB.el.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function fecharLightbox() {
+    LB.el.classList.remove('open');
+    document.body.style.overflow = '';
+    syncSheetLock();
+  }
+  function lbStep(n) { LB.i = (LB.i + n + LB.list.length) % LB.list.length; lbShow(); }
+  LB.prev.addEventListener('click', function () { lbStep(-1); });
+  LB.next.addEventListener('click', function () { lbStep(1); });
+  document.getElementById('lbx-close').addEventListener('click', fecharLightbox);
+  LB.el.addEventListener('click', function (e) { if (e.target === LB.el) fecharLightbox(); });
+  // arrastar para o lado no celular troca a imagem
+  var lbTouchX = null;
+  LB.el.addEventListener('touchstart', function (e) { lbTouchX = e.touches.length === 1 ? e.touches[0].clientX : null; }, { passive: true });
+  LB.el.addEventListener('touchend', function (e) {
+    if (lbTouchX === null || LB.list.length < 2) return;
+    var dx = e.changedTouches[0].clientX - lbTouchX;
+    if (Math.abs(dx) > 50) lbStep(dx < 0 ? 1 : -1);
+    lbTouchX = null;
+  });
+
+  // abre a tela cheia a partir de plantas, galeria, popup e (no celular) do visor
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest && e.target.closest('[data-lbx]');
+    if (!t) return;
+    if (t.classList.contains('viewer-stage')) {
+      if (!mqPhone.matches || e.target.closest('.viewer-ctl')) return;   // no desktop o visor tem zoom proprio
+    }
+    abrirLightbox(t.getAttribute('data-lbx'), parseInt(t.getAttribute('data-i'), 10) || 0);
+  });
+
+  /* ---------- "Ver unidades" de uma planta ---------- */
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.pl-go');
+    if (!b) return;
+    var tipo = b.getAttribute('data-tipo');
+    var seg = document.querySelector('.seg[data-tab="unidades"]');
+    switchTab('unidades', seg);
+    var opt = document.getElementById('tipo-opt-' + tipo);
+    if (opt) setFilter(tipo, opt);
+    syncChips();
+    var bar = document.querySelector('.fbar');
+    window.scrollTo({ top: bar ? Math.max(0, bar.getBoundingClientRect().top + window.scrollY - 100) : 0, behavior: 'smooth' });
+  });
+
+  /* =====================================================================
+     VISOR COM ZOOM (implantacao e mapa de vagas): +/- e arrastar
+     ===================================================================== */
+  Array.prototype.forEach.call(document.querySelectorAll('.viewer-stage'), function (stage) {
+    var img = stage.querySelector('img');
+    var pct = stage.querySelector('.viewer-pct');
+    var st = { z: 1, x: 0, y: 0 };
+    var ZMIN = 1, ZMAX = 4;
+    function apply() {
+      if (st.z <= 1) { st.x = 0; st.y = 0; }
+      img.style.setProperty('--z', st.z);
+      img.style.setProperty('--tx', st.x + 'px');
+      img.style.setProperty('--ty', st.y + 'px');
+      if (pct) pct.textContent = Math.round(st.z * 100) + '%';
+      stage.querySelector('[data-z="-1"]').disabled = st.z <= ZMIN;
+      stage.querySelector('[data-z="1"]').disabled = st.z >= ZMAX;
+    }
+    stage.querySelectorAll('.vz').forEach(function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        st.z = Math.max(ZMIN, Math.min(ZMAX, st.z + parseInt(b.getAttribute('data-z'), 10) * 0.5));
+        apply();
+      });
+    });
+    stage.querySelector('.vfull').addEventListener('click', function (e) {
+      e.stopPropagation();
+      abrirLightbox(stage.getAttribute('data-lbx'), parseInt(stage.getAttribute('data-i'), 10) || 0);
+    });
+    var drag = null;
+    stage.addEventListener('pointerdown', function (e) {
+      if (mqPhone.matches || st.z <= 1 || e.target.closest('.viewer-ctl')) return;
+      drag = { px: e.clientX, py: e.clientY, x: st.x, y: st.y };
+      stage.classList.add('drag');
+      stage.setPointerCapture(e.pointerId);
+    });
+    stage.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      st.x = drag.x + (e.clientX - drag.px);
+      st.y = drag.y + (e.clientY - drag.py);
+      apply();
+    });
+    function endDrag() { drag = null; stage.classList.remove('drag'); }
+    stage.addEventListener('pointerup', endDrag);
+    stage.addEventListener('pointercancel', endDrag);
+    stage.addEventListener('dblclick', function () {
+      if (mqPhone.matches) return;
+      st.z = st.z >= ZMAX ? 1 : Math.min(ZMAX, st.z + 1);
+      apply();
+    });
+    apply();
+  });
+
+  /* =====================================================================
+     CELULAR: tab bar flutuante espelhando as abas
+     ===================================================================== */
   var MTAB_ICONS = {
-    unidades: '<svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
-    plantas: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="10" x2="14" y2="10"></line><line x1="14" y1="10" x2="14" y2="21"></line></svg>',
-    implantacao: '<svg viewBox="0 0 24 24"><polygon points="1 6 8 3 16 6 23 3 23 18 16 21 8 18 1 21 1 6"></polygon><line x1="8" y1="3" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="21"></line></svg>',
-    galeria: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>',
+    unidades: '<svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg>',
+    plantas: '<svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM3 10h11M14 10v11"></path></svg>',
+    implantacao: '<svg viewBox="0 0 24 24"><path d="M1 6l7-3 8 3 7-3v15l-7 3-8-3-7 3zM8 3v15M16 6v15"></path></svg>',
+    galeria: '<svg viewBox="0 0 24 24"><path d="M3 3h18v18H3zM21 15l-5-5L5 21M8.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"></path></svg>',
     vagas: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 17V7h3.5a3 3 0 0 1 0 6H9"></path></svg>'
   };
-  var MTAB_LABELS = { unidades: 'Unidades', plantas: 'Plantas', implantacao: 'Implantação', galeria: 'Galeria', vagas: 'Vagas' };
-
-  var navTabs = document.querySelectorAll('.nav-tab');
-  if (navTabs.length && !document.getElementById('mobile-tabbar')) {
-    var tabbar = document.createElement('nav');
-    tabbar.className = 'mtabbar';
-    tabbar.id = 'mobile-tabbar';
-    tabbar.setAttribute('aria-label', 'Seções do empreendimento');
-    var criados = 0;
-    Array.prototype.forEach.call(navTabs, function (navTab) {
-      var m = /switchTab\('([^']+)'/.exec(navTab.getAttribute('onclick') || '');
-      if (!m) return;
-      var id = m[1];
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'mtab' + (navTab.classList.contains('active') ? ' on' : '');
-      btn.innerHTML = (MTAB_ICONS[id] || '') + '<span></span>';
-      btn.querySelector('span').textContent = MTAB_LABELS[id] || navTab.textContent;
-      btn.addEventListener('click', function () {
-        switchTab(id, navTab);
-        Array.prototype.forEach.call(tabbar.querySelectorAll('.mtab'), function (b) { b.classList.remove('on'); });
-        btn.classList.add('on');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-      tabbar.appendChild(btn);
-      criados++;
+  var tabbar = document.createElement('nav');
+  tabbar.className = 'mtabbar lg';
+  tabbar.setAttribute('aria-label', 'Seções do empreendimento');
+  tabbar.style.gridTemplateColumns = 'repeat(' + TABS.length + ',minmax(0,1fr))';
+  TABS.forEach(function (t, i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'mtab' + (i === 0 ? ' on' : '');
+    b.setAttribute('data-tab', t.id);
+    b.innerHTML = MTAB_ICONS[t.id] + '<span></span>';
+    b.querySelector('span').textContent = t.short || t.label;
+    b.addEventListener('click', function () {
+      switchTab(t.id, document.querySelector('.seg[data-tab="' + t.id + '"]'));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
-    tabbar.style.gridTemplateColumns = 'repeat(' + criados + ',1fr)';
-    document.body.appendChild(tabbar);
-  }
+    tabbar.appendChild(b);
+  });
+  document.body.appendChild(tabbar);
+  window.onTabChange = function (id) {
+    Array.prototype.forEach.call(tabbar.querySelectorAll('.mtab'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === id); });
+    closeAllFdd();
+  };
 
-  // 5) trocar de faixa (girar o aparelho, redimensionar) re-renderiza a lista
-  //    para alternar entre a linha compacta do celular e a do desktop, e
-  //    fecha qualquer sheet aberto (evita um painel teleportado ficar preso
-  //    fora do lugar se a faixa mudar de mobile pra desktop com ele aberto)
-  function onBreakpoint() { renderUnits(); closeAllFdd(); syncSheetLock(); syncZoomCopy(); }
+  // trocar de faixa (girar o aparelho, redimensionar) re-renderiza a lista e fecha sheets
+  function onBreakpoint() { renderUnits(); closeAllFdd(); syncSheetLock(); }
   if (mqPhone.addEventListener) mqPhone.addEventListener('change', onBreakpoint);
   else if (mqPhone.addListener) mqPhone.addListener(onBreakpoint);
 
-  // 6) Plantas e Galeria: envolve a grade num frame e injeta setas de navegacao.
-  //    No desktop o CSS mantem a grade como esta; so no mobile (< 768px) ela
-  //    vira carrossel com scroll-snap, e as setas (topo-esquerda) rolam 1 card.
-  var CAR_PREV_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
-  var CAR_NEXT_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
-  function initCarousel(grid) {
-    if (!grid || grid.dataset.carousel) return;
-    grid.dataset.carousel = '1';
-    var frame = document.createElement('div');
-    frame.className = 'carousel-frame';
-    grid.parentNode.insertBefore(frame, grid);
-    frame.appendChild(grid);
-    var arrows = document.createElement('div');
-    arrows.className = 'car-arrows';
-    arrows.innerHTML =
-      '<button type="button" class="car-arrow car-prev disabled" aria-label="Anterior">' + CAR_PREV_SVG + '</button>' +
-      '<button type="button" class="car-arrow car-next" aria-label="Próximo">' + CAR_NEXT_SVG + '</button>';
-    frame.appendChild(arrows);
-    var prevBtn = arrows.querySelector('.car-prev'), nextBtn = arrows.querySelector('.car-next');
-    function cardStep() {
-      var card = grid.children[0];
-      var gap = parseFloat(getComputedStyle(grid).columnGap || getComputedStyle(grid).gap) || 0;
-      return card ? (card.getBoundingClientRect().width + gap) : grid.clientWidth * 0.8;
-    }
-    function syncArrows() {
-      var max = grid.scrollWidth - grid.clientWidth - 2;
-      prevBtn.classList.toggle('disabled', grid.scrollLeft <= 2);
-      nextBtn.classList.toggle('disabled', grid.scrollLeft >= max);
-    }
-    prevBtn.addEventListener('click', function () { grid.scrollBy({ left: -cardStep(), behavior: 'smooth' }); });
-    nextBtn.addEventListener('click', function () { grid.scrollBy({ left: cardStep(), behavior: 'smooth' }); });
-    grid.addEventListener('scroll', syncArrows);
-    window.addEventListener('resize', syncArrows);
-    // a aba (Plantas/Galeria) comeca escondida (.section sem "active"), entao
-    // na montagem scrollWidth/clientWidth do carrossel sao 0 e as setas
-    // nasciam travadas ate o usuario arrastar manualmente (o que disparava
-    // o listener de 'scroll'). ResizeObserver acompanha o elemento e recalcula
-    // assim que a aba fica visivel e ganha largura de verdade.
-    if (window.ResizeObserver) {
-      new ResizeObserver(syncArrows).observe(grid);
-    } else {
-      requestAnimationFrame(function () { requestAnimationFrame(syncArrows); });
-    }
-  }
-  initCarousel(document.querySelector('#tab-plantas .plantas-grid'));
-  initCarousel(document.querySelector('#tab-galeria .g-grid'));
-
-  // 7) zoom por toque no mobile: o zoom por hover (initZoom, mousemove) nao
-  //    existe em tela sensivel ao toque. No celular, tocar numa imagem com
-  //    zoom (implantacao, plantas, mapa de vagas) abre ela em tela cheia.
-  var lightbox = document.createElement('div');
-  lightbox.className = 'zoom-lightbox';
-  lightbox.id = 'zoom-lightbox';
-  lightbox.innerHTML =
-    '<button type="button" class="zoom-lightbox-close" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>' +
-    '<img id="zoom-lightbox-img" src="" alt="">';
-  document.body.appendChild(lightbox);
-  var lightboxImg = document.getElementById('zoom-lightbox-img');
-  function openLightbox(img) {
-    lightboxImg.src = img.currentSrc || img.src;
-    lightboxImg.alt = img.alt || '';
-    lightbox.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeLightbox() {
-    lightbox.classList.remove('open');
-    if (!document.querySelector('.fdd.open')) document.body.style.overflow = '';
-  }
-  lightbox.addEventListener('click', function (e) { if (e.target === lightbox) closeLightbox(); });
-  lightbox.querySelector('.zoom-lightbox-close').addEventListener('click', closeLightbox);
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox(); });
-  document.querySelectorAll('.zoom-box').forEach(function (box) {
-    var img = box.querySelector('.zoom-img');
-    if (!img) return;
-    box.addEventListener('click', function (e) {
-      if (!mqPhone.matches) return;   // no desktop mantem so o zoom por hover
-      e.preventDefault();
-      openLightbox(img);
-    });
-  });
-
-  // troca "Passe o mouse..." por "Toque para ampliar..." no celular, onde o
-  // gesto de hover nao existe
-  document.querySelectorAll('.zoom-hint').forEach(function (h) { h.dataset.orig = h.textContent; });
-  var ssubPlantas = document.querySelector('#tab-plantas .ssub');
-  var ssubImpl = document.querySelector('#tab-implantacao .ssub');
-  if (ssubPlantas) ssubPlantas.dataset.orig = ssubPlantas.textContent;
-  if (ssubImpl) ssubImpl.dataset.orig = ssubImpl.textContent;
-  function syncZoomCopy() {
-    var phone = mqPhone.matches;
-    document.querySelectorAll('.zoom-hint').forEach(function (h) {
-      h.textContent = phone ? '\u{1F50D} Toque para ampliar' : h.dataset.orig;
-    });
-    if (ssubPlantas) ssubPlantas.textContent = phone ? 'Toque em cada planta para ampliar.' : ssubPlantas.dataset.orig;
-    if (ssubImpl) ssubImpl.textContent = phone ? 'Toque na imagem para ampliar.' : ssubImpl.dataset.orig;
-  }
-  syncZoomCopy();
-
-  // popup "Simular Fluxo" - escolhe Tabela Direta ou Associativo
+  /* =====================================================================
+     POPUPS "Simular fluxo" e "Baixar tabela"
+     ===================================================================== */
   var simOverlay = document.getElementById('sim-modal-overlay');
   window.abrirModalSimulador = function () {
     simOverlay.classList.add('open');
@@ -728,11 +879,7 @@
   }
   document.getElementById('sim-modal-close').addEventListener('click', fecharModalSimulador);
   simOverlay.addEventListener('click', function (e) { if (e.target === simOverlay) fecharModalSimulador(); });
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && simOverlay.classList.contains('open')) fecharModalSimulador();
-  });
 
-  // popup "Baixar tabela" - escolhe PDF com ou sem valores
   var pdfOverlay = document.getElementById('pdf-modal-overlay');
   window.abrirModalPdf = function () {
     pdfOverlay.classList.add('open');
@@ -744,9 +891,6 @@
   }
   document.getElementById('pdf-modal-close').addEventListener('click', fecharModalPdf);
   pdfOverlay.addEventListener('click', function (e) { if (e.target === pdfOverlay) fecharModalPdf(); });
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && pdfOverlay.classList.contains('open')) fecharModalPdf();
-  });
   pdfOverlay.querySelectorAll('[data-valores]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       fecharModalPdf();
@@ -754,40 +898,19 @@
     });
   });
 
-  // popup de detalhes da unidade (somente Ribeirao Preto) - carater informativo
-  var unitOverlay = document.getElementById('unit-modal-overlay');
-  var UNIT_FIELDS = [
-    ['Valor de Avaliação Bancária', 'avaliacao'],
-    ['Valor de Tabela', 'valorFinal'],
-    ['Bônus Adimplência', 'ba'],
-    ['Desconto Volta ao Caixa', 'folgaVoltaCx'],
-    ['Desconto Associativo', 'folgaTabela'],
-    ['Desconto Campanha G', 'folgaCampG']
-  ];
-  window.abrirUnidadeModal = function (idx) {
-    var list = window.CURRENT_UNITS_LIST || [];
-    var u = list[idx];
-    if (!u) return;
-    var d = unitDisplayData(u);
-    document.getElementById('unit-modal-title').textContent = u.tipoLabel;
-    document.getElementById('unit-modal-sub').innerHTML = d.apLabel;
-    var rows = '';
-    for (var i = 0; i < UNIT_FIELDS.length; i++) {
-      var lbl = UNIT_FIELDS[i][0], val = u[UNIT_FIELDS[i][1]] || 0;
-      rows += '<tr><td class="unit-modal-k">' + lbl + '</td><td class="unit-modal-v">' + fmt(val) + '</td></tr>';
-    }
-    document.getElementById('unit-modal-table').innerHTML = rows;
-    unitOverlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  };
-  function fecharModalUnidade() {
-    unitOverlay.classList.remove('open');
-    document.body.style.overflow = '';
-  }
-  document.getElementById('unit-modal-close').addEventListener('click', fecharModalUnidade);
-  unitOverlay.addEventListener('click', function (e) { if (e.target === unitOverlay) fecharModalUnidade(); });
+  /* ---------- teclado: Esc fecha o que estiver aberto; setas navegam a tela cheia ---------- */
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && unitOverlay.classList.contains('open')) fecharModalUnidade();
+    if (LB.el.classList.contains('open')) {
+      if (e.key === 'Escape') fecharLightbox();
+      else if (e.key === 'ArrowLeft' && LB.list.length > 1) lbStep(-1);
+      else if (e.key === 'ArrowRight' && LB.list.length > 1) lbStep(1);
+      return;
+    }
+    if (e.key !== 'Escape') return;
+    if (UMO.classList.contains('open')) fecharModalUnidade();
+    else if (simOverlay.classList.contains('open')) fecharModalSimulador();
+    else if (pdfOverlay.classList.contains('open')) fecharModalPdf();
+    else closeAllFdd();
   });
 })();
 </script>

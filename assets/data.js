@@ -188,17 +188,20 @@ function loadPromocionais() {
    olha o filtro de Premio), entao esconder a badge confundiria o corretor - ele
    veria o preco com desconto sem saber que e promocional. O aviso de que nao
    pode ser vendida com Premio fica na tooltip. */
-function promoBadgeHtml(u) {
+function promoBadgeHtml(u, chip) {
   if (!isPromo(u)) return '';
-  return '<span class="u-badge-promo">Promocional' + INFO_SVG +
-    '<span class="u-tooltip">Unidades promocionais n&atilde;o podem ser vendidas com Pr&ecirc;mio.</span></span>';
+  return '<span class="tipw" tabindex="0"><span class="' + (chip ? 'pchip promo' : 'u-promo') + '">Promocional' + INFO_SVG + '</span>' +
+    '<span class="tip" role="tooltip">Unidades promocionais n&atilde;o podem ser vendidas com Pr&ecirc;mio.</span></span>';
 }
 /* Selo de status da unidade. Em Ribeirao Preto, unidades com status MIRROR na planilha
    (coluna "Status da unidade") aparecem como "Mirror" no lugar de "Disponivel". */
-function statusBadgeHtml(u) {
+function isMirror(u) {
   var emp = window.CURRENT_EMP;
-  var mirror = !!(emp && emp._cityId === 'ribeirao-preto') && normKey(u.status) === 'mirror';
-  return '<span class="u-badge-disp">' + (mirror ? 'Mirror' : 'Disponivel') + '</span>';
+  return !!(emp && emp._cityId === 'ribeirao-preto') && normKey(u.status) === 'mirror';
+}
+function statusBadgeHtml(u, chip) {
+  var m = isMirror(u);
+  return '<span class="' + (chip ? 'pchip st' : 'u-st') + (m ? ' mirror' : '') + '">' + (m ? 'Mirror' : 'Dispon&iacute;vel') + '</span>';
 }
 function getSolIcon(u) { return unitNascente(u) ? '&#9728;' : '&#9790;'; }
 /* Valores monetarios sempre com centavos, exatamente como vem da planilha.
@@ -615,38 +618,31 @@ function unidadesFiltradas(sortVal) {
 
 function renderUnits() {
   var grid = document.getElementById('units-grid');
-  var plantaBox = document.getElementById('planta-destaque');
+  if (!grid) return;
   var sortEl = document.getElementById('sort');
   var sortVal = sortEl ? sortEl.value : 'num-asc';
-
-  if (plantaBox) {
-    var allPlantas = document.querySelectorAll('.planta-card');
-    for (var p = 0; p < allPlantas.length; p++) allPlantas[p].style.display = 'none';
-    plantaBox.style.display = 'none';
-    if (activeFilter !== 'todos') {
-      for (var pd = 0; pd < allPlantas.length; pd++) {
-        if (allPlantas[pd].getAttribute('data-tipo') === activeFilter) {
-          allPlantas[pd].style.display = 'block';
-          plantaBox.style.display = 'block';
-        }
-      }
-    }
-  }
 
   var list = unidadesFiltradas(sortVal);
 
   var cnt = document.getElementById('count-label');
   if (cnt) cnt.textContent = list.length;
+  var cntM = document.getElementById('count-label-m');
+  if (cntM) cntM.textContent = list.length;
+  var segCnt = document.getElementById('seg-count');
+  if (segCnt) { segCnt.textContent = units.length || ''; segCnt.style.display = units.length ? '' : 'none'; }
+
+  var phone = isPhoneView() && !!window.CURRENT_EMP;
+  var hideSol = !!(window.CURRENT_EMP && window.CURRENT_EMP.hideSol);
+  grid.className = (phone || viewMode === 'list' ? 'ulist' : 'ugrid') + (hideSol ? ' no-sol' : '');
+  window.CURRENT_UNITS_LIST = list;
 
   if (!list.length) {
-    grid.innerHTML = '<div class="empty"><div class="empty-icon">&#128269;</div><p>Nenhuma unidade para esse filtro.</p></div>';
+    grid.innerHTML = units.length
+      ? '<div class="uempty lg"><strong>Nenhuma unidade para esses filtros</strong><span>Troque os filtros ou limpe as sele&ccedil;&otilde;es.</span></div>'
+      : '<div class="uload">Carregando unidades&hellip;</div>';
     return;
   }
 
-  var phone = isPhoneView() && !!window.CURRENT_EMP;
-  grid.classList.toggle('list-view', phone || viewMode === 'list');
-  grid.classList.toggle('phone-view', phone);
-  window.CURRENT_UNITS_LIST = list;
   var buildUnit = phone ? unitMobileHtml : (viewMode === 'list' ? unitRowHtml : unitCardHtml);
   var html = '';
   for (var j = 0; j < list.length; j++) html += buildUnit(list[j], j);
@@ -657,26 +653,39 @@ function renderUnits() {
   }
 }
 
-// popup de detalhes (informativo) so nos empreendimentos de Ribeirao Preto
+/* toda unidade abre o popup de detalhes (planta + valores). Em Ribeirao Preto
+   ele tambem traz a composicao do valor e os atalhos para os simuladores. */
 function unitClickAttr(idx) {
-  var emp = window.CURRENT_EMP;
-  if (!(emp && emp._cityId === 'ribeirao-preto')) return '';
-  return ' onclick="abrirUnidadeModal(' + idx + ')" style="cursor:pointer"';
+  return ' role="button" tabindex="0" onclick="abrirUnidadeModal(' + idx + ')"' +
+    ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();abrirUnidadeModal(' + idx + ')}"';
 }
 
-/* dados comuns exibidos tanto no card quanto na linha da lista */
+var SOL_SUN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>';
+var SOL_MOON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>';
+var CHEV_R_SVG = '<svg class="u-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+var VAGA_V2_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17h14v-5l-2-5H7l-2 5z"></path><circle cx="8" cy="17" r="2"></circle><circle cx="16" cy="17" r="2"></circle></svg>';
+
+function solChipHtml(u) {
+  var nasc = unitNascente(u);
+  return '<span class="sol ' + (nasc ? 'nasc' : 'poen') + '">' + (nasc ? SOL_SUN_SVG : SOL_MOON_SVG) + (nasc ? 'Nascente' : 'Poente') + '</span>';
+}
+function vagaTagHtml(u, chip) {
+  if (!showVagasQtd() || u.vagas == null) return '';
+  var lbl = u.vagas === 1 ? '1 vaga' : (u.vagas > 0 ? u.vagas + ' vagas' : 'Sem vaga');
+  return '<span class="' + (chip ? 'pchip vaga' : 'u-vaga') + (u.vagas > 0 ? '' : ' none') + '">' + VAGA_V2_SVG + lbl + '</span>';
+}
+function avaliacaoTxt(u) { return (u.avaliacao && u.avaliacao > 0) ? fmt(u.avaliacao) : '&mdash;'; }
+
+/* dados comuns exibidos na lista, nos cards e no popup */
 function unitDisplayData(u) {
   var hideSol = window.CURRENT_EMP && window.CURRENT_EMP.hideSol;
-  var andarLabel = u.andar === 0 ? 'Terreo' : u.andar + '<sup>o</sup> andar';
-  var sol = getSol(u), solIcon = getSolIcon(u);
-  var solColor = (sol === 'Nascente') ? '#C9771A' : '#5A7FA8';
-  var solBg = (sol === 'Nascente') ? '#FFF5E6' : '#EBF2FA';
-  var solBorder = (sol === 'Nascente') ? '#F5DFB8' : '#C5D8EE';
+  var andarLabel = u.andar === 0 ? 'T&eacute;rreo' : u.andar + '&ordm; andar';
   var vTabela = tabelaDiretaOf(u), vAssoc = associativoOf(u);
   return {
-    hideSol: hideSol, andarLabel: andarLabel, sol: sol, solIcon: solIcon,
-    solColor: solColor, solBg: solBg, solBorder: solBorder,
-    vagasBadge: vagasBadgeHtml(u), promoBadge: promoBadgeHtml(u),
+    hideSol: hideSol, andarLabel: andarLabel, sol: getSol(u),
+    vagasBadge: vagaTagHtml(u), promoBadge: promoBadgeHtml(u),
+    bloco: (u.identificador || u.bl),
+    locLabel: andarLabel + ' &middot; Final ' + u.f,
     apLabel: (u.identificador || u.bl) + ' &middot; ' + andarLabel + ' &middot; Final ' + u.f,
     // desconto real entre o exibido em Tabela Direta e Associativo/Promocional
     vTabela: vTabela, vAssoc: vAssoc, desconto: vTabela - vAssoc
@@ -684,34 +693,11 @@ function unitDisplayData(u) {
 }
 
 /* ---------- visualizacao mobile (experiencia de app) ----------
-   Abaixo de 768px a lista de unidades vira uma linha compacta: um unico valor
-   em destaque (Associativo/Investidor, pedido do time comercial), Tabela Direta
-   como apoio, e o toque abre o popup com todos os valores. */
+   Abaixo de 768px a lista vira um card compacto: Associativo/Investidor em
+   destaque (pedido do time comercial), Tabela Direta e Avaliacao como apoio,
+   e o toque abre o popup (bottom sheet) com todos os valores. */
 function isPhoneView() {
   return window.matchMedia && window.matchMedia('(max-width:767px)').matches;
-}
-
-function unitMobileHtml(u, idx) {
-  var d = unitDisplayData(u);
-  var clickable = unitClickAttr(idx);
-  var html = '<div class="u-m"' + clickable + '>';
-  html += '<div class="u-m-main">';
-  html += '<div class="u-m-top"><span class="u-tipo">' + u.tipoLabel + '</span>' + d.promoBadge + statusBadgeHtml(u) + '</div>';
-  html += '<div class="u-m-id"><span class="u-ap">' + d.apLabel + '</span></div>';
-  html += '<div class="u-m-vals">';
-  html += '<div class="u-m-price"><div class="u-price-lbl">Associativo/Investidor</div>';
-  html += '<div class="u-m-assoc">' + fmt(d.vAssoc) + '</div>';
-  html += '<div class="u-m-tabela">Tabela ' + fmt(d.vTabela) + '</div></div>';
-  html += '<div class="u-m-meta"><span class="u-m-area">' + u.area + ' m&sup2;</span>';
-  if (!d.hideSol) {
-    html += '<span class="u-m-sol" style="color:' + d.solColor + ';background:' + d.solBg + ';border:1px solid ' + d.solBorder + '">' + d.solIcon + ' ' + d.sol + '</span>';
-  }
-  html += d.vagasBadge + '</div></div></div>';  // fecha .u-m-meta, .u-m-vals e .u-m-main
-  if (clickable) {
-    html += '<div class="u-m-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>';
-  }
-  html += '</div>';
-  return html;
 }
 
 // O texto "(Desconto de ...)" confunde o time de vendas em Ribeirao Preto: so aparece nos demais
@@ -719,66 +705,69 @@ function showDescontoAssoc() {
   var emp = window.CURRENT_EMP;
   return !(emp && emp._cityId === 'ribeirao-preto');
 }
-function descontoCardHtml(d) {
-  return showDescontoAssoc() ? ' (Desconto de ' + fmt(d.desconto) + ')' : '';
+function descontoTxt(d) {
+  return (showDescontoAssoc() && d.desconto > 0) ? 'Desconto de ' + fmt(d.desconto) : '';
 }
-function descontoRowHtml(d) {
-  return showDescontoAssoc() ? '<span class="u-desc-off">(Desconto de ' + fmt(d.desconto) + ')</span>' : '';
+function assocBoxHtml(d) {
+  var desc = descontoTxt(d);
+  return '<span class="u-assoc"><span class="u-k">Associativo / Investidor</span>' +
+    '<span class="u-assoc-v">' + fmt(d.vAssoc) + '</span>' +
+    (desc ? '<span class="u-desc">' + desc + '</span>' : '') + '</span>';
+}
+function unitIdHtml(u, d) {
+  return '<span class="u-id"><span class="u-tags">' + statusBadgeHtml(u) + d.promoBadge + d.vagasBadge + '</span>' +
+    '<span class="u-code">' + d.apLabel + '</span>' +
+    '<span class="u-tipo">' + u.tipoLabel + '</span></span>';
+}
+
+function unitMobileHtml(u, idx) {
+  var d = unitDisplayData(u);
+  var html = '<div class="urow lg"' + unitClickAttr(idx) + '>';
+  html += '<span class="m-top">' + unitIdHtml(u, d) + CHEV_R_SVG + '</span>';
+  html += assocBoxHtml(d);
+  html += '<span class="m-vals">' +
+    '<span class="u-cell"><span class="u-k">Tabela direta</span><span class="u-v">' + fmt(d.vTabela) + '</span></span>' +
+    '<span class="u-cell"><span class="u-k">Avalia&ccedil;&atilde;o</span><span class="u-v soft">' + avaliacaoTxt(u) + '</span></span>' +
+    '</span>';
+  html += '<span class="m-meta"><span class="m-area">' + u.area + ' m&sup2;</span>' + (d.hideSol ? '' : solChipHtml(u)) + '</span>';
+  html += '</div>';
+  return html;
 }
 
 function unitCardHtml(u, idx) {
   var d = unitDisplayData(u);
-  var html = '<div class="u-card"' + unitClickAttr(idx) + '>';
-  html += '<div class="u-top"><div class="u-top-info">';
-  html += '<div class="u-tipo">' + u.tipoLabel + '</div>';
-  html += '<div class="u-ap">' + d.apLabel + '</div>';
-  html += '</div><div class="u-top-tags">' + statusBadgeHtml(u) + d.promoBadge + d.vagasBadge + '</div></div>';
-  html += '<hr class="u-hr">';
-  html += '<div class="u-price-row">';
-  html += '<div><div class="u-price-lbl">Valor Tabela Direta</div><div class="u-price">' + fmt(d.vTabela) + '</div></div>';
-  if (u.avaliacao && u.avaliacao > 0)
-    html += '<div class="u-avaliacao"><div class="u-price-lbl">Valor de Avaliacao</div><div class="u-price u-price-sm">' + fmt(u.avaliacao) + '</div></div>';
-  html += '</div>';
-  html += '<div class="u-meta">';
-  html += '<div class="u-meta-box"' + (d.hideSol ? ' style="grid-column:1/-1"' : '') + '><div class="u-meta-k">Area privativa</div><div class="u-meta-v">' + u.area + ' m&sup2;</div></div>';
-  if (!d.hideSol) {
-    html += '<div class="u-meta-box" style="background:' + d.solBg + ';border:1px solid ' + d.solBorder + '">';
-    html += '<div class="u-meta-k" style="color:' + d.solColor + '">Sol</div>';
-    html += '<div class="u-meta-v" style="color:' + d.solColor + '">' + d.solIcon + ' ' + d.sol + '</div></div>';
-  }
-  html += '</div>';
-  html += '<div class="u-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(d.vAssoc) + descontoCardHtml(d) + '</span></div>';
+  var html = '<div class="ucard lg"' + unitClickAttr(idx) + '>';
+  html += '<span class="ucard-top">' + unitIdHtml(u, d) + CHEV_R_SVG + '</span>';
+  html += assocBoxHtml(d);
+  html += '<span class="ucard-vals">' +
+    '<span class="u-cell"><span class="u-k">Tabela direta</span><span class="u-v big">' + fmt(d.vTabela) + '</span></span>' +
+    '<span class="u-cell"><span class="u-k">Avalia&ccedil;&atilde;o</span><span class="u-v soft">' + avaliacaoTxt(u) + '</span></span>' +
+    '<span class="u-cell"><span class="u-k">&Aacute;rea privativa</span><span class="u-v">' + u.area + ' m&sup2;</span></span>' +
+    (d.hideSol ? '' : '<span class="u-cell"><span class="u-k">Sol</span>' + solChipHtml(u) + '</span>') +
+    '</span>';
   html += '</div>';
   return html;
 }
 
 function unitRowHtml(u, idx) {
   var d = unitDisplayData(u);
-  var html = '<div class="u-row"' + unitClickAttr(idx) + '>';
-  html += '<div class="u-row-id">';
-  html += statusBadgeHtml(u) + d.promoBadge;
-  html += '<div class="u-row-tipo-line"><div class="u-tipo">' + u.tipoLabel + '</div>' + d.vagasBadge + '</div>';
-  html += '<div class="u-ap">' + d.apLabel + '</div>';
-  html += '</div>';
-  html += '<div class="u-row-stats">';
-  html += '<div class="u-row-stat"><div class="u-price-lbl">Valor Tabela Direta</div><div class="u-price">' + fmt(d.vTabela) + '</div></div>';
-  if (u.avaliacao && u.avaliacao > 0)
-    html += '<div class="u-row-stat"><div class="u-price-lbl">Valor de Avaliacao</div><div class="u-price u-price-sm">' + fmt(u.avaliacao) + '</div></div>';
-  html += '<div class="u-row-stat"><div class="u-meta-k">Area privativa</div><div class="u-meta-v">' + u.area + ' m&sup2;</div></div>';
-  if (!d.hideSol) {
-    html += '<div class="u-row-stat"><div class="u-meta-k" style="color:' + d.solColor + '">Sol</div><div class="u-meta-v" style="color:' + d.solColor + '">' + d.solIcon + ' ' + d.sol + '</div></div>';
-  }
-  html += '</div>';
-  html += '<div class="u-row-desc"><span class="u-desc-lbl">Valor Associativo/Investidor</span><span class="u-desc-val">' + fmt(d.vAssoc) + '</span>' + descontoRowHtml(d) + '</div>';
-  html += '<div class="u-row-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>';
+  var html = '<div class="urow lg"' + unitClickAttr(idx) + '>';
+  html += unitIdHtml(u, d);
+  html += '<span class="u-cell"><span class="u-k">&Aacute;rea privativa</span><span class="u-v">' + u.area + ' m&sup2;</span></span>';
+  if (!d.hideSol) html += '<span class="u-cell"><span class="u-k">Sol</span>' + solChipHtml(u) + '</span>';
+  html += '<span class="u-cell"><span class="u-k">Tabela direta</span><span class="u-v big">' + fmt(d.vTabela) + '</span></span>';
+  html += '<span class="u-cell"><span class="u-k">Avalia&ccedil;&atilde;o</span><span class="u-v soft">' + avaliacaoTxt(u) + '</span></span>';
+  html += assocBoxHtml(d);
+  html += CHEV_R_SVG;
   html += '</div>';
   return html;
 }
 
 function setView(mode, btn) {
   viewMode = mode;
-  document.querySelectorAll('.view-btn').forEach(function (b) { b.classList.remove('on'); });
+  document.querySelectorAll('.view-btn').forEach(function (b) { b.classList.remove('on'); b.setAttribute('aria-pressed', 'false'); });
   btn.classList.add('on');
+  btn.setAttribute('aria-pressed', 'true');
   renderUnits();
 }
 
@@ -878,12 +867,17 @@ function exportarUnidadesPdf(comValores) {
 
 /* ---------- tabs + zoom ---------- */
 function switchTab(id, btn) {
-  var secs = document.querySelectorAll('.section');
-  for (var i = 0; i < secs.length; i++) secs[i].classList.remove('active');
-  var tabs = document.querySelectorAll('.nav-tab');
-  for (var k = 0; k < tabs.length; k++) tabs[k].classList.remove('active');
-  document.getElementById('tab-' + id).classList.add('active');
-  btn.classList.add('active');
+  var secs = document.querySelectorAll('.sec');
+  for (var i = 0; i < secs.length; i++) secs[i].classList.remove('on');
+  var tabs = document.querySelectorAll('.seg');
+  for (var k = 0; k < tabs.length; k++) { tabs[k].classList.remove('on'); tabs[k].removeAttribute('aria-current'); }
+  var sec = document.getElementById('tab-' + id);
+  if (sec) sec.classList.add('on');
+  var seg = btn && btn.classList && btn.classList.contains('seg') ? btn : document.querySelector('.seg[data-tab="' + id + '"]');
+  if (seg) { seg.classList.add('on'); seg.setAttribute('aria-current', 'page'); }
+  var ev = document.querySelector('.ev');
+  if (ev) ev.classList.toggle('tab-sec', id !== 'unidades');
+  if (typeof window.onTabChange === 'function') window.onTabChange(id);
 }
 function initZoom() {
   var zoomables = document.querySelectorAll('.zoom-box');
