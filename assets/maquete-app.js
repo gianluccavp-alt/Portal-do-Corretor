@@ -57,7 +57,7 @@ async function iniciar(emp) {
   const st = {
     grade: M.montarGrade(gcfg, null),
     dados: false,
-    modo: 'noite',
+    modo: 'cores',
     sel: null,
     vista: false,
     visiveis: null,

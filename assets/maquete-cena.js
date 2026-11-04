@@ -679,7 +679,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     }
   }
 
-  pintar(new Array(total).fill('sem-dados'), null, 'noite');
+  pintar(new Array(total).fill('sem-dados'), null, 'cores');
   requestAnimationFrame(quadro);
 
   function dispose() {
