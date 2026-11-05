@@ -153,9 +153,9 @@ img{display:block;max-width:100%}
 .fdd-val{font-weight:600;color:var(--ink);flex:1;text-align:left}
 .fdd-chev{width:14px;height:14px;stroke:var(--muted);flex-shrink:0;transition:transform .15s}
 .fdd:hover .fdd-chev,.fdd.open .fdd-chev{transform:rotate(180deg)}
-.fdd-panel{position:absolute;left:0;top:100%;padding-top:8px;z-index:40;min-width:240px;opacity:0;visibility:hidden;transform:translateY(-6px) scale(.98);transform-origin:top left;transition:opacity .18s,transform .18s,visibility .18s}
+.fdd-panel{pointer-events:none;position:absolute;left:0;top:100%;padding-top:8px;z-index:40;min-width:240px;opacity:0;visibility:hidden;transform:translateY(-6px) scale(.98);transform-origin:top left;transition:opacity .18s,transform .18s,visibility .18s}
 .fdd-panel-in{padding:6px;border-radius:18px;background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(40px) saturate(180%);backdrop-filter:blur(40px) saturate(180%);border:1px solid rgba(255,255,255,.9);box-shadow:0 20px 50px -16px color-mix(in srgb,var(--brand) 35%,transparent),0 2px 6px rgba(0,0,0,.06);max-height:min(420px,70vh);overflow-y:auto}
-.fdd:hover .fdd-panel,.fdd.open .fdd-panel,.fdd:focus-within .fdd-panel{opacity:1;visibility:visible;transform:none}
+.fdd:hover > .fdd-panel,.fdd.open > .fdd-panel,.fdd:focus-within > .fdd-panel{opacity:1;visibility:visible;transform:none;pointer-events:auto}
 .fdd.hush .fdd-panel{opacity:0!important;visibility:hidden!important;transform:translateY(-6px) scale(.98)!important}
 .fdd.hush .fdd-chev{transform:none!important}
 .fdd-opt{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;height:40px;padding:0 12px;border-radius:12px;font-size:14px;text-align:left;white-space:nowrap;color:var(--ink)}
@@ -186,7 +186,7 @@ img{display:block;max-width:100%}
 .fmore-in .fdd+.fdd{border-top:1px solid var(--line);padding-top:10px;margin-top:6px}
 .fmore-in .fdd-btn{pointer-events:none;height:auto;padding:0 4px 8px;border:0;background:none!important;font-size:13px;width:auto}
 .fmore-in .fdd-btn .fdd-val,.fmore-in .fdd-chev{display:none}
-.fmore-in .fdd-panel{position:static;opacity:1!important;visibility:visible!important;transform:none!important;padding:0;min-width:0;max-width:none;transition:none}
+.fmore-in .fdd-panel{position:static;opacity:1!important;visibility:inherit!important;transform:none!important;padding:0;min-width:0;max-width:none;transition:none}
 .fmore-in .fdd-panel-in{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 0 2px;background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;max-height:none;overflow:visible;border-radius:0}
 .fmore-in .fdd-panel-in>div[style*="contents"]{display:contents}
 .fmore-in .fdd-opt{width:auto;height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--line-2);font-size:13.5px}
@@ -203,7 +203,7 @@ img{display:block;max-width:100%}
   .fdd.on .fdd-btn{background:#fff;border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
   .fdd:hover .fdd-panel,.fdd:focus-within .fdd-panel{opacity:0;visibility:hidden}
   .fdd-panel{position:fixed;left:0;right:0;top:auto;bottom:0;min-width:0;max-width:none;margin:0;padding:0;z-index:520;transform:translateY(24px);transform-origin:bottom center}
-  .fdd-panel.open{opacity:1!important;visibility:visible!important;transform:none!important}
+  .fdd-panel.open{opacity:1!important;visibility:visible!important;transform:none!important;pointer-events:auto}
   .fdd-panel-in{border-radius:28px 28px 0 0;border-bottom:0;padding:8px 10px max(16px,env(safe-area-inset-bottom));max-height:75vh;background:rgba(255,255,255,.97)}
   .fdd-sheet-head{display:flex;flex-direction:column;align-items:center;gap:10px;padding:4px 10px 8px}
   .fdd-grab{width:38px;height:5px;border-radius:9px;background:var(--line)}
@@ -531,7 +531,7 @@ img{display:block;max-width:100%}
   .fdd-chev{width:12px;height:12px}
   .fdd.on .fdd-btn{background:#fff;border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
   .fdd:hover .fdd-panel,.fdd:focus-within .fdd-panel{opacity:0;visibility:hidden}
-  .fdd-panel.open{opacity:1!important;visibility:visible!important;transform:none!important}
+  .fdd-panel.open{opacity:1!important;visibility:visible!important;transform:none!important;pointer-events:auto}
   .fdd-panel-in{border-radius:28px 28px 0 0;border-bottom:0;padding:8px 10px max(16px,env(safe-area-inset-bottom));max-height:75vh;background:rgba(255,255,255,.97)}
   .fdd-sheet-head{display:flex;flex-direction:column;align-items:center;gap:10px;padding:4px 10px 8px}
   .fdd-grab{width:38px;height:5px;border-radius:9px;background:var(--line)}
