@@ -717,7 +717,7 @@
   layoutFiltros();
   function syncSheetLock() {
     var aberto = (mqSheet.matches && !!document.querySelector('.fdd-panel.open')) ||
-      (mqPhone.matches && (UMO.classList.contains('open') || LB.el.classList.contains('open')));
+      (mqSheet.matches && (UMO.classList.contains('open') || LB.el.classList.contains('open')));
     document.body.style.overflow = aberto ? 'hidden' : '';
   }
   document.addEventListener('click', function () { setTimeout(function () { syncChips(); }, 0); });
