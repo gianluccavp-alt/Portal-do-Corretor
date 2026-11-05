@@ -67,3 +67,7 @@ tbody td{border-color:var(--dir-line)}
 /* logo da appbar (mobile/tablet) é JPG com fundo branco: some no tema dark,
    o banner logo abaixo já traz a marca Direcional */
 .appbar-logo{display:none!important}
+
+/* barra fixa de acoes (Ver parcelas / Baixar PDF) no mobile e tablet */
+.btn-row{background:var(--bf-surface)!important;border-color:var(--dir-line)!important}
+@media(min-width:1200px){.btn-row{background:transparent!important}}

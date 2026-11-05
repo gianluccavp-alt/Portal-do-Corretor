@@ -658,7 +658,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 }
 </style>
 <!-- tema dark da Black Friday (remova esta linha para voltar ao claro) -->
-<link rel="stylesheet" href="assets/simulador-bf-dark.css?v=3">
+<link rel="stylesheet" href="assets/simulador-bf-dark.css?v=4">
 </head>
 <body class="tab-dados">
 
@@ -678,7 +678,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   <div class="hero-inner">
     <div class="hero-brand">Portal do Corretor<span class="bf-tag">BLACK FRIDAY</span></div>
     <h1>Simulador de <em>Fluxo Associativo</em></h1>
-    <p>Condição Black Friday: em <b>Ribeirão Preto</b> o Pro Soluto é em <b>até 60x sem juros</b>. Campinas e Sorocaba seguem a política padrão. Carnê linear e escalonado &middot; comprometimento de renda e verificação de política.</p>
+    <p>Condição Black Friday: em <b>Ribeirão Preto</b> o Pro Soluto é em <b>até 60x sem juros</b>. Campanha exclusiva dos empreendimentos de Ribeirão Preto. Carnê linear e escalonado &middot; comprometimento de renda e verificação de política.</p>
   </div>
 </header>
 
@@ -954,9 +954,8 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 
 <div class="foot">
   <div class="foot-inner">
-    Black Friday: nos empreendimentos de Ribeirão Preto o Pro Soluto é parcelado em até 60x sem juros e sem
-    correção de carência. Em Campinas e Sorocaba ele é corrigido a 0,5% a.m. antes das chaves e 1,5% a.m. após
-    as chaves, com correção de carência entre a data da venda e o 1º vencimento. O comprometimento de renda soma a parcela do
+    Campanha Black Friday exclusiva dos empreendimentos de Ribeirão Preto: Pro Soluto parcelado em até 60x sem
+    juros e sem correção de carência. O comprometimento de renda soma a parcela do
     carnê à evolução dos juros de obra (e à parcela cheia do financiamento após a entrega). Valores
     sujeitos a confirmação e aprovação da Direcional. &middot;
     <a href="index.html">Voltar ao portal</a>
@@ -1022,7 +1021,9 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
    inicioObra / entrega no formato AAAA-MM-DD (a entrega é sempre fim de mês)
    pctPS / prazoPadrao = política padrão do produto | parcMin = parcela mínima
    ========================================================= */
-var EMPS = window.SIM_EMPS;
+/* Black Friday: campanha valida so para Ribeirao Preto - Campinas e Sorocaba
+   ficam fora da lista (o catalogo compartilhado em simuladores.js nao muda). */
+var EMPS = window.SIM_EMPS.filter(function(e){ return e.cidade==='Ribeirão Preto'; });
 
 /* Escada de políticas - Formulário N34:W40 e Dados I23 da planilha.
    cr = teto de comprometimento de renda total | crPS = teto só da parcela do Pro Soluto */
