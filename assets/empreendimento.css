@@ -138,14 +138,15 @@ img{display:block;max-width:100%}
 .fbar{position:sticky;top:88px;z-index:30;border-radius:22px;padding:8px;display:flex;align-items:center;gap:6px}
 .fbar.lg{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
 .fbar.lg::after{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;background:rgba(255,255,255,.64);-webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%)}
-/* uma linha so: cada filtro ocupa o que precisa e, se faltar espaco, o valor encurta com "..." */
-.fbar-chips{display:grid;grid-auto-flow:column;grid-auto-columns:auto;gap:6px;flex:1 1 auto;min-width:0}
-.fdd{position:relative;min-width:0}
+/* sempre uma linha so: os filtros dividem a largura e vao ficando mais compactos; o valor encurta com "..." so em ultimo caso */
+.fbar-chips{display:flex;flex-wrap:nowrap;gap:6px;flex:1 1 auto;min-width:0}
+.fdd{position:relative;flex:1 1 auto;min-width:0}
 .fdd:nth-last-child(-n+2) .fdd-panel{left:auto;right:0;transform-origin:top right}
 .fdd-btn{display:inline-flex;align-items:center;gap:7px;width:100%;height:42px;padding:0 12px;border-radius:14px;border:1px solid var(--line-2);background:rgba(255,255,255,.72);font-size:14px;white-space:nowrap;transition:background .15s}
 .fdd:hover .fdd-btn,.fdd.open .fdd-btn{background:#fff}
 .fdd-ic{width:16px;height:16px;flex-shrink:0}
-.fdd-lbl{color:var(--muted)}
+.fdd-lbl{color:var(--muted);flex-shrink:0}
+.lbl-s{display:none}
 .fdd-val{font-weight:600;color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:left}
 .fdd-chev{width:14px;height:14px;stroke:var(--muted);flex-shrink:0;transition:transform .15s}
 .fdd:hover .fdd-chev,.fdd.open .fdd-chev{transform:rotate(180deg)}
@@ -170,9 +171,27 @@ img{display:block;max-width:100%}
   .acts-count strong{color:var(--ink);font-weight:700}
   .acts .tipw,.acts .vt{order:2}
 }
-/* sem espaco para todos os filtros numa linha: vira grade alinhada (nunca estoura a barra) */
+/* telas medias: filtros compactos (sem icone, rotulo pequeno em caixa alta), como no layout antigo */
 @media (min-width:768px) and (max-width:1399px){
-  .fbar-chips{grid-auto-flow:row;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .fbar{padding:6px}
+  .fbar-chips{gap:4px}
+  .fdd-btn{height:40px;padding:0 10px;gap:5px;border-radius:12px;font-size:13.5px}
+  .fdd-ic{display:none}
+  .lbl-l{display:none}
+  .lbl-s{display:inline}
+  .fdd-lbl{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+  .fdd-chev{width:12px;height:12px}
+}
+@media (min-width:768px) and (max-width:1100px){
+  .fbar{padding:5px}
+  .fbar-chips{gap:3px}
+  .fdd-btn{height:38px;padding:0 8px;gap:4px;font-size:12.5px}
+  .fdd-lbl{font-size:9.5px;letter-spacing:.04em}
+}
+/* tablet: o icone colorido substitui o rotulo para caber tudo */
+@media (min-width:768px) and (max-width:1023px){
+  .fdd-ic{display:block;width:14px;height:14px}
+  .fdd-lbl{display:none}
 }
 .fcount strong{color:var(--ink);font-weight:700}
 
@@ -422,7 +441,6 @@ img{display:block;max-width:100%}
   .hx{min-height:560px}
   .hx-body{padding:48px 32px 72px;grid-template-columns:1fr;gap:28px}
   .hx-stats,.hx-maq{width:100%;max-width:560px}
-  .fbar{flex-wrap:wrap}
   .fcount{margin-left:0}
   .urow,.no-sol .urow{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px 14px}
   .no-sol .urow{grid-template-columns:repeat(4,minmax(0,1fr))}

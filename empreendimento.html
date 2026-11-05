@@ -113,6 +113,8 @@
   document.title = emp.nome + ' · Portal do Corretor';
 
   var RP = emp._cityId === 'ribeirao-preto';
+  // Simular fluxo e PDF da tabela: Ribeirao Preto e Campinas (os simuladores ja tem os produtos de Campinas)
+  var SIM_PDF = RP || emp._cityId === 'campinas';
 
   /* paleta por empreendimento: so as cores de marca; o resto o CSS deriva.
      accent = cor principal | accentLight = destaque claro (titulo/pontos)
@@ -278,7 +280,7 @@
   function dropdown(o) {
     return '<div class="fdd"' + (o.rowId ? ' id="' + o.rowId + '"' : '') + '>' +
       '<button class="fdd-btn" type="button" aria-haspopup="listbox">' + o.icon +
-        '<span class="fdd-lbl">' + o.label + '</span><span class="fdd-val" id="' + o.valId + '">' + o.value + '</span>' + IC.chev + '</button>' +
+        '<span class="fdd-lbl" data-full="' + o.label + '">' + (o.short ? '<span class="lbl-l">' + o.label + '</span><span class="lbl-s">' + o.short + '</span>' : o.label) + '</span><span class="fdd-val" id="' + o.valId + '">' + o.value + '</span>' + IC.chev + '</button>' +
       '<div class="fdd-panel"><div class="fdd-panel-in" role="listbox">' + o.opts + '</div></div>' +
     '</div>';
   }
@@ -298,7 +300,7 @@
     ];
     var opts = ddOpt('tipo-opt-todos', 'Todos', true, "setFilter('todos',this)");
     list.forEach(function (t) { opts += ddOpt('tipo-opt-' + t.key, t.label, false, "setFilter('" + t.key + "',this)"); });
-    return dropdown({ icon: F_ICONS.tipo, label: 'Tipologia', valId: 'tipo-val', value: 'Todos', opts: opts + ddClear('clearTipo') });
+    return dropdown({ icon: F_ICONS.tipo, label: 'Tipologia', short: 'Tipo', valId: 'tipo-val', value: 'Todos', opts: opts + ddClear('clearTipo') });
   }
   function solDropdownHtml() {
     if (emp.hideSol) return '';
@@ -470,10 +472,10 @@
         '<div class="fcount"><strong id="count-label">0</strong> unidades</div>' +
       '</div>' +
       '<div class="acts">' +
-        (RP ? '<button type="button" class="gbtn lg" onclick="window.abrirModalSimulador()">' + IC.chart + 'Simular fluxo</button>' : '') +
+        (SIM_PDF ? '<button type="button" class="gbtn lg" onclick="window.abrirModalSimulador()">' + IC.chart + 'Simular fluxo</button>' : '') +
         (emp.book ? '<a class="gbtn lg act-book" href="' + esc(emp.book) + '" download title="Baixar o book de mesa deste empreendimento">' + IC.download + 'Book</a>' : '') +
         '<span class="acts-sp"></span>' +
-        (RP ? '<span class="tipw"><button type="button" class="gbtn lg icon" id="view-btn-pdf" aria-label="Baixar tabela em PDF" onclick="abrirModalPdf()">' + IC.download + '</button>' +
+        (SIM_PDF ? '<span class="tipw"><button type="button" class="gbtn lg icon" id="view-btn-pdf" aria-label="Baixar tabela em PDF" onclick="abrirModalPdf()">' + IC.download + '</button>' +
               '<span class="tip nw" role="tooltip">Baixar tabela (PDF)</span></span>' : '') +
         '<div class="vt lg" role="group" aria-label="Modo de visualização">' +
           '<button type="button" class="view-btn on" id="view-btn-list" aria-label="Ver em lista" aria-pressed="true" onclick="setView(\'list\',this)">' + IC.list + '</button>' +
@@ -556,7 +558,7 @@
     var head = document.createElement('div');
     head.className = 'fdd-sheet-head';
     head.innerHTML = '<span class="fdd-grab"></span><strong></strong>';
-    head.querySelector('strong').textContent = lbl ? lbl.textContent : '';
+    head.querySelector('strong').textContent = lbl ? lbl.getAttribute('data-full') : '';
     inner.insertBefore(head, inner.firstChild);
     fddList.push({ fdd: fdd, panel: panel });
   });
