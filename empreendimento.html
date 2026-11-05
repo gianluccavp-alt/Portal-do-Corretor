@@ -578,6 +578,18 @@
     }
     entry.panel.classList.add('open');
   }
+  function ancoraAbas() {
+    var sec = document.querySelector('.sec.on');
+    if (!sec) return 0;
+    var nav = document.querySelector('.segnav');
+    var off = mqPhone.matches || !nav ? 0 : nav.offsetHeight + 16;
+    return Math.max(0, sec.getBoundingClientRect().top + window.scrollY - off);
+  }
+  function voltaParaAncora() {
+    var y = ancoraAbas();
+    if (window.scrollY > y) window.scrollTo({ top: y, behavior: 'instant' });
+  }
+  window.voltaParaAncora = voltaParaAncora;
   fddList.forEach(function (entry) {
     var btn = entry.fdd.querySelector('.fdd-btn');
     btn.addEventListener('click', function (e) {
@@ -588,13 +600,22 @@
   sheetBackdrop.addEventListener('click', closeAllFdd);
   document.addEventListener('click', function (e) {
     // escolher uma opcao fecha o painel (ddSelect ja tira .open do .fdd, mas o painel pode estar no <body>)
-    if (e.target.closest && e.target.closest('.fdd-opt, .fdd-clear')) { closeAllFdd(); return; }
+    var opt = e.target.closest && e.target.closest('.fdd-opt, .fdd-clear');
+    if (opt) {
+      var dono = opt.closest('.fdd');
+      closeAllFdd();
+      // tira o foco e "silencia" o hover: o painel some na hora e so volta depois que o mouse sair
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+      if (dono && !mqPhone.matches) dono.classList.add('hush');
+      voltaParaAncora();
+      return;
+    }
     if (e.target.closest && e.target.closest('.fdd-panel')) return;
     closeAllFdd();
   });
   // ao sair do hover no desktop, um painel aberto por clique tambem fecha
   fddList.forEach(function (entry) {
-    entry.fdd.addEventListener('mouseleave', function () { if (!mqPhone.matches) closeFdd(entry); });
+    entry.fdd.addEventListener('mouseleave', function () { entry.fdd.classList.remove('hush'); if (!mqPhone.matches) closeFdd(entry); });
   });
 
   // pilula preenchida quando o filtro sai do padrao
@@ -771,8 +792,7 @@
     var opt = document.getElementById('tipo-opt-' + tipo);
     if (opt) setFilter(tipo, opt);
     syncChips();
-    var bar = document.querySelector('.fbar');
-    window.scrollTo({ top: bar ? Math.max(0, bar.getBoundingClientRect().top + window.scrollY - 100) : 0, behavior: 'smooth' });
+    window.scrollTo({ top: ancoraAbas(), behavior: 'instant' });
   });
 
   /* =====================================================================
@@ -850,12 +870,12 @@
     b.querySelector('span').textContent = t.short || t.label;
     b.addEventListener('click', function () {
       switchTab(t.id, document.querySelector('.seg[data-tab="' + t.id + '"]'));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
     tabbar.appendChild(b);
   });
   document.body.appendChild(tabbar);
   window.onTabChange = function (id) {
+    voltaParaAncora();
     Array.prototype.forEach.call(tabbar.querySelectorAll('.mtab'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === id); });
     closeAllFdd();
   };

@@ -875,8 +875,6 @@ function switchTab(id, btn) {
   if (sec) sec.classList.add('on');
   var seg = btn && btn.classList && btn.classList.contains('seg') ? btn : document.querySelector('.seg[data-tab="' + id + '"]');
   if (seg) { seg.classList.add('on'); seg.setAttribute('aria-current', 'page'); }
-  var ev = document.querySelector('.ev');
-  if (ev) ev.classList.toggle('tab-sec', id !== 'unidades');
   if (typeof window.onTabChange === 'function') window.onTabChange(id);
 }
 function initZoom() {
