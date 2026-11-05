@@ -8,6 +8,7 @@ var units = [];              // unidades do empreendimento atual (apos filtro)
 var activeFilter = 'todos';
 var activeSol = 'todos';
 var activeTorre = 'todos';
+var activeAndar = 'todos'; // 'todos' | numero do andar em texto ('0' = Terreo)
 var activeVaga = 'todos';    // 'todos' | 'com' (vagas > 0) | 'sem' (vagas = 0)
 var activePremio = 'com';    // 'com' = Com Premio (padrao) | 'sem' = Sem Premio
 var activePromo = 'todos';   // 'todos' | 'promo' (so as unidades marcadas em /promocionais)
@@ -490,6 +491,43 @@ function setTorre(torre, btn) {
   ddSelect('[id^="torre-opt-"]', 'torre-val', btn);
   renderUnits();
 }
+function setAndar(a, btn) {
+  activeAndar = a;
+  ddSelect('[id^="andar-opt-"]', 'andar-val', btn);
+  renderUnits();
+}
+function clearAndar() {
+  var opt = document.getElementById('andar-opt-todos');
+  if (opt) setAndar('todos', opt);
+}
+function andarNome(a) { return +a === 0 ? 'T\u00e9rreo' : a + '\u00ba andar'; }
+/* opcoes do filtro Andar saem dos andares que existem nas unidades carregadas */
+var _andaresKey = '';
+function updateAndarOptions() {
+  var box = document.getElementById('andar-opts');
+  if (!box) return;
+  var seen = {}, list = [];
+  for (var i = 0; i < units.length; i++) {
+    var a = units[i].andar;
+    if (typeof a === 'number' && isFinite(a) && !seen[a]) { seen[a] = 1; list.push(a); }
+  }
+  list.sort(function (x, y) { return x - y; });
+  var key = list.join(',');
+  if (key === _andaresKey) return;
+  _andaresKey = key;
+  if (activeAndar !== 'todos' && !seen[+activeAndar]) {
+    activeAndar = 'todos';
+    var v = document.getElementById('andar-val');
+    if (v) v.textContent = 'Todos';
+  }
+  var check = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+  function opt(k, label) {
+    return '<button type="button" class="fdd-opt' + (activeAndar === k ? ' on' : '') + '" id="andar-opt-' + k + '" onclick="setAndar(\'' + k + '\',this)"><span>' + label + '</span>' + check + '</button>';
+  }
+  box.innerHTML = opt('todos', 'Todos') + list.map(function (a) { return opt(String(a), andarNome(a)); }).join('');
+  var row = document.getElementById('andar-row');
+  if (row) row.style.display = list.length > 1 ? '' : 'none';
+}
 function setVaga(v, btn) {
   activeVaga = v;
   ddSelect('[id^="vaga-opt-"]', 'vaga-val', btn);
@@ -592,6 +630,7 @@ function unidadesFiltradas(sortVal) {
     if (activeTorre !== 'todos') {
       if (activeTorre !== String(blocoNum(u.bl))) continue;
     }
+    if (activeAndar !== 'todos' && String(u.andar) !== activeAndar) continue;
     if (activeVaga !== 'todos') {
       if (u.vagas == null) continue;                       // sem dado na planilha
       if (activeVaga === 'com' && u.vagas <= 0) continue;
@@ -622,7 +661,9 @@ function renderUnits() {
   var sortEl = document.getElementById('sort');
   var sortVal = sortEl ? sortEl.value : 'num-asc';
 
+  updateAndarOptions();
   var list = unidadesFiltradas(sortVal);
+  if (typeof window.onUnitsRendered === 'function') setTimeout(window.onUnitsRendered, 0);
 
   var cnt = document.getElementById('count-label');
   if (cnt) cnt.textContent = list.length;

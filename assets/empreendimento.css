@@ -138,16 +138,17 @@ img{display:block;max-width:100%}
 .fbar{position:sticky;top:88px;z-index:30;border-radius:22px;padding:8px;display:flex;align-items:center;gap:6px}
 .fbar.lg{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
 .fbar.lg::after{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;background:rgba(255,255,255,.64);-webkit-backdrop-filter:blur(28px) saturate(180%);backdrop-filter:blur(28px) saturate(180%)}
-/* sempre uma linha so: os filtros dividem a largura e vao ficando mais compactos; o valor encurta com "..." so em ultimo caso */
+/* sempre uma linha so. Desktop: o que nao cabe vai para "Mais filtros" (montado no JS).
+   Tablet e celular: a linha desliza para o lado. */
 .fbar-chips{display:flex;flex-wrap:nowrap;gap:6px;flex:1 1 auto;min-width:0}
-.fdd{position:relative;flex:1 1 auto;min-width:0}
+.fdd{position:relative;flex:1 0 auto}
 .fdd:nth-last-child(-n+2) .fdd-panel{left:auto;right:0;transform-origin:top right}
 .fdd-btn{display:inline-flex;align-items:center;gap:7px;width:100%;height:42px;padding:0 12px;border-radius:14px;border:1px solid var(--line-2);background:rgba(255,255,255,.72);font-size:14px;white-space:nowrap;transition:background .15s}
 .fdd:hover .fdd-btn,.fdd.open .fdd-btn{background:#fff}
 .fdd-ic{width:16px;height:16px;flex-shrink:0}
 .fdd-lbl{color:var(--muted);flex-shrink:0}
 .lbl-s{display:none}
-.fdd-val{font-weight:600;color:var(--ink);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.fdd-val{font-weight:600;color:var(--ink);flex:1;text-align:left}
 .fdd-chev{width:14px;height:14px;stroke:var(--muted);flex-shrink:0;transition:transform .15s}
 .fdd:hover .fdd-chev,.fdd.open .fdd-chev{transform:rotate(180deg)}
 .fdd-panel{position:absolute;left:0;top:100%;padding-top:8px;z-index:40;min-width:240px;opacity:0;visibility:hidden;transform:translateY(-6px) scale(.98);transform-origin:top left;transition:opacity .18s,transform .18s,visibility .18s}
@@ -171,27 +172,43 @@ img{display:block;max-width:100%}
   .acts-count strong{color:var(--ink);font-weight:700}
   .acts .tipw,.acts .vt{order:2}
 }
-/* telas medias: filtros compactos (sem icone, rotulo pequeno em caixa alta), como no layout antigo */
-@media (min-width:768px) and (max-width:1399px){
-  .fbar{padding:6px}
-  .fbar-chips{gap:4px}
-  .fdd-btn{height:40px;padding:0 10px;gap:5px;border-radius:12px;font-size:13.5px}
-  .fdd-ic{display:none}
-  .lbl-l{display:none}
-  .lbl-s{display:inline}
-  .fdd-lbl{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
-  .fdd-chev{width:12px;height:12px}
-}
-@media (min-width:768px) and (max-width:1100px){
-  .fbar{padding:5px}
-  .fbar-chips{gap:3px}
-  .fdd-btn{height:38px;padding:0 8px;gap:4px;font-size:12.5px}
-  .fdd-lbl{font-size:9.5px;letter-spacing:.04em}
-}
-/* tablet: o icone colorido substitui o rotulo para caber tudo */
-@media (min-width:768px) and (max-width:1023px){
-  .fdd-ic{display:block;width:14px;height:14px}
-  .fdd-lbl{display:none}
+/* ---------- "Mais filtros" (desktop) ---------- */
+.fmore{display:none;flex:0 0 auto}
+.fmore.show{display:block}
+.fmore .fdd-btn{gap:8px}
+.fmore-n{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--accent);color:#fff;font-size:11.5px;font-weight:700;display:none;align-items:center;justify-content:center}
+.fmore-n.on{display:inline-flex}
+.fmore .fdd-panel{min-width:340px;max-width:440px}
+.fmore-in{display:flex;flex-direction:column;gap:4px;padding:10px!important}
+.fmore-in .fdd{flex:none}
+.fmore-in .fdd+.fdd{border-top:1px solid var(--line);padding-top:10px;margin-top:6px}
+.fmore-in .fdd-btn{pointer-events:none;height:auto;padding:0 4px 8px;border:0;background:none!important;font-size:13px;width:auto}
+.fmore-in .fdd-btn .fdd-val,.fmore-in .fdd-chev{display:none}
+.fmore-in .fdd-panel{position:static;opacity:1!important;visibility:visible!important;transform:none!important;padding:0;min-width:0;max-width:none;transition:none}
+.fmore-in .fdd-panel-in{display:flex;flex-wrap:wrap;gap:6px;padding:0 0 0 2px;background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;max-height:none;overflow:visible;border-radius:0}
+.fmore-in .fdd-panel-in>div[style*="contents"]{display:contents}
+.fmore-in .fdd-opt{width:auto;height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--line-2);font-size:13.5px}
+.fmore-in .fdd-opt svg,.fmore-in .fdd-sep,.fmore-in .fdd-clear{display:none}
+.fmore-in .fdd-opt.on{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+
+.sheet-backdrop{display:none}
+/* ---------- tablet e celular: linha desliza para o lado; o painel abre como folha de baixo ---------- */
+@media (max-width:1023px){
+  .fbar-chips{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .fbar-chips::-webkit-scrollbar{display:none}
+  .fdd{flex:0 0 auto}
+  .fdd-btn{width:auto}
+  .fdd.on .fdd-btn{background:#fff;border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+  .fdd:hover .fdd-panel,.fdd:focus-within .fdd-panel{opacity:0;visibility:hidden}
+  .fdd-panel{position:fixed;left:8px;right:8px;top:auto;bottom:8px;min-width:0;max-width:560px;margin:0 auto;padding:0;z-index:520;transform:translateY(24px);transform-origin:bottom center}
+  .fdd-panel.open{opacity:1!important;visibility:visible!important;transform:none!important}
+  .fdd-panel-in{border-radius:30px;padding:8px 8px max(10px,env(safe-area-inset-bottom));max-height:70vh;background:rgba(255,255,255,.94)}
+  .fdd-sheet-head{display:flex;flex-direction:column;align-items:center;gap:10px;padding:4px 10px 8px}
+  .fdd-grab{width:38px;height:5px;border-radius:9px;background:var(--line)}
+  .fdd-sheet-head strong{align-self:flex-start;font-size:17px;font-weight:700}
+  .fdd-opt,.fdd-clear{height:48px;font-size:15px}
+  .sheet-backdrop{display:block;position:fixed;inset:0;z-index:510;background:rgba(0,0,0,.38);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s}
+  .sheet-backdrop.open{opacity:1;visibility:visible}
 }
 .fcount strong{color:var(--ink);font-weight:700}
 
@@ -420,7 +437,6 @@ img{display:block;max-width:100%}
 .sim-opt-arrow{flex:none;color:var(--muted)}
 .sim-opt-arrow svg{width:18px;height:18px;display:block}
 
-.sheet-backdrop{display:none}
 .mtabbar{display:none}
 .m-only,.hx-book{display:none}
 

@@ -174,7 +174,9 @@
     torre: fIcon('M5 2h14v20H5zM9 6h.01M15 6h.01M9 10h.01M15 10h.01M9 14h.01M15 14h.01M10 22v-4h4v4', '#5B7FA0'),
     vaga: fIcon('M5 17h14v-5l-2-5H7l-2 5zM8 15a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM16 15a2 2 0 1 0 0 4 2 2 0 0 0 0-4z', '#6B5BB5'),
     promo: fIcon('M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8zM7 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z', '#D8695D'),
-    sort: fIcon('M3 6h18M6 12h12M10 18h4', '#B0568A')
+    sort: fIcon('M3 6h18M6 12h12M10 18h4', '#B0568A'),
+    andar: fIcon('M12 2 2 7l10 5 10-5zM2 17l10 5 10-5M2 12l10 5 10-5', '#2F8A5B'),
+    mais: fIcon('M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6', '#55606A')
   };
   var PROX_ICONS = {
     shopping: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path>',
@@ -278,7 +280,7 @@
     return '<div class="fdd-sep"></div><button type="button" class="fdd-clear" onclick="' + fn + '()"><span>Limpar filtros</span>' + IC.trash + '</button>';
   }
   function dropdown(o) {
-    return '<div class="fdd"' + (o.rowId ? ' id="' + o.rowId + '"' : '') + '>' +
+    return '<div class="fdd' + (o.cls ? ' ' + o.cls : '') + '"' + (o.rowId ? ' id="' + o.rowId + '"' : '') + '>' +
       '<button class="fdd-btn" type="button" aria-haspopup="listbox">' + o.icon +
         '<span class="fdd-lbl" data-full="' + o.label + '">' + (o.short ? '<span class="lbl-l">' + o.label + '</span><span class="lbl-s">' + o.short + '</span>' : o.label) + '</span><span class="fdd-val" id="' + o.valId + '">' + o.value + '</span>' + IC.chev + '</button>' +
       '<div class="fdd-panel"><div class="fdd-panel-in" role="listbox">' + o.opts + '</div></div>' +
@@ -300,7 +302,7 @@
     ];
     var opts = ddOpt('tipo-opt-todos', 'Todos', true, "setFilter('todos',this)");
     list.forEach(function (t) { opts += ddOpt('tipo-opt-' + t.key, t.label, false, "setFilter('" + t.key + "',this)"); });
-    return dropdown({ icon: F_ICONS.tipo, label: 'Tipologia', short: 'Tipo', valId: 'tipo-val', value: 'Todos', opts: opts + ddClear('clearTipo') });
+    return dropdown({ icon: F_ICONS.tipo, label: 'Tipologia', valId: 'tipo-val', value: 'Todos', opts: opts + ddClear('clearTipo') });
   }
   function solDropdownHtml() {
     if (emp.hideSol) return '';
@@ -336,11 +338,24 @@
       ddOpt('promo-opt-promo', 'Promocional', false, "setPromo('promo',this)");
     return dropdown({ rowId: 'promo-row', icon: F_ICONS.promo, label: 'Promocional', valId: 'promo-val', value: 'Todas', opts: opts + ddClear('clearPromo') });
   }
+  // filtro Andar (todos os empreendimentos): as opcoes sao montadas a partir das unidades carregadas
+  function andarDropdownHtml() {
+    var opts = '<div id="andar-opts" style="display:contents">' + ddOpt('andar-opt-todos', 'Todos', true, "setAndar('todos',this)") + '</div>';
+    return dropdown({ rowId: 'andar-row', icon: F_ICONS.andar, label: 'Andar', valId: 'andar-val', value: 'Todos', opts: opts + ddClear('clearAndar') });
+  }
+  // "Mais filtros" (desktop): recebe os filtros que nao cabem na barra
+  function maisFiltrosHtml() {
+    return '<div class="fdd fmore" id="fmore">' +
+      '<button class="fdd-btn" type="button" aria-haspopup="true">' + F_ICONS.mais +
+        '<span class="fdd-val">Mais filtros</span><span class="fmore-n" id="fmore-n"></span>' + IC.chev + '</button>' +
+      '<div class="fdd-panel"><div class="fdd-panel-in fmore-in" id="fmore-in"></div></div>' +
+    '</div>';
+  }
   function sortDropdownHtml() {
     var opts = ddOpt('sort-opt-num-asc', 'Numeração', true, "setSortOpt('num-asc',this)") +
       ddOpt('sort-opt-venda-asc', 'Menor preço', false, "setSortOpt('venda-asc',this)") +
       ddOpt('sort-opt-venda-desc', 'Maior preço', false, "setSortOpt('venda-desc',this)");
-    return dropdown({ icon: F_ICONS.sort, label: 'Ordenar', valId: 'sort-val', value: 'Numeração', opts: opts }) +
+    return dropdown({ cls: 'fdd-sort', icon: F_ICONS.sort, label: 'Ordenar', valId: 'sort-val', value: 'Numeração', opts: opts }) +
       '<input type="hidden" id="sort" value="num-asc">';
   }
 
@@ -466,8 +481,8 @@
     '<section class="sec on" id="tab-unidades" aria-label="Unidades">' +
       '<div class="fbar lg">' +
         '<div class="fbar-chips">' +
-          tipoDropdownHtml() + solDropdownHtml() + premioDropdownHtml() + torreDropdownHtml() +
-          vagaDropdownHtml() + promoDropdownHtml() + sortDropdownHtml() +
+          tipoDropdownHtml() + torreDropdownHtml() + andarDropdownHtml() + solDropdownHtml() + premioDropdownHtml() +
+          vagaDropdownHtml() + promoDropdownHtml() + sortDropdownHtml() + maisFiltrosHtml() +
         '</div>' +
         '<div class="fcount"><strong id="count-label">0</strong> unidades</div>' +
       '</div>' +
@@ -514,6 +529,7 @@
 
   var mqPhone = window.matchMedia('(max-width:767px)');
   var mqTouch = window.matchMedia('(hover:none)');
+  var mqSheet = window.matchMedia('(max-width:1023px)');  // tablet e celular: filtros deslizam e abrem como folha
 
   /* ---------- "Ler mais" do bloco sobre (celular) ---------- */
   var aboutMore = document.getElementById('about-more');
@@ -555,6 +571,7 @@
     var lbl = fdd.querySelector('.fdd-lbl');
     if (!panel) return;
     var inner = panel.querySelector('.fdd-panel-in');
+    if (fdd.classList.contains('fmore')) { fddList.push({ fdd: fdd, panel: panel }); return; }
     var head = document.createElement('div');
     head.className = 'fdd-sheet-head';
     head.innerHTML = '<span class="fdd-grab"></span><strong></strong>';
@@ -574,7 +591,7 @@
   function openFdd(entry) {
     closeAllFdd();
     entry.fdd.classList.add('open');
-    if (mqPhone.matches) {
+    if (mqSheet.matches) {
       document.body.appendChild(entry.panel);
       sheetBackdrop.classList.add('open');
     }
@@ -592,6 +609,38 @@
     if (window.scrollY > y) window.scrollTo({ top: y, behavior: 'instant' });
   }
   window.voltaParaAncora = voltaParaAncora;
+
+  /* Ao trocar um filtro a pagina NAO volta para o topo: guarda a unidade que estava no alto da tela
+     e, depois de redesenhar a lista, mantem essa mesma unidade no mesmo lugar (se ela continuar na lista). */
+  var ancoraUnid = null;
+  function codigoUnid(el) { var c = el.querySelector('.u-code'); return c ? c.textContent : ''; }
+  function guardaUnidadeVisivel() {
+    ancoraUnid = null;
+    var grid = document.getElementById('units-grid');
+    var bar = document.querySelector('.fbar');
+    if (!grid || !bar) return;
+    var limite = bar.getBoundingClientRect().bottom;
+    for (var i = 0; i < grid.children.length; i++) {
+      var r = grid.children[i].getBoundingClientRect();
+      if (r.bottom > limite + 4) { ancoraUnid = { cod: codigoUnid(grid.children[i]), top: r.top, y: window.scrollY }; return; }
+    }
+  }
+  function mantemUnidadeVisivel() {
+    var a = ancoraUnid; ancoraUnid = null;
+    if (!a || !a.cod) return;
+    var grid = document.getElementById('units-grid');
+    for (var i = 0; grid && i < grid.children.length; i++) {
+      if (codigoUnid(grid.children[i]) === a.cod) {
+        var d = grid.children[i].getBoundingClientRect().top - a.top;
+        if (Math.abs(d) > 1) window.scrollTo({ top: window.scrollY + d, behavior: 'instant' });
+        return;
+      }
+    }
+    // a unidade saiu da lista: fica onde estava (o navegador so recua se a pagina ficou mais curta)
+  }
+  document.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('.fdd-opt, .fdd-clear')) guardaUnidadeVisivel();
+  }, true);
   fddList.forEach(function (entry) {
     var btn = entry.fdd.querySelector('.fdd-btn');
     btn.addEventListener('click', function (e) {
@@ -608,8 +657,8 @@
       closeAllFdd();
       // tira o foco e "silencia" o hover: o painel some na hora e so volta depois que o mouse sair
       if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-      if (dono && !mqPhone.matches) dono.classList.add('hush');
-      voltaParaAncora();
+      if (dono && !mqSheet.matches && !dono.closest('.fmore-in')) dono.classList.add('hush');
+      mantemUnidadeVisivel();
       return;
     }
     if (e.target.closest && e.target.closest('.fdd-panel')) return;
@@ -617,7 +666,7 @@
   });
   // ao sair do hover no desktop, um painel aberto por clique tambem fecha
   fddList.forEach(function (entry) {
-    entry.fdd.addEventListener('mouseleave', function () { entry.fdd.classList.remove('hush'); if (!mqPhone.matches) closeFdd(entry); });
+    entry.fdd.addEventListener('mouseleave', function () { entry.fdd.classList.remove('hush'); if (!mqSheet.matches) closeFdd(entry); });
   });
 
   // pilula preenchida quando o filtro sai do padrao
@@ -627,9 +676,48 @@
   }).filter(Boolean);
   function syncChips() {
     chipState.forEach(function (c) { c.fdd.classList.toggle('on', c.val.textContent !== c.padrao); });
+    var n = fmoreIn ? fmoreIn.querySelectorAll('.fdd.on').length : 0;
+    if (fmoreN) { fmoreN.textContent = n; fmoreN.classList.toggle('on', n > 0); }
   }
+
+  /* ---------- "Mais filtros": no desktop, os filtros que nao cabem na linha vao para o popup ---------- */
+  var fChips = document.querySelector('.fbar-chips');
+  var fmore = document.getElementById('fmore');
+  var fmoreIn = document.getElementById('fmore-in');
+  var fmoreN = document.getElementById('fmore-n');
+  var fSort = document.querySelector('.fdd-sort');
+  var fOrdem = Array.prototype.filter.call(document.querySelectorAll('.fbar-chips > .fdd'), function (f) {
+    return f !== fmore && f !== fSort;
+  });
+  function visivel(f) { return f.classList.contains('fdd') && f.style.display !== 'none'; }
+  function layoutFiltros() {
+    if (!fChips || !fmore) return;
+    if (fmore.matches(':hover') || fmore.classList.contains('open')) return;  // nao mexe com o popup aberto
+    fOrdem.forEach(function (f) { fChips.insertBefore(f, fSort); });         // volta tudo para a barra
+    fmore.classList.remove('show');
+    if (mqSheet.matches) { syncChips(); return; }                             // tablet/celular: desliza
+    if (fChips.scrollWidth <= fChips.clientWidth + 1) { syncChips(); return; }
+    fmore.classList.add('show');
+    for (var i = fOrdem.length - 1; i >= 0 && fChips.scrollWidth > fChips.clientWidth + 1; i--) {
+      var f = fOrdem[i];
+      if (f.parentElement !== fChips) continue;
+      fmoreIn.insertBefore(f, fmoreIn.firstChild);
+    }
+    // filtros ocultos (ex.: Premio sem dados) que ficaram na barra nao contam; se o popup so tem ocultos, some
+    var temVisivel = Array.prototype.some.call(fmoreIn.children, visivel);
+    if (!temVisivel) { Array.prototype.slice.call(fmoreIn.children).forEach(function (f) { fChips.insertBefore(f, fSort); }); fmore.classList.remove('show'); }
+    syncChips();
+  }
+  var layoutT = 0;
+  function agendaLayout() { clearTimeout(layoutT); layoutT = setTimeout(layoutFiltros, 60); }
+  window.onUnitsRendered = agendaLayout;
+  window.addEventListener('resize', agendaLayout);
+  if (fmore) fmore.addEventListener('mouseleave', agendaLayout);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(agendaLayout);
+  layoutFiltros();
   function syncSheetLock() {
-    var aberto = mqPhone.matches && (!!document.querySelector('.fdd-panel.open') || UMO.classList.contains('open') || LB.el.classList.contains('open'));
+    var aberto = (mqSheet.matches && !!document.querySelector('.fdd-panel.open')) ||
+      (mqPhone.matches && (UMO.classList.contains('open') || LB.el.classList.contains('open')));
     document.body.style.overflow = aberto ? 'hidden' : '';
   }
   document.addEventListener('click', function () { setTimeout(function () { syncChips(); }, 0); });
@@ -886,6 +974,7 @@
   function onBreakpoint() { renderUnits(); closeAllFdd(); syncSheetLock(); }
   if (mqPhone.addEventListener) mqPhone.addEventListener('change', onBreakpoint);
   else if (mqPhone.addListener) mqPhone.addListener(onBreakpoint);
+  if (mqSheet.addEventListener) mqSheet.addEventListener('change', function () { closeAllFdd(); syncSheetLock(); layoutFiltros(); });
 
   /* =====================================================================
      POPUPS "Simular fluxo" e "Baixar tabela"
