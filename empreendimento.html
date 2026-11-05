@@ -610,33 +610,14 @@
   }
   window.voltaParaAncora = voltaParaAncora;
 
-  /* Ao trocar um filtro a pagina NAO volta para o topo: guarda a unidade que estava no alto da tela
-     e, depois de redesenhar a lista, mantem essa mesma unidade no mesmo lugar (se ela continuar na lista). */
-  var ancoraUnid = null;
-  function codigoUnid(el) { var c = el.querySelector('.u-code'); return c ? c.textContent : ''; }
-  function guardaUnidadeVisivel() {
-    ancoraUnid = null;
-    var grid = document.getElementById('units-grid');
-    var bar = document.querySelector('.fbar');
-    if (!grid || !bar) return;
-    var limite = bar.getBoundingClientRect().bottom;
-    for (var i = 0; i < grid.children.length; i++) {
-      var r = grid.children[i].getBoundingClientRect();
-      if (r.bottom > limite + 4) { ancoraUnid = { cod: codigoUnid(grid.children[i]), top: r.top, y: window.scrollY }; return; }
-    }
-  }
+  /* Trocar um filtro NAO mexe na rolagem: guarda a posicao antes de redesenhar a lista e devolve
+     exatamente a mesma depois (so muda se a lista ficou mais curta do que o ponto onde a pessoa estava). */
+  var rolagemAntes = null;
+  function guardaUnidadeVisivel() { rolagemAntes = window.scrollY; }
   function mantemUnidadeVisivel() {
-    var a = ancoraUnid; ancoraUnid = null;
-    if (!a || !a.cod) return;
-    var grid = document.getElementById('units-grid');
-    for (var i = 0; grid && i < grid.children.length; i++) {
-      if (codigoUnid(grid.children[i]) === a.cod) {
-        var d = grid.children[i].getBoundingClientRect().top - a.top;
-        if (Math.abs(d) > 1) window.scrollTo({ top: window.scrollY + d, behavior: 'instant' });
-        return;
-      }
-    }
-    // a unidade saiu da lista: fica onde estava (o navegador so recua se a pagina ficou mais curta)
+    var y = rolagemAntes; rolagemAntes = null;
+    if (y == null) return;
+    if (Math.abs(window.scrollY - y) > 1) window.scrollTo({ top: y, behavior: 'instant' });
   }
   document.addEventListener('click', function (e) {
     if (e.target.closest && e.target.closest('.fdd-opt, .fdd-clear')) guardaUnidadeVisivel();

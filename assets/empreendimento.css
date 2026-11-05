@@ -36,6 +36,8 @@
 
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+/* sem "scroll anchoring" do navegador: redesenhar a lista nao pode puxar a tela */
+html,body{overflow-anchor:none}
 body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
 button{font:inherit;color:inherit;cursor:pointer;background:none;border:0}
 a{color:var(--accent-ink)}
