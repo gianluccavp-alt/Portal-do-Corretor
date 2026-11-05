@@ -26,7 +26,10 @@ button.step-label,.card,.pair,.chip,.btn-ghost,.kpi-hero,.fx,.kpi,.cmp-card,.vd,
 input,select,textarea{background:var(--bf-surface-2);color:var(--dir-ink);border-color:var(--dir-line)}
 input::placeholder,textarea::placeholder{color:var(--bf-muted)}
 input[readonly],.cbx-btn:disabled,.modal-renda,tbody tr.grp td{background:#121416}
-input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.85)}
+/* color-scheme:dark já deixa o ícone claro; o invert antigo o escurecia */
+input[type="date"]{color-scheme:dark}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:none;opacity:.75;cursor:pointer}
+input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1}
 button.step-label:hover{border-color:#3A3F43}
 .step-chev,.sub-chev,.entrada-f,.cbx-val.ph,.pl-n,.obs-wrap .ql-editor.ql-blank::before{color:var(--bf-muted)}
 
