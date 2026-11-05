@@ -74,3 +74,7 @@ tbody td{border-color:var(--dir-line)}
 /* barra fixa de acoes (Ver parcelas / Baixar PDF) no mobile e tablet */
 .btn-row{background:var(--bf-surface)!important;border-color:var(--dir-line)!important}
 @media(min-width:1200px){.btn-row{background:transparent!important}}
+
+/* valor da Entrada: centralizado, sem a pílula escura */
+.entrada-box input#f-presaldo{flex:0 0 auto;min-width:11rem;text-align:center!important;background:transparent!important}
+@media(max-width:560px){.entrada-box input#f-presaldo{flex:1 1 100%;text-align:center!important}}
