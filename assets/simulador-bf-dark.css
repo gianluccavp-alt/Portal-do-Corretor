@@ -1,0 +1,69 @@
+/* =========================================================
+   TEMA DARK - Simulador Associativo Black Friday
+   Sobrescreve o tema claro inline da página. Para voltar ao
+   claro basta remover o <link> deste arquivo.
+   ========================================================= */
+:root{
+  --dir-ink:#ECEEEF; --dir-grey:#9AA2A6; --dir-line:#2A2E31; --dir-bg:#0D0E0F;
+  --ok:#4CC27E; --warn:#F2B44C; --warn-bg:#2A2110; --err:#FF5A6E; --err-bg:#2C1216;
+  --bf-surface:#16181A; --bf-surface-2:#1C1F21; --bf-ok-bg:#10241A; --bf-ok-line:#1F4A31;
+  --bf-warn-line:#5A4417; --bf-err-line:#5C1F29; --bf-muted:#6E777B;
+  color-scheme:dark;
+}
+body{background:var(--dir-bg)}
+
+/* cabeçalho */
+.hero{background:radial-gradient(120% 140% at 85% 50%,#2a0b10 0%,#121314 55%,#0D0E0F 100%);
+      border-bottom-color:var(--dir-line)}
+.bf-tag{background:linear-gradient(135deg,#ff2a36,#c4000d);box-shadow:0 2px 10px rgba(228,3,43,.45)}
+.hero-bf{box-shadow:0 0 0 1px rgba(228,3,43,.35),0 10px 30px rgba(228,3,43,.22)}
+.appbar,.unitbar,.tabbar{background:var(--bf-surface)!important;border-color:var(--dir-line)!important}
+
+/* superfícies */
+button.step-label,.card,.pair,.chip,.btn-ghost,.kpi-hero,.fx,.kpi,.cmp-card,.vd,.tbl-wrap,.modal,
+.cbx-btn,.sheet-box{background:var(--bf-surface)}
+.step,section.step{background:var(--bf-surface);border-color:var(--dir-line)}
+input,select,textarea{background:var(--bf-surface-2);color:var(--dir-ink);border-color:var(--dir-line)}
+input::placeholder,textarea::placeholder{color:var(--bf-muted)}
+input[readonly],.cbx-btn:disabled,.modal-renda,tbody tr.grp td{background:#121416}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.85)}
+button.step-label:hover{border-color:#3A3F43}
+.step-chev,.sub-chev,.entrada-f,.cbx-val.ph,.pl-n,.obs-wrap .ql-editor.ql-blank::before{color:var(--bf-muted)}
+
+/* lista do combobox */
+[class*="cbx-list"],[class*="cbx-pop"],[class*="cbx-menu"]{background:var(--bf-surface-2)!important;border-color:var(--dir-line)!important}
+
+/* estados */
+.step.done .step-n,.ui-stat.dest,.kpi-ok,.fx-note,.st.ok,.alert.ok{background:var(--bf-ok-bg);border-color:var(--bf-ok-line)}
+.ui-stat.dest .ui-lab,.kpi-ok .kpi-lab,.kpi-ok .kpi-sub{color:var(--ok)}
+.step.warn .step-n,.st.comite,.alert.warn{border-color:var(--bf-warn-line)}
+.kpi-bad,.st.rep,.alert.err{border-color:var(--bf-err-line)}
+.kpi-bad .kpi-lab,.kpi-bad .kpi-sub{color:var(--err)}
+
+/* tabela e folha de parcelas */
+thead th{background:#24282B}
+tbody tr.tot td{background:#1E1214}
+tbody td{border-color:var(--dir-line)}
+.fase-track span.pos{background:#6B2633}
+
+/* editor de observações (Quill) */
+.obs-wrap .ql-toolbar.ql-snow,.obs-wrap .ql-container.ql-snow{border-color:var(--dir-line)!important}
+.obs-wrap .ql-editor{background:var(--bf-surface-2);color:var(--dir-ink)}
+.obs-wrap .ql-snow .ql-stroke{stroke:var(--dir-grey)}
+.obs-wrap .ql-snow .ql-fill{fill:var(--dir-grey)}
+.obs-wrap .ql-snow .ql-picker{color:var(--dir-grey)}
+
+/* rodapé */
+.foot{background:transparent;color:var(--dir-grey)}
+.foot a{color:var(--dir-ink)}
+
+/* sobras encontradas na varredura */
+.entrada-box{background:var(--bf-surface-2)!important;border-color:var(--dir-line)!important}
+.sheet-cols{background:#24282B!important}
+.sheet-foot{background:#1E1214!important}
+.obs-wrap .ql-toolbar.ql-snow,.obs-wrap .ql-snow .ql-picker-options,.obs-wrap .ql-snow .ql-tooltip{background:var(--bf-surface-2)!important;color:var(--dir-ink)}
+.obs-wrap .ql-snow .ql-picker-item{background:transparent!important;color:var(--dir-ink)}
+
+/* logo da appbar (mobile/tablet) é JPG com fundo branco: some no tema dark,
+   o banner logo abaixo já traz a marca Direcional */
+.appbar-logo{display:none!important}
