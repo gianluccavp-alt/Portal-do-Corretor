@@ -1,6 +1,8 @@
 # Fora do deploy (nao sao servidos publicamente)
 assets/3d/village-gaia/gaia.blend
 assets/3d/village-gaia/scripts/
+assets/3d/veredas/veredas.blend
+assets/3d/veredas/scripts/
 docs/
 .superpowers/
 .impeccable/

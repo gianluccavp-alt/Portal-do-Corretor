@@ -364,11 +364,14 @@ window.CITIES = [
           botaoVisivel: true,
           simId: 'gaia',
           modelo: 'assets/3d/village-gaia/gaia.glb',
+          // mini mundo do complexo Veredas: bairro em volta, carregado em segundo plano
+          mundo: 'assets/3d/veredas/veredas.glb',
           grade: { torres: [1, 2, 3], andares: 20, finais: 8 },
           /* torres do modelo real: centros em x = 31.9 (T1), -26.2 (T2), -84.5 (T3), z = -19.7;
              varandas (unidades) nas faces +x (finais 1, 2, 7, 8) e -x (finais 3 a 6) */
           cameras: {
             geral:     { pos: [135, 110, 145],  alvo: [-26, 20, -20] },
+            bairro:    { pos: [-520, 330, -380], alvo: [-60, 0, -230] },
             'torre-1': { pos: [117, 45, 40],    alvo: [31.9, 28, -19.7] },
             'torre-2': { pos: [14, 40, 65],     alvo: [-26.2, 28, -19.7] },
             'torre-3': { pos: [-170, 45, 40],   alvo: [-84.5, 28, -19.7] },

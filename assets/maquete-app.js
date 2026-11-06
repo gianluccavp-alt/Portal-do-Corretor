@@ -16,7 +16,7 @@ const STATUS_TXT = {
   disponivel: 'Disponível', reservada: 'Reservada', vendida: 'Vendida',
   fora: 'Fora de venda', 'sem-dados': 'Sem dados'
 };
-const CAMERA_TXT = { geral: 'Vista geral', frente: 'Frente', fundos: 'Fundos' };
+const CAMERA_TXT = { geral: 'Vista geral', bairro: 'Bairro', frente: 'Frente', fundos: 'Fundos' };
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (ch) => (

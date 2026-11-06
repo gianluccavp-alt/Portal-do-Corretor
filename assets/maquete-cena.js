@@ -19,6 +19,10 @@
    texturas do modelo, luz de ambiente por PMREM (ceu procedural do
    modo) para reflexos suaves, sombra PCF suave ajustada ao terreno e
    renderizada so quando a luz muda (o modelo e estatico).
+
+   Mini mundo (cfg.mundo): .glb do bairro carregado em segundo plano, depois de a maquete ja
+   estar utilizavel. Fica fora do picking e da sombra. Materiais "janela*" acendem a noite
+   (mapa de emissao); "luz_*" sao poças e halos de poste, aditivos, so visiveis a noite.
    ============================================================ */
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -29,9 +33,9 @@ import { criarModeloProvisorio } from './maquete-provisoria.js';
 
 const DRACO_PATH = 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/';
 const DUR_ANIM = 800;
-/* norte da cena: a face +x das torres (finais 1, 2, 7 e 8) e a do nascente, entao leste = +x
-   e norte = -z (glTF Y-up). Aproximacao suficiente para a bussola. */
-const NORTE = new THREE.Vector3(0, 0, -1);
+/* norte real da cena: planta FyrStudio + OpenStreetMap (as 2 rotatorias casam) mostram que
+   "para cima na planta" (+x da cena, glTF Y-up) aponta 20,76 graus a leste do norte. */
+const NORTE = new THREE.Vector3(Math.cos(THREE.MathUtils.degToRad(20.76)), 0, -Math.sin(THREE.MathUtils.degToRad(20.76)));
 /* afastamento do fundo da varanda ate o plano da fachada (1,1 m de loggia) + folga */
 const ATE_FACHADA = 1.13;
 
@@ -83,7 +87,7 @@ function criarCeu() {
       #include <colorspace_fragment>
       }`
   });
-  const ceu = new THREE.Mesh(new THREE.SphereGeometry(1500, 32, 16), mat);
+  const ceu = new THREE.Mesh(new THREE.SphereGeometry(6000, 32, 16), mat);
   ceu.name = 'ceu';
   ceu.renderOrder = -1;
   return ceu;
@@ -284,7 +288,7 @@ export async function criarCena(container, cfg, ev = {}) {
 
 async function montar(renderer, container, cfg, grade, total, onProgresso, onHover, onClick, extras) {
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(40, 1, 0.5, 4000);
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.5, 12000);
   const ceu = criarCeu();
   scene.add(ceu);
   scene.fog = new THREE.Fog('#000000', 320, 950);
@@ -462,12 +466,49 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     if (g !== rumoAnterior) { rumoAnterior = g; extras.onRumo(g); }
   }
 
+  /* ---------- mini mundo: bairro carregado em segundo plano ---------- */
+  const luzesNoite = [];
+  let rodando = true;
+  function adicionarMundo(mundo) {
+    if (!rodando) return;
+    const entorno = modelo.getObjectByName('entorno');
+    if (entorno) entorno.visible = false; // o plano liso cede lugar ao chao do bairro
+    scene.fog.near = 1000;
+    scene.fog.far = 4300;
+    controls.maxDistance = 1500;
+    afinarTexturas(mundo, renderer.capabilities.getMaxAnisotropy());
+    mundo.traverse((o) => {
+      if (!o.isMesh) return;
+      const mt = o.material;
+      if (/^luz_/.test(mt.name || '')) {
+        const halo = /halo/.test(mt.name);
+        o.material = new THREE.MeshBasicMaterial({
+          map: mt.map, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+          opacity: halo ? 0.85 : 0.5, side: THREE.DoubleSide, polygonOffset: !halo, polygonOffsetFactor: -2, polygonOffsetUnits: -4
+        });
+        o.renderOrder = 1;
+        luzesNoite.push(o);
+        return;
+      }
+      if (mt.emissiveMap && /janela/i.test(mt.name || '')) matsJanela.add(mt);
+      if (/faixa/.test(mt.name || '')) { mt.polygonOffset = true; mt.polygonOffsetFactor = -1; mt.polygonOffsetUnits = -2; }
+      o.receiveShadow = /planta|asfalto|guia|passeio/.test(o.name);
+    });
+    scene.add(mundo);
+    if (modoAtual) aplicarModo(modoAtual, true);
+    pedirRender();
+  }
+  if (typeof cfg.mundo === 'string' && cfg.mundo) {
+    carregarGLB(cfg.mundo, () => {}).then(adicionarMundo).catch((e) => console.warn('[maquete] bairro nao carregou:', e));
+  }
+
   /* ---------- modo (noite/cores) ---------- */
   let modoAtual = null;
-  function aplicarModo(modo) {
-    if (modo === modoAtual) return;
+  function aplicarModo(modo, forcar) {
+    if (modo === modoAtual && !forcar) return;
     modoAtual = modo;
     const m = MODOS[modo];
+    luzesNoite.forEach((o) => { o.visible = modo === 'noite'; });
     ceu.material.uniforms.topo.value.set(m.ceuTopo);
     ceu.material.uniforms.base.value.set(m.ceuBase);
     scene.fog.color.set(m.nevoa);
@@ -648,7 +689,6 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
   redimensionar();
 
   /* ---------- loop (so renderiza quando algo muda) ---------- */
-  let rodando = true;
   function quadro(agora) {
     if (!rodando) return;
     requestAnimationFrame(quadro);
@@ -664,6 +704,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     }
     if (controls.update()) { sujo = true; camMudou = true; }
     if (controls.target.y < 0) { controls.target.y = 0; camMudou = true; sujo = true; }
+    if (controls.target.lengthSq() > 1400 * 1400) { controls.target.setLength(1400); camMudou = true; sujo = true; } // nao sai do bairro no arrasto
     /* camera andou com o mouse parado: refaz o picking para a etiqueta nao ficar velha */
     if (camMudou && ultimoMouse) hoverPend = ultimoMouse;
     processarHover();
