@@ -94,3 +94,38 @@ test('serieAnual e brl', () => {
   assert.ok(Math.abs(serie[0] - 840) <= 0.05);
   assert.equal(F.brl(167397.73), 'R$ 167.397,73');
 });
+
+test('respostas vão e voltam pela URL', () => {
+  const resp = { ...RESP, sistema: 'SAC', prazo: 360, financiarAte: 150000 };
+  const back = F.decodificaRespostas(F.codificaRespostas(resp, '4'));
+  assert.equal(back.seg, '4');
+  assert.equal(back.resp.nascimento.getTime(), resp.nascimento.getTime());
+  for (const k of ['fgts', 'possuiImovel', 'fatorSocial', 'subsidioAnterior', 'sistema', 'prazo', 'financiarAte']) assert.equal(back.resp[k], resp[k], k);
+  assert.match(F.codificaRespostas(resp, '4'), /^[A-Za-z0-9_.~-]+$/);
+  assert.equal(F.decodificaRespostas('lixo'), null);
+  assert.equal(F.decodificaRespostas(''), null);
+});
+
+test('destinos: Black Friday só em Ribeirão Preto com a campanha ativa', () => {
+  assert.deepEqual(F.destinos(GAIA), ['normal', 'blackfriday']);
+  assert.deepEqual(F.destinos({ ...GAIA, cidade: 'Campinas' }), ['normal']);
+  const salvo = F.CAMPANHA_BF.ativa; F.CAMPANHA_BF.ativa = false;
+  assert.deepEqual(F.destinos(GAIA), ['normal']);
+  F.CAMPANHA_BF.ativa = salvo;
+});
+
+test('urlAssociativo com e sem unidade', () => {
+  const s = F.simular(RESP, { ...GAIA, venda: 230000 }, HOJE);
+  const u = new URL('http://x/' + F.urlAssociativo('normal', { ...GAIA, venda: 230000 }, RESP, s, '15', HOJE));
+  assert.equal(u.pathname, '/simulador-associativo.html');
+  const q = u.searchParams;
+  assert.equal(q.get('emp'), 'gaia'); assert.equal(q.get('unidade'), 'BL02-0305');
+  assert.equal(q.get('renda'), '2800'); assert.equal(q.get('idade'), '33'); assert.equal(q.get('valor'), '230000');
+  assert.equal(q.get('fin'), String(s.r.valorFinanciamento)); assert.equal(q.get('sub'), '13209'); assert.equal(q.get('parcFin'), '840');
+  assert.equal(q.get('origem'), 'financiamento'); assert.ok(F.decodificaRespostas(q.get('fz')));
+  const semUn = new URL('http://x/' + F.urlAssociativo('blackfriday', { ...GAIA, empId: null, unidade: '' }, RESP, F.simular(RESP, GAIA, HOJE), '15', HOJE));
+  assert.equal(semUn.pathname, '/simulador-associativo-blackfriday.html');
+  assert.equal(semUn.searchParams.has('emp'), false);
+  assert.equal(semUn.searchParams.has('valor'), false);
+  assert.equal(semUn.searchParams.get('fin'), '167397.73');
+});

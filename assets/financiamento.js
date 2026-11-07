@@ -139,8 +139,69 @@
     return out;
   }
 
+  /* Black Friday: liga/desliga a pergunta "Associativo ou Associativo Black Friday" (spec §2) */
+  var CAMPANHA_BF = { ativa: true, cidades: ['Ribeirão Preto'] };
+  var SEGS_VALIDAS = ['14', '15', '16', '4'];
+
+  function pad(n, t) { n = String(n); while (n.length < t) n = '0' + n; return n; }
+
+  /* respostas do cliente num parametro curto de URL (fz): sem renda e sem valores do imovel.
+     aaaammdd.fgts.imovel.fatorSocial.subsidioAnterior.sistema(P|S).prazo(x).financiarAteEmCentavos(x).seguradora */
+  function codificaRespostas(resp, codigoSeg) {
+    var n = resp.nascimento;
+    return [
+      pad(n.getFullYear(), 4) + pad(n.getMonth() + 1, 2) + pad(n.getDate(), 2),
+      resp.fgts !== false ? 1 : 0, resp.possuiImovel ? 1 : 0, resp.fatorSocial ? 1 : 0, resp.subsidioAnterior ? 1 : 0,
+      resp.sistema === 'SAC' ? 'S' : 'P',
+      resp.prazo > 0 ? Math.round(resp.prazo) : 'x',
+      resp.financiarAte > 0 ? Math.round(resp.financiarAte * 100) : 'x',
+      codigoSeg
+    ].join('.');
+  }
+
+  function decodificaRespostas(txt) {
+    var p = String(txt || '').split('.');
+    if (p.length !== 9 || !/^\d{8}$/.test(p[0])) return null;
+    var nasc = lerData(p[0].slice(6, 8) + '/' + p[0].slice(4, 6) + '/' + p[0].slice(0, 4));
+    if (!nasc) return null;
+    for (var i = 1; i <= 4; i++) if (p[i] !== '0' && p[i] !== '1') return null;
+    if (p[5] !== 'P' && p[5] !== 'S') return null;
+    if (p[6] !== 'x' && !(/^\d{1,3}$/.test(p[6]) && +p[6] >= 1 && +p[6] <= 420)) return null;
+    if (p[7] !== 'x' && !(/^\d+$/.test(p[7]) && +p[7] > 0)) return null;
+    if (SEGS_VALIDAS.indexOf(p[8]) < 0) return null;
+    var resp = {}, k;
+    for (k in RESP_PADRAO) resp[k] = RESP_PADRAO[k];
+    resp.nascimento = nasc; resp.fgts = p[1] === '1'; resp.possuiImovel = p[2] === '1';
+    resp.fatorSocial = p[3] === '1'; resp.subsidioAnterior = p[4] === '1';
+    resp.sistema = p[5] === 'S' ? 'SAC' : 'PRICE';
+    resp.prazo = p[6] === 'x' ? null : +p[6];
+    resp.financiarAte = p[7] === 'x' ? null : +p[7] / 100;
+    return { resp: resp, seg: p[8] };
+  }
+
+  function destinos(imovel) {
+    var out = ['normal'];
+    if (CAMPANHA_BF.ativa && CAMPANHA_BF.cidades.indexOf(imovel.cidade) >= 0) out.push('blackfriday');
+    return out;
+  }
+
+  /* mesmos parametros que o associativo ja aceita do Match, mais origem e respostas (spec §7) */
+  function urlAssociativo(destino, imovel, resp, sim, codigoSeg, hoje) {
+    var v = valoresCopia(sim, codigoSeg, resp.renda);
+    var p = [];
+    if (imovel.empId && imovel.unidade) p.push(['emp', imovel.empId], ['unidade', imovel.unidade]);
+    p.push(['renda', resp.renda], ['idade', idadeAnos(resp.nascimento, hoje)]);
+    if (imovel.venda > 0) p.push(['valor', imovel.venda]);
+    p.push(['fin', v.financiado], ['sub', v.subsidio], ['parcFin', v.parcFin],
+           ['origem', 'financiamento'], ['fz', codificaRespostas(resp, codigoSeg)]);
+    var pagina = destino === 'blackfriday' ? 'simulador-associativo-blackfriday.html' : 'simulador-associativo.html';
+    return pagina + '?' + p.map(function (x) { return x[0] + '=' + encodeURIComponent(String(x[1])); }).join('&');
+  }
+
   var api = {
-    RESP_PADRAO: RESP_PADRAO,
+    RESP_PADRAO: RESP_PADRAO, CAMPANHA_BF: CAMPANHA_BF,
+    codificaRespostas: codificaRespostas, decodificaRespostas: decodificaRespostas,
+    destinos: destinos, urlAssociativo: urlAssociativo,
     simular: simular, comparar: comparar, seguradoraPadrao: seguradoraPadrao, valoresCopia: valoresCopia,
     mostraPerguntasSubsidio: mostraPerguntasSubsidio, mensagemErro: mensagemErro,
     lerData: lerData, validar: validar, serieAnual: serieAnual, brl: brl, idadeAnos: idadeAnos
