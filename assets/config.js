@@ -368,13 +368,41 @@ window.CITIES = [
           /* torres do modelo real: centros em x = 31.9 (T1), -26.2 (T2), -84.5 (T3), z = -19.7;
              varandas (unidades) nas faces +x (finais 1, 2, 7, 8) e -x (finais 3 a 6) */
           cameras: {
-            geral:     { pos: [135, 110, 145],  alvo: [-26, 20, -20] },
+            geral:     { pos: [62, 125, 178],   alvo: [8, 8, -12] },
             'torre-1': { pos: [117, 45, 40],    alvo: [31.9, 28, -19.7] },
             'torre-2': { pos: [14, 40, 65],     alvo: [-26.2, 28, -19.7] },
             'torre-3': { pos: [-170, 45, 40],   alvo: [-84.5, 28, -19.7] },
             frente:    { pos: [60, 28, 150],    alvo: [-20, 28, -20] },
-            fundos:    { pos: [-26, 40, -200],  alvo: [-26, 28, -20] }
-          }
+            fundos:    { pos: [-26, 40, -200],  alvo: [-26, 28, -20] },
+            lazer:     { pos: [46, 46, 6],      alvo: [88, 0, 6] },
+            portaria:  { pos: [158, 9, 42],     alvo: [108, 3, 30] }
+          },
+          /* menu do botao Lazer: um angulo por ambiente (mesmas coordenadas das cameras) */
+          ambientes: [
+            { id: 'piscina',        nome: 'Piscina',          pos: [85, 6.5, -2],     alvo: [73, 0, -12] },
+            { id: 'academia',       nome: 'Academia',         pos: [96, 10, 3], alvo: [93, 0.5, -6] },
+            { id: 'quadra',         nome: 'Quadra',           pos: [113, 13, -9], alvo: [102.5, 0, -12.5] },
+            { id: 'crossfit',       nome: 'Crossfit',         pos: [113, 9, 5], alvo: [104, 0.2, 4.5] },
+            { id: 'playground',     nome: 'Playground',       pos: [83.5, 10.5, 1.5], alvo: [83, 0.5, 12.5] },
+            { id: 'brinquedoteca',  nome: 'Brinquedoteca',    pos: [92, 11, 10.5], alvo: [93, 0, 5.5] },
+            { id: 'salao',          nome: 'Salão de festas',  pos: [85.5, 8.5, 9.5],  alvo: [93.2, 0.8, 13.5] },
+            { id: 'pub',            nome: 'Pub de jogos',     pos: [92, 11, -3.5], alvo: [93, 0, 2] },
+            { id: 'churrasqueira',  nome: 'Churrasqueira',    pos: [96.5, 10.5, -11], alvo: [93.5, 0, -16.5] },
+            { id: 'gourmet',        nome: 'Varanda gourmet',  pos: [66.5, 7.5, 10.5], alvo: [70.5, 0.5, 19] },
+            { id: 'foodtruck',      nome: 'Food truck',       pos: [99.5, 4.5, 33.5], alvo: [94, 1.2, 28.5] },
+            { id: 'piquenique',     nome: 'Piquenique',       pos: [75, 5, 7],        alvo: [70, 0.2, 1.5] },
+            { id: 'jogos',          nome: 'Praça de jogos',   pos: [61, 7, 6.5], alvo: [70, 0.5, 6.6] },
+            { id: 'lounge',         nome: 'Lounge teen',      pos: [106.5, 10, 18.5], alvo: [101.5, 0.3, 13] },
+            { id: 'pet',            nome: 'Pet place',        pos: [-10, 7, 13], alvo: [-17.5, 0, 20] },
+            { id: 'bicicletario',   nome: 'Bicicletário',     pos: [82, 5, 29.5], alvo: [82, 0.5, 23] },
+            { id: 'spa',            nome: 'Spa',              pos: [41.5, 2.2, -18.1], alvo: [35, 1.2, -18.1] },
+            { id: 'beauty',         nome: 'Beauty care',      pos: [41, 2.4, -11.9], alvo: [34.5, 1.2, -11.9] },
+            { id: 'cinema',         nome: 'Cinema',           pos: [-75.5, 2.4, -18.1], alvo: [-81.7, 1.2, -18.1] },
+            { id: 'coworking',      nome: 'Coworking',        pos: [-75.5, 2.4, -11.9], alvo: [-81.7, 1.2, -11.9] },
+            { id: 'minimarket',     nome: 'Mini market',      pos: [-16.5, 2.3, -18.1], alvo: [-23, 1.2, -18.1] },
+            { id: 'lavanderia',     nome: 'Lavanderia',       pos: [-16, 2.6, -9.5], alvo: [-24, 1, -13] },
+            { id: 'delivery',       nome: 'Delivery',         pos: [104.5, 8.5, 25], alvo: [100.7, 0.8, 27] }
+          ]
         },
         tipos: [
           { key: 'tipo-ponta',       label: '2Q C/S Tipo - Ponta' },
