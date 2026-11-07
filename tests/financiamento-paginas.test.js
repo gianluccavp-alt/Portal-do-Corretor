@@ -34,3 +34,13 @@ test('associativo Black Friday liga o popup com tema black', () => {
   assert.match(h, /FinanciamentoPopup\.ligarAssociativo\(\{\s*tema:\s*'black'/);
   assert.ok(h.includes('fz.atualizar()') && h.includes('fz.limpar()'));
 });
+
+for (const f of ['simulador-associativo.html', 'simulador-associativo-blackfriday.html']) {
+  test(f + ': parâmetros da simulação valem sem emp e só marcam com origem=financiamento', () => {
+    const h = ler(f);
+    const fn = h.slice(h.indexOf('function aplicaParametrosUrl'), h.indexOf('})();', h.indexOf('function aplicaParametrosUrl')));
+    assert.ok(!/if\(!q\.has\('emp'\)\) return;/.test(fn), 'não pode sair cedo sem emp');
+    assert.ok(fn.includes("q.get('origem')==='financiamento'") || fn.includes('q.get("origem")==="financiamento"'));
+    assert.ok(fn.includes('decodificaRespostas'));
+  });
+}

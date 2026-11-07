@@ -2664,6 +2664,7 @@ function contextoFz(){
     unidade: S.unidade || '', unidadeRotulo: S.unidade || '',
     avaliacao: d && d.avaliacao>0 ? d.avaliacao : 0,
     venda: S.valor>0 ? S.valor : (d && d.associativoSemPremio>0 ? d.associativoSemPremio : 0),
+    valorImovel: S.valor||0,
     ato: S.ato||0, renda: S.renda||0, cliente: S.cliente||'', corretor: S.corretor||''
   };
 }
@@ -2676,9 +2677,11 @@ fz = FinanciamentoPopup.ligarAssociativo({
 
 /* Vindo do Match de Unidades: preenche o formulario a partir da URL.
    So popula o estado - nenhuma conta muda. Campo ausente/invalido e ignorado. */
-(function aplicaParametrosUrl(){
+var fzChegada = (function aplicaParametrosUrl(){
   var q = new URLSearchParams(location.search);
-  if(!q.has('emp')) return;
+  /* vindo do /simulador-financiamento: numeros valem mesmo sem unidade e os campos ficam marcados */
+  var doFinanciamento = q.get('origem')==='financiamento';
+  if(!q.has('emp') && !doFinanciamento) return null;
   var n = function(k){ var v=parseFloat(q.get(k)); return isFinite(v)&&v>=0 ? v : null; };
   var id = q.get('emp');
   if(EMPS.some(function(e){ return e.id===id; })) S.empId = id;
@@ -2689,11 +2692,13 @@ fz = FinanciamentoPopup.ligarAssociativo({
    ['parcFin','parcFin'],['ato','ato']].forEach(function(p){ var v=n(p[0]); if(v!==null) S[p[1]]=v; });
   var pz=n('prazo'); if(pz!==null && pz>=1) S.prazo=Math.round(pz);
   if(ehBF(emp()) && S.prazo>BF.prazoMax) S.prazo=BF.prazoMax;
+  return doFinanciamento && window.Financiamento ? Financiamento.decodificaRespostas(q.get('fz')) : null;
 })();
 initCombos();
 sugereDatas();
 sincronizaCampos();
 render();
+if(fzChegada && fz) fz.restaurar(fzChegada);
 avisaTamanhoObs();
 /* o Quill chega por script defer, ou seja, só depois do parse da página */
 document.addEventListener('DOMContentLoaded', initEditor);

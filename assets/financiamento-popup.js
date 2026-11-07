@@ -360,7 +360,20 @@ window.FinanciamentoPopup = (function () {
     area.setAttribute('data-fz-tema', tema);
     var st = { registro: null, retrato: null, anteriores: null, marcados: {}, velha: false, toast: null, timer: null };
 
-    function retratoDe(ctx) { return { empId: ctx.empId || null, unidade: ctx.unidade || '', venda: ctx.venda > 0 ? ctx.venda : 0 }; }
+    /* o que o corretor muda: empreendimento, unidade e o Valor do imovel digitado (valorImovel).
+       A venda derivada da planilha pode mudar sozinha (promocionais carregam depois) e nao conta.
+       completo = tirado com a planilha carregada (avaliacao conhecida). */
+    function retratoDe(ctx) {
+      return { empId: ctx.empId || null, unidade: ctx.unidade || '', venda: ctx.venda > 0 ? ctx.venda : 0,
+               valorImovel: ctx.valorImovel > 0 ? ctx.valorImovel : 0, completo: ctx.avaliacao > 0 };
+    }
+    function mudou(antes, agora) {
+      if (agora.empId !== antes.empId || agora.unidade !== antes.unidade) return true;
+      if (agora.valorImovel === antes.valorImovel) return false;
+      /* sem valor digitado na copia, a simulacao usou a venda da planilha: so avisa se o digitado for diferente dela */
+      var ref = antes.valorImovel > 0 ? antes.valorImovel : antes.venda;
+      return !(agora.valorImovel > 0) || Math.abs(agora.valorImovel - ref) > 1;
+    }
 
     function alvos(campo) {
       var el = document.getElementById(cfg.campos[campo]);
@@ -465,7 +478,7 @@ window.FinanciamentoPopup = (function () {
     });
 
     desenhaBotao();
-    return {
+    var controle = {
       /* chamado no fim do render() do associativo */
       atualizar: function () {
         if (!st.registro) return;
@@ -476,9 +489,11 @@ window.FinanciamentoPopup = (function () {
         }
         if (st.velha) return;
         var r = retratoDe(ctx);
-        /* venda ainda desconhecida no retrato (planilha carregando na chegada pela URL): adota a primeira conhecida */
-        if (!st.retrato.venda && r.venda > 0 && r.empId === st.retrato.empId && r.unidade === st.retrato.unidade) st.retrato.venda = r.venda;
-        if (r.empId !== st.retrato.empId || r.unidade !== st.retrato.unidade || Math.abs(r.venda - st.retrato.venda) > 1) {
+        /* retrato tirado com a planilha ainda carregando (chegada pela URL): adota o primeiro contexto completo */
+        if (!st.retrato.completo) { if (r.completo) st.retrato = r; return; }
+        /* sem valor digitado, a venda de referencia acompanha a planilha (promocionais, recarga) */
+        if (!(st.retrato.valorImovel > 0) && !(r.valorImovel > 0) && r.empId === st.retrato.empId && r.unidade === st.retrato.unidade) st.retrato.venda = r.venda;
+        if (mudou(st.retrato, r)) {
           st.velha = true;
           desenhaFaixa();
         }
@@ -499,6 +514,11 @@ window.FinanciamentoPopup = (function () {
         desenhaFaixa();
       }
     };
+    /* o associativo nao chama render() quando a planilha chega; depois dos ouvintes dele, confere de novo */
+    if (window.SimUnidades && window.SimUnidades.aoMudar) {
+      window.SimUnidades.aoMudar(function () { setTimeout(controle.atualizar, 0); });
+    }
+    return controle;
   }
 
   return { abrir: abrir, ligarAssociativo: ligarAssociativo };
