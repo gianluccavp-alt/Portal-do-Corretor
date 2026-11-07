@@ -54,3 +54,12 @@ test('tela dedicada carrega os módulos e tem os cinco passos', () => {
   for (const p of ['Imóvel', 'Renda', 'Idade', 'Perfil', 'Condições']) assert.ok(h.includes(p), p);
   assert.ok(!h.includes('Cabe financiar'));
 });
+
+test('home leva ao Simulador de Financiamento no card, no cabeçalho e no menu', () => {
+  const h = ler('index.html');
+  const links = [...h.matchAll(/<a\b[^>]*href="simulador-financiamento\.html"/g)];
+  assert.equal(links.length, 3);
+  const grid = h.slice(h.indexOf('class="tool-grid"'));
+  assert.ok(grid.indexOf('simulador-associativo.html') < grid.indexOf('simulador-financiamento.html'));
+  assert.ok(grid.includes('Simulador de Financiamento'));
+});
