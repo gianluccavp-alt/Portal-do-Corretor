@@ -25,3 +25,12 @@ test('associativo normal avisa o popup no render e no limpar', () => {
   const reset = h.slice(ini, h.indexOf('\n});', ini));
   assert.ok(reset.includes('fz.limpar()'));
 });
+
+test('associativo Black Friday liga o popup com tema black', () => {
+  const h = ler('simulador-associativo-blackfriday.html');
+  for (const s of ['assets/financiamento.js', 'assets/financiamento-popup.js']) assert.ok(h.includes(`src="${s}"`), s);
+  const passo2 = h.slice(h.indexOf('data-step="2"'), h.indexOf('data-step="3"'));
+  assert.ok(passo2.includes('id="fz-slot"'));
+  assert.match(h, /FinanciamentoPopup\.ligarAssociativo\(\{\s*tema:\s*'black'/);
+  assert.ok(h.includes('fz.atualizar()') && h.includes('fz.limpar()'));
+});
