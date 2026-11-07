@@ -198,8 +198,86 @@
     return pagina + '?' + p.map(function (x) { return x[0] + '=' + encodeURIComponent(String(x[1])); }).join('&');
   }
 
+  /* ---------- PDF: linhas ja formatadas (spec §9; desenho em assets/financiamento-pdf.js) ---------- */
+  var AVISO_PDF = 'Simulação estimada com as regras do Simulador Habitacional CAIXA vigentes na data de emissão. ' +
+    'Não é aprovação de crédito: valores sujeitos à análise da CAIXA, à avaliação do imóvel e à aprovação da Direcional.';
+
+  function dataBr(d) { return pad(d.getDate(), 2) + '/' + pad(d.getMonth() + 1, 2) + '/' + d.getFullYear(); }
+  function dataIso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1, 2) + '-' + pad(d.getDate(), 2); }
+  function pct(v) { return v.toFixed(2).replace('.', ',') + '%'; }
+  function simNao(b) { return b ? 'Sim' : 'Não'; }
+  function slug(t) {
+    return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+  function nomeSeguradora(n) {
+    return String(n).toLowerCase().replace(/(^|\s)\S/g, function (c) { return c.toUpperCase(); });
+  }
+  function programa(r) { return r.faixa === 'SBPE' ? 'SBPE' : 'MCMV · ' + r.faixa; }
+  function seguradoraDe(sim, codigo) {
+    var s = sim.r.seguradoras.filter(function (x) { return x.codigo === codigo; })[0];
+    return s || sim.r.seguradoras.filter(function (x) { return x.codigo === sim.segPadrao; })[0];
+  }
+  function serieDe(sim, codigo) {
+    if (!sim || sim.erro) return [];
+    return serieAnual(Motor.cronograma(sim.motorIn, sim.r, seguradoraDe(sim, codigo).codigo));
+  }
+
+  /* ctx = { comp:{PRICE,SAC}, sistema, imovel, resp, seg, pessoas:{cliente,corretor}, hoje } */
+  function dadosPdf(ctx) {
+    var sim = ctx.comp[ctx.sistema], r = sim.r, resp = ctx.resp, im = ctx.imovel;
+    var outro = ctx.sistema === 'PRICE' ? 'SAC' : 'PRICE';
+    var seg = seguradoraDe(sim, ctx.seg);
+    var base = sim.baseEntrada === 'venda' ? im.venda : im.avaliacao;
+    var cliente = (ctx.pessoas && ctx.pessoas.cliente) || '', corretor = (ctx.pessoas && ctx.pessoas.corretor) || '';
+    var dados = [
+      ['Renda familiar bruta', brl(resp.renda)],
+      ['Nascimento (mais velho)', dataBr(resp.nascimento) + ' · ' + idadeAnos(resp.nascimento, ctx.hoje) + ' anos'],
+      ['3 anos de FGTS', simNao(resp.fgts !== false)],
+      ['Imóvel na cidade', simNao(resp.possuiImovel === true)]
+    ];
+    if (mostraPerguntasSubsidio(resp.renda, resp.possuiImovel)) {
+      dados.push(['Mais de um comprador ou dependente', simNao(resp.fatorSocial === true)]);
+      dados.push(['Subsídio anterior', simNao(resp.subsidioAnterior === true)]);
+    }
+    dados.push(['Cidade do imóvel', im.cidade]);
+    var celula = function (s, f) { return !s || s.erro ? '—' : f(s); };
+    return {
+      arquivo: 'financiamento-' + (slug(cliente) || slug(im.empNome) || 'simulacao') + '-' + dataIso(ctx.hoje) + '.pdf',
+      emissao: dataBr(ctx.hoje),
+      cliente: cliente, corretor: corretor,
+      imovel: { nome: im.empNome || 'Imóvel', detalhe: im.unidadeRotulo || '', avaliacao: brl(im.avaliacao), cidade: im.cidade },
+      principal: {
+        financiado: brl(r.valorFinanciamento), primeira: brl(seg.primeira),
+        pctRenda: Math.round(seg.primeira / resp.renda * 100) + '% da renda',
+        subsidio: r.subsidio > 0 ? brl(r.subsidio) : null, entrada: brl(sim.entrada),
+        resumo: programa(r) + ' · ' + r.sistema + ' · ' + r.prazo + ' meses · ' + pct(r.jurosNominal) + ' a.a.'
+      },
+      barra: { fin: r.valorFinanciamento / base * 100, sub: r.subsidio / base * 100, ent: Math.max(0, sim.entrada) / base * 100 },
+      condicoes: [
+        ['Programa', programa(r)], ['Produto CAIXA', r.produto], ['Sistema de amortização', r.sistema],
+        ['Prazo', r.prazo + ' meses'], ['Juros nominal / efetivo', pct(r.jurosNominal) + ' / ' + pct(r.jurosEfetivo) + ' a.a.'],
+        ['Taxa de administração', brl(r.taxaAdm)], ['Parcela máxima', Math.round(r.comprometimento * 100) + '% da renda']
+      ],
+      dadosCliente: dados,
+      seguradoras: r.seguradoras.map(function (s) {
+        return { nome: nomeSeguradora(s.nome), primeira: brl(s.primeira), ultima: brl(s.ultima), escolhida: s.codigo === seg.codigo };
+      }),
+      comparacao: [
+        ['Financiamento', celula(ctx.comp.PRICE, function (s) { return brl(s.r.valorFinanciamento); }), celula(ctx.comp.SAC, function (s) { return brl(s.r.valorFinanciamento); })],
+        ['Entrada mínima', celula(ctx.comp.PRICE, function (s) { return brl(s.entrada); }), celula(ctx.comp.SAC, function (s) { return brl(s.entrada); })],
+        ['1ª parcela', celula(ctx.comp.PRICE, function (s) { return brl(seguradoraDe(s, ctx.seg).primeira); }), celula(ctx.comp.SAC, function (s) { return brl(seguradoraDe(s, ctx.seg).primeira); })],
+        ['Última parcela', celula(ctx.comp.PRICE, function (s) { return brl(seguradoraDe(s, ctx.seg).ultima); }), celula(ctx.comp.SAC, function (s) { return brl(seguradoraDe(s, ctx.seg).ultima); })]
+      ],
+      serie: (function () {
+        var o = {}; o[ctx.sistema] = serieDe(sim, ctx.seg); o[outro] = serieDe(ctx.comp[outro], ctx.seg); return o;
+      })(),
+      aviso: AVISO_PDF
+    };
+  }
+
   var api = {
-    RESP_PADRAO: RESP_PADRAO, CAMPANHA_BF: CAMPANHA_BF,
+    RESP_PADRAO: RESP_PADRAO, CAMPANHA_BF: CAMPANHA_BF, dadosPdf: dadosPdf, programa: programa,
     codificaRespostas: codificaRespostas, decodificaRespostas: decodificaRespostas,
     destinos: destinos, urlAssociativo: urlAssociativo,
     simular: simular, comparar: comparar, seguradoraPadrao: seguradoraPadrao, valoresCopia: valoresCopia,

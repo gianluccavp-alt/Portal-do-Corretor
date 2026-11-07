@@ -129,3 +129,21 @@ test('urlAssociativo com e sem unidade', () => {
   assert.equal(semUn.searchParams.has('valor'), false);
   assert.equal(semUn.searchParams.get('fin'), '167397.73');
 });
+
+test('dadosPdf: nome do arquivo, seguradora escolhida e SBPE sem subsídio', () => {
+  const comp = F.comparar(RESP, GAIA, HOJE);
+  const p = F.dadosPdf({ comp, sistema: 'PRICE', imovel: GAIA, resp: RESP, seg: '15', pessoas: { cliente: 'Ana Souza', corretor: '' }, hoje: HOJE });
+  assert.equal(p.arquivo, 'financiamento-ana-souza-2026-11-07.pdf');
+  assert.equal(p.emissao, '07/11/2026');
+  assert.equal(p.principal.financiado, 'R$ 167.397,73');
+  assert.equal(p.seguradoras.filter((s) => s.escolhida).length, 1);
+  assert.equal(p.seguradoras.find((s) => s.escolhida).primeira, 'R$ 840,00');
+  assert.equal(p.serie.PRICE.length, 8);
+  assert.match(p.aviso, /Não é aprovação de crédito/);
+  const semNome = F.dadosPdf({ comp, sistema: 'PRICE', imovel: GAIA, resp: RESP, seg: '15', pessoas: { cliente: '', corretor: '' }, hoje: HOJE });
+  assert.equal(semNome.arquivo, 'financiamento-village-gaia-2026-11-07.pdf');
+  const sb = F.comparar({ ...RESP, renda: 15000 }, { ...GAIA, avaliacao: 500000 }, HOJE);
+  const ps = F.dadosPdf({ comp: sb, sistema: 'PRICE', imovel: GAIA, resp: { ...RESP, renda: 15000 }, seg: '16', pessoas: { cliente: '', corretor: '' }, hoje: HOJE });
+  assert.equal(ps.principal.subsidio, null);
+  assert.ok(ps.condicoes.some(([k, v]) => k === 'Parcela máxima' && v === '25% da renda'));
+});
