@@ -392,3 +392,214 @@
   }
   render(false);
 })();
+
+/* ============================================================
+   RESULTADO da tela dedicada (spec §7; quadros Desktop-Resultado e M6-Resultado)
+   ============================================================ */
+window.FinanciamentoResultado = (function () {
+  'use strict';
+  var F = window.Financiamento;
+  var CHAVE_CORRETOR = 'mt-corretor';   /* o mesmo do Match */
+  var CORES = { PRICE: '#E4032B', SAC: '#2563A8' };
+  var CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>';
+  var SETA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>';
+  var BAIXAR = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg>';
+  var LAPIS = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"></path></svg>';
+  var NOVA = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"></path></svg>';
+  var ctx = null;   /* { st, im, hoje, comp, series } da ultima renderizacao */
+
+  function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function pct(v) { return v.toFixed(2).replace('.', ',') + '%'; }
+  function inteiro(n) { return F.brl(Math.round(n)).replace(/,\d+$/, ''); }
+  function mil(n) { return 'R$ ' + Math.round(n / 1000).toLocaleString('pt-BR') + ' mil'; }
+  function lerLS(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function gravarLS(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) { /* sem localStorage */ } }
+  function segDe(s, cod) { return s.r.seguradoras.filter(function (x) { return x.codigo === cod; })[0] || s.r.seguradoras.filter(function (x) { return x.codigo === s.segPadrao; })[0]; }
+  function nomeSeg(n) { return n.toLowerCase().replace(/(^|\s)\S/g, function (c) { return c.toUpperCase(); }); }
+  function totalPago(cron) { return cron.reduce(function (t, x) { return t + x.encargo; }, 0); }
+
+  function grafico(series, idade0) {
+    var todos = series.PRICE.concat(series.SAC);
+    if (!todos.length) return '';
+    var lo = 250, hi = Math.max(950, Math.ceil(Math.max.apply(null, todos) / 100) * 100 + 50);
+    lo = Math.max(0, Math.min(lo, Math.floor(Math.min.apply(null, todos) / 100) * 100 - 50));
+    var L = 56, T = 12, W = 620, H = 190, n = Math.max(series.PRICE.length, series.SAC.length);
+    var x = function (i) { return L + i * W / (n - 1); }, y = function (v) { return T + (hi - v) / (hi - lo) * H; };
+    var grade = [], passo = (hi - lo) > 900 ? 500 : 300;
+    for (var g = Math.ceil(lo / passo) * passo; g <= hi; g += passo) grade.push(g);
+    var linha = function (k) { return series[k].length ? '<polyline class="fzr-draw" points="' + series[k].map(function (v, i) { return x(i).toFixed(1) + ',' + y(v).toFixed(1); }).join(' ') + '" fill="none" stroke="' + CORES[k] + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>' : ''; };
+    var rotX = []; for (var i = 0; i < n; i++) rotX.push('<text x="' + x(i).toFixed(1) + '" y="' + (T + H + 22) + '" text-anchor="middle">' + (i === 0 ? 'hoje' : i === n - 1 ? 'fim' : (i * 5) + ' anos') + '</text>');
+    return '<svg class="fzr-svg" viewBox="0 0 700 236" role="img" aria-label="Parcela ao longo do prazo em PRICE e SAC">' +
+      '<g font-family="DM Sans, sans-serif" font-size="12" fill="#727A7D">' +
+      grade.map(function (v) { return '<line x1="' + L + '" y1="' + y(v).toFixed(1) + '" x2="690" y2="' + y(v).toFixed(1) + '" stroke="#EEF0F1"></line><text x="0" y="' + (y(v) + 4).toFixed(1) + '">' + inteiro(v) + '</text>'; }).join('') +
+      rotX.join('') + '</g>' + linha('SAC') + linha('PRICE') +
+      '<g class="fzr-cursor" opacity="0"><line class="fzr-cur-l" y1="' + T + '" y2="' + (T + H) + '" stroke="#3A4043" stroke-opacity=".35" stroke-dasharray="3 4"></line>' +
+      '<circle class="fzr-cur-p" r="5" fill="#E4032B" stroke="#fff" stroke-width="2"></circle><circle class="fzr-cur-s" r="5" fill="#2563A8" stroke="#fff" stroke-width="2"></circle>' +
+      '<g class="fzr-cur-box"><rect width="176" height="78" rx="12" fill="#2B3033"></rect><text class="fzr-cur-t" x="14" y="22" font-size="12" fill="#B4BCC0" font-family="DM Sans, sans-serif"></text>' +
+      '<circle cx="18" cy="41" r="4" fill="#FF6B7E"></circle><text x="28" y="45" font-size="13" fill="#fff" font-family="DM Sans, sans-serif">PRICE</text><text class="fzr-cur-vp" x="162" y="45" font-size="13" font-weight="700" fill="#fff" text-anchor="end" font-family="DM Sans, sans-serif"></text>' +
+      '<circle cx="18" cy="62" r="4" fill="#7FB0E8"></circle><text x="28" y="66" font-size="13" fill="#fff" font-family="DM Sans, sans-serif">SAC</text><text class="fzr-cur-vs" x="162" y="66" font-size="13" font-weight="700" fill="#fff" text-anchor="end" font-family="DM Sans, sans-serif"></text></g></g>' +
+      '<rect class="fzr-hit" x="' + L + '" y="0" width="' + W + '" height="' + (T + H) + '" fill="transparent"></rect></svg>' +
+      '<span hidden class="fzr-meta" data-l="' + L + '" data-w="' + W + '" data-t="' + T + '" data-h="' + H + '" data-lo="' + lo + '" data-hi="' + hi + '" data-n="' + n + '" data-idade="' + idade0 + '"></span>';
+  }
+
+  function ligaCursor(box) {
+    var svg = box.querySelector('.fzr-svg'), meta = box.querySelector('.fzr-meta');
+    if (!svg || !meta) return;
+    var L = +meta.dataset.l, W = +meta.dataset.w, T = +meta.dataset.t, H = +meta.dataset.h, lo = +meta.dataset.lo, hi = +meta.dataset.hi, n = +meta.dataset.n, idade0 = +meta.dataset.idade;
+    var y = function (v) { return T + (hi - v) / (hi - lo) * H; };
+    var cur = svg.querySelector('.fzr-cursor');
+    function mostra(i) {
+      var P = ctx.series.PRICE[i], S = ctx.series.SAC[i], xx = L + i * W / (n - 1);
+      cur.setAttribute('opacity', '1');
+      svg.querySelector('.fzr-cur-l').setAttribute('x1', xx); svg.querySelector('.fzr-cur-l').setAttribute('x2', xx);
+      var cp = svg.querySelector('.fzr-cur-p'), cs = svg.querySelector('.fzr-cur-s');
+      if (P != null) { cp.setAttribute('cx', xx); cp.setAttribute('cy', y(P)); cp.style.display = ''; } else cp.style.display = 'none';
+      if (S != null) { cs.setAttribute('cx', xx); cs.setAttribute('cy', y(S)); cs.style.display = ''; } else cs.style.display = 'none';
+      var anos = i === n - 1 ? Math.round(ctx.prazo / 12) : i * 5;
+      svg.querySelector('.fzr-cur-t').textContent = (i === 0 ? 'Hoje' : 'Daqui a ' + anos + ' anos') + ' · ' + (idade0 + anos) + ' anos';
+      svg.querySelector('.fzr-cur-vp').textContent = P != null ? inteiro(P) : '—';
+      svg.querySelector('.fzr-cur-vs').textContent = S != null ? inteiro(S) : '—';
+      var bx = xx + 14 + 176 > 690 ? xx - 190 : xx + 14;
+      svg.querySelector('.fzr-cur-box').setAttribute('transform', 'translate(' + bx + ',' + (T + 26) + ')');
+    }
+    svg.addEventListener('mousemove', function (ev) {
+      var r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) / r.width * 700;
+      mostra(Math.max(0, Math.min(n - 1, Math.round((px - L) / (W / (n - 1))))));
+    });
+    svg.addEventListener('mouseleave', function () { cur.setAttribute('opacity', '0'); });
+  }
+
+  function render(st, im, hoje) {
+    var box = document.getElementById('fzp-resultado');
+    box.hidden = false;
+    var comp = F.comparar(st.resp, im, hoje), s = comp[st.resp.sistema];
+    if (s.erro) {
+      ctx = { st: st, im: im, hoje: hoje, comp: comp, series: { PRICE: [], SAC: [] }, prazo: 0, erro: true };
+      box.innerHTML = '<div class="fzr-in"><div class="fzr-erro fzp-entra"><img class="fz-ico" src="assets/img/icones-3d/alvo.svg" width="64" height="64" alt="">' +
+        '<div><h1 class="fzr-erro-t">Não deu para simular</h1><p>' + esc(s.mensagem) + '</p><button type="button" class="fz-pri" data-r="editar">' + LAPIS + 'Editar respostas</button></div></div></div>';
+      return;
+    }
+    var cod = segDe(s, st.seg).codigo; st.seg = cod;
+    var r = s.r, seg = segDe(s, cod), outro = st.resp.sistema === 'PRICE' ? 'SAC' : 'PRICE';
+    var cronos = {}, series = { PRICE: [], SAC: [] };
+    ['PRICE', 'SAC'].forEach(function (k) {
+      if (comp[k].erro) return;
+      cronos[k] = MotorCaixa.cronograma(comp[k].motorIn, comp[k].r, segDe(comp[k], cod).codigo);
+      series[k] = F.serieAnual(cronos[k]);
+    });
+    var idade0 = F.idadeAnos(st.resp.nascimento, hoje);
+    ctx = { st: st, im: im, hoje: hoje, comp: comp, series: series, prazo: r.prazo };
+    var base = s.baseEntrada === 'venda' ? im.venda : im.avaliacao;
+    var pf = r.valorFinanciamento / base * 100, ps = r.subsidio / base * 100, pe = Math.max(0, s.entrada) / base * 100;
+    var pctRenda = Math.round(seg.primeira / st.resp.renda * 100);
+    var segp = function (k) { var on = st.resp.sistema === k; return '<button type="button" role="tab" aria-selected="' + on + '" class="fz-seg' + (on ? ' fz-seg-on' : '') + '" data-r="sis" data-v="' + k + '">' + k + '</button>'; };
+    var cel = function (k, f) { return comp[k].erro ? '—' : f(comp[k]); };
+    var lugar = im.empNome ? im.empNome + (im.unidade ? ' · ' + im.unidade : '') : 'Imóvel de ' + inteiro(im.avaliacao) + ' em ' + im.cidade;
+    var respostas = [['Renda', F.brl(st.resp.renda)], ['Nascimento', ('0' + st.resp.nascimento.getDate()).slice(-2) + '/' + ('0' + (st.resp.nascimento.getMonth() + 1)).slice(-2) + '/' + st.resp.nascimento.getFullYear()],
+      ['FGTS 3 anos', st.resp.fgts !== false ? 'Sim' : 'Não'], ['Imóvel na cidade', st.resp.possuiImovel ? 'Sim' : 'Não']];
+    if (F.mostraPerguntasSubsidio(st.resp.renda, st.resp.possuiImovel)) respostas.push(['Dependente', st.resp.fatorSocial ? 'Sim' : 'Não'], ['Subsídio anterior', st.resp.subsidioAnterior ? 'Sim' : 'Não']);
+
+    box.innerHTML = '<div class="fzr-in">' +
+      '<div class="fzr-topo fzp-entra"><div><p class="fzr-ok">' + CHECK + 'Simulação pronta</p>' +
+        '<h1 class="fzr-t">Financia até <span>' + F.brl(r.valorFinanciamento) + '</span></h1>' +
+        '<p class="fzr-sub">' + esc(lugar) + ' · renda de ' + F.brl(st.resp.renda).replace(/,00$/, '') + '/mês · ' + idade0 + ' anos</p>' +
+        (s.limitado ? '<p class="fzr-limite">A CAIXA aprova até ' + F.brl(s.capacidade) + ' para esta renda; o valor do imóvel não pede mais que isso.</p>' : '') + '</div>' +
+        '<div class="fzr-acoes"><button type="button" class="fz-sec" data-r="editar">' + LAPIS + 'Editar respostas</button>' +
+        '<button type="button" class="fz-sec" data-r="pdf">' + BAIXAR + 'Baixar PDF</button>' +
+        '<button type="button" class="fz-pri" data-r="levar">Levar ao associativo' + SETA + '</button></div></div>' +
+      '<div class="fzr-kpis fzp-entra">' +
+        '<div class="fzr-kpi"><small>Enquadramento</small><b>' + esc(F.programa(r)) + '</b></div>' +
+        '<div class="fzr-kpi"><small>Juros CAIXA</small><b>' + pct(r.jurosNominal) + ' a.a.</b><small>efetivo ' + pct(r.jurosEfetivo) + '</small></div>' +
+        '<div class="fzr-kpi"><small>Prazo</small><b>' + r.prazo + ' meses</b><small>' + (r.prazo % 12 ? Math.floor(r.prazo / 12) + ' anos e ' + (r.prazo % 12) + ' meses' : (r.prazo / 12) + ' anos') + '</small></div>' +
+        (r.subsidio > 0 ? '<div class="fzr-kpi fzr-kpi-ok"><small>Subsídio</small><b>' + F.brl(r.subsidio) + '</b><small>' + (st.resp.fatorSocial ? 'com dependente' : 'só o comprador') + '</small></div>'
+          : '<div class="fzr-kpi"><small>Subsídio</small><b>—</b><small>' + (r.faixa === 'SBPE' ? 'SBPE não tem subsídio' : 'sem direito nesta faixa') + '</small></div>') +
+        '<div class="fzr-kpi"><small>Taxa de administração</small><b>' + F.brl(r.taxaAdm) + '</b><small>por mês</small></div></div>' +
+      '<div class="fzr-grade"><div class="fzr-principal">' +
+        '<article class="fzr-card fzr-card-g fzp-entra"><div class="fzr-card-cab"><h2>Como fecham os ' + inteiro(base) + '</h2><div class="fz-segw" role="tablist" aria-label="Sistema de amortização">' + segp('PRICE') + segp('SAC') + '</div></div>' +
+          '<div class="fzr-barra"><span style="width:' + pf.toFixed(2) + '%" class="fzr-b-fin"></span>' + (r.subsidio > 0 ? '<span style="width:' + ps.toFixed(2) + '%" class="fzr-b-sub"></span>' : '') + '<span class="fzr-b-ent"></span></div>' +
+          '<div class="fzr-leg"><div><small><i class="fzr-d fzr-d-fin"></i>Financiamento · ' + Math.round(pf) + '%</small><b>' + F.brl(r.valorFinanciamento) + '</b></div>' +
+          (r.subsidio > 0 ? '<div><small><i class="fzr-d fzr-d-sub"></i>Subsídio · ' + Math.round(ps) + '%</small><b class="fzr-verde">' + F.brl(r.subsidio) + '</b></div>' : '') +
+          '<div><small><i class="fzr-d fzr-d-ent"></i>Entrada mínima · ' + Math.round(pe) + '%</small><b>' + F.brl(s.entrada) + '</b></div></div>' +
+          '<div class="fzr-parcelas"><div class="fzr-parc"><div class="fzr-parc-l"><div><small>1ª parcela</small><b>' + F.brl(seg.primeira) + '</b></div><div class="fzr-dir"><small>da renda</small><b class="fzr-verde">' + pctRenda + '%</b></div></div>' +
+            '<div class="fzr-trilho"><span style="width:' + Math.min(100, pctRenda / (r.comprometimento * 100) * 100).toFixed(1) + '%"></span></div><p>Parcela máxima da CAIXA: ' + Math.round(r.comprometimento * 100) + '% da renda (' + F.brl(s.parcelaMax) + ').</p></div>' +
+          '<div class="fzr-parc"><small>Última parcela</small><b>' + F.brl(seg.ultima) + '</b><p>Sem o seguro de danos físicos, que zera no último mês.</p></div></div></article>' +
+        '<article class="fzr-card fzp-entra"><div class="fzr-card-cab"><div><h2>Parcela ao longo do prazo</h2><p>Encargo com seguros, ' + esc(nomeSeg(seg.nome)) + ' · estimativa</p></div>' +
+          '<div class="fzr-legenda"><span><i style="background:#E4032B"></i>PRICE</span><span><i style="background:#2563A8"></i>SAC</span></div></div>' +
+          '<div class="fzr-graf"><div class="fzr-graf-svg">' + grafico(series, idade0) + '</div>' +
+          '<table class="fzr-tab"><thead><tr><th scope="col"><span class="fzr-sr">Item</span></th><th scope="col">PRICE</th><th scope="col">SAC</th></tr></thead><tbody>' +
+          '<tr><td>Financia</td><td>' + cel('PRICE', function (c) { return inteiro(c.r.valorFinanciamento); }) + '</td><td>' + cel('SAC', function (c) { return inteiro(c.r.valorFinanciamento); }) + '</td></tr>' +
+          '<tr><td>Entrada</td><td>' + cel('PRICE', function (c) { return inteiro(c.entrada); }) + '</td><td>' + cel('SAC', function (c) { return inteiro(c.entrada); }) + '</td></tr>' +
+          '<tr><td>1ª parcela</td><td>' + cel('PRICE', function (c) { return inteiro(segDe(c, cod).primeira); }) + '</td><td>' + cel('SAC', function (c) { return inteiro(segDe(c, cod).primeira); }) + '</td></tr>' +
+          '<tr><td>Última</td><td>' + cel('PRICE', function (c) { return inteiro(segDe(c, cod).ultima); }) + '</td><td>' + cel('SAC', function (c) { return inteiro(segDe(c, cod).ultima); }) + '</td></tr>' +
+          '<tr><td>Total pago*</td><td>' + (cronos.PRICE ? mil(totalPago(cronos.PRICE)) : '—') + '</td><td>' + (cronos.SAC ? mil(totalPago(cronos.SAC)) : '—') + '</td></tr>' +
+          '</tbody></table></div><p class="fzr-nota">* Soma das parcelas com seguros no prazo todo. No PRICE o seguro de vida sobe com a idade, por isso a parcela pode crescer com o tempo.</p></article>' +
+        '<article class="fzr-card fzp-entra"><div class="fzr-card-cab fzr-cab-ico"><img class="fz-ico" src="assets/img/icones-3d/escudo.svg" width="48" height="48" alt=""><div><h2>Seguradora</h2><p>A escolhida vai para o PDF e para o associativo</p></div></div>' +
+          '<div class="fzr-segs" role="radiogroup" aria-label="Seguradora"><div class="fzr-seg-h"><span></span><span>Seguradora</span><span>1ª parcela</span><span>Última</span></div>' +
+          r.seguradoras.map(function (x) {
+            var on = x.codigo === cod, maior = x.codigo === s.segPadrao;
+            var menor = r.seguradoras.every(function (y) { return y.primeira >= x.primeira; });
+            return '<button type="button" role="radio" aria-checked="' + on + '" class="fzr-seg' + (on ? ' fzr-seg-on' : '') + '" data-r="seg" data-v="' + x.codigo + '"><span class="fz-radio">' + CHECK + '</span>' +
+              '<span><b>' + esc(nomeSeg(x.nome)) + '</b>' + (maior ? '<small>Maior parcela · é a que limita o financiamento</small>' : menor ? '<small class="fzr-verde2">Menor parcela</small>' : '') + '</span>' +
+              '<span class="fzr-num">' + F.brl(x.primeira) + '</span><span class="fzr-num fzr-cinza">' + F.brl(x.ultima) + '</span></button>';
+          }).join('') + '</div></article></div>' +
+      '<aside class="fzr-lado">' +
+        '<div class="fzr-prox"><img class="fz-ico" src="assets/img/icones-3d/calculadora.svg" width="88" height="88" alt=""><p class="fzr-prox-o">Próximo passo</p><h3>Monte o fluxo no associativo</h3><p>Renda, financiamento, subsídio e parcela já entram preenchidos.</p><button type="button" data-r="levar">Abrir no associativo →</button></div>' +
+        '<div class="fzr-card fzr-pdf"><h3>PDF para o cliente</h3><label class="fz-lab" for="fzr-cli">Nome do cliente <span class="fzr-cinza">opcional</span></label><input id="fzr-cli" class="fzr-in-txt" autocomplete="off" value="' + esc(st.cliente || '') + '">' +
+          '<label class="fz-lab" for="fzr-cor">Corretor <span class="fzr-cinza">opcional</span></label><input id="fzr-cor" class="fzr-in-txt" autocomplete="off" value="' + esc(lerLS(CHAVE_CORRETOR)) + '">' +
+          '<button type="button" class="fz-sec fzr-pdf-btn" data-r="pdf">' + BAIXAR + 'Baixar PDF</button></div>' +
+        '<div class="fzr-card"><div class="fzr-cab-ico"><img class="fz-ico" src="assets/img/icones-3d/alvo.svg" width="48" height="48" alt=""><h3>Como chegamos aqui</h3></div><ul class="fzr-lista">' +
+          '<li>Parcela de até ' + Math.round(r.comprometimento * 100) + '% da renda: ' + F.brl(s.parcelaMax) + '.</li>' +
+          '<li>Financiamento de até ' + Math.round(r.cota * 100) + '% do imóvel' + (r.valorFinanciamento < r.cota * s.motorIn.valor - 1 ? '. Aqui a parcela limitou antes.' : '.') + '</li>' +
+          '<li>Prazo pela idade: ' + r.prazo + ' meses aos ' + idade0 + ' anos.</li>' +
+          (r.subsidio > 0 ? '<li>Subsídio pela renda, pela cidade' + (st.resp.fatorSocial ? ' e por ter dependente.' : '.') + '</li>' : '') +
+          (s.trava ? '<li>Imóvel avaliado acima de R$ 400 mil e vendido abaixo disso: a CAIXA simula em R$ 400 mil.</li>' : '') + '</ul></div>' +
+        '<div class="fzr-card"><h3>Respostas</h3><dl class="fzr-resp">' + respostas.map(function (x) { return '<dt>' + x[0] + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('') + '</dl>' +
+          '<button type="button" class="fzr-lnk" data-r="nova">' + NOVA + 'Nova simulação</button></div>' +
+        '<p class="fzr-aviso">Estimativa do motor calibrado no Simulador Habitacional CAIXA. Sujeita à análise de crédito da CAIXA e à aprovação da Direcional.</p></aside></div>' +
+      '<div class="fzr-rod-cel"><button type="button" class="fz-sec" data-r="pdf">' + BAIXAR + 'PDF</button><button type="button" class="fz-pri" data-r="levar">Levar ao associativo' + SETA + '</button></div>' +
+      '</div>';
+    ligaCursor(box);
+  }
+
+  function pdf() {
+    var st = ctx.st, cli = document.getElementById('fzr-cli'), cor = document.getElementById('fzr-cor');
+    st.cliente = cli ? cli.value.trim() : '';
+    var corretor = cor ? cor.value.trim() : lerLS(CHAVE_CORRETOR);
+    gravarLS(CHAVE_CORRETOR, corretor);
+    if (!window.FinanciamentoPdf) return;
+    window.FinanciamentoPdf.gerar(F.dadosPdf({ comp: ctx.comp, sistema: st.resp.sistema, imovel: ctx.im, resp: st.resp, seg: st.seg,
+      pessoas: { cliente: st.cliente, corretor: corretor }, hoje: ctx.hoje }));
+  }
+
+  function levar() {
+    var st = ctx.st, s = ctx.comp[st.resp.sistema], d = F.destinos(ctx.im);
+    var url = function (dest) { return F.urlAssociativo(dest, ctx.im, st.resp, s, st.seg, ctx.hoje); };
+    if (d.length === 1) { location.href = url(d[0]); return; }
+    var veu = document.createElement('div');
+    veu.className = 'fz-veu'; veu.setAttribute('data-fz-tema', 'claro');
+    veu.innerHTML = '<div class="fzr-escolha" role="dialog" aria-modal="true" aria-labelledby="fzr-esc-t"><h2 id="fzr-esc-t">Para qual simulador?</h2>' +
+      '<p>A unidade é de ' + esc(ctx.im.cidade) + ', onde vale a condição Black Friday.</p>' +
+      '<a class="fz-sec" href="' + esc(url('normal')) + '">Associativo</a><a class="fz-pri" href="' + esc(url('blackfriday')) + '">Associativo Black Friday</a>' +
+      '<button type="button" class="fz-ghost" data-fecha>Cancelar</button></div>';
+    var fecha = function () { document.removeEventListener('keydown', tecla, true); veu.remove(); };
+    var tecla = function (ev) { if (ev.key === 'Escape') fecha(); };
+    veu.addEventListener('click', function (ev) { if (ev.target === veu || ev.target.closest('[data-fecha]')) fecha(); });
+    document.addEventListener('keydown', tecla, true);
+    document.body.appendChild(veu);
+    veu.querySelector('.fz-pri').focus();
+  }
+
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-r]');
+    if (!b || !ctx) return;
+    var a = b.getAttribute('data-r'), App = window.FinanciamentoApp;
+    if (a === 'editar') App.irPara(ctx.erro ? 1 : 5);
+    else if (a === 'sis') { ctx.st.resp.sistema = b.getAttribute('data-v'); App.salvar(); App.render(false); }
+    else if (a === 'seg') { ctx.st.seg = b.getAttribute('data-v'); App.salvar(); App.render(false); }
+    else if (a === 'pdf') pdf();
+    else if (a === 'levar') levar();
+    else if (a === 'nova') App.novo();
+  });
+
+  return { render: render };
+})();
