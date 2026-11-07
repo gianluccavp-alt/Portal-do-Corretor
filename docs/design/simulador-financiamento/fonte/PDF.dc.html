@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>PDF · Simulação de financiamento</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FFFFFF}
+.pg,.pg *{box-sizing:border-box}
+.lab{font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#5C6467}
+.step{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#E4032B;margin:0 0 10px}
+.step::before{content:"";width:22px;height:2px;border-radius:2px;background:#E4032B}
+.kv{width:100%;border-collapse:collapse;font-size:13px}
+.kv td{padding:7px 0;border-top:1px solid #E7E9EA;vertical-align:top}
+.kv td:first-child{color:#5C6467}
+.kv td:last-child{text-align:right;font-weight:700;color:#2B3033;font-variant-numeric:tabular-nums}
+.tb{width:100%;border-collapse:collapse;font-size:13px}
+.tb th{font-size:12px;font-weight:600;color:#5C6467;text-align:right;padding:0 10px 7px;border-bottom:1px solid #C9CFD2}
+.tb th:first-child,.tb td:first-child{text-align:left;padding-left:0}
+.tb td{padding:8px 10px;border-bottom:1px solid #E7E9EA;text-align:right;font-weight:700;color:#2B3033;font-variant-numeric:tabular-nums}
+.tb td:first-child{font-weight:500;color:#3A4043}
+.tb td:last-child,.tb th:last-child{padding-right:0}
+</style>
+</helmet>
+<div class="pg" style="width: 794px; height: 1123px; padding: 44px 48px 40px; background: #FFFFFF; font-family: 'DM Sans', system-ui, sans-serif; color: #3A4043; display: flex; flex-direction: column; overflow: hidden">
+  <header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; padding-bottom: 16px; border-bottom: 1px solid #E7E9EA">
+    <img src="/_blob/62e47367b1daf8f281743eb29b78fccd" alt="Grupo Direcional" style="height: 34px; width: auto; display: block">
+    <div style="text-align: right">
+      <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -.6px; color: #2B3033">Simulação de financiamento</h1>
+      <div style="font-size: 12px; color: #5C6467; margin-top: 3px">Emitida em 07/11/2026 · Portal do Corretor</div>
+    </div>
+  </header>
+
+  <section style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; padding: 16px 0">
+    <div><div class="lab">Cliente</div><div style="font-size: 14px; font-weight: 700; color: #2B3033; margin-top: 3px">[Nome do cliente]</div></div>
+    <div><div class="lab">Corretor</div><div style="font-size: 14px; font-weight: 700; color: #2B3033; margin-top: 3px">[Nome do corretor]</div></div>
+    <div><div class="lab">Imóvel</div><div style="font-size: 14px; font-weight: 700; color: #2B3033; margin-top: 3px">Village Gaia · Apto 305</div><div style="font-size: 12px; color: #5C6467">Bloco 2 · 2Q C/S Tipo Meio</div></div>
+    <div><div class="lab">Valor de avaliação</div><div style="font-size: 14px; font-weight: 700; color: #2B3033; margin-top: 3px">R$ 220.000,00</div><div style="font-size: 12px; color: #5C6467">Ribeirão Preto · SP</div></div>
+  </section>
+
+  <section style="border: 1px solid #E7E9EA; border-radius: 14px; padding: 18px 20px; background: #FAFBFB">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 20px">
+      <div>
+        <div class="lab">Valor financiado</div>
+        <div style="font-size: 36px; font-weight: 800; letter-spacing: -1.2px; color: #2B3033; font-variant-numeric: tabular-nums; line-height: 1.1; margin-top: 2px">R$ 167.397,73</div>
+        <div style="font-size: 12px; color: #5C6467; margin-top: 2px">MCMV · Faixa 1 · PRICE · 420 meses · 4,50% a.a.</div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, auto); gap: 22px">
+        <div><div class="lab">1ª parcela</div><div style="font-size: 18px; font-weight: 800; color: #2B3033; margin-top: 2px; font-variant-numeric: tabular-nums">R$ 840,00</div><div style="font-size: 12px; color: #5C6467">30% da renda</div></div>
+        <div><div class="lab">Subsídio</div><div style="font-size: 18px; font-weight: 800; color: #1E8E4A; margin-top: 2px; font-variant-numeric: tabular-nums">R$ 13.209,00</div><div style="font-size: 12px; color: #5C6467">desconto FGTS</div></div>
+        <div><div class="lab">Entrada mínima</div><div style="font-size: 18px; font-weight: 800; color: #2B3033; margin-top: 2px; font-variant-numeric: tabular-nums">R$ 39.393,27</div><div style="font-size: 12px; color: #5C6467">a negociar</div></div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 2px; height: 12px; margin-top: 16px">
+      <span style="width: 76.1%; background: #E4032B; border-radius: 4px 2px 2px 4px"></span>
+      <span style="width: 6%; background: #1E8E4A; border-radius: 2px"></span>
+      <span style="flex: 1; background: #3A4043; border-radius: 2px 4px 4px 2px"></span>
+    </div>
+    <div style="display: flex; gap: 18px; margin-top: 8px; font-size: 12px; color: #3A4043">
+      <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: 2px; background: #E4032B"></span>Financiamento 76%</span>
+      <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: 2px; background: #1E8E4A"></span>Subsídio 6%</span>
+      <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; border-radius: 2px; background: #3A4043"></span>Entrada 18%</span>
+    </div>
+  </section>
+
+  <section style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; margin-top: 22px">
+    <div>
+      <h2 class="step">Condições</h2>
+      <table class="kv"><tbody>
+        <tr><td>Programa</td><td>MCMV · Faixa 1</td></tr>
+        <tr><td>Produto CAIXA</td><td>100501101</td></tr>
+        <tr><td>Sistema de amortização</td><td>PRICE</td></tr>
+        <tr><td>Prazo</td><td>420 meses</td></tr>
+        <tr><td>Juros nominal / efetivo</td><td>4,50% / 4,59% a.a.</td></tr>
+        <tr><td>Taxa de administração</td><td>R$ 0,00</td></tr>
+        <tr><td>Parcela máxima</td><td>30% da renda</td></tr>
+      </tbody></table>
+    </div>
+    <div>
+      <h2 class="step">Dados do cliente</h2>
+      <table class="kv"><tbody>
+        <tr><td>Renda familiar bruta</td><td>R$ 2.800,00</td></tr>
+        <tr><td>Nascimento (mais velho)</td><td>14/03/1993 · 33 anos</td></tr>
+        <tr><td>3 anos de FGTS</td><td>Sim</td></tr>
+        <tr><td>Imóvel na cidade</td><td>Não</td></tr>
+        <tr><td>Mais de um comprador ou dependente</td><td>Sim</td></tr>
+        <tr><td>Subsídio anterior</td><td>Não</td></tr>
+        <tr><td>Cidade do imóvel</td><td>Ribeirão Preto</td></tr>
+      </tbody></table>
+    </div>
+  </section>
+
+  <section style="margin-top: 22px">
+    <h2 class="step">Parcela por seguradora</h2>
+    <table class="tb">
+      <thead><tr><th scope="col">Seguradora</th><th scope="col">1ª parcela</th><th scope="col">Última parcela</th></tr></thead>
+      <tbody>
+        <tr><td><b style="color: #2B3033">Caixa Residencial Habitacional Mais</b> <span style="font-size: 12px; font-weight: 700; color: #B8001F; background: #FDEEF0; padding: 2px 7px; border-radius: 99px; margin-left: 6px">escolhida</span></td><td>R$ 840,00</td><td>R$ 792,22</td></tr>
+        <tr><td>Tokio Marine</td><td>R$ 831,97</td><td>R$ 792,22</td></tr>
+        <tr><td>Caixa Residencial Habitacional</td><td>R$ 825,92</td><td>R$ 792,22</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section style="margin-top: 22px">
+    <h2 class="step">PRICE ou SAC</h2>
+    <div style="display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start">
+      <table class="tb">
+        <thead><tr><th scope="col">Comparação</th><th scope="col">PRICE</th><th scope="col">SAC</th></tr></thead>
+        <tbody>
+          <tr><td>Financiamento</td><td>R$ 167.397,73</td><td>R$ 129.877,57</td></tr>
+          <tr><td>Entrada mínima</td><td>R$ 39.393,27</td><td>R$ 76.913,43</td></tr>
+          <tr><td>1ª parcela</td><td>R$ 840,00</td><td>R$ 840,00</td></tr>
+          <tr><td>Última parcela</td><td>R$ 792,22</td><td>R$ 310,39</td></tr>
+        </tbody>
+      </table>
+      <figure style="margin: 0">
+        <figcaption style="font-size: 12px; color: #5C6467; margin-bottom: 4px; display: flex; gap: 14px">Parcela em 35 anos<span style="display: inline-flex; align-items: center; gap: 5px; color: #3A4043"><span style="width: 12px; height: 2px; background: #E4032B"></span>PRICE</span><span style="display: inline-flex; align-items: center; gap: 5px; color: #3A4043"><span style="width: 12px; height: 2px; background: #2563A8"></span>SAC</span></figcaption>
+        <svg viewBox="0 0 350 132" width="340" height="128" role="img" aria-label="PRICE perto de R$ 840 a R$ 890; SAC cai de R$ 840 para R$ 310" style="display: block">
+          <g font-family="DM Sans, sans-serif" font-size="12" fill="#5C6467">
+            <line x1="40" y1="15.9" x2="345" y2="15.9" stroke="#E7E9EA"></line><text x="0" y="20">900</text>
+            <line x1="40" y1="63" x2="345" y2="63" stroke="#E7E9EA"></line><text x="0" y="67">600</text>
+            <line x1="40" y1="110.1" x2="345" y2="110.1" stroke="#C9CFD2"></line><text x="0" y="114">300</text>
+            <text x="40" y="130" text-anchor="middle">hoje</text><text x="340" y="130" text-anchor="end">35 anos</text>
+          </g>
+          <polyline points="40.0,25.3 82.9,36.0 125.7,45.9 168.6,56.1 211.4,65.7 254.3,77.8 297.1,89.4 340.0,108.6" fill="none" stroke="#2563A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+          <polyline points="40.0,25.3 82.9,24.7 125.7,22.6 168.6,21.0 211.4,17.7 254.3,19.0 297.1,19.6 340.0,32.8" fill="none" stroke="#E4032B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      </figure>
+    </div>
+  </section>
+
+  <div style="flex: 1"></div>
+  <footer style="padding-top: 14px; border-top: 1px solid #E7E9EA; display: flex; justify-content: space-between; gap: 24px; align-items: flex-end">
+    <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #5C6467; max-width: 520px">Simulação estimada com as regras do Simulador Habitacional CAIXA vigentes na data de emissão. Não é aprovação de crédito: valores sujeitos à análise da CAIXA, à avaliação do imóvel e à aprovação da Direcional.</p>
+    <span style="font-size: 12px; font-weight: 700; color: #3A4043; white-space: nowrap">Grupo Direcional</span>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":794,"height":1123}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

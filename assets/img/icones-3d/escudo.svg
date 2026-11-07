@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Seguro">
+<defs>
+<linearGradient id="r3d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF7186"/><stop offset="0.45" stop-color="#E4032B"/><stop offset="1" stop-color="#A3001B"/></linearGradient>
+<linearGradient id="w3d" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#DCE1E4"/></linearGradient>
+<radialGradient id="sh3d" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#3A4043" stop-opacity="0.28"/><stop offset="1" stop-color="#3A4043" stop-opacity="0"/></radialGradient>
+</defs>
+<ellipse cx="32" cy="59" rx="17" ry="3.5" fill="url(#sh3d)"/>
+<path d="M32 6 L51 12.5 V28 C51 41.5 43 50.5 32 55 C21 50.5 13 41.5 13 28 V12.5 Z" fill="#8E0017" transform="translate(0 3)"/>
+<path d="M32 6 L51 12.5 V28 C51 41.5 43 50.5 32 55 C21 50.5 13 41.5 13 28 V12.5 Z" fill="url(#r3d)"/>
+<path d="M32 12 L45.5 16.6 V28 C45.5 38 39.8 44.8 32 48.4 Z" fill="#FFFFFF" fill-opacity="0.14"/>
+<path d="M23 30 L29.5 36.5 L41.5 24.5" fill="none" stroke="#8E0017" stroke-opacity="0.5" stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 1.5)"/>
+<path d="M23 30 L29.5 36.5 L41.5 24.5" fill="none" stroke="url(#w3d)" stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M18 15.5 L29.5 11.6" fill="none" stroke="#FFFFFF" stroke-opacity="0.55" stroke-width="2.4" stroke-linecap="round"/>
+</svg>

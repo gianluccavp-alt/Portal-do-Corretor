@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Simulador de Financiamento · celular</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.app,.app *{box-sizing:border-box}
+:where(.app) button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;margin:0;text-align:left;-webkit-tap-highlight-color:transparent}
+:where(.app) input{font:inherit;color:inherit;border:0;background:none;min-width:0;padding:0;margin:0}
+.app input:focus{outline:none}
+.app :focus-visible{outline:2px solid #E4032B;outline-offset:3px;border-radius:12px}
+.scroll{overflow-y:auto;scrollbar-width:none}
+.scroll::-webkit-scrollbar,.hscroll::-webkit-scrollbar{display:none}
+.hscroll{overflow-x:auto;scrollbar-width:none}
+.btn-pri{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:56px;border-radius:18px;background:#E4032B;color:#fff;font-weight:700;font-size:16px;box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 12px 24px -10px rgba(228,3,43,.65);transition:transform .12s ease,background .2s ease;text-align:center;white-space:nowrap}
+.btn-pri:hover{background:#CF0227}
+.btn-pri:active{transform:scale(.97)}
+.btn-sec{display:flex;align-items:center;justify-content:center;gap:8px;height:56px;padding:0 16px;border-radius:18px;background:#fff;border:1.5px solid #E7E9EA;font-weight:700;font-size:15px;text-align:center;white-space:nowrap;color:#3A4043;transition:border-color .2s,color .2s}
+.btn-sec:hover{border-color:#E4032B;color:#E4032B}
+.enter{animation:enter .55s cubic-bezier(.2,.8,.2,1) both}
+.d1{animation-delay:.07s}.d2{animation-delay:.14s}.d3{animation-delay:.21s}.d4{animation-delay:.28s}.d5{animation-delay:.35s}
+@keyframes enter{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.float{animation:float 4.6s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-8px) rotate(-1.5deg)}}
+.live{position:relative}
+.live::after{content:"";position:absolute;inset:-4px;border-radius:50%;background:#1E8E4A;opacity:.25;animation:pulse 2s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.55);opacity:.55}100%{transform:scale(1.5);opacity:0}}
+.sheen{position:relative;overflow:hidden}
+.sheen::after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:40%;background:linear-gradient(100deg,rgba(255,255,255,0),rgba(255,255,255,.35),rgba(255,255,255,0));animation:sheen 3.2s 1.2s ease-in-out infinite}
+@keyframes sheen{0%{left:-60%}40%,100%{left:130%}}
+.pill{flex:none;display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 16px;border-radius:99px;background:#fff;border:1.5px solid #E7E9EA;color:#3A4043;font-weight:600;font-size:14px;white-space:nowrap;transition:background .2s,border-color .2s,color .2s}
+.pill-on{background:#3A4043;border-color:#3A4043;color:#fff}
+.chipr{flex:none;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:99px;background:#fff;font-size:13px;font-weight:600;color:#3A4043;white-space:nowrap;box-shadow:0 1px 2px rgba(58,64,67,.08)}
+.chipr:hover{color:#E4032B}
+.segw{display:flex;gap:4px;padding:4px;border-radius:99px;background:#E9ECEE}
+.seg{flex:1 1 0;height:40px;padding:0 12px;border-radius:99px;font-size:14px;font-weight:600;color:#5C6467;white-space:nowrap;text-align:center;transition:background .2s,color .2s}
+.seg-on{background:#fff;color:#2B3033;box-shadow:0 1px 2px rgba(58,64,67,.1),0 4px 12px -6px rgba(58,64,67,.3)}
+.field{display:flex;align-items:baseline;gap:10px;padding:16px 20px;border-radius:22px;background:#fff;border:1.5px solid #E7E9EA;transition:border-color .2s,box-shadow .2s}
+.field:focus-within{border-color:#E4032B;box-shadow:0 0 0 5px rgba(228,3,43,.1)}
+.pick{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:20px;background:#fff;border:1.5px solid #E7E9EA;transition:border-color .2s}
+.pick:hover{border-color:#C9CFD2}
+.tile{position:relative;display:flex;flex-direction:column;justify-content:space-between;align-items:stretch;gap:10px;min-height:156px;padding:14px 14px 16px;border-radius:22px;background:#fff;border:1.5px solid #fff;box-shadow:0 1px 2px rgba(58,64,67,.06),0 10px 24px -16px rgba(58,64,67,.3);transition:border-color .2s,background .2s,transform .12s,box-shadow .2s}
+.tile:active{transform:scale(.97)}
+.tile-on{border-color:#E4032B;background:#FFF6F7;box-shadow:0 14px 28px -16px rgba(228,3,43,.45)}
+.sw{width:44px;height:26px;border-radius:99px;background:#D9DEE1;position:relative;transition:background .25s;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .3s cubic-bezier(.3,1.4,.5,1)}
+.sw-on{background:#E4032B}
+.sw-on::after{transform:translateX(18px)}
+.opt{display:flex;align-items:flex-start;gap:12px;width:100%;padding:16px;border-radius:22px;background:#fff;border:1.5px solid #fff;box-shadow:0 1px 2px rgba(58,64,67,.06),0 10px 24px -16px rgba(58,64,67,.3);transition:border-color .2s,background .2s,transform .12s}
+.opt:active{transform:scale(.98)}
+.opt-on{border-color:#E4032B;background:#FFF6F7}
+.radio{width:24px;height:24px;border-radius:50%;border:2px solid #C9CFD2;flex:none;display:grid;place-items:center;transition:border-color .2s,background .2s}
+.radio svg{opacity:0;transform:scale(.4);transition:opacity .2s,transform .3s cubic-bezier(.3,1.6,.5,1)}
+.opt-on .radio,.srow-on .radio{border-color:#E4032B;background:#E4032B}
+.opt-on .radio svg,.srow-on .radio svg{opacity:1;transform:none}
+.srow{display:flex;align-items:center;gap:12px;width:100%;padding:12px 4px;border-top:1px solid #EEF0F1}
+.srow:first-child{border-top:0}
+.card{background:#fff;border-radius:24px;padding:18px;box-shadow:0 1px 2px rgba(58,64,67,.06)}
+.grow{animation:grow 1.1s .25s cubic-bezier(.2,.8,.2,1) both;transform-origin:left center}
+@keyframes grow{from{transform:scaleX(0)}to{transform:none}}
+.draw{stroke-dasharray:700;stroke-dashoffset:700;animation:draw 1.6s .4s cubic-bezier(.65,0,.25,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.app *,.app *::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition:none!important}.draw{stroke-dashoffset:0}}
+</style>
+</helmet>
+<div class="app" style="width: 390px; height: {{altura}}; min-height: 844px; background: #F5F6F7; font-family: 'DM Sans', system-ui, sans-serif; color: #3A4043; display: flex; flex-direction: column; overflow: hidden; position: relative">
+
+<!-- ============ ABERTURA ============ -->
+<sc-if value="{{isIntro}}" hint-placeholder-val="{{ true }}">
+<div style="flex: 1; display: flex; flex-direction: column; padding: 22px 24px 28px; min-height: 0">
+  <div style="display: flex; align-items: center; justify-content: space-between; height: 44px">
+    <img src="/_blob/62e47367b1daf8f281743eb29b78fccd" alt="Grupo Direcional" style="height: 22px; width: auto; display: block">
+    <a href="#" aria-label="Voltar ao portal" style="width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: #fff; color: #3A4043; box-shadow: 0 1px 2px rgba(58,64,67,.08)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+  </div>
+
+  <div style="position: relative; height: 330px; margin: 6px -24px 0; display: flex; align-items: center; justify-content: center">
+    <div style="position: absolute; width: 300px; height: 300px; border-radius: 50%; border: 1px solid #E7E9EA"></div>
+    <div style="position: absolute; width: 214px; height: 214px; border-radius: 50%; border: 1px solid #E7E9EA; background: #FFFFFF; box-shadow: 0 30px 60px -30px rgba(58,64,67,.25)"></div>
+    <div class="float" style="position: relative"><dc-import name="Icone" icone="calculadora" tamanho="146" hint-size="146px,146px"></dc-import></div>
+    <div class="float" style="position: absolute; left: 30px; top: 40px; animation-delay: -1.2s"><dc-import name="Icone" icone="casa" tamanho="62" hint-size="62px,62px"></dc-import></div>
+    <div class="float" style="position: absolute; right: 30px; top: 58px; animation-delay: -2.4s"><dc-import name="Icone" icone="moedas" tamanho="60" hint-size="60px,60px"></dc-import></div>
+    <div class="float" style="position: absolute; right: 50px; bottom: 26px; animation-delay: -.6s"><dc-import name="Icone" icone="chave" tamanho="54" hint-size="54px,54px"></dc-import></div>
+    <div class="float" style="position: absolute; left: 46px; bottom: 32px; animation-delay: -3.1s"><dc-import name="Icone" icone="documento" tamanho="52" hint-size="52px,52px"></dc-import></div>
+  </div>
+
+  <div class="enter" style="margin-top: 6px">
+    <div style="font-size: 12px; font-weight: 700; letter-spacing: .14em; color: #E4032B; text-transform: uppercase">Simulador de financiamento</div>
+    <h1 style="margin: 10px 0 0; font-size: 36px; line-height: 1.05; font-weight: 800; letter-spacing: -1.2px; color: #2B3033">Quanto o cliente consegue financiar?</h1>
+    <p style="margin: 12px 0 0; font-size: 16px; line-height: 1.5; color: #5C6467">Cinco perguntas e você tem financiamento, subsídio, parcela e entrada, com as regras da CAIXA para MCMV e SBPE.</p>
+  </div>
+
+  <div class="enter d1" style="display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap">
+    <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; background: #fff; padding: 8px 12px; border-radius: 12px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E4032B" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>≈ 1 minuto</span>
+    <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; background: #fff; padding: 8px 12px; border-radius: 12px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E4032B" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"></path></svg>5 perguntas</span>
+    <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; background: #fff; padding: 8px 12px; border-radius: 12px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E4032B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg>PDF pronto</span>
+  </div>
+
+  <div style="flex: 1"></div>
+  <div class="enter d2" style="display: flex; flex-direction: column; gap: 10px">
+    <button class="btn-pri sheen" type="button" onClick="{{comecar}}">Começar simulação<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+    <button type="button" onClick="{{repetir}}" style="height: 44px; text-align: center; font-size: 14px; font-weight: 600; color: #5C6467">Repetir a última simulação</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ PERGUNTAS ============ -->
+<sc-if value="{{isPerg}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; display: flex; flex-direction: column; min-height: 0">
+  <div style="display: flex; align-items: center; justify-content: space-between; height: 60px; padding: 8px 14px 0; flex: none">
+    <button type="button" aria-label="Voltar" onClick="{{voltar}}" style="width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: #fff; box-shadow: 0 1px 2px rgba(58,64,67,.08)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+    <div style="text-align: center">
+      <div style="font-size: 14px; font-weight: 700; color: #2B3033">Simulador de financiamento</div>
+      <div style="font-size: 12px; color: #727A7D; margin-top: 1px">Passo {{e}} de 5</div>
+    </div>
+    <button type="button" aria-label="Sair" onClick="{{sair}}" style="width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: #fff; box-shadow: 0 1px 2px rgba(58,64,67,.08)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+  </div>
+  <div style="display: flex; gap: 6px; padding: 10px 24px 0; flex: none">
+    <sc-for list="{{barra}}" as="b" hint-placeholder-count="5"><span style="flex: 1; height: 5px; border-radius: 99px; background: {{b.cor}}"></span></sc-for>
+  </div>
+  <sc-if value="{{temResumo}}" hint-placeholder-val="{{ false }}">
+    <div class="hscroll" style="display: flex; gap: 8px; padding: 12px 24px 2px; flex: none">
+      <sc-for list="{{resumo}}" as="c" hint-placeholder-count="2">
+        <button type="button" class="chipr" onClick="{{c.ir}}" aria-label="Editar {{c.rot}}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1E8E4A" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>{{c.t}}</button>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <div class="scroll" style="flex: 1; min-height: 0; padding: 18px 24px 16px">
+    <div class="enter" style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px">
+      <div style="min-width: 0">
+        <div style="font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #E4032B">{{q.eyebrow}}</div>
+        <h2 style="margin: 8px 0 0; font-size: 27px; line-height: 1.1; font-weight: 800; letter-spacing: -.8px; color: #2B3033">{{q.titulo}}</h2>
+      </div>
+      <sc-if value="{{q.temIcone}}" hint-placeholder-val="{{ true }}"><div class="float" style="flex: none"><dc-import name="Icone" icone="{{q.icone}}" tamanho="70" hint-size="70px,70px"></dc-import></div></sc-if>
+    </div>
+    <p class="enter d1" style="margin: 10px 0 0; font-size: 15px; line-height: 1.5; color: #5C6467">{{q.desc}}</p>
+
+    <!-- 1 · IMOVEL -->
+    <sc-if value="{{is1}}" hint-placeholder-val="{{ false }}">
+      <div class="enter d2" style="margin-top: 18px">
+        <div class="segw" role="tablist" aria-label="Como informar o imóvel">
+          <button type="button" role="tab" aria-selected="{{ariaPortal}}" class="{{segPortal}}" onClick="{{modoPortal}}">Unidade do portal</button>
+          <button type="button" role="tab" aria-selected="{{ariaValor}}" class="{{segValor}}" onClick="{{modoValor}}">Digitar valor</button>
+        </div>
+      </div>
+      <div class="enter d3" style="margin-top: 18px">
+        <div style="font-size: 13px; font-weight: 600; color: #5C6467; margin-bottom: 8px">Cidade</div>
+        <div class="hscroll" style="display: flex; gap: 8px; margin: 0 -24px; padding: 0 24px">
+          <sc-for list="{{cidades}}" as="c" hint-placeholder-count="3"><button type="button" class="{{c.cls}}" aria-pressed="{{c.aria}}" onClick="{{c.pick}}">{{c.nome}}</button></sc-for>
+        </div>
+      </div>
+      <sc-if value="{{modoIsPortal}}" hint-placeholder-val="{{ true }}">
+        <div class="enter d4" style="display: flex; flex-direction: column; gap: 10px; margin-top: 18px">
+          <div style="font-size: 13px; font-weight: 600; color: #5C6467">Empreendimento e unidade</div>
+          <button type="button" class="pick">
+            <img src="/_blob/1c91892cd95bf8129a07af78a610990a" alt="" style="width: 56px; height: 56px; border-radius: 14px; object-fit: cover; flex: none; display: block">
+            <span style="flex: 1; min-width: 0"><span style="display: block; font-size: 16px; font-weight: 700; color: #2B3033">Village Gaia</span><span style="display: block; font-size: 13px; color: #727A7D; margin-top: 2px">Ribeirão Preto · planilha ao vivo</span></span>
+            <span style="font-size: 13px; font-weight: 700; color: #E4032B">Trocar</span>
+          </button>
+          <button type="button" class="pick" style="padding: 14px 16px">
+            <span style="flex: 1; min-width: 0"><span style="display: block; font-size: 12px; color: #727A7D">Unidade</span><span style="display: block; font-size: 16px; font-weight: 700; color: #2B3033; margin-top: 2px">Bloco 2 · Apto 305</span><span style="display: block; font-size: 13px; color: #727A7D; margin-top: 2px">2Q C/S Tipo Meio · 3º andar</span></span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#727A7D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 20px; background: #EFF9F2; border: 1px solid #C7E7D3">
+            <span><span style="display: block; font-size: 12px; color: #2E7D4F; font-weight: 600">Valor de avaliação</span><span style="display: block; font-size: 22px; font-weight: 800; color: #2B3033; letter-spacing: -.4px; font-variant-numeric: tabular-nums">R$ 220.000,00</span></span>
+            <span style="font-size: 12px; font-weight: 700; color: #1E8E4A; background: #fff; padding: 5px 10px; border-radius: 99px">Da planilha</span>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{modoIsValor}}" hint-placeholder-val="{{ false }}">
+        <div class="enter d4" style="margin-top: 18px">
+          <label for="m-valor" style="display: block; font-size: 13px; font-weight: 600; color: #5C6467; margin-bottom: 8px">Valor de avaliação do imóvel</label>
+          <div class="field"><span style="font-size: 22px; font-weight: 700; color: #727A7D">R$</span><input id="m-valor" type="text" inputmode="numeric" value="220.000" aria-label="Valor de avaliação em reais" style="font-size: 36px; font-weight: 800; letter-spacing: -1px; width: 100%; color: #2B3033; font-variant-numeric: tabular-nums"></div>
+          <p style="margin: 10px 4px 0; font-size: 13px; line-height: 1.5; color: #727A7D">É o valor que a CAIXA considera. Sem a avaliação em mãos, use o valor de venda.</p>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <!-- 2 · RENDA -->
+    <sc-if value="{{is2}}" hint-placeholder-val="{{ false }}">
+      <div class="enter d2" style="margin-top: 22px">
+        <label for="m-renda" style="display: block; font-size: 13px; font-weight: 600; color: #5C6467; margin-bottom: 8px">Renda bruta familiar</label>
+        <div class="field"><span style="font-size: 22px; font-weight: 700; color: #727A7D">R$</span><input id="m-renda" type="text" inputmode="numeric" value="2.800" aria-label="Renda em reais por mês" style="font-size: 40px; font-weight: 800; letter-spacing: -1.2px; width: 100%; color: #2B3033; font-variant-numeric: tabular-nums"><span style="font-size: 16px; font-weight: 600; color: #727A7D">/mês</span></div>
+      </div>
+      <div class="enter d3" style="margin-top: 14px; padding: 16px 18px; border-radius: 22px; background: #fff; box-shadow: 0 1px 2px rgba(58,64,67,.06)">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #1E8E4A"><span class="live" style="width: 8px; height: 8px; border-radius: 50%; background: #1E8E4A"></span>Prévia do enquadramento</div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px">
+          <div><div style="font-size: 12px; color: #727A7D">Programa</div><div style="font-size: 17px; font-weight: 800; color: #2B3033; margin-top: 2px">MCMV · Faixa 1</div></div>
+          <div><div style="font-size: 12px; color: #727A7D">Juros CAIXA</div><div style="font-size: 17px; font-weight: 800; color: #2B3033; margin-top: 2px">4,50% a.a.</div></div>
+          <div><div style="font-size: 12px; color: #727A7D">Parcela de até</div><div style="font-size: 17px; font-weight: 800; color: #2B3033; margin-top: 2px">R$ 840,00</div></div>
+          <div><div style="font-size: 12px; color: #727A7D">Subsídio</div><div style="font-size: 17px; font-weight: 800; color: #1E8E4A; margin-top: 2px">Tem direito</div></div>
+        </div>
+      </div>
+      <p class="enter d4" style="margin: 12px 4px 0; font-size: 13px; line-height: 1.5; color: #727A7D">Acima de R$ 13.000, ou se o cliente já tem imóvel na cidade, a conta muda para o SBPE.</p>
+    </sc-if>
+
+    <!-- 3 · NASCIMENTO -->
+    <sc-if value="{{is3}}" hint-placeholder-val="{{ false }}">
+      <div class="enter d2" style="margin-top: 22px">
+        <div style="font-size: 13px; font-weight: 600; color: #5C6467; margin-bottom: 8px">Data de nascimento</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 10px">
+          <div class="field" style="flex-direction: column; gap: 2px; padding: 12px 16px"><label for="m-dia" style="font-size: 12px; color: #727A7D">Dia</label><input id="m-dia" type="text" inputmode="numeric" value="14" style="font-size: 30px; font-weight: 800; color: #2B3033; width: 100%"></div>
+          <div class="field" style="flex-direction: column; gap: 2px; padding: 12px 16px"><label for="m-mes" style="font-size: 12px; color: #727A7D">Mês</label><input id="m-mes" type="text" inputmode="numeric" value="03" style="font-size: 30px; font-weight: 800; color: #2B3033; width: 100%"></div>
+          <div class="field" style="flex-direction: column; gap: 2px; padding: 12px 16px"><label for="m-ano" style="font-size: 12px; color: #727A7D">Ano</label><input id="m-ano" type="text" inputmode="numeric" value="1993" style="font-size: 30px; font-weight: 800; color: #2B3033; width: 100%"></div>
+        </div>
+      </div>
+      <div class="enter d3" style="display: flex; align-items: center; gap: 14px; margin-top: 14px; padding: 16px 18px; border-radius: 22px; background: #fff; box-shadow: 0 1px 2px rgba(58,64,67,.06)">
+        <div style="flex: none; width: 58px; height: 58px; border-radius: 18px; background: #FFF1F3; display: grid; place-items: center; text-align: center"><span><span style="display: block; font-size: 22px; font-weight: 800; color: #E4032B; line-height: 1">33</span><span style="display: block; font-size: 11px; font-weight: 700; color: #E4032B">anos</span></span></div>
+        <div><div style="font-size: 16px; font-weight: 800; color: #2B3033">Prazo de até 420 meses</div><div style="font-size: 13px; color: #727A7D; margin-top: 2px">35 anos, o máximo da CAIXA</div></div>
+      </div>
+      <p class="enter d4" style="margin: 12px 4px 0; font-size: 13px; line-height: 1.5; color: #727A7D">Com mais de 70 anos e 6 meses a CAIXA não financia. Perto disso, o prazo encurta.</p>
+    </sc-if>
+
+    <!-- 4 · PERFIL -->
+    <sc-if value="{{is4}}" hint-placeholder-val="{{ false }}">
+      <div class="enter d2" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 18px">
+        <sc-for list="{{tiles}}" as="t" hint-placeholder-count="4">
+          <button type="button" role="switch" aria-checked="{{t.aria}}" class="{{t.cls}}" onClick="{{t.toggle}}">
+            <span style="display: flex; justify-content: space-between; align-items: flex-start"><span class="float" style="animation-delay: {{t.delay}}"><dc-import name="Icone" icone="{{t.icone}}" tamanho="58" hint-size="58px,58px"></dc-import></span><span class="{{t.sw}}"></span></span>
+            <span><span style="display: block; font-size: 15px; line-height: 1.25; font-weight: 700; color: #2B3033">{{t.t}}</span><span style="display: block; font-size: 12px; line-height: 1.35; color: #727A7D; margin-top: 4px">{{t.d}}</span></span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- 5 · CONDICOES -->
+    <sc-if value="{{is5}}" hint-placeholder-val="{{ false }}">
+      <div class="enter d2" style="display: flex; flex-direction: column; gap: 10px; margin-top: 18px" role="radiogroup" aria-label="Sistema de amortização">
+        <sc-for list="{{sistemas}}" as="o" hint-placeholder-count="2">
+          <button type="button" role="radio" aria-checked="{{o.aria}}" class="{{o.cls}}" onClick="{{o.pick}}">
+            <span class="radio" style="margin-top: 2px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+            <span style="flex: 1; min-width: 0">
+              <span style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px"><span style="font-size: 18px; font-weight: 800; color: #2B3033">{{o.nome}}</span><sc-if value="{{o.tag}}" hint-placeholder-val="{{ false }}"><span style="font-size: 11px; font-weight: 700; color: #1E8E4A; background: #EFF9F2; padding: 3px 8px; border-radius: 99px">{{o.tag}}</span></sc-if></span>
+              <span style="display: block; font-size: 13px; color: #727A7D; margin-top: 2px">{{o.desc}}</span>
+              <span style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #E7E9EA">
+                <span><span style="display: block; font-size: 12px; color: #727A7D">Financia</span><span style="display: block; font-size: 16px; font-weight: 800; color: #2B3033; font-variant-numeric: tabular-nums">{{o.fin}}</span></span>
+                <span><span style="display: block; font-size: 12px; color: #727A7D">Parcela</span><span style="display: block; font-size: 16px; font-weight: 800; color: #2B3033; font-variant-numeric: tabular-nums">{{o.parc}}</span></span>
+              </span>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+      <div class="enter d3" style="margin-top: 18px">
+        <div style="font-size: 13px; font-weight: 600; color: #5C6467; margin-bottom: 8px">Prazo</div>
+        <div class="hscroll" style="display: flex; gap: 8px; margin: 0 -24px; padding: 0 24px">
+          <sc-for list="{{prazos}}" as="p" hint-placeholder-count="4"><button type="button" class="{{p.cls}}" aria-pressed="{{p.aria}}" onClick="{{p.pick}}">{{p.rot}}</button></sc-for>
+        </div>
+      </div>
+      <button type="button" class="enter d4 pick" style="margin-top: 14px; padding: 14px 16px" onClick="{{toggleMenos}}" aria-expanded="{{ariaMenos}}">
+        <span style="flex: 1"><span style="display: block; font-size: 15px; font-weight: 700; color: #2B3033">Financiar menos que o máximo</span><span style="display: block; font-size: 12px; color: #727A7D; margin-top: 2px">Opcional · o resto vira entrada</span></span>
+        <span class="{{swMenos}}"></span>
+      </button>
+    </sc-if>
+  </div>
+
+  <div style="flex: none; padding: 12px 24px 26px; background: linear-gradient(180deg, rgba(245,246,247,0), #F5F6F7 30%)">
+    <button class="btn-pri" type="button" onClick="{{avancar}}">{{rotAvancar}}<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ============ RESULTADO ============ -->
+<sc-if value="{{isRes}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; display: flex; flex-direction: column; min-height: 0">
+  <div style="display: flex; align-items: center; justify-content: space-between; height: 60px; padding: 8px 14px 0; flex: none">
+    <button type="button" aria-label="Editar respostas" onClick="{{editar}}" style="width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: #fff; box-shadow: 0 1px 2px rgba(58,64,67,.08)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+    <div style="font-size: 14px; font-weight: 700; color: #2B3033">Resultado</div>
+    <button type="button" aria-label="Nova simulação" onClick="{{refazer}}" style="width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: #fff; box-shadow: 0 1px 2px rgba(58,64,67,.08)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"></path></svg></button>
+  </div>
+
+  <div class="{{resScroll}}" style="flex: 1; min-height: 0; padding: 10px 20px 18px">
+    <div class="enter" style="padding: 0 4px">
+      <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #1E8E4A"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Simulação pronta</div>
+      <div style="font-size: 14px; color: #5C6467; margin-top: 4px">Village Gaia · Apto 305 · R$ 220.000 · renda R$ 2.800</div>
+    </div>
+
+    <div class="enter d1 card" style="margin-top: 14px; padding: 20px; border-radius: 28px; box-shadow: 0 1px 2px rgba(58,64,67,.06), 0 24px 40px -30px rgba(58,64,67,.45)">
+      <div style="font-size: 13px; color: #727A7D">Financia até</div>
+      <div style="display: flex; align-items: baseline; margin-top: 2px; color: #2B3033; font-variant-numeric: tabular-nums"><span style="font-size: 20px; font-weight: 700; margin-right: 6px">R$</span><span style="font-size: 44px; font-weight: 800; letter-spacing: -1.6px; line-height: 1">{{r.fin}}</span><span style="font-size: 20px; font-weight: 700">{{r.cent}}</span></div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px">
+        <span style="font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 99px; background: #FFF1F3; color: #B8001F">MCMV · Faixa 1</span>
+        <span style="font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 99px; background: #F5F6F7; color: #3A4043">4,50% a.a.</span>
+        <span style="font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 99px; background: #F5F6F7; color: #3A4043">420 meses</span>
+        <span style="font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 99px; background: #F5F6F7; color: #3A4043">{{r.sis}}</span>
+      </div>
+      <div style="margin-top: 18px; font-size: 12px; font-weight: 600; color: #5C6467">Como fecham os R$ 220.000</div>
+      <div style="display: flex; gap: 2px; height: 14px; margin-top: 8px">
+        <span class="grow" style="width: {{r.pf}}%; background: #E4032B; border-radius: 6px 2px 2px 6px"></span>
+        <span class="grow" style="width: {{r.ps}}%; background: #1E8E4A; border-radius: 2px"></span>
+        <span class="grow" style="flex: 1; background: #3A4043; border-radius: 2px 6px 6px 2px"></span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px; font-size: 14px">
+        <div style="display: flex; align-items: center; gap: 8px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #E4032B"></span><span style="flex: 1; color: #5C6467">Financiamento</span><b style="font-variant-numeric: tabular-nums; color: #2B3033">{{r.finTxt}}</b></div>
+        <div style="display: flex; align-items: center; gap: 8px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #1E8E4A"></span><span style="flex: 1; color: #5C6467">Subsídio</span><b style="font-variant-numeric: tabular-nums; color: #1E8E4A">R$ 13.209,00</b></div>
+        <div style="display: flex; align-items: center; gap: 8px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #3A4043"></span><span style="flex: 1; color: #5C6467">Entrada mínima</span><b style="font-variant-numeric: tabular-nums; color: #2B3033">{{r.ent}}</b></div>
+      </div>
+    </div>
+
+    <div class="enter d2" style="margin-top: 14px">
+      <div class="segw" role="tablist" aria-label="Sistema de amortização">
+        <button type="button" role="tab" aria-selected="{{ariaPrice}}" class="{{segPrice}}" onClick="{{usaPrice}}">PRICE</button>
+        <button type="button" role="tab" aria-selected="{{ariaSac}}" class="{{segSac}}" onClick="{{usaSac}}">SAC</button>
+      </div>
+    </div>
+
+    <div class="enter d3" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px">
+      <div class="card" style="padding: 16px; border-radius: 20px">
+        <div style="font-size: 12px; color: #727A7D">1ª parcela</div>
+        <div style="font-size: 21px; font-weight: 800; color: #2B3033; margin-top: 2px; font-variant-numeric: tabular-nums">R$ 840,00</div>
+        <div style="height: 6px; border-radius: 99px; background: #E3E7E9; margin-top: 10px; overflow: hidden"><div class="grow" style="width: 100%; height: 100%; background: #1E8E4A; border-radius: 99px"></div></div>
+        <div style="font-size: 12px; font-weight: 700; color: #1E8E4A; margin-top: 6px">30% da renda · no limite</div>
+      </div>
+      <div class="card" style="padding: 16px; border-radius: 20px">
+        <div style="font-size: 12px; color: #727A7D">Última parcela</div>
+        <div style="font-size: 21px; font-weight: 800; color: #2B3033; margin-top: 2px; font-variant-numeric: tabular-nums">{{r.ult}}</div>
+        <div style="font-size: 12px; color: #727A7D; margin-top: 10px; line-height: 1.4">{{r.ultNota}}</div>
+      </div>
+    </div>
+
+    <div class="enter d4 card" style="margin-top: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px">
+        <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #2B3033">Parcela ao longo do prazo</h3>
+        <span style="font-size: 12px; color: #727A7D">estimativa</span>
+      </div>
+      <div style="display: flex; gap: 14px; margin-top: 8px; font-size: 12px; font-weight: 600; color: #3A4043">
+        <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 3px; border-radius: 2px; background: #E4032B"></span>PRICE</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 14px; height: 3px; border-radius: 2px; background: #2563A8"></span>SAC</span>
+      </div>
+      <svg viewBox="0 0 340 150" width="100%" role="img" aria-label="Parcela PRICE fica entre R$ 790 e R$ 890; SAC cai de R$ 840 para R$ 310 em 35 anos" style="display: block; margin-top: 6px; overflow: visible">
+        <g font-family="DM Sans, sans-serif" font-size="10" fill="#727A7D">
+          <line x1="36" y1="18.3" x2="330" y2="18.3" stroke="#EEF0F1"></line><text x="0" y="21.5">R$ 900</text>
+          <line x1="36" y1="68" x2="330" y2="68" stroke="#EEF0F1"></line><text x="0" y="71">R$ 600</text>
+          <line x1="36" y1="117.7" x2="330" y2="117.7" stroke="#E3E7E9"></line><text x="0" y="121">R$ 300</text>
+          <text x="36" y="142" text-anchor="middle">hoje</text><text x="118.9" y="142" text-anchor="middle">10 anos</text><text x="201.7" y="142" text-anchor="middle">20 anos</text><text x="284.6" y="142" text-anchor="middle">30 anos</text>
+        </g>
+        <polyline class="draw" points="36.0,28.2 77.4,39.5 118.9,49.9 160.3,60.7 201.7,70.8 243.1,83.6 284.6,95.8 326.0,116.1" fill="none" stroke="#2563A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        <polyline class="draw" points="36.0,28.2 77.4,27.6 118.9,25.4 160.3,23.8 201.7,20.3 243.1,21.6 284.6,22.3 326.0,36.2" fill="none" stroke="#E4032B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        <circle cx="36" cy="28.2" r="4.5" fill="#E4032B" stroke="#fff" stroke-width="2"></circle>
+        <circle cx="326" cy="36.2" r="4" fill="#E4032B" stroke="#fff" stroke-width="2"></circle>
+        <circle cx="326" cy="116.1" r="4" fill="#2563A8" stroke="#fff" stroke-width="2"></circle>
+      </svg>
+      <p style="margin: 8px 0 0; font-size: 12px; line-height: 1.45; color: #727A7D">No PRICE o seguro sobe com a idade e a parcela chega perto de R$ 890. No SAC ela cai mês a mês.</p>
+    </div>
+
+    <div class="enter d5 card" style="margin-top: 12px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <dc-import name="Icone" icone="escudo" tamanho="40" hint-size="40px,40px"></dc-import>
+        <div><h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #2B3033">Seguradora</h3><div style="font-size: 12px; color: #727A7D">A escolhida vai para o PDF e para o associativo</div></div>
+      </div>
+      <div role="radiogroup" aria-label="Seguradora" style="margin-top: 8px">
+        <sc-for list="{{segs}}" as="g" hint-placeholder-count="3">
+          <button type="button" role="radio" aria-checked="{{g.aria}}" class="{{g.cls}}" onClick="{{g.pick}}">
+            <span class="radio"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+            <span style="flex: 1; min-width: 0"><span style="display: block; font-size: 14px; font-weight: 700; color: #2B3033">{{g.nome}}</span><span style="display: block; font-size: 12px; color: #727A7D">última {{g.ult}}</span></span>
+            <span style="font-size: 15px; font-weight: 800; color: #2B3033; font-variant-numeric: tabular-nums">{{g.pri}}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 12px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <dc-import name="Icone" icone="alvo" tamanho="40" hint-size="40px,40px"></dc-import>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #2B3033">Como chegamos aqui</h3>
+      </div>
+      <ul style="margin: 12px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 9px; font-size: 13px; line-height: 1.45; color: #5C6467">
+        <li style="display: flex; gap: 10px"><span style="width: 6px; height: 6px; border-radius: 50%; background: #E4032B; margin-top: 7px; flex: none"></span>Parcela de até 30% da renda: R$ 840,00.</li>
+        <li style="display: flex; gap: 10px"><span style="width: 6px; height: 6px; border-radius: 50%; background: #E4032B; margin-top: 7px; flex: none"></span>Financiamento de até 80% do imóvel, limitado pela parcela.</li>
+        <li style="display: flex; gap: 10px"><span style="width: 6px; height: 6px; border-radius: 50%; background: #E4032B; margin-top: 7px; flex: none"></span>Prazo pela idade do comprador mais velho.</li>
+        <li style="display: flex; gap: 10px"><span style="width: 6px; height: 6px; border-radius: 50%; background: #E4032B; margin-top: 7px; flex: none"></span>Subsídio pela renda, cidade e composição familiar.</li>
+      </ul>
+    </div>
+    <p style="margin: 14px 6px 0; font-size: 12px; line-height: 1.5; color: #727A7D">Estimativa do motor calibrado no Simulador Habitacional CAIXA. Sujeita à análise de crédito da CAIXA e à aprovação da Direcional.</p>
+  </div>
+
+  <div style="flex: none; display: flex; gap: 10px; padding: 12px 20px 26px; background: #FFFFFF; border-top: 1px solid #E7E9EA">
+    <button class="btn-sec" type="button" style="flex: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg>PDF</button>
+    <button class="btn-pri" type="button" style="flex: 1">Levar ao associativo<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+  </div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"etapa":{"editor":"enum","options":["0","1","2","3","4","5","6"],"default":"0"},"alto":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  base() {
+    const e = Number(this.props.etapa) || 0;
+    return { e: e, modo: 'portal', cidade: 'rp', fgts: true, imovel: false, dep: true, subAnt: false, sistema: 'PRICE', prazo: '420', menos: false, seg: '15' };
+  }
+  renderVals() {
+    const s = Object.assign({}, this.base(), this.state || {});
+    const set = (o) => this.setState(o);
+    const e = s.e;
+    const alto = this.props.alto === true || this.props.alto === 'true';
+    const R = {
+      PRICE: { fin: '167.397', cent: ',73', finTxt: 'R$ 167.397,73', ent: 'R$ 39.393,27', ult: 'R$ 792,22', ultNota: 'Fica perto disso o prazo todo', pf: '76.1', ps: '6', sis: 'PRICE',
+        segs: [['15', 'Caixa Residencial Mais', 'R$ 840,00', 'R$ 792,22'], ['4', 'Tokio Marine', 'R$ 831,97', 'R$ 792,22'], ['14', 'Caixa Residencial', 'R$ 825,92', 'R$ 792,22']] },
+      SAC: { fin: '129.877', cent: ',57', finTxt: 'R$ 129.877,57', ent: 'R$ 76.913,43', ult: 'R$ 310,39', ultNota: 'Cai todo mês até o fim', pf: '59', ps: '6', sis: 'SAC',
+        segs: [['15', 'Caixa Residencial Mais', 'R$ 840,00', 'R$ 310,39'], ['4', 'Tokio Marine', 'R$ 831,49', 'R$ 310,39'], ['14', 'Caixa Residencial', 'R$ 825,92', 'R$ 310,39']] }
+    };
+    const r = R[s.sistema];
+    const Q = {
+      1: { eyebrow: 'Passo 1 · Imóvel', titulo: 'Qual imóvel o cliente quer?', desc: 'Escolha a unidade no portal ou digite o valor de avaliação.', icone: 'predio', temIcone: true },
+      2: { eyebrow: 'Passo 2 · Renda', titulo: 'Qual a renda da família?', desc: 'Some a renda bruta de todos os compradores. Ela define faixa, juros e o teto da parcela.', icone: 'carteira', temIcone: true },
+      3: { eyebrow: 'Passo 3 · Idade', titulo: 'Quando nasceu o comprador mais velho?', desc: 'A idade define o prazo e o valor do seguro.', icone: 'calendario', temIcone: true },
+      4: { eyebrow: 'Passo 4 · Perfil', titulo: 'O que vale para o cliente?', desc: 'Essas respostas mudam o programa, os juros e o subsídio. Toque para ligar ou desligar.', icone: 'maleta', temIcone: false },
+      5: { eyebrow: 'Passo 5 · Condições', titulo: 'Como o cliente quer pagar?', desc: 'Compare os dois sistemas. Dá para trocar depois, no resultado.', icone: 'calculadora', temIcone: true }
+    };
+    const perfilTxt = [s.fgts ? 'FGTS 3 anos' : 'Sem FGTS', s.dep ? 'com dependente' : 'sem dependente'].join(' · ');
+    const resumo = [
+      { k: 1, rot: 'imóvel', t: s.modo === 'portal' ? 'Village Gaia · Apto 305' : 'Imóvel de R$ 220.000' },
+      { k: 2, rot: 'renda', t: 'R$ 2.800/mês' },
+      { k: 3, rot: 'idade', t: '33 anos' },
+      { k: 4, rot: 'perfil', t: perfilTxt },
+      { k: 5, rot: 'condições', t: s.sistema + ' · ' + s.prazo + ' meses' }
+    ].filter((c) => c.k < e).map((c) => Object.assign({}, c, { ir: () => set({ e: c.k }) }));
+    const cidades = [{ id: 'rp', nome: 'Ribeirão Preto' }, { id: 'cps', nome: 'Campinas' }, { id: 'soro', nome: 'Sorocaba' }].map((c) => ({
+      nome: c.nome, cls: s.cidade === c.id ? 'pill pill-on' : 'pill', aria: String(s.cidade === c.id), pick: () => set({ cidade: c.id })
+    }));
+    const tiles = [
+      { id: 'fgts', icone: 'maleta', t: '3 anos de FGTS', d: 'Somando todos os períodos', delay: '0s' },
+      { id: 'imovel', icone: 'chave', t: 'Já tem imóvel na cidade', d: 'Se sim, a conta vai para o SBPE', delay: '-1.1s' },
+      { id: 'dep', icone: 'pessoas', t: 'Mais de um comprador ou dependente', d: 'Sem isso, só 30% do subsídio', delay: '-2.2s' },
+      { id: 'subAnt', icone: 'presente', t: 'Já recebeu subsídio', d: 'Do FGTS ou da União', delay: '-3.3s' }
+    ].map((t) => {
+      const on = !!s[t.id];
+      return Object.assign({}, t, { cls: on ? 'tile tile-on' : 'tile', sw: on ? 'sw sw-on' : 'sw', aria: String(on), toggle: () => { const o = {}; o[t.id] = !on; set(o); } });
+    });
+    const sistemas = [
+      { id: 'PRICE', nome: 'PRICE', desc: 'Parcela parecida do começo ao fim', fin: 'R$ 167,4 mil', parc: 'R$ 840 o prazo todo', tag: 'Financia mais' },
+      { id: 'SAC', nome: 'SAC', desc: 'Parcela que cai com o tempo', fin: 'R$ 129,9 mil', parc: 'R$ 840 até R$ 310', tag: '' }
+    ].map((o) => Object.assign({}, o, { cls: s.sistema === o.id ? 'opt opt-on' : 'opt', aria: String(s.sistema === o.id), pick: () => set({ sistema: o.id }) }));
+    const prazos = [['420', 'Máximo · 420 meses'], ['360', '360'], ['300', '300'], ['240', '240']].map((p) => ({
+      rot: p[1], cls: s.prazo === p[0] ? 'pill pill-on' : 'pill', aria: String(s.prazo === p[0]), pick: () => set({ prazo: p[0] })
+    }));
+    const segs = r.segs.map((g) => ({
+      nome: g[1], pri: g[2], ult: g[3], cls: s.seg === g[0] ? 'srow srow-on' : 'srow', aria: String(s.seg === g[0]), pick: () => set({ seg: g[0] })
+    }));
+    return {
+      altura: alto ? 'auto' : '844px',
+      e: e, isIntro: e === 0, isPerg: e >= 1 && e <= 5, isRes: e >= 6,
+      is1: e === 1, is2: e === 2, is3: e === 3, is4: e === 4, is5: e === 5,
+      q: Q[e] || Q[1],
+      barra: [1, 2, 3, 4, 5].map((k) => ({ cor: k <= e ? '#E4032B' : '#E1E5E7' })),
+      resumo: resumo, temResumo: resumo.length > 0,
+      cidades: cidades, tiles: tiles, sistemas: sistemas, prazos: prazos, segs: segs, r: r,
+      modoIsPortal: s.modo === 'portal', modoIsValor: s.modo === 'valor',
+      segPortal: s.modo === 'portal' ? 'seg seg-on' : 'seg', segValor: s.modo === 'valor' ? 'seg seg-on' : 'seg',
+      ariaPortal: String(s.modo === 'portal'), ariaValor: String(s.modo === 'valor'),
+      modoPortal: () => set({ modo: 'portal' }), modoValor: () => set({ modo: 'valor' }),
+      segPrice: s.sistema === 'PRICE' ? 'seg seg-on' : 'seg', segSac: s.sistema === 'SAC' ? 'seg seg-on' : 'seg',
+      ariaPrice: String(s.sistema === 'PRICE'), ariaSac: String(s.sistema === 'SAC'),
+      usaPrice: () => set({ sistema: 'PRICE' }), usaSac: () => set({ sistema: 'SAC' }),
+      swMenos: s.menos ? 'sw sw-on' : 'sw', ariaMenos: String(s.menos), toggleMenos: () => set({ menos: !s.menos }),
+      resScroll: alto ? '' : 'scroll',
+      rotAvancar: e === 5 ? 'Ver resultado' : 'Continuar',
+      comecar: () => set({ e: 1 }), repetir: () => set({ e: 6 }),
+      voltar: () => set({ e: Math.max(0, e - 1) }), sair: () => set({ e: 0 }),
+      avancar: () => set({ e: Math.min(6, e + 1) }),
+      editar: () => set({ e: 5 }), refazer: () => set({ e: 1 })
+    };
+  }
+}
+</script>
+</body>
+</html>

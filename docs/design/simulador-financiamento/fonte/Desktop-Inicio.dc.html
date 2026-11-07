@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Simulador de Financiamento · desktop, início</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F7}
+.dk,.dk *{box-sizing:border-box}
+:where(.dk) button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;margin:0;text-align:left}
+:where(.dk) input{font:inherit;color:inherit;border:0;background:none;min-width:0;padding:0;margin:0}
+.dk input:focus{outline:none}
+.dk :focus-visible{outline:2px solid #E4032B;outline-offset:3px;border-radius:12px}
+.btn-pri{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:56px;padding:0 28px;border-radius:18px;background:#E4032B;color:#fff;font-weight:700;font-size:16px;white-space:nowrap;box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 12px 24px -10px rgba(228,3,43,.65);transition:transform .12s,background .2s}
+.btn-pri:hover{background:#CF0227}
+.btn-pri:active{transform:scale(.97)}
+.btn-ghost{display:inline-flex;align-items:center;gap:8px;height:56px;padding:0 20px;border-radius:18px;font-weight:600;font-size:15px;color:#5C6467}
+.btn-ghost:hover{background:#fff;color:#2B3033}
+.lnk{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 14px;border-radius:14px;font-size:14px;font-weight:600;color:#5C6467;text-decoration:none}
+.lnk:hover{background:#F5F6F7;color:#2B3033}
+.tl{display:grid;grid-template-columns:24px minmax(0,1fr) auto;column-gap:14px;width:100%;border-radius:14px;padding:0 8px}
+.segw{display:inline-flex;gap:4px;padding:4px;border-radius:99px;background:#E9ECEE}
+.seg{height:42px;padding:0 20px;border-radius:99px;font-size:14px;font-weight:600;color:#5C6467;white-space:nowrap;text-align:center}
+.seg-on{background:#fff;color:#2B3033;box-shadow:0 1px 2px rgba(58,64,67,.1),0 4px 12px -6px rgba(58,64,67,.3)}
+.pill{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 18px;border-radius:99px;background:#fff;border:1.5px solid #E7E9EA;color:#3A4043;font-weight:600;font-size:14px;white-space:nowrap}
+.pill-on{background:#3A4043;border-color:#3A4043;color:#fff}
+.emp{display:flex;flex-direction:column;border-radius:22px;background:#fff;border:1.5px solid #fff;overflow:hidden;box-shadow:0 1px 2px rgba(58,64,67,.06),0 14px 30px -22px rgba(58,64,67,.4);transition:transform .2s,border-color .2s}
+.emp:hover{transform:translateY(-3px)}
+.emp-on{border-color:#E4032B;box-shadow:0 18px 34px -20px rgba(228,3,43,.5)}
+.pick{display:flex;align-items:center;gap:12px;width:100%;padding:14px 18px;border-radius:20px;background:#fff;border:1.5px solid #E7E9EA}
+.pick:hover{border-color:#C9CFD2}
+.chip{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;background:#fff;padding:10px 14px;border-radius:14px;box-shadow:0 1px 2px rgba(58,64,67,.06)}
+.float{animation:float 4.6s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-9px) rotate(-1.5deg)}}
+.now{position:relative}
+.now::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid #E4032B;animation:pulse 2.2s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.55);opacity:.55}100%{transform:scale(1.35);opacity:0}}
+.enter{animation:enter .6s cubic-bezier(.2,.8,.2,1) both}
+.d1{animation-delay:.08s}.d2{animation-delay:.16s}.d3{animation-delay:.24s}
+@keyframes enter{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+kbd{font:inherit;font-size:12px;font-weight:700;padding:3px 7px;border-radius:7px;background:#fff;border:1px solid #E7E9EA;box-shadow:0 1px 0 #E7E9EA}
+@media (prefers-reduced-motion:reduce){.dk *,.dk *::after{animation:none!important;transition:none!important}}
+</style>
+</helmet>
+<div class="dk" style="width: 100%; min-height: 1200px; background: #F5F6F7; font-family: 'DM Sans', system-ui, sans-serif; color: #3A4043">
+  <header style="background: #FFFFFF; border-bottom: 1px solid #E7E9EA">
+    <div style="max-width: 1280px; margin: 0 auto; padding: 0 32px; height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+      <a href="#" style="display: flex; align-items: center; gap: 14px; text-decoration: none; color: #3A4043">
+        <img src="/_blob/62e47367b1daf8f281743eb29b78fccd" alt="Grupo Direcional" style="height: 26px; width: auto; display: block">
+        <span style="width: 1px; height: 24px; background: #E7E9EA"></span>
+        <span style="font-size: 15px; font-weight: 700">Portal do Corretor</span>
+      </a>
+      <nav aria-label="Ferramentas" style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap">
+        <a href="#" class="lnk">Match de Unidades</a>
+        <a href="#" class="lnk">Associativo</a>
+        <a href="#" class="lnk" aria-current="page" style="color: #E4032B; background: #FFF1F3">Financiamento</a>
+      </nav>
+    </div>
+  </header>
+
+  <section style="position: relative; overflow: hidden; background: #FFFFFF; border-bottom: 1px solid #E7E9EA">
+    <div style="max-width: 1280px; margin: 0 auto; padding: 48px 32px 52px; display: flex; flex-wrap: wrap; align-items: center; gap: 40px">
+      <div class="enter" style="flex: 1 1 520px; min-width: 0">
+        <div style="font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #E4032B">Simulador de financiamento · motor CAIXA</div>
+        <h1 style="margin: 14px 0 0; font-size: 60px; line-height: 1.02; font-weight: 800; letter-spacing: -2.2px; color: #2B3033; max-width: 620px; text-wrap: balance">Quanto o seu cliente consegue <span style="color: #E4032B">financiar?</span></h1>
+        <p style="margin: 18px 0 0; font-size: 18px; line-height: 1.55; color: #5C6467; max-width: 56ch">Cinco perguntas e você tem financiamento, subsídio, parcela e entrada, com as regras da CAIXA. Leve tudo para o associativo com um clique ou mande o PDF para o cliente.</p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px">
+          <span class="chip" style="background: #F5F6F7; box-shadow: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E4032B" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>≈ 1 minuto</span>
+          <span class="chip" style="background: #F5F6F7; box-shadow: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E4032B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18l6-6 4 4 6-8"></path></svg>PRICE e SAC lado a lado</span>
+          <span class="chip" style="background: #F5F6F7; box-shadow: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E4032B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg>PDF para o cliente</span>
+        </div>
+        <p style="margin: 18px 0 0; font-size: 13px; color: #727A7D">MCMV faixas 1 a 4 e SBPE · Ribeirão Preto, Campinas e Sorocaba</p>
+      </div>
+
+      <div style="flex: 1 1 440px; position: relative; height: 400px; display: flex; align-items: center; justify-content: center">
+        <div style="position: absolute; width: 380px; height: 380px; border-radius: 50%; border: 1px solid #EEF0F1"></div>
+        <div style="position: absolute; width: 290px; height: 290px; border-radius: 50%; border: 1px solid #E7E9EA"></div>
+        <div style="position: absolute; width: 210px; height: 210px; border-radius: 50%; background: #F5F6F7; box-shadow: inset 0 0 0 1px #E7E9EA"></div>
+        <div class="float" style="position: relative"><dc-import name="Icone" icone="calculadora" tamanho="190" hint-size="190px,190px"></dc-import></div>
+        <div class="float" style="position: absolute; left: 8%; top: 8%; animation-delay: -1.2s"><dc-import name="Icone" icone="casa" tamanho="84" hint-size="84px,84px"></dc-import></div>
+        <div class="float" style="position: absolute; right: 9%; top: 12%; animation-delay: -2.4s"><dc-import name="Icone" icone="moedas" tamanho="78" hint-size="78px,78px"></dc-import></div>
+        <div class="float" style="position: absolute; right: 4%; bottom: 30%; animation-delay: -.6s"><dc-import name="Icone" icone="chave" tamanho="64" hint-size="64px,64px"></dc-import></div>
+        <div class="float" style="position: absolute; left: 12%; bottom: 14%; animation-delay: -3.1s"><dc-import name="Icone" icone="documento" tamanho="70" hint-size="70px,70px"></dc-import></div>
+        <div class="float" style="position: absolute; left: 2%; top: 44%; animation-delay: -1.8s"><dc-import name="Icone" icone="escudo" tamanho="52" hint-size="52px,52px"></dc-import></div>
+        <div class="enter d3" style="position: absolute; right: 2%; bottom: 2%; width: 236px; padding: 16px 18px; border-radius: 22px; background: rgba(255,255,255,.92); backdrop-filter: blur(10px); box-shadow: 0 1px 2px rgba(58,64,67,.08), 0 24px 40px -24px rgba(58,64,67,.45)">
+          <div style="font-size: 12px; color: #727A7D">Financia até</div>
+          <div style="font-size: 26px; font-weight: 800; letter-spacing: -.8px; color: #2B3033; font-variant-numeric: tabular-nums">R$ 167.397</div>
+          <div style="display: flex; gap: 2px; height: 8px; margin-top: 10px"><span style="width: 76%; background: #E4032B; border-radius: 4px 2px 2px 4px"></span><span style="width: 6%; background: #1E8E4A; border-radius: 2px"></span><span style="flex: 1; background: #3A4043; border-radius: 2px 4px 4px 2px"></span></div>
+          <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: #5C6467"><span>Parcela R$ 840</span><span style="color: #1E8E4A; font-weight: 700">+ R$ 13.209</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main style="max-width: 1280px; margin: 0 auto; padding: 40px 32px 56px; display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start">
+    <aside style="flex: 1 1 300px; max-width: 360px; display: flex; flex-direction: column; gap: 14px">
+      <div style="background: #FFFFFF; border-radius: 28px; padding: 26px 18px 18px; box-shadow: 0 1px 2px rgba(58,64,67,.06), 0 20px 40px -30px rgba(58,64,67,.4)">
+        <div style="padding: 0 8px; display: flex; justify-content: space-between; align-items: baseline">
+          <h2 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.4px; color: #2B3033">Simulação</h2>
+          <span style="font-size: 13px; font-weight: 600; color: #727A7D">1 de 5</span>
+        </div>
+        <div style="margin-top: 16px">
+          <div class="tl" style="background: #FFF6F7">
+            <span style="display: flex; flex-direction: column; align-items: center">
+              <span class="now" style="width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 6px solid #E4032B; margin-top: 14px; flex: none"></span>
+              <span style="flex: 1; width: 0; border-left: 2px dashed #D3D8DB; margin-top: 6px; min-height: 12px"></span>
+            </span>
+            <span style="display: flex; flex-direction: column; padding: 11px 0 12px">
+              <span style="font-size: 12px; color: #E4032B; font-weight: 700">Agora</span>
+              <span style="font-size: 15px; font-weight: 700; color: #2B3033">Imóvel</span>
+            </span>
+            <span></span>
+          </div>
+          <sc-for list="{{futuros}}" as="u" hint-placeholder-count="5">
+            <div class="tl" style="height: 46px">
+              <span style="display: flex; flex-direction: column; align-items: center">
+                <span style="width: 12px; height: 12px; border-radius: 50%; border: 2px solid #C9CFD2; margin-top: 15px; flex: none"></span>
+                <span style="flex: 1; width: 0; border-left: 2px dashed #D3D8DB; margin-top: 4px; opacity: {{u.linha}}"></span>
+              </span>
+              <span style="font-size: 15px; color: #727A7D; font-weight: 500; padding-top: 11px">{{u.rot}}</span>
+              <span></span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="border-radius: 24px; padding: 20px; border: 1.5px dashed #D3D8DB; display: flex; gap: 14px; align-items: center">
+        <div style="flex: none; opacity: .55"><dc-import name="Icone" icone="alvo" tamanho="48" hint-size="48px,48px"></dc-import></div>
+        <div><div style="font-size: 15px; font-weight: 700; color: #2B3033">Prévia ao vivo</div><div style="font-size: 13px; line-height: 1.45; color: #727A7D; margin-top: 2px">Faixa, juros e parcela aparecem aqui conforme você responde.</div></div>
+      </div>
+    </aside>
+
+    <section style="flex: 999 1 560px; min-width: 0; padding-top: 8px">
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap">
+        <div style="max-width: 620px">
+          <div style="font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #E4032B">Passo 1 · Imóvel</div>
+          <h2 style="margin: 10px 0 0; font-size: 44px; line-height: 1.05; font-weight: 800; letter-spacing: -1.4px; color: #2B3033">Qual imóvel o cliente quer?</h2>
+          <p style="margin: 12px 0 0; font-size: 17px; line-height: 1.5; color: #5C6467">Escolha a unidade e o valor de avaliação vem da planilha. Sem unidade? Digite o valor.</p>
+        </div>
+        <div class="segw" role="tablist" aria-label="Como informar o imóvel">
+          <button type="button" role="tab" aria-selected="true" class="seg seg-on">Unidade do portal</button>
+          <button type="button" role="tab" aria-selected="false" class="seg">Digitar valor</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 28px" aria-label="Cidade">
+        <button type="button" class="pill pill-on" aria-pressed="true">Ribeirão Preto</button>
+        <button type="button" class="pill" aria-pressed="false">Campinas</button>
+        <button type="button" class="pill" aria-pressed="false">Sorocaba</button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 18px">
+        <button type="button" class="emp emp-on" aria-pressed="true">
+          <span style="position: relative; display: block; height: 120px"><img src="/_blob/1c91892cd95bf8129a07af78a610990a" alt="Fachada do Village Gaia" style="width: 100%; height: 100%; object-fit: cover; display: block"><span style="position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; border-radius: 50%; background: #E4032B; display: grid; place-items: center; box-shadow: 0 4px 10px -2px rgba(228,3,43,.6)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></span>
+          <span style="display: block; padding: 14px 16px 16px"><span style="display: block; font-size: 16px; font-weight: 700; color: #2B3033">Village Gaia</span><span style="display: block; font-size: 13px; color: #727A7D; margin-top: 2px">Ribeirão Preto</span></span>
+        </button>
+        <sc-for list="{{outros}}" as="o" hint-placeholder-count="3">
+          <button type="button" class="emp" aria-pressed="false">
+            <span style="display: grid; place-items: center; height: 120px; background: #F5F6F7"><dc-import name="Icone" icone="predio" tamanho="64" hint-size="64px,64px"></dc-import></span>
+            <span style="display: block; padding: 14px 16px 16px"><span style="display: block; font-size: 16px; font-weight: 700; color: #2B3033">{{o.nome}}</span><span style="display: block; font-size: 13px; color: #727A7D; margin-top: 2px">Ribeirão Preto</span></span>
+          </button>
+        </sc-for>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 18px">
+        <button type="button" class="pick">
+          <span style="flex: 1; min-width: 0"><span style="display: block; font-size: 12px; color: #727A7D">Unidade</span><span style="display: block; font-size: 17px; font-weight: 700; color: #2B3033; margin-top: 2px">Bloco 2 · Apto 305</span><span style="display: block; font-size: 13px; color: #727A7D; margin-top: 2px">2Q C/S Tipo Meio · 3º andar</span></span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#727A7D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+        </button>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-radius: 20px; background: #EFF9F2; border: 1px solid #C7E7D3">
+          <span><span style="display: block; font-size: 12px; color: #2E7D4F; font-weight: 600">Valor de avaliação</span><span style="display: block; font-size: 24px; font-weight: 800; color: #2B3033; letter-spacing: -.5px; font-variant-numeric: tabular-nums">R$ 220.000,00</span></span>
+          <span style="font-size: 12px; font-weight: 700; color: #1E8E4A; background: #fff; padding: 5px 10px; border-radius: 99px">Da planilha</span>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 36px; padding-top: 24px; border-top: 1px solid #E7E9EA">
+        <span style="font-size: 13px; color: #727A7D">Tudo fica salvo neste aparelho até você começar outra simulação.</span>
+        <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap">
+          <span style="font-size: 13px; color: #727A7D">Pressione <kbd>Enter</kbd> para continuar</span>
+          <button type="button" class="btn-pri">Continuar<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      futuros: [{ rot: 'Renda', linha: '1' }, { rot: 'Idade', linha: '1' }, { rot: 'Perfil do cliente', linha: '1' }, { rot: 'Condições', linha: '1' }, { rot: 'Resultado', linha: '0' }],
+      outros: [{ nome: 'Village Park' }, { nome: 'Reserva Jardim Botânico' }, { nome: 'Conquista Clube Ipiranga' }]
+    };
+  }
+}
+</script>
+</body>
+</html>
