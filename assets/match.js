@@ -262,6 +262,8 @@
   var api = {
     numero: numero, temSubsidio: temSubsidio, atoDe: atoDe, atoCliente: atoCliente, seloFaixa: seloFaixa, melhorMatch: melhorMatch, bandaDoValor: bandaDoValor, validarCliente: validarCliente, resumoCliente: resumoCliente,
     avaliarUnidade: avaliarUnidade, buscar: buscar, linhaPdf: linhaPdf, urlAssociativo: urlAssociativo,
+    /* usados tambem pelo /simulador-financiamento (assets/financiamento.js) */
+    travaFaixa3: travaFaixa3, TETO_F3: TETO_F3,
     ORDEM_POLITICAS: ORDEM_POLITICAS
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
