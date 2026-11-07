@@ -156,3 +156,32 @@ test('sem dependente a CAIXA concede 30% do desconto da família; subsídio ante
   assert.equal(M.simular(Object.assign({ fatorSocial: true }, e)).subsidio, 22663);
   assert.equal(M.simular(Object.assign({ fatorSocial: true, subsidioAnterior: true }, e)).subsidio, 0);
 });
+
+test('cronograma: mês 1 e último batem com primeira/ultima de cada seguradora', () => {
+  const hoje = new Date(2026, 10, 7);
+  const base = { renda: 2800, valor: 220000, nascimento: new Date(1993, 2, 14), municipio: '3543402',
+    fgts: true, possuiImovel: false, fatorSocial: true, subsidioAnterior: false, hoje };
+  const casos = [
+    { ...base, sistema: 'PRICE' }, { ...base, sistema: 'SAC' },
+    { ...base, renda: 15000, valor: 500000, fatorSocial: false, sistema: 'PRICE' },   /* SBPE */
+    { ...base, renda: 15000, valor: 500000, fatorSocial: false, sistema: 'SAC' }
+  ];
+  for (const e of casos) {
+    const r = M.simular(e);
+    for (const s of r.seguradoras) {
+      const c = M.cronograma(e, r, s.codigo);
+      assert.equal(c.length, r.prazo);
+      assert.ok(Math.abs(c[0].encargo - s.primeira) <= 0.05, e.sistema + ' ' + s.codigo + ' mes 1: ' + c[0].encargo + ' x ' + s.primeira);
+      assert.ok(Math.abs(c[c.length - 1].encargo - s.ultima) <= 0.05, e.sistema + ' ' + s.codigo + ' ultimo: ' + c[c.length - 1].encargo + ' x ' + s.ultima);
+      const amort = c.reduce((t, x) => t + x.amortizacao, 0);
+      assert.ok(Math.abs(amort - r.valorFinanciamento) <= 0.05, 'soma das amortizacoes');
+      assert.ok(Math.abs(c[c.length - 1].saldo) <= 0.05);
+    }
+  }
+});
+
+test('cronograma: resultado com erro ou seguradora desconhecida devolve []', () => {
+  assert.deepEqual(M.cronograma({}, { erro: 'x' }, '15'), []);
+  const e = { renda: 2800, valor: 220000, nascimento: new Date(1993, 2, 14), municipio: '3543402', sistema: 'PRICE', hoje: new Date(2026, 10, 7) };
+  assert.deepEqual(M.cronograma(e, M.simular(e), '99'), []);
+});

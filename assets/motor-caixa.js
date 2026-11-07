@@ -174,8 +174,41 @@
     };
   }
 
+  /* Cronograma mes a mes do encargo (parcela + juros + MIP + DFI + taxa adm), para o grafico e o
+     total pago do /simulador-financiamento. Mesmas regras do resumo (regras-motor-caixa.md §4):
+     MIP do mes 1 sobre o valor financiado inteiro, depois sobre o saldo apos a amortizacao, com a
+     taxa da faixa de idade na data da parcela; DFI zera no ultimo mes. As contas internas nao
+     arredondam; a amortizacao exibida e a diferenca dos saldos arredondados (soma = financiamento).
+     e = entrada passada ao simular; r = resultado sem erro; codigo = seguradora ('14','15','16','4'). */
+  function cronograma(e, r, codigo) {
+    if (!r || r.erro || !e || !e.nascimento || !e.hoje) return [];
+    var sbpe = r.faixa === 'SBPE';
+    var seg = null;
+    (sbpe ? SEGURADORAS_SBPE : SEGURADORAS).forEach(function (s) { if (s.codigo === codigo) seg = s; });
+    if (!seg) return [];
+    var sac = r.sistema === 'SAC', n = r.prazo, fin = r.valorFinanciamento;
+    var i = sbpe ? SBPE.iMensal : r.jurosNominal / 1200;
+    var prest = fin * i / (1 - Math.pow(1 + i, -n));
+    var dfi = r2(e.valor * seg.dfi / 100);
+    var mip1 = r2(fin * taxaMip(seg, idadeAnos(e.nascimento, addMeses(e.hoje, 1))));
+    var saldo = fin, out = [];
+    for (var m = 1; m <= n; m++) {
+      var data = addMeses(e.hoje, m);
+      var antes = saldo;
+      var juros = saldo * i;
+      var amort = m === n ? saldo : (sac ? fin / n : prest - juros);
+      saldo = m === n ? 0 : saldo - amort;
+      var mip = m === 1 ? mip1 : r2(saldo * (taxaMip(seg, idadeAnos(e.nascimento, data)) || 0));
+      var dfiM = m === n ? 0 : dfi;
+      out.push({ mes: m, data: data, encargo: r2(amort + juros + mip + dfiM + r.taxaAdm),
+        amortizacao: r2(r2(antes) - r2(saldo)), juros: r2(juros), mip: mip, dfi: dfiM,
+        taxaAdm: r.taxaAdm, saldo: r2(saldo) });
+    }
+    return out;
+  }
+
   var api = {
-    simular: simular, subsidio: subsidio, enquadrar: enquadrar, prazoMaximo: prazoMaximo,
+    simular: simular, cronograma: cronograma, subsidio: subsidio, enquadrar: enquadrar, prazoMaximo: prazoMaximo,
     CIDADES: CIDADES, MUNICIPIO_POR_CIDADE: MUNICIPIO_POR_CIDADE
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
