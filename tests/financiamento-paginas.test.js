@@ -44,3 +44,13 @@ for (const f of ['simulador-associativo.html', 'simulador-associativo-blackfrida
     assert.ok(fn.includes('decodificaRespostas'));
   });
 }
+
+test('tela dedicada carrega os módulos e tem os cinco passos', () => {
+  const h = ler('simulador-financiamento.html');
+  for (const s of ['assets/config.js', 'assets/simuladores.js', 'assets/motor-caixa.js', 'assets/match-prosoluto.js', 'assets/match.js', 'assets/financiamento.js', 'assets/financiamento-pdf.js', 'assets/financiamento-app.js', 'assets/credito.js']) assert.ok(h.includes(`src="${s}"`), s);
+  assert.ok(h.includes('jspdf/2.5.1/jspdf.umd.min.js') && h.includes('jspdf-autotable/3.8.2'));
+  assert.ok(h.includes('href="assets/financiamento.css"'));
+  assert.match(h, /<title>[^<]*Simulador de Financiamento/);
+  for (const p of ['Imóvel', 'Renda', 'Idade', 'Perfil', 'Condições']) assert.ok(h.includes(p), p);
+  assert.ok(!h.includes('Cabe financiar'));
+});
