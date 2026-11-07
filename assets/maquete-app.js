@@ -16,7 +16,7 @@ const STATUS_TXT = {
   disponivel: 'Disponível', reservada: 'Reservada', vendida: 'Vendida',
   fora: 'Fora de venda', 'sem-dados': 'Sem dados'
 };
-const CAMERA_TXT = { geral: 'Vista geral', frente: 'Frente', fundos: 'Fundos' };
+const CAMERA_TXT = { geral: 'Vista geral', frente: 'Frente', fundos: 'Fundos', lazer: 'Lazer', portaria: 'Portaria' };
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (ch) => (
@@ -429,9 +429,82 @@ async function iniciar(emp) {
       const b = document.createElement('button');
       b.type = 'button';
       b.textContent = m ? 'Torre ' + m[1] : (CAMERA_TXT[nome] || nome);
-      b.addEventListener('click', () => { st.vista = false; if (cena) cena.irPara(nome); if (st.sel !== null) renderPainel(); });
+      b.addEventListener('click', () => irParaCamera(nome));
       nav.appendChild(b);
+      if (nome === 'lazer' && cfg.ambientes && cfg.ambientes.length) montarMenuLazer(b);
     });
+
+    function irParaCamera(nome) {
+      st.vista = false;
+      if (cena) cena.irPara(nome);
+      if (st.sel !== null) renderPainel();
+    }
+
+    /* menu do botao Lazer: abre ao passar o mouse (ou focar/tocar) e leva a camera ate cada ambiente.
+       Fica fora da barra de cameras porque ela rola na horizontal no celular e cortaria o menu. */
+    function montarMenuLazer(botao) {
+      const menu = document.createElement('div');
+      menu.id = 'mq-ambientes';
+      menu.className = 'mq-card mq-ambientes';
+      menu.setAttribute('role', 'menu');
+      menu.setAttribute('aria-label', 'Ambientes de lazer');
+      menu.hidden = true;
+      cfg.ambientes.forEach((a) => {
+        const it = document.createElement('button');
+        it.type = 'button';
+        it.setAttribute('role', 'menuitem');
+        it.textContent = a.nome;
+        it.addEventListener('click', () => { irParaCamera(a.id); fechar(); });
+        menu.appendChild(it);
+      });
+      document.body.appendChild(menu);
+      botao.setAttribute('aria-haspopup', 'menu');
+      botao.setAttribute('aria-expanded', 'false');
+      botao.setAttribute('aria-controls', menu.id);
+
+      let timer = null;
+      function posicionar() {
+        const r = botao.getBoundingClientRect();
+        const w = menu.offsetWidth;
+        menu.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px';
+        menu.style.bottom = (window.innerHeight - r.top + 10) + 'px';
+      }
+      function abrir() {
+        clearTimeout(timer);
+        menu.hidden = false;
+        posicionar();
+        botao.setAttribute('aria-expanded', 'true');
+      }
+      function fechar() {
+        clearTimeout(timer);
+        menu.hidden = true;
+        botao.setAttribute('aria-expanded', 'false');
+      }
+      /* folga para o mouse atravessar o vao entre o botao e o menu */
+      const fecharDepois = () => { clearTimeout(timer); timer = setTimeout(fechar, 220); };
+      let toque = false;
+      botao.addEventListener('pointerdown', (e) => { toque = e.pointerType === 'touch'; });
+      botao.addEventListener('pointerenter', (e) => { if (e.pointerType !== 'touch') abrir(); });
+      botao.addEventListener('pointerleave', (e) => { if (e.pointerType !== 'touch') fecharDepois(); });
+      menu.addEventListener('pointerenter', () => clearTimeout(timer));
+      menu.addEventListener('pointerleave', (e) => { if (e.pointerType !== 'touch') fecharDepois(); });
+      /* sem hover (toque): o toque no botao alterna o menu; o clique tambem leva a visao geral do lazer */
+      botao.addEventListener('click', () => { if (toque && !menu.hidden) fechar(); else abrir(); });
+      botao.addEventListener('focus', () => { if (botao.matches(':focus-visible')) abrir(); });
+      [botao, menu].forEach((el) => el.addEventListener('focusout', (e) => {
+        if (!menu.contains(e.relatedTarget) && e.relatedTarget !== botao) fecharDepois();
+      }));
+      document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape' || menu.hidden) return;
+        const dentro = menu.contains(document.activeElement);
+        fechar();
+        if (dentro) botao.focus();
+      });
+      document.addEventListener('pointerdown', (e) => {
+        if (!menu.hidden && !menu.contains(e.target) && !botao.contains(e.target)) fechar();
+      });
+      window.addEventListener('resize', () => { if (!menu.hidden) posicionar(); });
+    }
 
     /* busca */
     const input = $('mq-busca-input');

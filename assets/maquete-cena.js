@@ -15,7 +15,7 @@
    pelo atributo de vertice "_unit" da malha "unidades" (sem um
    material por unidade). Texel = rgb da cor + a = forca do emissivo.
 
-   Qualidade de render: pixel ratio ate 2, ACES Filmic, anisotropia maxima nas
+   Qualidade de render: pixel ratio ate 2 (cai em movimento se a GPU nao acompanhar), ACES Filmic, anisotropia maxima nas
    texturas do modelo, luz de ambiente por PMREM (ceu procedural do
    modo) para reflexos suaves, sombra PCF suave ajustada ao terreno e
    renderizada so quando a luz muda (o modelo e estatico).
@@ -40,11 +40,11 @@ const ATE_FACHADA = 1.13;
    A luz difusa de ceu fica com a hemisferica: env em todo o modelo custava ~2x o tempo de GPU. */
 const MODOS = {
   noite: {
-    ceuTopo: '#050913', ceuBase: '#1c2541', nevoa: '#1c2541',
+    ceuTopo: '#050913', ceuBase: '#1c2541', nevoa: '#1c2541', nuvens: 0,
     envTopo: '#1a2440', envHorizonte: '#3a4a74', envChao: '#0b0e15', envInt: 0.6,
-    hemiCeu: '#5a6c9c', hemiChao: '#10131a', hemi: 0.9,
+    hemiCeu: '#66789f', hemiChao: '#12151c', hemi: 1.15,
     sol: '#a9bcff', solInt: 0.5, exposicao: 1.15, emissivo: 1.6, sombra: false,
-    corSel: '#3DDC84', luzJanelas: 1.15,
+    corSel: '#3DDC84', luzJanelas: 1.15, luzInterna: 0.5, luzAcesa: 3.2, luzTela: 1.1, luzAgua: 0.55, luzChao: 1,
     estados: {
       disponivel: ['#FFC872', 1],
       reservada: ['#D9323F', 0.55],
@@ -55,12 +55,12 @@ const MODOS = {
     esmaecido: ['#161b25', 0], misturaEsmaecido: 1
   },
   cores: {
-    ceuTopo: '#7FA9D9', ceuBase: '#E8EEF3', nevoa: '#E8EEF3',
+    ceuTopo: '#3F7FCB', ceuBase: '#DCEAF4', nevoa: '#DCEAF4', nuvens: 1,
     envTopo: '#6f9fd6', envHorizonte: '#eef3f7', envChao: '#8f9a7c', envInt: 1.0,
     /* fachadas na sombra nao podem virar preto (modelo real e grafite): ceu (env) + hemi */
     hemiCeu: '#dfeaf7', hemiChao: '#a3a892', hemi: 1.5,
     sol: '#fff1dc', solInt: 4.5, exposicao: 0.9, emissivo: 0.35, sombra: true,
-    corSel: '#FFD23F', luzJanelas: 0,
+    corSel: '#FFD23F', luzJanelas: 0, luzInterna: 0.16, luzAcesa: 0, luzTela: 0.35, luzAgua: 0, luzChao: 0,
     estados: {
       disponivel: ['#2FA866', 0.5],
       reservada: ['#D9323F', 0.35],
@@ -75,11 +75,28 @@ const MODOS = {
 function criarCeu() {
   const mat = new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false, toneMapped: false,
-    uniforms: { topo: { value: new THREE.Color() }, base: { value: new THREE.Color() } },
+    uniforms: { topo: { value: new THREE.Color() }, base: { value: new THREE.Color() }, nuvens: { value: 0 } },
     vertexShader: `varying vec3 vDir;
       void main() { vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-    fragmentShader: `uniform vec3 topo; uniform vec3 base; varying vec3 vDir;
-      void main() { float h = smoothstep(-0.02, 0.55, vDir.y); gl_FragColor = vec4(mix(base, topo, h), 1.0);
+    /* nuvens: ruido fractal projetado num plano alto. So o ceu paga esse custo, e so nos pixels de ceu */
+    fragmentShader: `uniform vec3 topo; uniform vec3 base; uniform float nuvens; varying vec3 vDir;
+      float h21(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+      float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(h21(i), h21(i + vec2(1, 0)), f.x), mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), f.x), f.y); }
+      float fbm(vec2 p) { float v = 0.0, a = 0.5; for (int k = 0; k < 5; k++) { v += a * vn(p); p = p * 2.03 + 7.1; a *= 0.5; } return v; }
+      void main() {
+        vec3 d = normalize(vDir);
+        float h = smoothstep(-0.02, 0.55, d.y);
+        vec3 c = mix(base, topo, h);
+        if (nuvens > 0.0 && d.y > 0.0) {
+          vec2 p = d.xz / (d.y + 0.14) * 1.5;
+          float n = fbm(p);
+          float mass = smoothstep(0.50, 0.74, n);
+          float somb = smoothstep(0.50, 0.92, fbm(p + vec2(0.13, 0.09)));
+          vec3 corN = mix(vec3(1.0), vec3(0.66, 0.71, 0.79), somb * 0.75);
+          c = mix(c, corN, mass * smoothstep(0.015, 0.14, d.y) * 0.93 * nuvens);
+        }
+        gl_FragColor = vec4(c, 1.0);
       #include <colorspace_fragment>
       }`
   });
@@ -138,6 +155,40 @@ function afinarTexturas(modelo, aniso) {
         t.needsUpdate = true;
       });
     });
+  });
+}
+
+/* recortes (folhas, guarda-corpos, alambrado): borda suave com MSAA, sem serrilhado nem halo;
+   sombras de contato so escurecem o que esta embaixo */
+function ajustarRecortes(modelo) {
+  const vistos = new Set();
+  modelo.traverse((o) => {
+    if (!o.isMesh) return;
+    (Array.isArray(o.material) ? o.material : [o.material]).forEach((mt) => {
+      if (!mt || vistos.has(mt)) return;
+      vistos.add(mt);
+      if (mt.alphaTest > 0) {
+        mt.alphaToCoverage = true;
+        mt.alphaTest = 0.35;
+      }
+      /* folhagem: o verso do cartao recebe a mesma luz da frente (sem riscos escuros nas copas) */
+      if (/^(folha_|fronde|touceira|flores_)/.test(mt.name || '')) {
+        mt.onBeforeCompile = (shader) => {
+          shader.fragmentShader = shader.fragmentShader.replace('#include <normal_fragment_begin>',
+            THREE.ShaderChunk.normal_fragment_begin.replace(/gl_FrontFacing \? 1\.0 : - 1\.0/, '1.0'));
+        };
+        mt.customProgramCacheKey = () => 'folhagem';
+        mt.needsUpdate = true;
+      }
+      if (/^sombra_contato/.test(mt.name || '')) {
+        mt.depthWrite = false;
+        mt.polygonOffset = true;
+        mt.polygonOffsetFactor = -1;
+        mt.polygonOffsetUnits = -1;
+        mt.vertexColors = false;
+      }
+    });
+    if (/^vegetacao|^sombra/.test(o.name)) o.renderOrder = 1;
   });
 }
 
@@ -284,7 +335,7 @@ export async function criarCena(container, cfg, ev = {}) {
 
 async function montar(renderer, container, cfg, grade, total, onProgresso, onHover, onClick, extras) {
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(40, 1, 0.5, 4000);
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.4, 4000);
   const ceu = criarCeu();
   scene.add(ceu);
   scene.fog = new THREE.Fog('#000000', 320, 950);
@@ -346,8 +397,9 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
   }
   scene.add(modelo);
   afinarTexturas(modelo, renderer.capabilities.getMaxAnisotropy());
+  ajustarRecortes(modelo);
   /* materiais lisos que ganham reflexo do ceu (o resto e reboco/chao fosco: so luz difusa) */
-  const LISOS = /vidro|guarda|agua|veneziana|unidade/i;
+  const LISOS = /vidro|guarda|agua|veneziana|unidade|inox|espelho|carro_|cromo/i;
   const matsReflexo = new Set([matUnidades]);
   /* janelas de dormitorio (parte de vidro) e banheiro: emissao do modelo, acesa so a noite */
   const matsJanela = new Set();
@@ -357,6 +409,50 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
       if (mt && mt.isMeshStandardMaterial && LISOS.test(mt.name || '')) matsReflexo.add(mt);
       if (mt && mt.emissiveMap && /janela/i.test(mt.name || '')) matsJanela.add(mt);
     });
+  });
+  /* luzes do lazer a noite. Ambientes sem teto: paredes, pisos e moveis recebem brilho quente proprio
+     (sai a custo zero de GPU, sem uma luz real por sala). luz_*: fontes acesas; tela: TV e geladeira;
+     agua e pastilha: piscina iluminada; luz_chao: poca de luz somada, invisivel de dia. */
+  const luzes = { interno: new Set(), acesa: new Set(), tela: new Set(), agua: new Set(), chao: new Set() };
+  modelo.traverse((o) => {
+    if (!o.isMesh) return;
+    let raiz = o;
+    while (raiz.parent && raiz.parent !== modelo) raiz = raiz.parent;
+    const mt = o.material;
+    const nome = (mt && mt.name) || '';
+    if (/^(vidro_lazer|agua|sombra_contato|luz_chao|marcas)/.test(nome)) o.castShadow = false;
+    if (!mt || !mt.isMeshStandardMaterial) return;
+    if (/^luz_chao/.test(nome)) {
+      mt.transparent = true;
+      mt.blending = THREE.AdditiveBlending;
+      mt.depthWrite = false;
+      mt.vertexColors = false;
+      mt.polygonOffset = true;
+      mt.polygonOffsetFactor = -2;
+      mt.polygonOffsetUnits = -2;
+      /* so a textura, sem iluminacao: emissivo puro */
+      mt.color.set('#000000');
+      mt.emissive.set('#ffffff');
+      mt.emissiveMap = mt.map;
+      luzes.chao.add(mt);
+      o.renderOrder = 2;
+    } else if (/^luz_/.test(nome)) {
+      mt.emissive.copy(mt.color);
+      luzes.acesa.add(mt);
+    } else if (/^tela/.test(nome)) {
+      mt.emissive.set('#ffffff');
+      mt.emissiveMap = mt.map;
+      luzes.tela.add(mt);
+    } else if (/^(agua|pastilha)/.test(nome)) {
+      mt.emissive.set(nome.startsWith('agua') ? '#28a7a2' : '#3a8f8c');
+      if (mt.map) mt.emissiveMap = mt.map;
+      luzes.agua.add(mt);
+    } else if (/^(int_|piso_|carpete|ripado|placa)/.test(nome) || raiz.name === 'moveis') {
+      if (/^(metal|cromo|inox|espelho|vidro)/.test(nome)) return;
+      mt.emissive.copy(mt.color).multiply(new THREE.Color('#ffd9a8'));
+      if (mt.map) mt.emissiveMap = mt.map;
+      luzes.interno.add(mt);
+    }
   });
   ajustarSombra(modelo);
   const malhasUn = malhasDeUnidades(modelo);
@@ -372,7 +468,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
   const setUn = new Set(malhasUn);
   /* alvos do picking: so o que pode tapar uma unidade (torres). Chao, entorno, arvores e
      guarda-corpos (vazados) ficam de fora - tambem deixa o raycast barato */
-  const SEM_PICK = /^(terreno|entorno|arvores|guarda-corpo)/;
+  const SEM_PICK = /^(terreno|entorno|guarda-corpo|lazer|moveis|vegetacao|carros|torre-\d-det)/;
   const alvosPick = [];
   modelo.traverse((o) => {
     if (!o.isMesh) return;
@@ -386,7 +482,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
-  controls.minDistance = 18;
+  controls.minDistance = 6;
   controls.maxDistance = 340;
   controls.maxPolarAngle = Math.PI / 2 - 0.06;
   controls.screenSpacePanning = false;
@@ -470,6 +566,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     const m = MODOS[modo];
     ceu.material.uniforms.topo.value.set(m.ceuTopo);
     ceu.material.uniforms.base.value.set(m.ceuBase);
+    ceu.material.uniforms.nuvens.value = m.nuvens;
     scene.fog.color.set(m.nevoa);
     hemi.color.set(m.hemiCeu);
     hemi.groundColor.set(m.hemiChao);
@@ -487,6 +584,11 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     uni.uEmissivo.value = m.emissivo;
     uni.uCorSel.value.set(m.corSel);
     matsJanela.forEach((mt) => { mt.emissive.set('#ffffff'); mt.emissiveIntensity = m.luzJanelas; });
+    luzes.interno.forEach((mt) => { mt.emissiveIntensity = m.luzInterna; });
+    luzes.acesa.forEach((mt) => { mt.emissiveIntensity = m.luzAcesa; });
+    luzes.tela.forEach((mt) => { mt.emissiveIntensity = m.luzTela; });
+    luzes.agua.forEach((mt) => { mt.emissiveIntensity = m.luzAgua; });
+    luzes.chao.forEach((mt) => { mt.visible = m.luzChao > 0; mt.emissiveIntensity = m.luzChao; });
     contorno.material.color.set(m.corSel);
   }
 
@@ -544,7 +646,8 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
   }
 
   function irPara(nome) {
-    const c = cfg.cameras && cfg.cameras[nome];
+    /* cameras da barra ou ambientes do menu Lazer */
+    const c = (cfg.cameras && cfg.cameras[nome]) || (cfg.ambientes || []).find((a) => a.id === nome);
     if (!c) { console.warn('[maquete] camera desconhecida:', nome); return; }
     animarPara(new THREE.Vector3().fromArray(c.pos), new THREE.Vector3().fromArray(c.alvo));
   }
@@ -647,6 +750,39 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
   ro.observe(container);
   redimensionar();
 
+  /* ---------- resolucao adaptativa: parado sempre nitido; em movimento, se a GPU nao acompanha,
+     desce a resolucao ate ficar fluido e volta ao maximo quando a camera para ---------- */
+  const RATIO_MAX = Math.min(window.devicePixelRatio || 1, 2);
+  const RATIO_MIN = Math.min(1, RATIO_MAX);
+  let ratioAtual = RATIO_MAX;
+  let ratioMov = RATIO_MAX;
+  let tUltimoMov = 0;
+  let tQuadroAnt = 0;
+  let somaDt = 0;
+  let nDt = 0;
+  function usarRatio(r) {
+    if (r === ratioAtual) return;
+    ratioAtual = r;
+    renderer.setPixelRatio(r);
+    redimensionar();
+  }
+  function adaptarResolucao(agora, emMovimento) {
+    if (emMovimento) {
+      usarRatio(ratioMov);
+      /* intervalo entre quadros seguidos em movimento; pausas nao contam */
+      if (tUltimoMov && agora - tUltimoMov < 100) { somaDt += agora - tQuadroAnt; nDt++; }
+      tUltimoMov = agora;
+      tQuadroAnt = agora;
+      if (nDt >= 24) {
+        const media = somaDt / nDt;
+        somaDt = 0; nDt = 0;
+        if (media > 25 && ratioMov > RATIO_MIN) ratioMov = Math.max(RATIO_MIN, ratioMov * 0.8);
+      }
+    } else if (ratioAtual !== RATIO_MAX && agora - tUltimoMov > 300) {
+      usarRatio(RATIO_MAX);
+    }
+  }
+
   /* ---------- loop (so renderiza quando algo muda) ---------- */
   let rodando = true;
   function quadro(agora) {
@@ -667,6 +803,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     /* camera andou com o mouse parado: refaz o picking para a etiqueta nao ficar velha */
     if (camMudou && ultimoMouse) hoverPend = ultimoMouse;
     processarHover();
+    adaptarResolucao(agora, camMudou);
     if (uni.uSel.value >= 0) {
       uni.uPulso.value = 0.5 + 0.5 * Math.sin(agora / 260);
       sujo = true;

@@ -295,11 +295,44 @@ svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width:
 }
 .mq-rodape > * { pointer-events: auto; }
 .mq-legenda {
-  justify-self: start; display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 10px 16px; border-radius: 18px;
-  font-size: .78rem; color: var(--tx2);
+  justify-self: start; display: flex; flex-wrap: nowrap; gap: 14px; padding: 10px 16px; border-radius: 18px;
+  width: max-content; max-width: 100%; font-size: .78rem; color: var(--tx2);
 }
 .mq-legenda span { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
 .mq-cameras { grid-column: 2; }
+
+/* menu do botao Lazer */
+.mq-ambientes {
+  position: fixed; z-index: 12; display: grid; grid-template-columns: repeat(3, auto); gap: 2px;
+  padding: 8px; border-radius: 18px; max-width: calc(100vw - 16px);
+  animation: mq-ambientes-entra .18s var(--suave);
+}
+.mq-ambientes[hidden] { display: none; }
+.mq-ambientes button {
+  border: 0; background: none; border-radius: 10px; padding: .42rem .7rem; text-align: left;
+  font-size: .8rem; font-weight: 500; color: var(--tx2); white-space: nowrap;
+  transition: background-color .2s var(--suave), color .15s;
+}
+.mq-ambientes button:hover, .mq-ambientes button:focus-visible { color: #fff; background: var(--sobre-hover); }
+@keyframes mq-ambientes-entra { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* sem espaco para os tres lado a lado: legenda em cima, sem quebrar linha */
+@media (max-width: 1250px) {
+  .mq-rodape { grid-template-columns: auto auto; justify-content: start; }
+  .mq-legenda { grid-column: 1 / -1; }
+  .mq-cameras { grid-column: 1; }
+}
+@media (max-width: 840px) {
+  .mq-rodape { grid-template-columns: minmax(0, 1fr); }
+  .mq-cameras { overflow-x: auto; scrollbar-width: none; justify-self: start; max-width: 100%; }
+  .mq-cameras::-webkit-scrollbar { display: none; }
+}
+/* painel aberto ocupa a direita: a legenda sai antes de faltar espaco */
+@media (max-width: 1700px) {
+  body.painel-aberto .mq-rodape { grid-template-columns: minmax(0, 1fr); justify-items: start; }
+  body.painel-aberto .mq-cameras { grid-column: 1; }
+  body.painel-aberto .mq-legenda { display: none; }
+}
 .mq-dot {
   display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: none;
   border: 1px solid rgba(255, 255, 255, .28); box-shadow: inset 0 1px 1px rgba(255, 255, 255, .35);
@@ -560,7 +593,9 @@ body.painel-aberto .mq-rodape { right: calc(var(--painel) + 2 * var(--gap)); }
   .mq-esq { flex: 1; min-width: 0; width: auto; }
   .mq-filtros { max-height: calc(100vh - 260px); }
   .mq-rodape { grid-template-columns: 1fr; gap: 8px; }
-  .mq-legenda { padding: 7px 12px; gap: 4px 10px; font-size: .72rem; }
+  .mq-legenda { padding: 7px 12px; gap: 9px; font-size: .68rem; overflow-x: auto; scrollbar-width: none; }
+  .mq-legenda span { gap: 5px; }
+  .mq-ambientes { grid-template-columns: repeat(2, 1fr); }
   .mq-cameras { grid-column: 1; overflow-x: auto; scrollbar-width: none; }
   .mq-cameras::-webkit-scrollbar { display: none; }
   .mq-aviso { bottom: auto; top: 86px; z-index: 13; }
@@ -583,7 +618,7 @@ body.painel-aberto .mq-rodape { right: calc(var(--painel) + 2 * var(--gap)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mq-painel, .mq-filtros, .mq-busca-msg, .mq-aviso, .mq-modal { animation: none; }
+  .mq-painel, .mq-filtros, .mq-busca-msg, .mq-aviso, .mq-modal, .mq-ambientes { animation: none; }
   .mq-bussola svg { transition: none; }
   .mq-topo, .mq-rodape, #maquete-carregando, .mq-btn, .mq-seg button, .mq-chip, .mq-fechar, .mq-planta, .mq-voltar svg { transition: none; }
   .mq-btn:active, .mq-seg button:active, .mq-chip:active, .mq-fechar:hover, .mq-fechar:active, .mq-filtros-btn:active { transform: none; }
