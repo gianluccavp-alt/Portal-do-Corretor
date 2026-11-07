@@ -342,32 +342,162 @@ window.FinanciamentoPopup = (function () {
     return aberto;
   }
 
-  /* ---------- botao no passo Cliente do associativo ---------- */
+  /* ---------- botao no passo Cliente do associativo (spec §6.1 e §6.4) ---------- */
+  var CALC = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="3"></rect><path d="M8 7h8M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"></path></svg>';
+  var ALERTA = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4M12 17h.01"></path></svg>';
+
+  function imovelDe(ctx) {
+    return { cidade: ctx.cidade || '', avaliacao: ctx.avaliacao > 0 ? ctx.avaliacao : 0, venda: ctx.venda > 0 ? ctx.venda : 0,
+             ato: ctx.ato > 0 ? ctx.ato : 0, empId: ctx.empId || null, empNome: ctx.empNome || '',
+             unidade: ctx.unidade || '', unidadeRotulo: ctx.unidadeRotulo || '' };
+  }
+
+  /* cfg = { tema, slot, contexto(), ler(), aplicar(valores), campos:{ renda, financiado, subsidio, parcFin } } */
   function ligarAssociativo(cfg) {
     var tema = cfg.tema === 'black' ? 'black' : 'claro';
     var slot = cfg.slot;
-    slot.setAttribute('data-fz-tema', tema);
+    var area = slot.closest('.card') || slot;          /* campos marcados herdam as cores do tema */
+    area.setAttribute('data-fz-tema', tema);
+    var st = { registro: null, retrato: null, anteriores: null, marcados: {}, velha: false, toast: null, timer: null };
 
-    function abrirPopup(extra) {
-      abrir(Object.assign({ tema: tema, contexto: cfg.contexto(), aoCopiar: function (valores) { cfg.aplicar(valores); } }, extra || {}));
+    function retratoDe(ctx) { return { empId: ctx.empId || null, unidade: ctx.unidade || '', venda: ctx.venda > 0 ? ctx.venda : 0 }; }
+
+    function alvos(campo) {
+      var el = document.getElementById(cfg.campos[campo]);
+      if (!el) return [];
+      var par = el.closest('.pair');
+      return par ? [par] : [el];
+    }
+    function marca(campo, on) {
+      alvos(campo).forEach(function (n) { n.classList.toggle('fz-campo-sim', on); });
+      var lab = document.querySelector('label[for="' + cfg.campos[campo] + '"]');
+      if (!lab) return;
+      var tag = lab.querySelector('.fz-tag');
+      if (on && !tag) { tag = document.createElement('span'); tag.className = 'fz-tag'; tag.textContent = 'simulação'; lab.appendChild(tag); }
+      if (!on && tag) tag.parentNode.removeChild(tag);
+    }
+    function marcaTodos(on) {
+      Object.keys(cfg.campos).forEach(function (c) { st.marcados[c] = on; marca(c, on); });
+    }
+
+    function tiraToast() {
+      clearTimeout(st.timer);
+      if (st.toast && st.toast.parentNode) st.toast.parentNode.removeChild(st.toast);
+      st.toast = null;
+    }
+    function mostraToast() {
+      tiraToast();
+      var t = document.createElement('div');
+      t.className = 'fz-toast'; t.setAttribute('role', 'status'); t.setAttribute('data-fz-tema', tema);
+      t.innerHTML = '<span class="fz-toast-ok">' + CHECK + '</span><span>4 campos preenchidos com a simulação</span><button type="button" data-fz="desfazer">Desfazer</button>';
+      t.addEventListener('click', function (ev) { if (ev.target.closest('[data-fz="desfazer"]')) desfazer(); });
+      document.body.appendChild(t);
+      st.toast = t;
+      st.timer = setTimeout(tiraToast, 6000);
     }
 
     function desenhaBotao() {
-      slot.innerHTML = '<div class="fz-cta">' + '<span class="fz-cta-ico">' + ICONE('calculadora', 54) + '</span>' +
+      slot.innerHTML = '<div class="fz-cta"><span class="fz-cta-ico">' + ICONE('calculadora', 54) + '</span>' +
         '<span class="fz-cta-txt"><b>Ainda sem a simulação da CAIXA?</b><span>Calcule financiamento, subsídio e parcela aqui e preencha estes campos com um clique.</span></span>' +
-        '<button type="button" class="fz-cta-btn" data-fz="abrir"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="3"></rect><path d="M8 7h8M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"></path></svg>Simular financiamento</button></div>';
+        '<button type="button" class="fz-cta-btn" data-fz="abrir">' + CALC + 'Simular financiamento</button></div>';
+    }
+    function desenhaFaixa() {
+      if (st.velha) {
+        slot.innerHTML = '<div class="fz-faixa fz-faixa-velha" role="status"><span class="fz-faixa-ico">' + ALERTA + '</span>' +
+          '<span class="fz-faixa-txt"><b>A unidade mudou depois da simulação</b><span>Os valores continuam nos campos. Refaça para atualizar com a unidade nova.</span></span>' +
+          '<button type="button" class="fz-faixa-lnk fz-faixa-pri" data-fz="refazer">Refazer</button></div>';
+        return;
+      }
+      slot.innerHTML = '<div class="fz-faixa" role="status"><span class="fz-faixa-ico">' + CHECK + '</span>' +
+        '<span class="fz-faixa-txt"><b>Financiamento simulado' + (st.registro.resumo ? ' · ' + esc(st.registro.resumo) : '') + '</b>' +
+        '<span>Os campos em verde vieram da simulação. Editar um deles tira a marca.</span></span>' +
+        '<button type="button" class="fz-faixa-lnk" data-fz="ver">Ver simulação</button>' +
+        '<button type="button" class="fz-faixa-lnk" data-fz="pdf">' + BAIXAR + 'PDF</button></div>';
+    }
+
+    function aoCopiar(valores, registro) {
+      var ctx = cfg.contexto();
+      st.anteriores = cfg.ler();
+      st.retrato = retratoDe(ctx);
+      st.registro = registro;
+      st.velha = false;
+      cfg.aplicar(valores);
+      marcaTodos(true);
+      desenhaFaixa();
+      mostraToast();
+    }
+    function desfazer() {
+      tiraToast();
+      if (st.anteriores) cfg.aplicar(st.anteriores);
+      marcaTodos(false);
+      st.registro = null; st.anteriores = null; st.velha = false;
+      desenhaBotao();
+    }
+    function abrirPopup(extra) {
+      abrir(Object.assign({ tema: tema, contexto: cfg.contexto(), aoCopiar: aoCopiar }, extra || {}));
+    }
+    function pdf() {
+      var ctx = cfg.contexto(), reg = st.registro;
+      var im = reg.imovel && reg.imovel.avaliacao > 0 ? reg.imovel : imovelDe(ctx);
+      if (!(im.avaliacao > 0) || !window.FinanciamentoPdf) return;
+      var hoje = new Date(), comp = F.comparar(reg.resp, im, hoje);
+      if (comp[reg.resp.sistema].erro) return;
+      window.FinanciamentoPdf.gerar(F.dadosPdf({ comp: comp, sistema: reg.resp.sistema, imovel: im, resp: reg.resp, seg: reg.seg,
+        pessoas: { cliente: ctx.cliente || '', corretor: ctx.corretor || '' }, hoje: hoje }));
     }
 
     slot.addEventListener('click', function (ev) {
       var b = ev.target.closest('[data-fz]');
-      if (b && b.getAttribute('data-fz') === 'abrir') abrirPopup();
+      if (!b) return;
+      var a = b.getAttribute('data-fz');
+      if (a === 'abrir') abrirPopup();
+      else if (a === 'ver') abrirPopup({ respostas: st.registro.resp, seg: st.registro.seg, etapa: 'resultado' });
+      else if (a === 'refazer') abrirPopup({ respostas: st.registro.resp, seg: st.registro.seg, etapa: 1 });
+      else if (a === 'pdf') pdf();
+    });
+
+    /* editar um campo copiado tira a marca so dele */
+    Object.keys(cfg.campos).forEach(function (c) {
+      [cfg.campos[c], cfg.campos[c] + '-p'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('input', function () { if (st.marcados[c]) { st.marcados[c] = false; marca(c, false); } });
+      });
     });
 
     desenhaBotao();
     return {
-      atualizar: function () {},
-      limpar: function () { desenhaBotao(); },
-      restaurar: function () {}
+      /* chamado no fim do render() do associativo */
+      atualizar: function () {
+        if (!st.registro) return;
+        var ctx = cfg.contexto();
+        if (!st.registro.resumo && ctx.avaliacao > 0) {
+          var s = F.simular(st.registro.resp, imovelDe(ctx), new Date());
+          if (!s.erro) { st.registro.resumo = resumoDe(s); if (!st.velha) desenhaFaixa(); }
+        }
+        if (st.velha) return;
+        var r = retratoDe(ctx);
+        /* venda ainda desconhecida no retrato (planilha carregando na chegada pela URL): adota a primeira conhecida */
+        if (!st.retrato.venda && r.venda > 0 && r.empId === st.retrato.empId && r.unidade === st.retrato.unidade) st.retrato.venda = r.venda;
+        if (r.empId !== st.retrato.empId || r.unidade !== st.retrato.unidade || Math.abs(r.venda - st.retrato.venda) > 1) {
+          st.velha = true;
+          desenhaFaixa();
+        }
+      },
+      limpar: function () {
+        tiraToast();
+        marcaTodos(false);
+        st.registro = null; st.anteriores = null; st.velha = false;
+        desenhaBotao();
+      },
+      /* chegada pela URL com origem=financiamento: marcas e faixa, sem toast nem Desfazer */
+      restaurar: function (dados) {
+        var ctx = cfg.contexto();
+        st.registro = { resp: dados.resp, seg: dados.seg, imovel: imovelDe(ctx), resumo: '' };
+        st.retrato = retratoDe(ctx);
+        st.anteriores = null; st.velha = false;
+        marcaTodos(true);
+        desenhaFaixa();
+      }
     };
   }
 

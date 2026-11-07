@@ -1831,7 +1831,7 @@ function renderTabela(c){
   tb.innerHTML=html;
 }
 
-function render(){ renderEmpInfo(); renderUnidInfo(); renderPols(); renderResultado(); renderShell(); }
+function render(){ renderEmpInfo(); renderUnidInfo(); renderPols(); renderResultado(); renderShell(); if(fz) fz.atualizar(); }
 
 /* =========================================================
    SHELL MOBILE
@@ -2366,6 +2366,7 @@ $('b-toggle-tbl').addEventListener('click', function(){ S.verTudo=!S.verTudo; re
 
 $('b-reset').addEventListener('click', function(){
   S=estadoInicial(); venc1Movido=false;
+  if(fz) fz.limpar();
   if(quill) quill.setText('');
   else if($('f-obs')) $('f-obs').value='';
   avisaTamanhoObs();

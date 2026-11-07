@@ -17,3 +17,11 @@ test('associativo normal carrega o popup e tem o slot no passo Cliente', () => {
 test('ícones 3D novos existem', () => {
   for (const n of ['escudo', 'documento']) assert.ok(fs.existsSync(path.join(__dirname, '..', `assets/img/icones-3d/${n}.svg`)));
 });
+
+test('associativo normal avisa o popup no render e no limpar', () => {
+  const h = ler('simulador-associativo.html');
+  assert.match(h, /function render\(\)\{[^\n]*fz\.atualizar\(\)/);
+  const ini = h.indexOf("$('b-reset').addEventListener");
+  const reset = h.slice(ini, h.indexOf('\n});', ini));
+  assert.ok(reset.includes('fz.limpar()'));
+});
