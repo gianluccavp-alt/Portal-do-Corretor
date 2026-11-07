@@ -61,6 +61,8 @@ window.FinanciamentoPopup = (function () {
     };
     if (!(st.resp.renda > 0) && ctx.renda > 0) st.resp.renda = ctx.renda;
     st.nascTxt = dataTxt(st.resp.nascimento);
+    /* resultado so abre com respostas e imovel validos; senao comeca no passo 1 */
+    if (st.etapa === 'resultado' && F.validar(st.resp, st.imovel, hoje).length) st.etapa = 1;
     var origem = document.activeElement;
 
     var veu = document.createElement('div');
@@ -438,6 +440,7 @@ window.FinanciamentoPopup = (function () {
       marcaTodos(true);
       desenhaFaixa();
       mostraToast();
+      var ver = slot.querySelector('[data-fz="ver"]'); if (ver) ver.focus();
     }
     function desfazer() {
       tiraToast();
@@ -464,7 +467,11 @@ window.FinanciamentoPopup = (function () {
       if (!b) return;
       var a = b.getAttribute('data-fz');
       if (a === 'abrir') abrirPopup();
-      else if (a === 'ver') abrirPopup({ respostas: st.registro.resp, seg: st.registro.seg, etapa: 'resultado' });
+      else if (a === 'ver') {
+        var c = cfg.contexto(), im = st.registro.imovel;
+        if (!(c.avaliacao > 0) && im && im.avaliacao > 0) c = Object.assign({}, c, { avaliacao: im.avaliacao, cidade: im.cidade || c.cidade });
+        abrir({ tema: tema, contexto: c, aoCopiar: aoCopiar, respostas: st.registro.resp, seg: st.registro.seg, etapa: 'resultado' });
+      }
       else if (a === 'refazer') abrirPopup({ respostas: st.registro.resp, seg: st.registro.seg, etapa: 1 });
       else if (a === 'pdf') pdf();
     });
@@ -490,7 +497,7 @@ window.FinanciamentoPopup = (function () {
         if (st.velha) return;
         var r = retratoDe(ctx);
         /* retrato tirado com a planilha ainda carregando (chegada pela URL): adota o primeiro contexto completo */
-        if (!st.retrato.completo) { if (r.completo) st.retrato = r; return; }
+        if (!st.retrato.completo && r.completo && r.empId === st.retrato.empId && r.unidade === st.retrato.unidade) { st.retrato = r; return; }
         /* sem valor digitado, a venda de referencia acompanha a planilha (promocionais, recarga) */
         if (!(st.retrato.valorImovel > 0) && !(r.valorImovel > 0) && r.empId === st.retrato.empId && r.unidade === st.retrato.unidade) st.retrato.venda = r.venda;
         if (mudou(st.retrato, r)) {

@@ -102,6 +102,12 @@
     sim.capacidade = r.valorFinanciamento;
     if (venda > 0) {
       var teto = r2(venda - r.subsidio - ato);
+      /* o motor entende valorFinanciamento 0 como "sem teto": sem espaco para financiar e aviso */
+      if (teto <= 0) {
+        sim.erro = 'Sem valor para financiar';
+        sim.mensagem = 'O valor de venda menos subsídio e ato não deixa nada para financiar. Revise o valor do imóvel ou o ato.';
+        return sim;
+      }
       if (teto < r.valorFinanciamento) {
         motorIn.valorFinanciamento = Math.max(0, teto);
         r = Motor.simular(motorIn);

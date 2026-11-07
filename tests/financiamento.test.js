@@ -147,3 +147,9 @@ test('dadosPdf: nome do arquivo, seguradora escolhida e SBPE sem subsídio', () 
   assert.equal(ps.principal.subsidio, null);
   assert.ok(ps.condicoes.some(([k, v]) => k === 'Parcela máxima' && v === '25% da renda'));
 });
+
+test('simular: venda que não deixa nada para financiar vira aviso, não financia a capacidade', () => {
+  const s = F.simular(RESP, { ...GAIA, venda: 5000, ato: 0 }, HOJE);
+  assert.ok(s.erro);
+  assert.match(s.mensagem, /nada para financiar/);
+});
