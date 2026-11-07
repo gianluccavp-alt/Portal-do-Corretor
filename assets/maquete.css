@@ -623,3 +623,65 @@ body.painel-aberto .mq-rodape { right: calc(var(--painel) + 2 * var(--gap)); }
   .mq-topo, .mq-rodape, #maquete-carregando, .mq-btn, .mq-seg button, .mq-chip, .mq-fechar, .mq-planta, .mq-voltar svg { transition: none; }
   .mq-btn:active, .mq-seg button:active, .mq-chip:active, .mq-fechar:hover, .mq-fechar:active, .mq-filtros-btn:active { transform: none; }
 }
+
+/* ---------- apartamento decorado: passeio em primeira pessoa ---------- */
+.mq-apto-entrar { width: 100%; margin-top: 10px; }
+.mq-apto-entrar svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+body.apto-ativo .mq-topo, body.apto-ativo .mq-rodape, body.apto-ativo .mq-painel, body.apto-ativo .mq-sel,
+body.apto-ativo .mq-tip, body.apto-ativo .mq-aviso, body.apto-ativo .mq-ambientes { display: none !important; }
+.apto-hud { position: fixed; inset: 0; z-index: 12; pointer-events: none; }
+.apto-hud > *, .apto-rodape > * { pointer-events: auto; }
+.apto-id {
+  position: absolute; top: var(--gap); left: var(--gap);
+  display: flex; flex-direction: column; gap: 3px; padding: 14px 18px; pointer-events: none;
+}
+.apto-id strong { font-size: 1.32rem; font-weight: 700; letter-spacing: -.4px; line-height: 1.2; }
+.apto-id p { margin: 0; font-size: .8rem; color: var(--tx2); }
+.apto-sair { position: absolute; top: var(--gap); right: var(--gap); background: var(--tint-forte); -webkit-backdrop-filter: var(--vidro-blur); backdrop-filter: var(--vidro-blur); }
+.apto-sair svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.apto-ajuda {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px 26px; text-align: center; pointer-events: none;
+}
+.apto-ajuda strong { font-size: 1.02rem; font-weight: 600; }
+.apto-ajuda-teclas { display: grid; grid-template-columns: auto auto; gap: 7px 12px; align-items: center; justify-items: start; font-size: .84rem; color: var(--tx2); }
+.apto-ajuda-teclas > span:nth-child(odd) { justify-self: end; display: inline-flex; gap: 3px; }
+.apto-ajuda kbd {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 25px; height: 25px; padding: 0 6px;
+  border-radius: 7px; border: 1px solid var(--fio-forte); background: var(--sobre); color: var(--tx);
+  font: 600 .76rem 'DM Sans', system-ui, sans-serif;
+}
+.apto-rodape {
+  position: absolute; left: var(--gap); right: var(--gap); bottom: var(--gap);
+  display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none;
+}
+.apto-ambientes { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.apto-ambientes::-webkit-scrollbar { display: none; }
+.apto-nota { margin: 0; font-size: .7rem; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, .75); text-align: center; pointer-events: none; }
+.apto-setas {
+  display: none; position: absolute; right: var(--gap); bottom: 104px;
+  grid-template-columns: repeat(3, 48px); grid-template-rows: repeat(2, 48px); gap: 6px;
+}
+.apto-setas button {
+  border-radius: 14px; border: 1px solid var(--fio-forte); background: var(--tint-forte); color: #fff; font-size: 1.1rem;
+  touch-action: none; -webkit-user-select: none; user-select: none;
+}
+.apto-setas button:nth-child(1) { grid-column: 2; grid-row: 1; }
+.apto-setas button:nth-child(2) { grid-column: 1; grid-row: 2; }
+.apto-setas button:nth-child(3) { grid-column: 2; grid-row: 2; }
+.apto-setas button:nth-child(4) { grid-column: 3; grid-row: 2; }
+@media (pointer: coarse) {
+  .apto-setas { display: grid; }
+  .apto-ajuda { display: none; }
+}
+.apto-carregando {
+  position: fixed; inset: 0; z-index: 20;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  padding: 16px; text-align: center; color: #fff;
+  background: radial-gradient(60% 50% at 50% 42%, rgba(228, 3, 43, .10) 0%, rgba(228, 3, 43, 0) 70%), radial-gradient(120% 90% at 50% 100%, #1c2541 0%, #0b1020 60%);
+  transition: opacity .45s var(--suave);
+}
+.apto-carregando.fim { opacity: 0; pointer-events: none; }
+.apto-carregando strong { font-size: 1.5rem; font-weight: 700; letter-spacing: -.5px; }
+.apto-carregando p { margin: 0; font-size: .86rem; color: #FFB3BE; }
+.apto-carregando .maquete-barra span { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--red); transition: width .25s var(--suave); }

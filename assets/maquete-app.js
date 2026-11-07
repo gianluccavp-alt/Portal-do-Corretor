@@ -64,6 +64,8 @@ async function iniciar(emp) {
     filtros: { soDisponiveis: false, tipos: [], sol: '', andarMin: 0, andarMax: ANDAR_MAX }
   };
   let cena = null;
+  let aptoAtivo = null;
+  let aptoBaixando = false;
 
   /* ---------- planilha (com timeout) ---------- */
   function carregarPlanilha() {
@@ -137,6 +139,12 @@ async function iniciar(emp) {
   aplicarDados(units);
   atualizar();
   $('maquete-carregando').classList.add('fim');
+  /* link direto para o passeio: ?apto=torre-andar-final (ex.: 2-12-5) */
+  const linkApto = /^(\d+)-(\d+)-(\d+)$/.exec(new URLSearchParams(location.search).get('apto') || '');
+  if (linkApto) {
+    const idxApto = M.indice(gcfg, +linkApto[1], +linkApto[2], +linkApto[3]);
+    if (idxApto !== -1 && temApto(st.grade.celulas[idxApto])) entrarNoApto(idxApto);
+  }
 
   /* ---------- estado -> cena + DOM ---------- */
   /* a noite as disponiveis ja sao as unicas acesas: "So disponiveis" nao muda nada e some */
@@ -336,6 +344,12 @@ async function iniciar(emp) {
         '<span>' + esc(planta.title || tipoLabel) + '<em>Ampliar</em></span></button>';
     }
 
+    if (temApto(c)) {
+      h += '<button type="button" class="mq-btn mq-apto-entrar" data-acao="apto">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>' +
+        'Entrar no apartamento decorado</button>';
+    }
+
     h += '<div class="mq-p-meta">' +
       '<div><span class="mq-lab">Andar</span><b>' + andarTxt + '</b></div>' +
       '<div><span class="mq-lab">Posição</span><b>' + M.posicaoLabel(tipo) + '</b></div>' +
@@ -372,6 +386,82 @@ async function iniciar(emp) {
     if (st.sel === null) return;
     const i = M.vizinhaDisponivel(st.grade, st.sel, dir, st.visiveis);
     if (i !== null) abrir(i);
+  }
+
+  /* ---------- apartamento decorado ---------- */
+  function temApto(c) {
+    const a = cfg.apto;
+    return !!(a && a.finais.includes(c.final) && c.andar >= a.andarMin && a.torres[c.torre]);
+  }
+
+  async function entrarNoApto(idx) {
+    if (aptoBaixando || aptoAtivo || !cena) return;
+    const c = st.grade.celulas[idx];
+    const a = cfg.apto;
+    aptoBaixando = true;
+    const tela = $('apto-carregando');
+    const barra = $('apto-progresso');
+    barra.style.width = '0%';
+    $('apto-carregando-nome').textContent = 'Torre ' + c.torre + ' · Unidade ' + pad2(c.andar) + pad2(c.final);
+    tela.hidden = false;
+    tela.classList.remove('fim');
+    $('apto-erro').hidden = true;
+    let pronto;
+    try {
+      pronto = await cena.prepararApto(a, (p) => { barra.style.width = Math.round(p * 100) + '%'; });
+    } catch (e) {
+      console.error('[maquete] apartamento', e);
+      $('apto-erro').hidden = false;
+      setTimeout(() => { tela.hidden = true; }, 2600);
+      aptoBaixando = false;
+      return;
+    }
+    aptoBaixando = false;
+    montarAmbientes(pronto.ambientes);
+    const [cx, cy] = a.torres[c.torre];
+    document.body.classList.add('apto-ativo');
+    $('apto-hud').hidden = false;
+    $('apto-unidade').textContent = 'Torre ' + c.torre + ' · Unidade ' + pad2(c.andar) + pad2(c.final) + ' · ' + c.andar + 'º andar';
+    $('apto-ajuda').hidden = false;
+    $('apto-ajuda-titulo').textContent = 'Clique na tela para olhar com o mouse';
+    aptoAtivo = cena.entrarApto({ cx, cy, andar: c.andar }, {
+      onAmbiente: (am) => {
+        if (!am) return;
+        $('apto-ambiente').textContent = am.nome;
+        document.querySelectorAll('#apto-ambientes button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === am.id)));
+      },
+      onTrava: (preso) => { $('apto-ajuda').hidden = preso; },
+      onInteragiu: () => { $('apto-ajuda').hidden = true; },
+      /* navegador recusou prender o mouse: olhar passa a ser arrastando */
+      onTravaFalhou: () => { $('apto-ajuda-titulo').textContent = 'Arraste com o mouse para olhar'; },
+      onEsc: sairDoApto
+    });
+    tela.classList.add('fim');
+    setTimeout(() => { tela.hidden = true; }, 500);
+  }
+
+  function montarAmbientes(lista) {
+    const nav = $('apto-ambientes');
+    if (nav.childElementCount) return;
+    lista.forEach((am) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.id = am.id;
+      b.textContent = am.nome;
+      b.addEventListener('click', () => { if (aptoAtivo) aptoAtivo.irPara(am.id); b.blur(); });
+      nav.appendChild(b);
+    });
+  }
+
+  function sairDoApto() {
+    if (!aptoAtivo) return;
+    aptoAtivo = null;
+    cena.sairApto();
+    document.body.classList.remove('apto-ativo');
+    $('apto-hud').hidden = true;
+    /* devolve as cores de status e a selecao que estavam na tela */
+    atualizar();
+    if (st.sel !== null) cena.destacar(st.sel);
   }
 
   /* ---------- busca ---------- */
@@ -615,11 +705,20 @@ async function iniciar(emp) {
     $('mq-painel-corpo').addEventListener('click', (e) => {
       const pl = e.target.closest('[data-acao="planta"]');
       if (pl) { abrirPlanta(pl.dataset.src, pl.dataset.titulo); return; }
+      if (e.target.closest('[data-acao="apto"]')) { entrarNoApto(st.sel); return; }
       const b = e.target.closest('[data-acao="vista"]');
       if (!b || st.sel === null || !cena) return;
       st.vista = !st.vista;
       if (st.vista) cena.vistaDaUnidade(st.sel); else cena.focarUnidade(st.sel);
       renderPainel();
+    });
+
+    /* apartamento decorado */
+    $('apto-sair').addEventListener('click', sairDoApto);
+    document.querySelectorAll('#apto-setas button').forEach((b) => {
+      const liga = (v) => (e) => { e.preventDefault(); if (aptoAtivo) aptoAtivo.tecla(b.dataset.tecla, v); };
+      b.addEventListener('pointerdown', liga(true));
+      ['pointerup', 'pointerleave', 'pointercancel'].forEach((t) => b.addEventListener(t, liga(false)));
     });
 
     /* teclado: Esc fecha, setas navegam (fora de campos) */

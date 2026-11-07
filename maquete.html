@@ -152,6 +152,41 @@
   </div>
 </div>
 
+<!-- apartamento decorado: passeio em primeira pessoa -->
+<div id="apto-hud" class="apto-hud" hidden>
+  <div class="mq-card apto-id">
+    <span class="mq-eyebrow">Apartamento decorado</span>
+    <strong id="apto-ambiente">Entrada</strong>
+    <p id="apto-unidade"></p>
+  </div>
+  <button type="button" id="apto-sair" class="mq-btn mq-btn-ghost apto-sair">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>Voltar para a maquete</button>
+  <div id="apto-ajuda" class="mq-card apto-ajuda">
+    <strong id="apto-ajuda-titulo">Clique na tela para olhar com o mouse</strong>
+    <div class="apto-ajuda-teclas">
+      <span class="apto-setas-ico"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd></span><span>andar</span>
+      <span><kbd>Shift</kbd></span><span>mais rápido</span>
+      <span><kbd>Esc</kbd></span><span>soltar o mouse</span>
+    </div>
+  </div>
+  <div id="apto-setas" class="apto-setas" aria-label="Andar">
+    <button type="button" data-tecla="f" aria-label="Frente">↑</button>
+    <button type="button" data-tecla="e" aria-label="Esquerda">←</button>
+    <button type="button" data-tecla="t" aria-label="Trás">↓</button>
+    <button type="button" data-tecla="d" aria-label="Direita">→</button>
+  </div>
+  <div class="apto-rodape">
+    <nav id="apto-ambientes" class="mq-seg apto-ambientes" aria-label="Ambientes"></nav>
+    <p class="apto-nota">Imagem ilustrativa. Decoração, móveis e eletrodomésticos não fazem parte da unidade entregue.</p>
+  </div>
+</div>
+<div id="apto-carregando" class="apto-carregando" hidden>
+  <span class="mq-eyebrow">Apartamento decorado</span>
+  <strong id="apto-carregando-nome"></strong>
+  <div class="maquete-barra"><span id="apto-progresso"></span></div>
+  <p id="apto-erro" hidden>Não foi possível abrir o apartamento. Tente de novo.</p>
+</div>
+
 <div id="maquete-carregando">
   <span class="mq-eyebrow">Maquete 3D</span>
   <strong id="mq-carregando-nome"></strong>

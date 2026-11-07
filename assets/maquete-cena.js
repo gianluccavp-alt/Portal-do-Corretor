@@ -6,7 +6,7 @@
      ev  = { onProgresso(p 0..1), onHover(idx|null, x, y), onClick(idx|null) }
    Cena = { pintar(estados, visiveis, modo), destacar(idx|null),
             focarUnidade(idx), irPara(nomeCamera), vistaDaUnidade(idx),
-            dispose() }
+            prepararApto(cfg, onProgresso), entrarApto(unidade, ev), sairApto(), dispose() }
    ev tambem aceita onSelecao({x, y}|null) - ponto da tela acima da unidade
    selecionada (badge) - e onRumo(graus) - azimute da camera (0 = olhando
    para o norte, 90 = para o leste), para a bussola.
@@ -788,6 +788,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
   function quadro(agora) {
     if (!rodando) return;
     requestAnimationFrame(quadro);
+    if (apto && apto.ativo) { apto.quadro(agora); return; }
     let camMudou = false;
     if (anim) {
       const t = Math.min(1, (agora - anim.t0) / DUR_ANIM);
@@ -819,6 +820,41 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
   pintar(new Array(total).fill('sem-dados'), null, 'cores');
   requestAnimationFrame(quadro);
 
+  /* ---------- apartamento decorado: carrega sob demanda (maquete-apto.js) e assume o loop ---------- */
+  let aptoPromessa = null;
+  let apto = null;
+  function prepararApto(cfgApto, onP) {
+    if (!aptoPromessa) {
+      aptoPromessa = import('./maquete-apto.js').then(({ carregarApto }) => carregarApto({
+        renderer, scene, camera, controls, modelo, sol, carregarGLB, usarRatio, ratioMax: RATIO_MAX
+      }, cfgApto, onP)).then((a) => { apto = a; return a; });
+      aptoPromessa.catch(() => { aptoPromessa = null; });
+    }
+    return aptoPromessa;
+  }
+  function entrarApto(unidade, cb) {
+    if (!apto) return null;
+    /* vai para o dia, sem as cores de status e sem selecao: e um passeio, nao um mapa de vendas */
+    aplicarModo('cores');
+    uni.uSel.value = -1;
+    uni.uHover.value = -1;
+    uni.uEmissivo.value = 0;
+    contorno.visible = false;
+    corEsm.set('#cfc4b3');
+    for (let i = 0; i < total; i++) {
+      dados[i * 4] = corEsm.r; dados[i * 4 + 1] = corEsm.g; dados[i * 4 + 2] = corEsm.b; dados[i * 4 + 3] = 0;
+    }
+    tex.needsUpdate = true;
+    onHover(null, 0, 0);
+    extras.onSelecao(null);
+    apto.entrar(unidade, cb);
+    return apto;
+  }
+  function sairApto() {
+    if (apto) apto.sair();
+    pedirRender();
+  }
+
   function dispose() {
     rodando = false;
     ro.disconnect();
@@ -842,5 +878,5 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     el.remove();
   }
 
-  return { pintar, destacar, focarUnidade, irPara, vistaDaUnidade, dispose };
+  return { pintar, destacar, focarUnidade, irPara, vistaDaUnidade, prepararApto, entrarApto, sairApto, dispose };
 }

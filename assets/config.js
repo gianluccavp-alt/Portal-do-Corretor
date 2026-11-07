@@ -364,6 +364,13 @@ window.CITIES = [
           botaoVisivel: true,
           simId: 'gaia',
           modelo: 'assets/3d/village-gaia/gaia.glb',
+          /* apartamento decorado (passeio em primeira pessoa): finais com modelo pronto, a partir do andar indicado.
+             torres: centro da torre em metros, no sistema do gerador do modelo (Z para cima) */
+          apto: {
+            pasta: 'assets/3d/village-gaia/apto/', arquivo: 'apto-final05', versao: '4', exposicaoInterna: 1.5,
+            finais: [5], andarMin: 1, peDireito: 2.9,
+            torres: { 1: [31.886, 19.661], 2: [-26.174, 19.661], 3: [-84.534, 19.661] }
+          },
           grade: { torres: [1, 2, 3], andares: 20, finais: 8 },
           /* torres do modelo real: centros em x = 31.9 (T1), -26.2 (T2), -84.5 (T3), z = -19.7;
              varandas (unidades) nas faces +x (finais 1, 2, 7, 8) e -x (finais 3 a 6) */
