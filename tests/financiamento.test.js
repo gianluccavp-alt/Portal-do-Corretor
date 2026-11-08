@@ -14,7 +14,6 @@ test('simular: caso de referência do canvas', () => {
   assert.equal(s.r.valorFinanciamento, 167397.73);
   assert.equal(s.r.subsidio, 13209);
   assert.equal(s.entrada, 39393.27);
-  assert.equal(s.baseEntrada, 'avaliacao');
   assert.equal(s.segPadrao, '15');
   assert.equal(s.parcelaMax, 840);
   assert.equal(s.limitado, false);
@@ -26,8 +25,7 @@ test('simular: teto venda − subsídio − ato limita e refaz a parcela', () =>
   assert.equal(s.capacidade, 167397.73);
   assert.equal(s.r.valorFinanciamento, 159291);
   assert.equal(s.r.seguradoras.find((x) => x.codigo === '15').primeira, 800.76);
-  assert.equal(s.entrada, 0);
-  assert.equal(s.baseEntrada, 'venda');
+  assert.equal(s.entrada, 47500);   /* avaliação 220.000 − financiamento − subsídio */
 });
 
 test('simular: trava da Faixa 3 em R$ 400 mil', () => {
@@ -168,4 +166,11 @@ test('seguradorasOrdenadas: maior 1ª parcela primeiro, sem mexer na lista origi
   const lista = [{ codigo: '14', primeira: 2967.36 }, { codigo: '15', primeira: 3000 }, { codigo: '4', primeira: 2982.82 }];
   assert.deepEqual(F.seguradorasOrdenadas(lista).map((s) => s.codigo), ['15', '4', '14']);
   assert.deepEqual(lista.map((s) => s.codigo), ['14', '15', '4']);
+});
+
+test('entrada é calculada sobre a avaliação, como no simulador da CAIXA, mesmo com valor de venda', () => {
+  const im = { ...GAIA, avaliacao: 366000, venda: 312800, ato: 1000 };
+  const s = F.simular({ ...RESP, renda: 10000, fatorSocial: false }, im, HOJE);
+  assert.ok(!s.erro);
+  assert.equal(s.entrada, Math.round((366000 - s.r.valorFinanciamento - s.r.subsidio) * 100) / 100);
 });

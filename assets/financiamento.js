@@ -108,7 +108,7 @@
 
     var r = Motor.simular(motorIn);
     var sim = { erro: null, mensagem: null, motorIn: motorIn, r: r, capacidade: 0, limitado: false,
-                trava: trava, entrada: 0, baseEntrada: venda > 0 ? 'venda' : 'avaliacao',
+                trava: trava, entrada: 0,
                 segPadrao: null, parcelaMax: 0 };
     if (r.erro) { sim.erro = r.erro; sim.mensagem = mensagemErro(r.erro); return sim; }
 
@@ -128,8 +128,8 @@
         sim.limitado = true;
       }
     }
-    var base = venda > 0 ? venda : imovel.avaliacao;
-    sim.entrada = r2(base - r.valorFinanciamento - r.subsidio - ato);
+    /* como no simulador da CAIXA: a entrada sai da avaliacao, nao do valor de venda */
+    sim.entrada = r2(imovel.avaliacao - r.valorFinanciamento - r.subsidio);
     sim.segPadrao = seguradoraPadrao(r.seguradoras);
     sim.parcelaMax = r2(r.comprometimento * resp.renda);
     return sim;
@@ -247,7 +247,7 @@
     var sim = ctx.comp[ctx.sistema], r = sim.r, resp = ctx.resp, im = ctx.imovel;
     var outro = ctx.sistema === 'PRICE' ? 'SAC' : 'PRICE';
     var seg = seguradoraDe(sim, ctx.seg);
-    var base = sim.baseEntrada === 'venda' ? im.venda : im.avaliacao;
+    var base = im.avaliacao;
     var cliente = (ctx.pessoas && ctx.pessoas.cliente) || '', corretor = (ctx.pessoas && ctx.pessoas.corretor) || '';
     var dados = [
       ['Renda familiar bruta', brl(resp.renda)],

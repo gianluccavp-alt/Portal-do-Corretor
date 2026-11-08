@@ -175,7 +175,7 @@ window.FinanciamentoPopup = (function () {
           '<button type="button" class="fz-lnk" data-acao="editar">Editar respostas</button></div></div>';
       }
       var r = s.r, seg = segEscolhida(s), segObj = r.seguradoras.filter(function (x) { return x.codigo === seg; })[0];
-      var base = s.baseEntrada === 'venda' ? st.imovel.venda : st.imovel.avaliacao;
+      var base = st.imovel.avaliacao;
       var pf = r.valorFinanciamento / base * 100, ps = r.subsidio / base * 100;
       var v = F.valoresCopia(s, seg, st.resp.renda);
       var segp = function (id) { var on = r.sistema === id; return '<button type="button" role="tab" aria-selected="' + on + '" class="fz-seg' + (on ? ' fz-seg-on' : '') + '" data-acao="sis" data-v="' + id + '" data-foco="rsis-' + id + '">' + id + '</button>'; };

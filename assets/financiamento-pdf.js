@@ -167,8 +167,7 @@ window.FinanciamentoPdf = (function () {
       /* rodape */
       doc.setDrawColor(LINHA[0], LINHA[1], LINHA[2]); doc.setLineWidth(0.3); doc.line(M, 276, R, 276);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); cor(doc, CINZA);
-      doc.text(doc.splitTextToSize(p.aviso, 140), M, 281);
-      doc.setFont('helvetica', 'bold'); cor(doc, GRAFITE); doc.text('Grupo Direcional', R, 281, { align: 'right' });
+      doc.text(doc.splitTextToSize(p.aviso, R - M), M, 281);
 
       doc.save(p.arquivo);
     });

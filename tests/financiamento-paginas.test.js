@@ -84,3 +84,10 @@ test('resultado: sem o card de PDF, com o aviso novo', () => {
   assert.ok(!a.includes('Da planilha'));
   assert.ok(a.includes('Estimativa de Simulação Habitacional CAIXA. Sujeita à análise de crédito da CAIXA e à aprovação da Direcional.'));
 });
+
+test('resultado: a tabela fica dentro do card e os textos riscados saíram', () => {
+  const a = ler('assets/financiamento-app.js');
+  assert.ok(!a.includes('</table></div>'), 'um </div> a mais fecha a coluna principal antes da hora');
+  assert.ok(!a.includes("% da renda (' + F.brl(s.parcelaMax)"));
+  assert.ok(!ler('assets/financiamento-pdf.js').includes('Grupo Direcional'));
+});

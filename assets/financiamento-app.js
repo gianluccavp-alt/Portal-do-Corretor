@@ -617,7 +617,7 @@ window.FinanciamentoResultado = (function () {
     });
     var idade0 = F.idadeAnos(st.resp.nascimento, hoje);
     ctx = { st: st, im: im, hoje: hoje, comp: comp, series: series, prazo: r.prazo };
-    var base = s.baseEntrada === 'venda' ? im.venda : im.avaliacao;
+    var base = im.avaliacao;
     var pf = r.valorFinanciamento / base * 100, ps = r.subsidio / base * 100, pe = Math.max(0, s.entrada) / base * 100;
     var pctRenda = Math.round(seg.primeira / st.resp.renda * 100);
     var segp = function (k) { var on = st.resp.sistema === k; return '<button type="button" role="tab" aria-selected="' + on + '" class="fz-seg' + (on ? ' fz-seg-on' : '') + '" data-r="sis" data-v="' + k + '">' + k + '</button>'; };
@@ -649,8 +649,8 @@ window.FinanciamentoResultado = (function () {
           '<div class="fzr-leg"><div><small><i class="fzr-d fzr-d-fin"></i>Financiamento · ' + Math.round(pf) + '%</small><b>' + F.brl(r.valorFinanciamento) + '</b></div>' +
           (r.subsidio > 0 ? '<div><small><i class="fzr-d fzr-d-sub"></i>Subsídio · ' + Math.round(ps) + '%</small><b class="fzr-verde">' + F.brl(r.subsidio) + '</b></div>' : '') +
           '<div><small><i class="fzr-d fzr-d-ent"></i>Entrada mínima · ' + Math.round(pe) + '%</small><b>' + F.brl(s.entrada) + '</b></div></div>' +
-          '<div class="fzr-parcelas"><div class="fzr-parc"><div class="fzr-parc-l"><div><small>1ª parcela</small><b>' + F.brl(seg.primeira) + '</b></div><div class="fzr-dir"><small>da renda</small><b class="fzr-verde">' + pctRenda + '%</b></div></div>' +
-            '<div class="fzr-trilho"><span style="width:' + Math.min(100, pctRenda / (r.comprometimento * 100) * 100).toFixed(1) + '%"></span></div><p>Parcela máxima da CAIXA: ' + Math.round(r.comprometimento * 100) + '% da renda (' + F.brl(s.parcelaMax) + ').</p></div>' +
+          '<div class="fzr-parcelas"><div class="fzr-parc"><div class="fzr-parc-l"><div><small>1ª parcela</small><b>' + F.brl(seg.primeira) + '</b></div><div class="fzr-dir"><b class="fzr-verde">' + pctRenda + '%</b><small>da renda</small></div></div>' +
+            '<div class="fzr-trilho"><span style="width:' + Math.min(100, pctRenda / (r.comprometimento * 100) * 100).toFixed(1) + '%"></span></div><p>Parcela máxima da CAIXA: ' + Math.round(r.comprometimento * 100) + '% da renda.</p></div>' +
           '<div class="fzr-parc"><small>Última parcela</small><b>' + F.brl(seg.ultima) + '</b><p>Sem o seguro de danos físicos, que zera no último mês.</p></div></div></article>' +
         '<article class="fzr-card fzp-entra"><div class="fzr-card-cab"><div><h2>Parcela ao longo do prazo</h2><p>Encargo com seguros, ' + esc(nomeSeg(seg.nome)) + ' · estimativa</p></div>' +
           '<div class="fzr-legenda"><span><i style="background:#E4032B"></i>PRICE</span><span><i style="background:#2563A8"></i>SAC</span></div></div>' +
@@ -661,7 +661,7 @@ window.FinanciamentoResultado = (function () {
           '<tr><td>1ª parcela</td><td' + col('PRICE') + '>' + cel('PRICE', function (c) { return inteiro(segDe(c, cod).primeira); }) + '</td><td' + col('SAC') + '>' + cel('SAC', function (c) { return inteiro(segDe(c, cod).primeira); }) + '</td></tr>' +
           '<tr><td>Última</td><td' + col('PRICE') + '>' + cel('PRICE', function (c) { return inteiro(segDe(c, cod).ultima); }) + '</td><td' + col('SAC') + '>' + cel('SAC', function (c) { return inteiro(segDe(c, cod).ultima); }) + '</td></tr>' +
           '<tr><td>Total pago*</td><td' + col('PRICE') + '>' + (cronos.PRICE ? mil(totalPago(cronos.PRICE)) : '—') + '</td><td' + col('SAC') + '>' + (cronos.SAC ? mil(totalPago(cronos.SAC)) : '—') + '</td></tr>' +
-          '</tbody></table></div><p class="fzr-nota">* Soma das parcelas com seguros no prazo todo. No PRICE o seguro de vida sobe com a idade, por isso a parcela pode crescer com o tempo.</p></article>' +
+          '</tbody></table><p class="fzr-nota">* Soma das parcelas com seguros no prazo todo. No PRICE o seguro de vida sobe com a idade, por isso a parcela pode crescer com o tempo.</p></article>' +
         '<article class="fzr-card fzp-entra"><div class="fzr-card-cab fzr-cab-ico"><img class="fz-ico" src="assets/img/icones-3d/escudo.svg" width="48" height="48" alt=""><div><h2>Seguradora</h2><p>A escolhida vai para o PDF e para o associativo</p></div></div>' +
           '<div class="fzr-segs" role="radiogroup" aria-label="Seguradora"><div class="fzr-seg-h"><span></span><span>Seguradora</span><span>1ª parcela</span><span>Última</span></div>' +
           F.seguradorasOrdenadas(r.seguradoras).map(function (x) {
