@@ -88,3 +88,48 @@ test('escala-comercial-rp mantém o cabeçalho e o rodapé de antes da Home V2',
   assert.match(ESCALA, /\.brand-logo\s*\{[^}]*height:\s*24px/);
   assert.match(ESCALA, /\.home-foot\s*\{[^}]*margin-top:\s*3\.5rem/);
 });
+
+const EM_BREVE_NOVAS = [
+  ['em-breve-maquete.html', 'Maquete 3D Interativa'],
+  ['em-breve-documentacao.html', 'Documentação do Cliente']
+];
+
+test('navbar da home só com as quatro ferramentas e logo apenas para o celular', () => {
+  const nav = INDEX.slice(INDEX.indexOf('class="header-links"'), INDEX.indexOf('</nav>'));
+  assert.equal([...nav.matchAll(/class="header-link[ "]/g)].length, 4);
+  assert.ok(!nav.includes('em-breve-'));
+  const header = INDEX.slice(INDEX.indexOf('class="site-header"'), INDEX.indexOf('class="header-links"'));
+  assert.ok(header.includes('brand-logo') && !header.includes('brand-name'));
+  assert.match(CSS, /min-width:901px\)\{[^@]*\.pagina-home \.brand-lockup\{display:none\}/);
+});
+
+test('hero da home: logo, headline Portal do Corretor e subheadline', () => {
+  const hero = INDEX.slice(INDEX.indexOf('home-hero-text'), INDEX.indexOf('home-hero-art'));
+  assert.ok(hero.indexOf('home-logo') < hero.indexOf('<h1'));
+  assert.match(hero, /<h1 class="home-title">Portal <em>do Corretor<\/em><\/h1>/);
+  assert.ok(!hero.includes('São Paulo Interior'));
+});
+
+test('cards de ferramentas têm ícones sem repetição e as futuras levam ao em breve', () => {
+  const grid = INDEX.slice(INDEX.indexOf('class="tool-grid"'));
+  const icones = [...grid.matchAll(/class="tool-icon" src="([^"]+)"/g)].map((m) => m[1]);
+  assert.equal(icones.length, 6);
+  assert.equal(new Set(icones).size, 6);
+  for (const [pagina, titulo] of EM_BREVE_NOVAS) {
+    const card = grid.slice(grid.indexOf(`href="${pagina}"`));
+    assert.ok(grid.includes(`href="${pagina}"`), pagina);
+    assert.ok(card.slice(0, card.indexOf('</a>')).includes(titulo), titulo);
+    assert.ok(card.slice(0, card.indexOf('</a>')).includes('Em breve'), titulo);
+  }
+});
+
+for (const [pagina, titulo] of EM_BREVE_NOVAS) {
+  test(`${pagina} tem o título, o texto aprovado e o menu`, () => {
+    const h = ler(pagina);
+    assert.match(h, new RegExp(`<h1[^>]*>${titulo}</h1>`));
+    assert.ok(h.includes('Estamos finalizando essa ferramenta. Em breve ela estará disponível aqui no portal.'));
+    assert.match(h, /href="index\.html"[^>]*>[\s\S]*?Voltar para o início/);
+    assert.match(h, /<button[^>]*id="menu-btn"/);
+    assert.ok(h.includes('assets/menu.js'));
+  });
+}
