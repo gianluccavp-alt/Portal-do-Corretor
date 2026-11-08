@@ -63,3 +63,24 @@ test('home leva ao Simulador de Financiamento no card, no cabeçalho e no menu',
   assert.ok(grid.indexOf('simulador-associativo.html') < grid.indexOf('simulador-financiamento.html'));
   assert.ok(grid.includes('Simulador de Financiamento'));
 });
+
+test('PDF não mostra a tabela de seguradoras nem o "a negociar"', () => {
+  const p = ler('assets/financiamento-pdf.js');
+  assert.ok(!p.includes('Parcela por seguradora'));
+  assert.ok(!p.includes('a negociar'));
+});
+
+test('as três páginas carregam o morph antes dos módulos da tela e do popup', () => {
+  for (const [f, m] of [['simulador-financiamento.html', 'financiamento-app.js'], ['simulador-associativo.html', 'financiamento-popup.js'], ['simulador-associativo-blackfriday.html', 'financiamento-popup.js']]) {
+    const h = ler(f);
+    assert.ok(h.includes('src="assets/financiamento-ui.js"'), f);
+    assert.ok(h.indexOf('financiamento-ui.js') < h.indexOf(m), f);
+  }
+});
+
+test('resultado: sem o card de PDF, com o aviso novo', () => {
+  const a = ler('assets/financiamento-app.js');
+  assert.ok(!a.includes('PDF para o cliente</h3>'));
+  assert.ok(!a.includes('Da planilha'));
+  assert.ok(a.includes('Estimativa de Simulação Habitacional CAIXA. Sujeita à análise de crédito da CAIXA e à aprovação da Direcional.'));
+});

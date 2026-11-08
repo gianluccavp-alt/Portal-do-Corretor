@@ -153,3 +153,19 @@ test('simular: venda que não deixa nada para financiar vira aviso, não financi
   assert.ok(s.erro);
   assert.match(s.mensagem, /nada para financiar/);
 });
+
+test('mascaraMoeda: entra pelos centavos, separa milhares e limpa quando zera', () => {
+  assert.equal(F.mascaraMoeda('1'), '0,01');
+  assert.equal(F.mascaraMoeda('123'), '1,23');
+  assert.equal(F.mascaraMoeda('1000000'), '10.000,00');
+  assert.equal(F.mascaraMoeda('10.000,005'), '100.000,05');
+  assert.equal(F.mascaraMoeda('abc'), '');
+  assert.equal(F.mascaraMoeda('0,00'), '');
+  assert.equal(F.mascaraMoeda('99999999999999'), '999.999.999,99');
+});
+
+test('seguradorasOrdenadas: maior 1ª parcela primeiro, sem mexer na lista original', () => {
+  const lista = [{ codigo: '14', primeira: 2967.36 }, { codigo: '15', primeira: 3000 }, { codigo: '4', primeira: 2982.82 }];
+  assert.deepEqual(F.seguradorasOrdenadas(lista).map((s) => s.codigo), ['15', '4', '14']);
+  assert.deepEqual(lista.map((s) => s.codigo), ['14', '15', '4']);
+});

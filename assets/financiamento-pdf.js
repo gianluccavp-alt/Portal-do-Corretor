@@ -58,17 +58,19 @@ window.FinanciamentoPdf = (function () {
   }
 
   function miniGrafico(doc, serie, x, y, w, h) {
-    var lo = 250, hi = 950;
-    var py = function (v) { return y + (hi - Math.max(lo, Math.min(hi, v))) / (hi - lo) * h; };
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); cor(doc, CINZA);
-    [300, 600, 900].forEach(function (v) {
-      doc.setDrawColor(LINHA[0], LINHA[1], LINHA[2]); doc.setLineWidth(0.2);
-      doc.line(x + 9, py(v), x + w, py(v));
-      doc.text(String(v), x, py(v) + 1);
-    });
     var todos = (serie.PRICE || []).concat(serie.SAC || []);
-    var max = Math.max.apply(null, todos.concat([0]));
-    if (max > hi) { hi = Math.ceil(max / 100) * 100 + 100; lo = Math.max(0, hi - 1400); }
+    if (!todos.length) return;
+    var max = Math.max.apply(null, todos), min = Math.min.apply(null, todos);
+    var grade = [100, 200, 500, 1000, 2000, 5000].filter(function (p) { return (max - min) / p <= 4; })[0] || 10000;
+    var lo = Math.floor(min / grade) * grade, hi = Math.ceil(max / grade) * grade;
+    if (hi === lo) hi += grade;
+    var py = function (v) { return y + (hi - v) / (hi - lo) * h; };
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); cor(doc, CINZA);
+    for (var g = lo; g <= hi; g += grade) {
+      doc.setDrawColor(LINHA[0], LINHA[1], LINHA[2]); doc.setLineWidth(0.2);
+      doc.line(x + 9, py(g), x + w, py(g));
+      doc.text(g.toLocaleString('pt-BR'), x, py(g) + 1);
+    }
     [['SAC', AZUL], ['PRICE', VERMELHO]].forEach(function (s) {
       var pts = serie[s[0]] || [];
       if (pts.length < 2) return;
@@ -117,12 +119,12 @@ window.FinanciamentoPdf = (function () {
       doc.text(p.principal.resumo, M + 5, by + 21);
       [['1ª parcela', p.principal.primeira, p.principal.pctRenda, TITULO],
        ['Subsídio', p.principal.subsidio || '—', p.principal.subsidio ? 'desconto FGTS' : 'sem subsídio', p.principal.subsidio ? VERDE : CINZA],
-       ['Entrada mínima', p.principal.entrada, 'a negociar', TITULO]]
+       ['Entrada mínima', p.principal.entrada, '', TITULO]]
         .forEach(function (c, i) {
           var x = M + 100 + i * 28;
           rotulo(doc, c[0], x, by + 9);
           valor(doc, c[1], x, by + 15, 10.5, c[3]);
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); cor(doc, CINZA); doc.text(c[2], x, by + 19.5);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); cor(doc, CINZA); if (c[2]) doc.text(c[2], x, by + 19.5);
         });
       var bx = M + 5, bw = R - M - 10, bY = by + 27, total = p.barra.fin + p.barra.sub + p.barra.ent || 1;
       [[p.barra.fin, VERMELHO], [p.barra.sub, VERDE], [p.barra.ent, GRAFITE]].reduce(function (x, s) {
@@ -145,22 +147,8 @@ window.FinanciamentoPdf = (function () {
       var y1 = tabelaChaveValor(doc, p.condicoes, M, ty + 3, meia);
       var y2 = tabelaChaveValor(doc, p.dadosCliente, M + meia + 10, ty + 3, meia);
 
-      /* seguradoras */
-      var sy = Math.max(y1, y2) + 9;
-      passo(doc, 'Parcela por seguradora', M, sy);
-      doc.autoTable({
-        startY: sy + 3, margin: { left: M, right: M }, theme: 'plain',
-        head: [['Seguradora', '1ª parcela', 'Última parcela']],
-        body: p.seguradoras.map(function (s) { return [s.nome + (s.escolhida ? '  (escolhida)' : ''), s.primeira, s.ultima]; }),
-        styles: { font: 'helvetica', fontSize: 8.5, cellPadding: { top: 1.8, bottom: 1.8, left: 0, right: 0 }, textColor: GRAFITE, lineColor: LINHA, lineWidth: { bottom: 0.2 } },
-        headStyles: { fontStyle: 'bold', textColor: CINZA, fontSize: 7.5 },
-        columnStyles: { 1: { halign: 'right', fontStyle: 'bold' }, 2: { halign: 'right' } },
-        didParseCell: function (d) { if (d.section === 'head' && d.column.index > 0) d.cell.styles.halign = 'right';
-          if (d.section === 'body' && p.seguradoras[d.row.index].escolhida) d.cell.styles.fontStyle = 'bold'; }
-      });
-
       /* PRICE x SAC */
-      var cy = doc.lastAutoTable.finalY + 9;
+      var cy = Math.max(y1, y2) + 9;
       passo(doc, 'PRICE ou SAC', M, cy);
       doc.autoTable({
         startY: cy + 3, margin: { left: M }, tableWidth: 104, theme: 'plain',

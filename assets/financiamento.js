@@ -73,6 +73,19 @@
     return melhor ? melhor.codigo : null;
   }
 
+  /* maior 1a parcela primeiro; a lista original nao muda */
+  function seguradorasOrdenadas(seguradoras) {
+    return (seguradoras || []).slice().sort(function (a, b) { return b.primeira - a.primeira; });
+  }
+
+  /* digitacao de valor como em maquininha: entra pelos centavos, milhares com ponto; zero vira vazio */
+  function mascaraMoeda(txt) {
+    var d = String(txt == null ? '' : txt).replace(/\D/g, '').replace(/^0+/, '').slice(0, 11);
+    if (!d) return '';
+    while (d.length < 3) d = '0' + d;
+    return d.slice(0, -2).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + d.slice(-2);
+  }
+
   /* resp: respostas do cliente; imovel: { cidade, avaliacao, venda, ato, ... }.
      Com venda > 0 aplica as mesmas duas regras do Match (spec §4.1): trava da Faixa 3 em
      R$ 400 mil e teto do financiamento em venda - subsidio - ato. */
@@ -286,7 +299,7 @@
     RESP_PADRAO: RESP_PADRAO, CAMPANHA_BF: CAMPANHA_BF, dadosPdf: dadosPdf, programa: programa,
     codificaRespostas: codificaRespostas, decodificaRespostas: decodificaRespostas,
     destinos: destinos, urlAssociativo: urlAssociativo,
-    simular: simular, comparar: comparar, seguradoraPadrao: seguradoraPadrao, valoresCopia: valoresCopia,
+    simular: simular, comparar: comparar, seguradoraPadrao: seguradoraPadrao, seguradorasOrdenadas: seguradorasOrdenadas, mascaraMoeda: mascaraMoeda, valoresCopia: valoresCopia,
     mostraPerguntasSubsidio: mostraPerguntasSubsidio, mensagemErro: mensagemErro,
     lerData: lerData, validar: validar, serieAnual: serieAnual, brl: brl, idadeAnos: idadeAnos
   };

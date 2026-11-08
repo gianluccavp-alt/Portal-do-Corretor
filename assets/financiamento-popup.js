@@ -10,7 +10,7 @@
 window.FinanciamentoPopup = (function () {
   'use strict';
 
-  var F = window.Financiamento;
+  var F = window.Financiamento, UI = window.FinanciamentoUI;
   var ICONE = function (n, t, alt) {
     return '<img class="fz-ico" src="assets/img/icones-3d/' + n + '.svg" width="' + t + '" height="' + t + '" alt="' + (alt || '') + '">';
   };
@@ -113,10 +113,10 @@ window.FinanciamentoPopup = (function () {
         h += '<div class="fz-campo fz-campo-largo"><span class="fz-lab" id="fz-l-cidade">Cidade do imóvel</span><div class="fz-pills" role="radiogroup" aria-labelledby="fz-l-cidade">' +
           CIDADES.map(function (c) { var on = st.imovel.cidade === c; return '<button type="button" role="radio" aria-checked="' + on + '" class="fz-pill' + (on ? ' fz-pill-on' : '') + '" data-acao="cidade" data-v="' + esc(c) + '" data-foco="cidade-' + esc(c) + '">' + esc(c) + '</button>'; }).join('') +
           '</div>' + erroDe('cidade') + '</div>' +
-          '<div class="fz-campo"><label class="fz-lab" for="fz-valor">Valor de avaliação</label><div class="fz-input' + (st.erros.valor ? ' fz-input-erro' : '') + '"><span class="fz-pre">R$</span><input id="fz-valor" data-campo="valor" inputmode="decimal" autocomplete="off" value="' + (st.imovel.avaliacao > 0 ? semRs(st.imovel.avaliacao) : '') + '" placeholder="0,00"' + (st.erros.valor ? ' aria-invalid="true" aria-describedby="fz-e-valor"' : '') + '></div>' + erroDe('valor') + '</div>';
+          '<div class="fz-campo"><label class="fz-lab" for="fz-valor">Valor de avaliação</label><div class="fz-input' + (st.erros.valor ? ' fz-input-erro' : '') + '"><span class="fz-pre">R$</span><input id="fz-valor" data-campo="valor" data-moeda inputmode="numeric" autocomplete="off" value="' + (st.imovel.avaliacao > 0 ? semRs(st.imovel.avaliacao) : '') + '" placeholder="0,00"' + (st.erros.valor ? ' aria-invalid="true" aria-describedby="fz-e-valor"' : '') + '></div>' + erroDe('valor') + '</div>';
       }
       h += '<div class="fz-campo"><label class="fz-lab" for="fz-renda">Renda familiar bruta' + (ctx.renda > 0 && st.resp.renda === ctx.renda ? '<span class="fz-do">do simulador</span>' : '') + '</label>' +
-        '<div class="fz-input' + (st.erros.renda ? ' fz-input-erro' : '') + '"><span class="fz-pre">R$</span><input id="fz-renda" data-campo="renda" inputmode="decimal" autocomplete="off" value="' + (st.resp.renda > 0 ? semRs(st.resp.renda) : '') + '" placeholder="0,00"' + (st.erros.renda ? ' aria-invalid="true" aria-describedby="fz-e-renda"' : '') + '></div>' + erroDe('renda') + '</div>';
+        '<div class="fz-input' + (st.erros.renda ? ' fz-input-erro' : '') + '"><span class="fz-pre">R$</span><input id="fz-renda" data-campo="renda" data-moeda inputmode="numeric" autocomplete="off" value="' + (st.resp.renda > 0 ? semRs(st.resp.renda) : '') + '" placeholder="0,00"' + (st.erros.renda ? ' aria-invalid="true" aria-describedby="fz-e-renda"' : '') + '></div>' + erroDe('renda') + '</div>';
       var idade = st.resp.nascimento ? F.idadeAnos(st.resp.nascimento, hoje) : null;
       h += '<div class="fz-campo"><label class="fz-lab" for="fz-nasc">Nascimento do comprador mais velho</label>' +
         '<div class="fz-input' + (st.erros.nascimento ? ' fz-input-erro' : '') + '"><input id="fz-nasc" data-campo="nascimento" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="dd/mm/aaaa" value="' + esc(st.nascTxt) + '"' + (st.erros.nascimento ? ' aria-invalid="true" aria-describedby="fz-e-nascimento"' : '') + '>' +
@@ -190,7 +190,7 @@ window.FinanciamentoPopup = (function () {
           '<div><span class="fz-k"><i class="fz-dot fz-dot-sub"></i>Subsídio</span><b class="fz-verde">' + (r.subsidio > 0 ? inteiro(r.subsidio) : '—') + '</b></div>' +
           '<div><span class="fz-k"><i class="fz-dot fz-dot-ent"></i>Entrada</span><b>' + inteiro(s.entrada) + '</b></div></div></div>' +
           '<div class="fz-segs"><div class="fz-segs-t">' + ICONE('escudo', 28) + '<b>Seguradora</b><span>· 1ª parcela</span></div><div role="radiogroup" aria-label="Seguradora">' +
-          r.seguradoras.map(function (x) {
+          F.seguradorasOrdenadas(r.seguradoras).map(function (x) {
             var on = x.codigo === seg, nome = x.nome.toLowerCase().replace(/(^|\s)\S/g, function (c) { return c.toUpperCase(); }).replace('Habitacional ', '');
             return '<button type="button" role="radio" aria-checked="' + on + '" class="fz-row' + (on ? ' fz-row-on' : '') + '" data-acao="seg" data-v="' + x.codigo + '" data-foco="seg-' + x.codigo + '"><span class="fz-radio">' + CHECK + '</span><span class="fz-row-n">' + esc(nome) + '</span><b>' + F.brl(x.primeira) + '</b></button>';
           }).join('') + '</div></div></div>' +
@@ -201,20 +201,26 @@ window.FinanciamentoPopup = (function () {
         '</div></div>';
     }
 
+    var desenhada = null;   /* passo que esta na tela */
     function render() {
       var foco = document.activeElement && pop.contains(document.activeElement) ? document.activeElement.getAttribute('data-foco') || document.activeElement.id : null;
       var idx = ORDEM.indexOf(st.etapa);
       veu.querySelector('.fz-cab-s').textContent = subtitulo();
-      veu.querySelector('.fz-prog-b').innerHTML = ORDEM.map(function (k, i) { return '<span class="' + (i <= idx ? 'fz-on' : '') + '"></span>'; }).join('');
+      UI.morph(veu.querySelector('.fz-prog-b'), ORDEM.map(function (k, i) { return '<span class="' + (i <= idx ? 'fz-on' : '') + '"></span>'; }).join(''));
       veu.querySelector('.fz-prog-t').textContent = TITULOS[st.etapa];
-      corpo.innerHTML = st.etapa === 1 ? passo1() : st.etapa === 2 ? passo2() : st.etapa === 3 ? passo3() : resultado();
+      var html = st.etapa === 1 ? passo1() : st.etapa === 2 ? passo2() : st.etapa === 3 ? passo3() : resultado();
+      /* mesmo passo: atualiza no lugar, sem piscar */
+      if (desenhada === st.etapa) UI.morph(corpo, html, { suave: true }); else corpo.innerHTML = html;
+      desenhada = st.etapa;
       if (st.etapa === 'resultado') {
         var erro = simAtual().erro;
-        rod.innerHTML = '<button type="button" class="fz-sec" data-acao="pdf"' + (erro ? ' disabled' : '') + '>' + BAIXAR + (pop.classList.contains('fz-folha') ? 'PDF' : 'Baixar PDF') + '</button>' +
-          '<button type="button" class="fz-pri" data-acao="copiar"' + (erro ? ' disabled' : '') + '>' + COPIAR + 'Copiar para o simulador</button>';
+        var folha = pop.classList.contains('fz-folha');
+        UI.morph(rod, '<button type="button" class="fz-ghost' + (folha ? ' fz-so-ico' : '') + '" data-acao="voltar" aria-label="Voltar e editar as respostas">' + VOLTA + (folha ? '' : 'Voltar') + '</button>' +
+          '<span class="fz-rod-dir"><button type="button" class="fz-sec" data-acao="pdf"' + (erro ? ' disabled' : '') + '>' + BAIXAR + (folha ? 'PDF' : 'Baixar PDF') + '</button>' +
+          '<button type="button" class="fz-pri" data-acao="copiar"' + (erro ? ' disabled' : '') + '>' + COPIAR + (folha ? 'Copiar' : 'Copiar para o simulador') + '</button></span>');
       } else {
-        rod.innerHTML = '<button type="button" class="fz-ghost" data-acao="voltar">' + VOLTA + (idx === 0 ? 'Cancelar' : 'Voltar') + '</button>' +
-          '<button type="button" class="fz-pri" data-acao="avancar">' + (st.etapa === 3 ? 'Ver resultado' : 'Continuar') + SETA + '</button>';
+        UI.morph(rod, '<button type="button" class="fz-ghost" data-acao="voltar">' + VOLTA + (idx === 0 ? 'Cancelar' : 'Voltar') + '</button>' +
+          '<button type="button" class="fz-pri" data-acao="avancar">' + (st.etapa === 3 ? 'Ver resultado' : 'Continuar') + SETA + '</button>');
       }
       if (foco) {
         var alvo = pop.querySelector('[data-foco="' + foco + '"]') || document.getElementById(foco);
@@ -317,15 +323,10 @@ window.FinanciamentoPopup = (function () {
       }
       var pv = pop.querySelector('.fz-previa'); if (pv) pv.innerHTML = previa();
     });
-    pop.addEventListener('focusout', function (ev) {
-      var c = ev.target.getAttribute && ev.target.getAttribute('data-campo');
-      if (c === 'renda' && st.resp.renda > 0) ev.target.value = semRs(st.resp.renda);
-      if (c === 'valor' && st.imovel.avaliacao > 0) ev.target.value = semRs(st.imovel.avaliacao);
-    });
 
     function teclas(ev) {
       if (ev.key === 'Escape') { ev.preventDefault(); fechar(); return; }
-      if (ev.key === 'Enter' && st.etapa !== 'resultado' && ev.target.tagName === 'INPUT') { ev.preventDefault(); avancar(); return; }
+      if (ev.key === 'Enter' && st.etapa !== 'resultado' && !ev.repeat && UI.enterAvanca(ev.target)) { ev.preventDefault(); avancar(); return; }
       if (ev.key === 'Tab') {
         var f = focaveis(pop);
         if (!f.length) return;

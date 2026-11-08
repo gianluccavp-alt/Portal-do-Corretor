@@ -9,7 +9,7 @@
 (function () {
   'use strict';
 
-  var F = window.Financiamento;
+  var F = window.Financiamento, UI = window.FinanciamentoUI;
   var $ = function (id) { return document.getElementById(id); };
   var CHAVE = 'fz-ultima';
   var CIDADES = ['Ribeirão Preto', 'Campinas', 'Sorocaba'];
@@ -20,6 +20,8 @@
   var SETA = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>';
   var VOLTA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>';
   var CHECK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>';
+  var LUPA = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>';
+  var AJUSTE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"></path><circle cx="16" cy="7" r="2"></circle><circle cx="8" cy="17" r="2"></circle></svg>';
   var CHEV = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
 
   function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -35,9 +37,11 @@
   /* ---------- estado ---------- */
   function novo() {
     return { etapa: 1, abertura: true, modo: 'portal', cidade: 'Ribeirão Preto', empId: null, blocoId: null, unidade: '',
-             avaliacaoDigitada: 0, resp: Object.assign({}, F.RESP_PADRAO), seg: null, erros: {}, nascTxt: '', menos: false };
+             avaliacaoDigitada: 0, resp: Object.assign({}, F.RESP_PADRAO), seg: null, erros: {}, nascTxt: '' };
   }
   var st = novo();
+  var pick = { aberto: null, q: '', ativo: 0 };   /* seletor de torre/unidade aberto */
+  var desenhada = null;                            /* etapa que esta na tela */
 
   function salvar() {
     try {
@@ -101,6 +105,95 @@
     }).join('');
   }
 
+  /* ---------- seletor de torre e unidade, com busca ---------- */
+  function normaliza(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+  function opcoesPick(tipo) {
+    var e = empAtual();
+    if (!e) return [];
+    var u = unidadesDe(e);
+    if (tipo === 'bloco') return u.blocos.map(function (b) { return { v: b.id, t: b.label, s: b.qtd + ' un.', p: '' }; });
+    return (st.blocoId ? u.unidades[st.blocoId] || [] : []).map(function (x) {
+      var d = u.detalhes[x] || {};
+      return { v: x, t: x, s: d.tipoLabel || '', p: d.avaliacao > 0 ? inteiro(d.avaliacao) : '' };
+    });
+  }
+  function filtradas(tipo) {
+    var termos = normaliza(pick.q).split(/\s+/).filter(Boolean);
+    return opcoesPick(tipo).filter(function (o) {
+      var alvo = normaliza(o.t + ' ' + o.s);
+      return termos.every(function (t) { return alvo.indexOf(t) >= 0; });
+    });
+  }
+  function valorPick(tipo) { return tipo === 'bloco' ? st.blocoId : st.unidade; }
+  function listaPick(tipo) {
+    var itens = filtradas(tipo), atual = valorPick(tipo);
+    if (!itens.length) return '<li class="fzp-pick-vazio">Nada encontrado para essa busca</li>';
+    return itens.map(function (o, i) {
+      var sel = o.v === atual;
+      return '<li role="option" id="fzp-op-' + i + '" aria-selected="' + sel + '" class="fzp-pick-op' + (i === pick.ativo ? ' fzp-pick-ativo' : '') + (sel ? ' fzp-pick-sel' : '') + '" data-a="pick-op" data-v="' + esc(o.v) + '">' +
+        '<span class="fzp-pick-tx"><b>' + esc(o.t) + '</b>' + (o.s ? '<small>' + esc(o.s) + '</small>' : '') + '</span>' + (o.p ? '<span class="fzp-pick-p">' + o.p + '</span>' : '') +
+        '<span class="fzp-pick-ok">' + (sel ? CHECK : '') + '</span></li>';
+    }).join('');
+  }
+  function seletor(tipo, rotulo, vazio, attrs) {
+    var on = pick.aberto === tipo, op = opcoesPick(tipo), atual = op.filter(function (o) { return o.v === valorPick(tipo); })[0];
+    var bloqueado = tipo === 'unidade' && !st.blocoId, id = tipo === 'bloco' ? 'fzp-bloco' : 'fzp-un';
+    var pop = '';
+    if (on) {
+      var ph = tipo === 'bloco' ? 'Buscar torre' : 'Buscar unidade ou tipologia';
+      pop = '<div class="fzp-pick-pop">' + (op.length > 8 ? '<div class="fzp-pick-busca">' + LUPA + '<input id="fzp-pick-q" data-c="pickq" type="text" role="combobox" aria-expanded="true" aria-controls="fzp-pick-lista" aria-activedescendant="fzp-op-' + pick.ativo + '" aria-label="' + ph + '" autocomplete="off" placeholder="' + ph + '" value="' + esc(pick.q) + '"></div>' : '') +
+        '<ul class="fzp-pick-lista" id="fzp-pick-lista" role="listbox" tabindex="-1" aria-label="' + rotulo + '">' + listaPick(tipo) + '</ul></div>';
+    }
+    return '<span class="fz-lab" id="' + id + '-l">' + rotulo + '</span><div class="fzp-pick' + (on ? ' fzp-pick-on' : '') + '">' +
+      '<button type="button" id="' + id + '" class="fzp-pick-btn" data-a="pick" data-v="' + tipo + '" aria-haspopup="listbox" aria-expanded="' + on + '" aria-labelledby="' + id + '-l ' + id + '-v"' + (bloqueado ? ' disabled' : '') + attrs + '>' +
+      '<span class="fzp-pick-val' + (atual ? '' : ' fzp-pick-ph') + '" id="' + id + '-v">' + (atual ? esc(atual.t) + (atual.s ? '<small> · ' + esc(atual.s) + '</small>' : '') : vazio) + '</span>' + CHEV + '</button>' + pop + '</div>';
+  }
+  function rolaAtivo() {
+    var l = $('fzp-pick-lista'), o = l && l.querySelector('.fzp-pick-ativo');
+    if (o) l.scrollTop = Math.max(0, o.offsetTop - (l.clientHeight - o.offsetHeight) / 2);
+  }
+  function atualizaLista() {
+    var l = $('fzp-pick-lista'), q = $('fzp-pick-q');
+    if (!l) return;
+    UI.morph(l, listaPick(pick.aberto));
+    if (q) q.setAttribute('aria-activedescendant', 'fzp-op-' + pick.ativo);
+    rolaAtivo();
+  }
+  function abrirPick(tipo) {
+    var idx = filtradasSemBusca(tipo);
+    pick = { aberto: tipo, q: '', ativo: idx };
+    render(false);
+    rolaAtivo();
+    var q = $('fzp-pick-q'), l = $('fzp-pick-lista');
+    if (q && !celular()) q.focus(); else if (l) l.focus({ preventScroll: true });
+    var pop = document.querySelector('.fzp-pick-pop');
+    if (pop) pop.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+  function filtradasSemBusca(tipo) {
+    var i = opcoesPick(tipo).map(function (o) { return o.v; }).indexOf(valorPick(tipo));
+    return i < 0 ? 0 : i;
+  }
+  function fecharPick(devolverFoco) {
+    var tipo = pick.aberto;
+    if (!tipo) return;
+    pick = { aberto: null, q: '', ativo: 0 };
+    render(false);
+    if (devolverFoco) { var b = $(tipo === 'bloco' ? 'fzp-bloco' : 'fzp-un'); if (b) b.focus(); }
+  }
+  function escolhePick(tipo, v) {
+    pick = { aberto: null, q: '', ativo: 0 };
+    if (tipo === 'bloco') {
+      if (v !== st.blocoId) { st.blocoId = v; st.unidade = ''; }
+      render(false);
+      if (!st.unidade && !celular()) abrirPick('unidade'); else $('fzp-un').focus();
+    } else {
+      st.unidade = v;
+      delete st.erros.unidade;
+      render(false);
+      $('fzp-un').focus();
+    }
+  }
+
   function passo1() {
     var h = cabecalho(1, 'Qual imóvel o cliente quer?', 'Escolha a unidade e o valor de avaliação vem da planilha. Sem unidade? Digite o valor.', null);
     h += '<div class="fzp-linha"><div class="fz-segw fzp-segw" role="tablist" aria-label="Como informar o imóvel">' +
@@ -119,24 +212,19 @@
         }).join('') + '</div>';
         var e = empAtual();
         if (e) {
-          var u = unidadesDe(e), lista = st.blocoId ? (u.unidades[st.blocoId] || []) : [];
-          h += '<div class="fzp-grade2 fzp-mt">' +
-            '<div><label class="fz-lab" for="fzp-bloco">Torre</label><span class="fzp-sel">' +
-            '<select id="fzp-bloco" data-c="bloco"><option value="">Escolha a torre</option>' + u.blocos.map(function (b) { return '<option value="' + esc(b.id) + '"' + (b.id === st.blocoId ? ' selected' : '') + '>' + esc(b.label) + ' · ' + b.qtd + ' un.</option>'; }).join('') + '</select>' + CHEV + '</span></div>' +
-            '<div><label class="fz-lab" for="fzp-un">Unidade</label><span class="fzp-sel">' +
-            '<select id="fzp-un" data-c="unidade"' + (st.blocoId ? '' : ' disabled') + attrsErro('unidade') + '><option value="">' + (st.blocoId ? 'Escolha a unidade' : 'Escolha a torre primeiro') + '</option>' +
-            lista.map(function (x) { var d = u.detalhes[x]; return '<option value="' + esc(x) + '"' + (x === st.unidade ? ' selected' : '') + '>' + esc(x) + (d && d.tipoLabel ? ' · ' + esc(d.tipoLabel) : '') + '</option>'; }).join('') +
-            '</select>' + CHEV + '</span>' + erroDe('unidade') + '</div></div>';
+          h += '<div class="fzp-grade2 fzp-mt fzp-revela">' +
+            '<div>' + seletor('bloco', 'Torre', 'Escolha a torre', st.erros.unidade && !st.blocoId ? attrsErro('unidade') : '') + '</div>' +
+            '<div>' + seletor('unidade', 'Unidade', st.blocoId ? 'Escolha a unidade' : 'Escolha a torre primeiro', st.blocoId ? attrsErro('unidade') : '') + erroDe('unidade') + '</div></div>';
           var d = detalhe();
           if (d && d.avaliacao > 0) {
-            h += '<div class="fzp-aval"><span><span class="fzp-aval-k">Valor de avaliação</span><b>' + F.brl(d.avaliacao) + '</b></span><span class="fzp-aval-tag">Da planilha</span></div>';
+            h += '<div class="fzp-aval fzp-revela"><span class="fzp-aval-k">Valor de avaliação</span><b>' + F.brl(d.avaliacao) + '</b></div>';
           }
         } else h += erroDe('unidade');
       }
     }
     if (st.modo === 'valor' || semAvaliacaoNaPlanilha() || (st.modo === 'portal' && window.SimUnidades && SimUnidades.estado() === 'erro')) {
       h += '<div class="fzp-mt"><label class="fz-lab" for="fzp-valor">Valor de avaliação do imóvel' + (semAvaliacaoNaPlanilha() ? '<span class="fz-do" style="color:var(--fz-warn)">sem avaliação na planilha</span>' : '') + '</label>' +
-        '<div class="fz-input fzp-input-g' + (st.erros.valor ? ' fz-input-erro' : '') + '"><span class="fz-pre">R$</span><input id="fzp-valor" data-c="valor" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + (st.avaliacaoDigitada > 0 ? semRs(st.avaliacaoDigitada) : '') + '"' + attrsErro('valor') + '></div>' + erroDe('valor') +
+        '<div class="fz-input fzp-input-g' + (st.erros.valor ? ' fz-input-erro' : '') + '"><span class="fz-pre">R$</span><input id="fzp-valor" data-c="valor" data-moeda inputmode="numeric" autocomplete="off" placeholder="0,00" value="' + (st.avaliacaoDigitada > 0 ? semRs(st.avaliacaoDigitada) : '') + '"' + attrsErro('valor') + '></div>' + erroDe('valor') +
         '<p class="fzp-dica">É o valor que a CAIXA considera. Sem a avaliação em mãos, use o valor de venda.</p></div>';
     }
     return h;
@@ -144,7 +232,7 @@
   function passo2() {
     return cabecalho(2, 'Qual a renda da família?', 'Some a renda bruta de todos os compradores. Ela define faixa, juros e o teto da parcela.', 'carteira') +
       '<label class="fz-lab" for="fzp-renda">Renda bruta familiar</label>' +
-      '<div class="fz-input fzp-input-g' + (st.erros.renda ? ' fz-input-erro' : '') + '"><span class="fz-pre">R$</span><input id="fzp-renda" data-c="renda" inputmode="decimal" autocomplete="off" placeholder="0,00" value="' + (st.resp.renda > 0 ? semRs(st.resp.renda) : '') + '"' + attrsErro('renda') + '><span class="fz-pre">/mês</span></div>' + erroDe('renda') +
+      '<div class="fz-input fzp-input-g' + (st.erros.renda ? ' fz-input-erro' : '') + '"><span class="fz-pre">R$</span><input id="fzp-renda" data-c="renda" data-moeda inputmode="numeric" autocomplete="off" placeholder="0,00" value="' + (st.resp.renda > 0 ? semRs(st.resp.renda) : '') + '"' + attrsErro('renda') + '><span class="fz-pre">/mês</span></div>' + erroDe('renda') +
       '<p class="fzp-dica">Acima de R$ 13.000, ou se o cliente já tem imóvel na cidade, a conta muda para o SBPE.</p>';
   }
   function passo3() {
@@ -176,10 +264,10 @@
           '<span><span class="fz-tile-t">' + t[2] + '</span><span class="fz-tile-d">' + t[3] + '</span></span></button>';
       }).join('') + '</div>';
   }
-  function linha(serie, cor) {
+  function linha(serie, cor, min, max) {
     if (!serie.length) return '';
-    var max = 950, min = 250, w = 300, hh = 52;
-    var pts = serie.map(function (v, i) { return (4 + i * (w - 8) / (serie.length - 1)).toFixed(1) + ',' + (4 + (max - Math.max(min, Math.min(max, v))) / (max - min) * hh).toFixed(1); }).join(' ');
+    var w = 300, hh = 52;
+    var pts = serie.map(function (v, i) { return (4 + i * (w - 8) / (serie.length - 1)).toFixed(1) + ',' + (4 + (max - v) / ((max - min) || 1) * hh).toFixed(1); }).join(' ');
     return '<svg viewBox="0 0 300 64" width="100%" height="64" aria-hidden="true" class="fzp-spark"><line x1="0" y1="60" x2="300" y2="60" stroke="var(--fz-line)"></line><polyline points="' + pts + '" fill="none" stroke="' + cor + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>';
   }
   function passo5() {
@@ -189,11 +277,13 @@
     var opcoes = [[null, 'Máximo · ' + maximo + ' meses']].concat([360, 300, 240].filter(function (p) { return p < maximo; }).map(function (p) { return [p, p + ' meses']; }));
     if (st.resp.prazo != null && !opcoes.some(function (o) { return o[0] === st.resp.prazo; })) st.resp.prazo = null;
     var comp = F.comparar(st.resp, im, HOJE);
+    var serieDe = function (id) { var x = comp[id]; return x.erro ? [] : F.serieAnual(MotorCaixa.cronograma(x.motorIn, x.r, x.segPadrao)); };
+    var series = { PRICE: serieDe('PRICE'), SAC: serieDe('SAC') }, todos = series.PRICE.concat(series.SAC);
+    var hi = Math.max.apply(null, todos.concat([0])), lo = Math.min.apply(null, todos.concat([hi]));
     var cartao = function (id, desc) {
-      var s = comp[id], on = st.resp.sistema === id, c = '', serie = [];
+      var s = comp[id], on = st.resp.sistema === id, c = '', serie = series[id];
       if (!s.erro) {
         var seg = s.r.seguradoras.filter(function (x) { return x.codigo === s.segPadrao; })[0];
-        serie = F.serieAnual(MotorCaixa.cronograma(s.motorIn, s.r, s.segPadrao));
         c = '<span class="fzp-opt-n"><span><span class="fz-k">Financia</span><b>' + inteiro(s.r.valorFinanciamento) + '</b></span>' +
           '<span><span class="fz-k">' + (id === 'SAC' ? '1ª → última' : '1ª parcela') + '</span><b>' + (id === 'SAC' ? inteiro(seg.primeira) + ' → ' + semRs(Math.round(seg.ultima)).replace(/,\d+$/, '') : inteiro(seg.primeira)) + '</b></span>' +
           '<span><span class="fz-k">Entrada</span><b>' + inteiro(s.entrada) + '</b></span></span>';
@@ -201,14 +291,12 @@
       var tag = id === 'PRICE' && !comp.PRICE.erro && !comp.SAC.erro && comp.PRICE.r.valorFinanciamento > comp.SAC.r.valorFinanciamento ? '<span class="fzp-tag-ok">Financia mais</span>' : '';
       return '<button type="button" role="radio" aria-checked="' + on + '" class="fz-opt fzp-opt' + (on ? ' fz-opt-on' : '') + '" data-a="sis" data-v="' + id + '">' +
         '<span class="fz-opt-t"><span class="fz-radio">' + CHECK + '</span>' + id + tag + '</span><span class="fz-opt-d">' + desc + '</span>' +
-        linha(serie, id === 'PRICE' ? '#E4032B' : '#2563A8') + c + '</button>';
+        linha(serie, id === 'PRICE' ? '#E4032B' : '#2563A8', lo, hi) + c + '</button>';
     };
     return cabecalho(5, 'Como o cliente quer pagar?', 'Os dois sistemas com os números deste cliente. Dá para trocar depois, no resultado.', 'calculadora') +
       '<div class="fz-opts fzp-opts" role="radiogroup" aria-label="Sistema de amortização">' + cartao('PRICE', 'Parcela parecida do começo ao fim.') + cartao('SAC', 'Parcela que cai todo mês. Financia menos, então a entrada sobe.') + '</div>' +
       '<div class="fzp-linha fzp-mt"><div><p class="fz-lab" id="fzp-l-prazo">Prazo</p><div class="fz-pills" role="radiogroup" aria-labelledby="fzp-l-prazo">' + pilulas('prazo', opcoes, st.resp.prazo) + '</div></div>' +
-      '<div class="fzp-menos"><button type="button" role="switch" aria-checked="' + st.menos + '" class="fzp-menos-btn" data-a="menos"><span><b>Financiar menos que o máximo</b><small>Opcional · o resto vira entrada</small></span><span class="fz-sw' + (st.menos ? ' fz-sw-on' : '') + '"></span></button>' +
-      (st.menos ? '<div class="fz-input fzp-input-m"><span class="fz-pre">R$</span><input id="fzp-menos" data-c="financiarAte" inputmode="decimal" autocomplete="off" placeholder="valor a financiar" aria-label="Valor que quer financiar" value="' + (st.resp.financiarAte > 0 ? semRs(st.resp.financiarAte) : '') + '"></div>' : '') +
-      '</div></div>';
+      '<button type="button" class="fz-sec fzp-menos' + (st.resp.financiarAte > 0 ? ' fzp-menos-on' : '') + '" data-a="menos">' + AJUSTE + (st.resp.financiarAte > 0 ? 'Financiando ' + inteiro(st.resp.financiarAte) : 'Financiar menos que o máximo') + '</button></div>';
   }
 
   /* ---------- resumo das respostas (trilha e pilulas do celular) ---------- */
@@ -227,7 +315,7 @@
   }
   function trilha() {
     var r = respostas();
-    $('fzp-trilha').innerHTML = [1, 2, 3, 4, 5, 6].map(function (k) {
+    UI.morph($('fzp-trilha'), [1, 2, 3, 4, 5, 6].map(function (k) {
       var estado = k < st.etapa ? 'feito' : k === st.etapa ? 'agora' : 'depois';
       if (estado === 'feito') {
         return '<li class="fzp-tl fzp-tl-feito"><button type="button" data-a="ir" data-v="' + k + '" aria-label="Editar ' + ROTULOS[k] + '">' +
@@ -239,7 +327,7 @@
           '<span class="fzp-tl-t"><small>Agora</small><b>' + ROTULOS[k] + '</b></span></li>';
       }
       return '<li class="fzp-tl fzp-tl-depois"><span class="fzp-tl-m"><span class="fzp-tl-o"></span>' + (k < 6 ? '<span class="fzp-tl-l fzp-tl-tr"></span>' : '') + '</span><span class="fzp-tl-t"><b>' + ROTULOS[k] + '</b></span></li>';
-    }).join('');
+    }).join(''));
     $('fzp-contador').textContent = Math.min(st.etapa, 5) + ' de 5';
   }
   function pilulasCelular() {
@@ -252,27 +340,27 @@
     var pronto = st.resp.renda > 0 && im.avaliacao > 0 && CIDADES.indexOf(im.cidade) >= 0;
     if (!pronto) {
       box.className = 'fzp-previa fzp-previa-vazia';
-      box.innerHTML = icone('alvo', 48) + '<div><b>Prévia ao vivo</b><span>Faixa, juros e parcela aparecem aqui conforme você responde.</span></div>';
+      UI.morph(box, icone('alvo', 48) + '<div><b>Prévia ao vivo</b><span>Faixa, juros e parcela aparecem aqui conforme você responde.</span></div>');
       return;
     }
     var linhas;
     if (st.resp.nascimento) {
       var s = F.simular(st.resp, im, HOJE);
-      if (s.erro) { box.className = 'fzp-previa fzp-previa-vazia'; box.innerHTML = '<div><b>Prévia ao vivo</b><span>' + esc(s.mensagem) + '</span></div>'; return; }
+      if (s.erro) { box.className = 'fzp-previa fzp-previa-vazia'; UI.morph(box, '<div><b>Prévia ao vivo</b><span>' + esc(s.mensagem) + '</span></div>'); return; }
       linhas = [['Programa', F.programa(s.r)], ['Juros', pct(s.r.jurosNominal) + ' a.a.'], ['Prazo', s.r.prazo + ' meses'], ['Subsídio', s.r.subsidio > 0 ? inteiro(s.r.subsidio) : '—']];
       box.dataset.parcela = F.brl(s.parcelaMax);
     } else {
       var cid = MotorCaixa.CIDADES[MotorCaixa.MUNICIPIO_POR_CIDADE[im.cidade]];
       var sbpe = st.resp.possuiImovel || st.resp.renda > 13000;
       var enq = sbpe ? { faixa: 'SBPE', jn: 10.92 } : MotorCaixa.enquadrar(st.resp.renda, im.avaliacao, cid, st.resp.fgts !== false);
-      if (!enq) { box.className = 'fzp-previa fzp-previa-vazia'; box.innerHTML = '<div><b>Prévia ao vivo</b><span>' + esc(F.mensagemErro('Fora do enquadramento MCMV')) + '</span></div>'; return; }
+      if (!enq) { box.className = 'fzp-previa fzp-previa-vazia'; UI.morph(box, '<div><b>Prévia ao vivo</b><span>' + esc(F.mensagemErro('Fora do enquadramento MCMV')) + '</span></div>'); return; }
       linhas = [['Programa', enq.faixa === 'SBPE' ? 'SBPE' : 'MCMV · ' + enq.faixa], ['Juros', pct(enq.jn) + ' a.a.'], ['Prazo', 'falta a idade'], ['Subsídio', enq.subsidio ? 'pode ter' : '—']];
       box.dataset.parcela = F.brl((sbpe && st.resp.sistema !== 'SAC' ? 0.25 : 0.30) * st.resp.renda);
     }
     box.className = 'fzp-previa';
-    box.innerHTML = '<p class="fzp-previa-t"><span class="fzp-vivo"></span>Prévia ao vivo</p><div class="fzp-previa-g">' +
+    UI.morph(box, '<p class="fzp-previa-t"><span class="fzp-vivo"></span>Prévia ao vivo</p><div class="fzp-previa-g">' +
       linhas.map(function (l) { return '<div><small>' + l[0] + '</small><b' + (l[0] === 'Subsídio' && l[1] !== '—' ? ' class="fzp-verde"' : '') + '>' + esc(l[1]) + '</b></div>'; }).join('') +
-      '</div><div class="fzp-previa-p"><small>Parcela de até</small><b>' + box.dataset.parcela + '</b></div>';
+      '</div><div class="fzp-previa-p"><small>Parcela de até</small><b>' + box.dataset.parcela + '</b></div>');
   }
 
   /* ---------- render ---------- */
@@ -291,7 +379,10 @@
     trilha();
     previa();
     var corpo = st.etapa === 1 ? passo1() : st.etapa === 2 ? passo2() : st.etapa === 3 ? passo3() : st.etapa === 4 ? passo4() : st.etapa === 5 ? passo5() : '';
-    $('fzp-pergunta').innerHTML = st.etapa <= 5 ? pilulasCelular() + '<div class="fzp-q fzp-entra">' + corpo + '</div>' + rodape() : '';
+    var html = st.etapa <= 5 ? pilulasCelular() + '<div class="fzp-q fzp-entra">' + corpo + '</div>' + rodape() : '';
+    /* so a troca de passo entra com animacao; no mesmo passo atualiza no lugar, sem piscar */
+    if (desenhada === st.etapa) UI.morph($('fzp-pergunta'), html, { suave: true }); else $('fzp-pergunta').innerHTML = html;
+    desenhada = st.etapa;
     if (window.FinanciamentoResultado && st.etapa === 6) window.FinanciamentoResultado.render(st, imovel(), HOJE);
     else { var res = $('fzp-resultado'); if (res) { res.hidden = true; res.innerHTML = ''; } }
     if (focarCampo) {
@@ -300,8 +391,29 @@
     }
   }
 
+  function abrirMenos() {
+    var sim = F.simular(Object.assign({}, st.resp, { financiarAte: null }), imovel(), HOJE);
+    var maximo = sim.erro ? 0 : sim.r.valorFinanciamento;
+    UI.miniPopup({
+      titulo: 'Financiar menos que o máximo',
+      desc: 'O que sobrar do financiamento vira entrada.',
+      corpo: '<label class="fz-lab" for="fzp-menos">Valor a financiar</label><div class="fz-input"><span class="fz-pre">R$</span><input id="fzp-menos" data-moeda inputmode="numeric" autocomplete="off" placeholder="0,00" value="' + (st.resp.financiarAte > 0 ? semRs(st.resp.financiarAte) : '') + '"></div>' +
+        (maximo ? '<p class="fzp-dica">Máximo para este cliente: <b>' + F.brl(maximo) + '</b></p>' : ''),
+      confirmar: 'Aplicar',
+      extra: st.resp.financiarAte > 0 ? 'Usar o máximo' : null,
+      aoExtra: function () { st.resp.financiarAte = null; salvar(); render(false); },
+      aoConfirmar: function (raiz) {
+        var v = num(raiz.querySelector('#fzp-menos').value);
+        if (!(v > 0)) return 'Informe o valor a financiar.';
+        if (maximo && v > maximo) return 'O máximo para este cliente é ' + F.brl(maximo) + '.';
+        st.resp.financiarAte = v; salvar(); render(false);
+      }
+    });
+  }
+
   function avancar() {
     if (st.etapa > 5) return;
+    st.abertura = false;
     st.erros = errosDoPasso();
     if (Object.keys(st.erros).length) { render(true); return; }
     st.etapa += 1;
@@ -326,9 +438,12 @@
   /* ---------- eventos ---------- */
   document.addEventListener('click', function (ev) {
     var b = ev.target.closest('[data-a]');
+    if (pick.aberto && !ev.target.closest('.fzp-pick')) fecharPick(false);
     if (!b || b.disabled) return;
     var a = b.getAttribute('data-a'), v = b.getAttribute('data-v');
-    if (a === 'comecar') { st.abertura = false; render(true); window.scrollTo(0, 0); }
+    if (a === 'pick') { if (pick.aberto === v) fecharPick(true); else abrirPick(v); }
+    else if (a === 'pick-op') escolhePick(pick.aberto, v);
+    else if (a === 'comecar') { st.abertura = false; render(true); window.scrollTo(0, 0); }
     else if (a === 'repetir') { var u = ultima(); if (u) { st = Object.assign(novo(), u, { abertura: false, erros: {} }); st.nascTxt = dataTxt(st.resp.nascimento); render(false); } }
     else if (a === 'voltar') voltar();
     else if (a === 'avancar') avancar();
@@ -339,20 +454,14 @@
     else if (a === 'tog') { st.resp[v] = v === 'fgts' ? st.resp.fgts === false : st.resp[v] !== true; render(false); salvar(); }
     else if (a === 'sis') { st.resp.sistema = v; render(false); salvar(); }
     else if (a === 'prazo') { st.resp.prazo = v ? +v : null; render(false); salvar(); }
-    else if (a === 'menos') { st.menos = !st.menos; if (!st.menos) st.resp.financiarAte = null; render(false); if (st.menos) { var m = $('fzp-menos'); if (m) m.focus(); } }
-  });
-  document.addEventListener('change', function (ev) {
-    var c = ev.target.getAttribute && ev.target.getAttribute('data-c');
-    if (c === 'bloco') { st.blocoId = ev.target.value || null; st.unidade = ''; render(false); var un = $('fzp-un'); if (un && !un.disabled) un.focus(); }
-    else if (c === 'unidade') { st.unidade = ev.target.value; delete st.erros.unidade; render(false); }
-    else if (c === 'financiarAte') { render(false); salvar(); }
+    else if (a === 'menos') abrirMenos();
   });
   document.addEventListener('input', function (ev) {
     var c = ev.target.getAttribute && ev.target.getAttribute('data-c');
     if (!c) return;
+    if (c === 'pickq') { pick.q = ev.target.value; pick.ativo = 0; atualizaLista(); return; }
     if (c === 'renda') st.resp.renda = num(ev.target.value);
     else if (c === 'valor') st.avaliacaoDigitada = num(ev.target.value);
-    else if (c === 'financiarAte') st.resp.financiarAte = num(ev.target.value) || null;
     else if (c === 'nascimento') {
       var d = ev.target.value.replace(/\D/g, '').slice(0, 8);
       var t = d.length > 4 ? d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4) : d.length > 2 ? d.slice(0, 2) + '/' + d.slice(2) : d;
@@ -363,7 +472,7 @@
       var s = st.resp.nascimento ? F.simular(Object.assign({}, st.resp, { prazo: null }), imovel(), HOJE) : null;
       $('fzp-prazo-info').innerHTML = prazoInfo(s, idade);
     } else return;
-    if (st.erros[c === 'financiarAte' ? '' : c]) {
+    if (st.erros[c]) {
       delete st.erros[c];
       var caixa = ev.target.closest('.fz-input'); if (caixa) caixa.classList.remove('fz-input-erro');
       var msg = $('fzp-e-' + c); if (msg) msg.parentNode.removeChild(msg);
@@ -373,12 +482,28 @@
   });
   document.addEventListener('focusout', function (ev) {
     var c = ev.target.getAttribute && ev.target.getAttribute('data-c');
-    if (c === 'renda' && st.resp.renda > 0) ev.target.value = semRs(st.resp.renda);
-    if (c === 'valor' && st.avaliacaoDigitada > 0) ev.target.value = semRs(st.avaliacaoDigitada);
     if (c === 'renda' || c === 'valor' || c === 'nascimento') salvar();
   });
   document.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Enter' && st.etapa <= 5 && !st.abertura && ev.target.tagName === 'INPUT') { ev.preventDefault(); avancar(); }
+    if (pick.aberto && ev.target.closest && ev.target.closest('.fzp-pick')) {
+      var itens = filtradas(pick.aberto);
+      if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+        ev.preventDefault();
+        pick.ativo = Math.max(0, Math.min(itens.length - 1, pick.ativo + (ev.key === 'ArrowDown' ? 1 : -1)));
+        atualizaLista();
+      } else if (ev.key === 'Enter') {
+        ev.preventDefault();
+        if (itens[pick.ativo]) escolhePick(pick.aberto, itens[pick.ativo].v);
+      } else if (ev.key === 'Escape') { ev.preventDefault(); fecharPick(true); }
+      else if (ev.key === 'Tab') fecharPick(false);
+      return;
+    }
+    if (ev.key !== 'Enter' || ev.repeat || st.etapa > 5 || document.querySelector('.fz-veu')) return;
+    /* a abertura so existe no celular; no desktop a pergunta ja esta na tela */
+    if (st.abertura && st.etapa === 1 && celular()) return;
+    /* depois de escolher a unidade, Enter segue em vez de reabrir o seletor */
+    var noSeletor = st.unidade && ev.target.closest && ev.target.closest('.fzp-pick-btn');
+    if (noSeletor || UI.enterAvanca(ev.target)) { ev.preventDefault(); avancar(); }
   });
 
   /* ---------- planilha ---------- */
@@ -398,7 +523,7 @@
    ============================================================ */
 window.FinanciamentoResultado = (function () {
   'use strict';
-  var F = window.Financiamento;
+  var F = window.Financiamento, UI = window.FinanciamentoUI;
   var CHAVE_CORRETOR = 'mt-corretor';   /* o mesmo do Match */
   var CORES = { PRICE: '#E4032B', SAC: '#2563A8' };
   var CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>';
@@ -430,7 +555,7 @@ window.FinanciamentoResultado = (function () {
     var linha = function (k) { return series[k].length ? '<polyline class="fzr-draw" points="' + series[k].map(function (v, i) { return x(i).toFixed(1) + ',' + y(v).toFixed(1); }).join(' ') + '" fill="none" stroke="' + CORES[k] + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>' : ''; };
     var rotX = []; for (var i = 0; i < n; i++) rotX.push('<text x="' + x(i).toFixed(1) + '" y="' + (T + H + 22) + '" text-anchor="middle">' + (i === 0 ? 'hoje' : i === n - 1 ? 'fim' : (i * 5) + ' anos') + '</text>');
     return '<svg class="fzr-svg" viewBox="0 0 700 236" role="img" aria-label="Parcela ao longo do prazo em PRICE e SAC">' +
-      '<g font-family="DM Sans, sans-serif" font-size="12" fill="#727A7D">' +
+      '<g font-family="DM Sans, sans-serif" font-size="11" fill="#727A7D">' +
       grade.map(function (v) { return '<line x1="' + L + '" y1="' + y(v).toFixed(1) + '" x2="690" y2="' + y(v).toFixed(1) + '" stroke="#EEF0F1"></line><text x="0" y="' + (y(v) + 4).toFixed(1) + '">' + inteiro(v) + '</text>'; }).join('') +
       rotX.join('') + '</g>' + linha('SAC') + linha('PRICE') +
       '<g class="fzr-cursor" opacity="0"><line class="fzr-cur-l" y1="' + T + '" y2="' + (T + H) + '" stroke="#3A4043" stroke-opacity=".35" stroke-dasharray="3 4"></line>' +
@@ -444,11 +569,13 @@ window.FinanciamentoResultado = (function () {
 
   function ligaCursor(box) {
     var svg = box.querySelector('.fzr-svg'), meta = box.querySelector('.fzr-meta');
-    if (!svg || !meta) return;
-    var L = +meta.dataset.l, W = +meta.dataset.w, T = +meta.dataset.t, H = +meta.dataset.h, lo = +meta.dataset.lo, hi = +meta.dataset.hi, n = +meta.dataset.n, idade0 = +meta.dataset.idade;
-    var y = function (v) { return T + (hi - v) / (hi - lo) * H; };
+    if (!svg || !meta || svg._fzCursor) return;   /* o morph mantem o svg: liga uma vez so */
+    svg._fzCursor = true;
     var cur = svg.querySelector('.fzr-cursor');
+    var m = function (k) { return +meta.dataset[k]; };
     function mostra(i) {
+      var L = m('l'), W = m('w'), T = m('t'), H = m('h'), lo = m('lo'), hi = m('hi'), n = m('n'), idade0 = m('idade');
+      var y = function (v) { return T + (hi - v) / (hi - lo) * H; };
       var P = ctx.series.PRICE[i], S = ctx.series.SAC[i], xx = L + i * W / (n - 1);
       cur.setAttribute('opacity', '1');
       svg.querySelector('.fzr-cur-l').setAttribute('x1', xx); svg.querySelector('.fzr-cur-l').setAttribute('x2', xx);
@@ -463,7 +590,7 @@ window.FinanciamentoResultado = (function () {
       svg.querySelector('.fzr-cur-box').setAttribute('transform', 'translate(' + bx + ',' + (T + 26) + ')');
     }
     svg.addEventListener('mousemove', function (ev) {
-      var r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) / r.width * 700;
+      var r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) / r.width * 700, L = m('l'), W = m('w'), n = m('n');
       mostra(Math.max(0, Math.min(n - 1, Math.round((px - L) / (W / (n - 1))))));
     });
     svg.addEventListener('mouseleave', function () { cur.setAttribute('opacity', '0'); });
@@ -472,11 +599,12 @@ window.FinanciamentoResultado = (function () {
   function render(st, im, hoje) {
     var box = document.getElementById('fzp-resultado');
     box.hidden = false;
+    var pinta = function (html) { if (box.firstElementChild) UI.morph(box, html, { suave: true }); else box.innerHTML = html; };
     var comp = F.comparar(st.resp, im, hoje), s = comp[st.resp.sistema];
     if (s.erro) {
       ctx = { st: st, im: im, hoje: hoje, comp: comp, series: { PRICE: [], SAC: [] }, prazo: 0, erro: true };
-      box.innerHTML = '<div class="fzr-in"><div class="fzr-erro fzp-entra"><img class="fz-ico" src="assets/img/icones-3d/alvo.svg" width="64" height="64" alt="">' +
-        '<div><h1 class="fzr-erro-t">Não deu para simular</h1><p>' + esc(s.mensagem) + '</p><button type="button" class="fz-pri" data-r="editar">' + LAPIS + 'Editar respostas</button></div></div></div>';
+      pinta('<div class="fzr-in"><div class="fzr-erro fzp-entra"><img class="fz-ico" src="assets/img/icones-3d/alvo.svg" width="64" height="64" alt="">' +
+        '<div><h1 class="fzr-erro-t">Não deu para simular</h1><p>' + esc(s.mensagem) + '</p><button type="button" class="fz-pri" data-r="editar">' + LAPIS + 'Editar respostas</button></div></div></div>');
       return;
     }
     var cod = segDe(s, st.seg).codigo; st.seg = cod;
@@ -494,12 +622,13 @@ window.FinanciamentoResultado = (function () {
     var pctRenda = Math.round(seg.primeira / st.resp.renda * 100);
     var segp = function (k) { var on = st.resp.sistema === k; return '<button type="button" role="tab" aria-selected="' + on + '" class="fz-seg' + (on ? ' fz-seg-on' : '') + '" data-r="sis" data-v="' + k + '">' + k + '</button>'; };
     var cel = function (k, f) { return comp[k].erro ? '—' : f(comp[k]); };
+    var col = function (k) { return st.resp.sistema === k ? ' class="fzr-col-on"' : ''; };
     var lugar = im.empNome ? im.empNome + (im.unidade ? ' · ' + im.unidade : '') : 'Imóvel de ' + inteiro(im.avaliacao) + ' em ' + im.cidade;
     var respostas = [['Renda', F.brl(st.resp.renda)], ['Nascimento', ('0' + st.resp.nascimento.getDate()).slice(-2) + '/' + ('0' + (st.resp.nascimento.getMonth() + 1)).slice(-2) + '/' + st.resp.nascimento.getFullYear()],
       ['FGTS 3 anos', st.resp.fgts !== false ? 'Sim' : 'Não'], ['Imóvel na cidade', st.resp.possuiImovel ? 'Sim' : 'Não']];
     if (F.mostraPerguntasSubsidio(st.resp.renda, st.resp.possuiImovel)) respostas.push(['Dependente', st.resp.fatorSocial ? 'Sim' : 'Não'], ['Subsídio anterior', st.resp.subsidioAnterior ? 'Sim' : 'Não']);
 
-    box.innerHTML = '<div class="fzr-in">' +
+    pinta('<div class="fzr-in">' +
       '<div class="fzr-topo fzp-entra"><div><p class="fzr-ok">' + CHECK + 'Simulação pronta</p>' +
         '<h1 class="fzr-t">Financia até <span>' + F.brl(r.valorFinanciamento) + '</span></h1>' +
         '<p class="fzr-sub">' + esc(lugar) + ' · renda de ' + F.brl(st.resp.renda).replace(/,00$/, '') + '/mês · ' + idade0 + ' anos</p>' +
@@ -525,17 +654,17 @@ window.FinanciamentoResultado = (function () {
           '<div class="fzr-parc"><small>Última parcela</small><b>' + F.brl(seg.ultima) + '</b><p>Sem o seguro de danos físicos, que zera no último mês.</p></div></div></article>' +
         '<article class="fzr-card fzp-entra"><div class="fzr-card-cab"><div><h2>Parcela ao longo do prazo</h2><p>Encargo com seguros, ' + esc(nomeSeg(seg.nome)) + ' · estimativa</p></div>' +
           '<div class="fzr-legenda"><span><i style="background:#E4032B"></i>PRICE</span><span><i style="background:#2563A8"></i>SAC</span></div></div>' +
-          '<div class="fzr-graf"><div class="fzr-graf-svg">' + grafico(series, idade0) + '</div>' +
-          '<table class="fzr-tab"><thead><tr><th scope="col"><span class="fzr-sr">Item</span></th><th scope="col">PRICE</th><th scope="col">SAC</th></tr></thead><tbody>' +
-          '<tr><td>Financia</td><td>' + cel('PRICE', function (c) { return inteiro(c.r.valorFinanciamento); }) + '</td><td>' + cel('SAC', function (c) { return inteiro(c.r.valorFinanciamento); }) + '</td></tr>' +
-          '<tr><td>Entrada</td><td>' + cel('PRICE', function (c) { return inteiro(c.entrada); }) + '</td><td>' + cel('SAC', function (c) { return inteiro(c.entrada); }) + '</td></tr>' +
-          '<tr><td>1ª parcela</td><td>' + cel('PRICE', function (c) { return inteiro(segDe(c, cod).primeira); }) + '</td><td>' + cel('SAC', function (c) { return inteiro(segDe(c, cod).primeira); }) + '</td></tr>' +
-          '<tr><td>Última</td><td>' + cel('PRICE', function (c) { return inteiro(segDe(c, cod).ultima); }) + '</td><td>' + cel('SAC', function (c) { return inteiro(segDe(c, cod).ultima); }) + '</td></tr>' +
-          '<tr><td>Total pago*</td><td>' + (cronos.PRICE ? mil(totalPago(cronos.PRICE)) : '—') + '</td><td>' + (cronos.SAC ? mil(totalPago(cronos.SAC)) : '—') + '</td></tr>' +
+          '<div class="fzr-graf">' + grafico(series, idade0) +
+          '</div><table class="fzr-tab"><thead><tr><th scope="col"><span class="fzr-sr">Item</span></th><th scope="col"' + col('PRICE') + '>PRICE</th><th scope="col"' + col('SAC') + '>SAC</th></tr></thead><tbody>' +
+          '<tr><td>Financia</td><td' + col('PRICE') + '>' + cel('PRICE', function (c) { return inteiro(c.r.valorFinanciamento); }) + '</td><td' + col('SAC') + '>' + cel('SAC', function (c) { return inteiro(c.r.valorFinanciamento); }) + '</td></tr>' +
+          '<tr><td>Entrada</td><td' + col('PRICE') + '>' + cel('PRICE', function (c) { return inteiro(c.entrada); }) + '</td><td' + col('SAC') + '>' + cel('SAC', function (c) { return inteiro(c.entrada); }) + '</td></tr>' +
+          '<tr><td>1ª parcela</td><td' + col('PRICE') + '>' + cel('PRICE', function (c) { return inteiro(segDe(c, cod).primeira); }) + '</td><td' + col('SAC') + '>' + cel('SAC', function (c) { return inteiro(segDe(c, cod).primeira); }) + '</td></tr>' +
+          '<tr><td>Última</td><td' + col('PRICE') + '>' + cel('PRICE', function (c) { return inteiro(segDe(c, cod).ultima); }) + '</td><td' + col('SAC') + '>' + cel('SAC', function (c) { return inteiro(segDe(c, cod).ultima); }) + '</td></tr>' +
+          '<tr><td>Total pago*</td><td' + col('PRICE') + '>' + (cronos.PRICE ? mil(totalPago(cronos.PRICE)) : '—') + '</td><td' + col('SAC') + '>' + (cronos.SAC ? mil(totalPago(cronos.SAC)) : '—') + '</td></tr>' +
           '</tbody></table></div><p class="fzr-nota">* Soma das parcelas com seguros no prazo todo. No PRICE o seguro de vida sobe com a idade, por isso a parcela pode crescer com o tempo.</p></article>' +
         '<article class="fzr-card fzp-entra"><div class="fzr-card-cab fzr-cab-ico"><img class="fz-ico" src="assets/img/icones-3d/escudo.svg" width="48" height="48" alt=""><div><h2>Seguradora</h2><p>A escolhida vai para o PDF e para o associativo</p></div></div>' +
           '<div class="fzr-segs" role="radiogroup" aria-label="Seguradora"><div class="fzr-seg-h"><span></span><span>Seguradora</span><span>1ª parcela</span><span>Última</span></div>' +
-          r.seguradoras.map(function (x) {
+          F.seguradorasOrdenadas(r.seguradoras).map(function (x) {
             var on = x.codigo === cod, maior = x.codigo === s.segPadrao;
             var menor = r.seguradoras.every(function (y) { return y.primeira >= x.primeira; });
             return '<button type="button" role="radio" aria-checked="' + on + '" class="fzr-seg' + (on ? ' fzr-seg-on' : '') + '" data-r="seg" data-v="' + x.codigo + '"><span class="fz-radio">' + CHECK + '</span>' +
@@ -544,9 +673,6 @@ window.FinanciamentoResultado = (function () {
           }).join('') + '</div></article></div>' +
       '<aside class="fzr-lado">' +
         '<div class="fzr-prox"><img class="fz-ico" src="assets/img/icones-3d/calculadora.svg" width="88" height="88" alt=""><p class="fzr-prox-o">Próximo passo</p><h3>Monte o fluxo no associativo</h3><p>Renda, financiamento, subsídio e parcela já entram preenchidos.</p><button type="button" data-r="levar">Abrir no associativo →</button></div>' +
-        '<div class="fzr-card fzr-pdf"><h3>PDF para o cliente</h3><label class="fz-lab" for="fzr-cli">Nome do cliente <span class="fzr-cinza">opcional</span></label><input id="fzr-cli" class="fzr-in-txt" autocomplete="off" value="' + esc(st.cliente || '') + '">' +
-          '<label class="fz-lab" for="fzr-cor">Corretor <span class="fzr-cinza">opcional</span></label><input id="fzr-cor" class="fzr-in-txt" autocomplete="off" value="' + esc(lerLS(CHAVE_CORRETOR)) + '">' +
-          '<button type="button" class="fz-sec fzr-pdf-btn" data-r="pdf">' + BAIXAR + 'Baixar PDF</button></div>' +
         '<div class="fzr-card"><div class="fzr-cab-ico"><img class="fz-ico" src="assets/img/icones-3d/alvo.svg" width="48" height="48" alt=""><h3>Como chegamos aqui</h3></div><ul class="fzr-lista">' +
           '<li>Parcela de até ' + Math.round(r.comprometimento * 100) + '% da renda: ' + F.brl(s.parcelaMax) + '.</li>' +
           '<li>Financiamento de até ' + Math.round(r.cota * 100) + '% do imóvel' + (r.valorFinanciamento < r.cota * s.motorIn.valor - 1 ? '. Aqui a parcela limitou antes.' : '.') + '</li>' +
@@ -555,20 +681,31 @@ window.FinanciamentoResultado = (function () {
           (s.trava ? '<li>Imóvel avaliado acima de R$ 400 mil e vendido abaixo disso: a CAIXA simula em R$ 400 mil.</li>' : '') + '</ul></div>' +
         '<div class="fzr-card"><h3>Respostas</h3><dl class="fzr-resp">' + respostas.map(function (x) { return '<dt>' + x[0] + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('') + '</dl>' +
           '<button type="button" class="fzr-lnk" data-r="nova">' + NOVA + 'Nova simulação</button></div>' +
-        '<p class="fzr-aviso">Estimativa do motor calibrado no Simulador Habitacional CAIXA. Sujeita à análise de crédito da CAIXA e à aprovação da Direcional.</p></aside></div>' +
+        '<p class="fzr-aviso">Estimativa de Simulação Habitacional CAIXA. Sujeita à análise de crédito da CAIXA e à aprovação da Direcional.</p></aside></div>' +
       '<div class="fzr-rod-cel"><button type="button" class="fz-sec" data-r="pdf">' + BAIXAR + 'PDF</button><button type="button" class="fz-pri" data-r="levar">Levar ao associativo' + SETA + '</button></div>' +
-      '</div>';
+      '</div>');
     ligaCursor(box);
   }
 
+  function campoTexto(id, rotulo, valor) {
+    return '<label class="fz-lab" for="' + id + '">' + rotulo + '<span class="fz-opc">opcional</span></label><div class="fz-input fz-input-txt"><input id="' + id + '" type="text" autocomplete="off" value="' + esc(valor) + '"></div>';
+  }
   function pdf() {
-    var st = ctx.st, cli = document.getElementById('fzr-cli'), cor = document.getElementById('fzr-cor');
-    st.cliente = cli ? cli.value.trim() : '';
-    var corretor = cor ? cor.value.trim() : lerLS(CHAVE_CORRETOR);
-    gravarLS(CHAVE_CORRETOR, corretor);
-    if (!window.FinanciamentoPdf) return;
-    window.FinanciamentoPdf.gerar(F.dadosPdf({ comp: ctx.comp, sistema: st.resp.sistema, imovel: ctx.im, resp: st.resp, seg: st.seg,
-      pessoas: { cliente: st.cliente, corretor: corretor }, hoje: ctx.hoje }));
+    var st = ctx.st;
+    UI.miniPopup({
+      titulo: 'Baixar PDF',
+      desc: 'Os nomes saem no cabeçalho do PDF. Pode deixar em branco.',
+      corpo: campoTexto('fzr-cli', 'Nome do cliente', st.cliente || '') + campoTexto('fzr-cor', 'Corretor', lerLS(CHAVE_CORRETOR)),
+      confirmar: BAIXAR + 'Baixar PDF',
+      aoConfirmar: function (raiz) {
+        st.cliente = raiz.querySelector('#fzr-cli').value.trim();
+        var corretor = raiz.querySelector('#fzr-cor').value.trim();
+        gravarLS(CHAVE_CORRETOR, corretor);
+        if (!window.FinanciamentoPdf) return;
+        window.FinanciamentoPdf.gerar(F.dadosPdf({ comp: ctx.comp, sistema: st.resp.sistema, imovel: ctx.im, resp: st.resp, seg: st.seg,
+          pessoas: { cliente: st.cliente, corretor: corretor }, hoje: ctx.hoje }));
+      }
+    });
   }
 
   function levar() {
