@@ -35,6 +35,15 @@
 <script src="assets/config.js"></script>
 <!-- catalogo de empreendimentos, unidades da planilha, combobox e rich text -> PDF -->
 <script src="assets/simuladores.js"></script>
+<!-- Simular financiamento: motor CAIXA + regras do Match + popup (spec 2026-11-07-simulador-financiamento) -->
+<script src="assets/motor-caixa.js"></script>
+<script src="assets/match-prosoluto.js"></script>
+<script src="assets/match.js"></script>
+<script src="assets/financiamento.js"></script>
+<script src="assets/financiamento-pdf.js"></script>
+<script src="assets/financiamento-ui.js"></script>
+<script src="assets/financiamento-popup.js"></script>
+<link rel="stylesheet" href="assets/financiamento.css">
 <style>
 /* ===== Identidade Grupo Direcional ===== */
 :root{
@@ -716,6 +725,7 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
   <section class="step">
     <button class="step-label" type="button" data-step="2"><span class="step-n">2</span><span class="step-t"><span class="s-pre">Passo 2 &middot; </span>Cliente</span><span class="step-sum" id="sum-2"></span><svg class="step-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
     <div class="card">
+      <div id="fz-slot"></div>
       <div class="grid g4">
         <div>
           <label for="f-renda">Renda do cliente</label>
@@ -1884,7 +1894,7 @@ function renderTabela(c){
   tb.innerHTML=html;
 }
 
-function render(){ renderEmpInfo(); renderUnidInfo(); renderPols(); renderResultado(); renderShell(); }
+function render(){ renderEmpInfo(); renderUnidInfo(); renderPols(); renderResultado(); renderShell(); if(fz) fz.atualizar(); }
 
 /* =========================================================
    SHELL MOBILE
@@ -2434,6 +2444,7 @@ $('b-toggle-tbl').addEventListener('click', function(){ S.verTudo=!S.verTudo; re
 
 $('b-reset').addEventListener('click', function(){
   S=estadoInicial(); venc1Movido=false;
+  if(fz) fz.limpar();
   if(quill) quill.setText('');
   else if($('f-obs')) $('f-obs').value='';
   avisaTamanhoObs();
@@ -2640,11 +2651,38 @@ $('b-pdf').addEventListener('click', function(){
 /* =========================================================
    INIT
    ========================================================= */
+/* =========================================================
+   SIMULAR FINANCIAMENTO (popup do motor CAIXA no passo Cliente)
+   Modulo: assets/financiamento-popup.js. Copiar mexe so em renda,
+   financiamento, subsidio e parcela do financiamento.
+   ========================================================= */
+var fz = null;
+function contextoFz(){
+  var e = EMPS.filter(function(x){ return x.id===S.empId; })[0] || null;
+  var d = (unidadesEmp.detalhes||{})[S.unidade] || null;
+  return {
+    cidade: e ? e.cidade : '', empId: e ? e.id : null, empNome: e ? e.nome : '',
+    unidade: S.unidade || '', unidadeRotulo: S.unidade || '',
+    avaliacao: d && d.avaliacao>0 ? d.avaliacao : 0,
+    venda: S.valor>0 ? S.valor : (d && d.associativoSemPremio>0 ? d.associativoSemPremio : 0),
+    valorImovel: S.valor||0,
+    ato: S.ato||0, renda: S.renda||0, cliente: S.cliente||'', corretor: S.corretor||''
+  };
+}
+fz = FinanciamentoPopup.ligarAssociativo({
+  tema: 'black', slot: $('fz-slot'), contexto: contextoFz,
+  ler: function(){ return { renda:S.renda, financiado:S.financiado, subsidio:S.subsidio, parcFin:S.parcFin }; },
+  aplicar: function(v){ S.renda=v.renda; S.financiado=v.financiado; S.subsidio=v.subsidio; S.parcFin=v.parcFin; sincronizaCampos(); render(); },
+  campos: { renda:'f-renda', financiado:'f-fin', subsidio:'f-sub', parcFin:'f-parcfin' }
+});
+
 /* Vindo do Match de Unidades: preenche o formulario a partir da URL.
    So popula o estado - nenhuma conta muda. Campo ausente/invalido e ignorado. */
-(function aplicaParametrosUrl(){
+var fzChegada = (function aplicaParametrosUrl(){
   var q = new URLSearchParams(location.search);
-  if(!q.has('emp')) return;
+  /* vindo do /simulador-financiamento: numeros valem mesmo sem unidade e os campos ficam marcados */
+  var doFinanciamento = q.get('origem')==='financiamento';
+  if(!q.has('emp') && !doFinanciamento) return null;
   var n = function(k){ var v=parseFloat(q.get(k)); return isFinite(v)&&v>=0 ? v : null; };
   var id = q.get('emp');
   if(EMPS.some(function(e){ return e.id===id; })) S.empId = id;
@@ -2655,11 +2693,13 @@ $('b-pdf').addEventListener('click', function(){
    ['parcFin','parcFin'],['ato','ato']].forEach(function(p){ var v=n(p[0]); if(v!==null) S[p[1]]=v; });
   var pz=n('prazo'); if(pz!==null && pz>=1) S.prazo=Math.round(pz);
   if(ehBF(emp()) && S.prazo>BF.prazoMax) S.prazo=BF.prazoMax;
+  return doFinanciamento && window.Financiamento ? Financiamento.decodificaRespostas(q.get('fz')) : null;
 })();
 initCombos();
 sugereDatas();
 sincronizaCampos();
 render();
+if(fzChegada && fz) fz.restaurar(fzChegada);
 avisaTamanhoObs();
 /* o Quill chega por script defer, ou seja, só depois do parse da página */
 document.addEventListener('DOMContentLoaded', initEditor);

@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Popup · Simular financiamento</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.fm,.fm *{box-sizing:border-box}
+.fm-claro{--panel:#FFFFFF;--soft:#F5F6F7;--ink:#2B3033;--txt:#3A4043;--sub:#5C6467;--mut:#727A7D;--line:#E7E9EA;--tile:#FFFFFF;--tileOn:#FFF6F7;--field:#FFFFFF;--okBg:#EFF9F2;--okLine:#C7E7D3;--ok:#1E8E4A;--redSoft:#FFF1F3;--redTxt:#B8001F;--segBg:#E9ECEE;--segOn:#FFFFFF;--ent:#3A4043;--sw:#D9DEE1;--shadow:0 1px 2px rgba(58,64,67,.06),0 10px 24px -16px rgba(58,64,67,.3);--box:0 30px 80px -20px rgba(28,32,34,.45)}
+.fm-black{--panel:#16181A;--soft:#1C1F21;--ink:#F2F3F4;--txt:#ECEEEF;--sub:#B4BBBE;--mut:#9AA2A6;--line:#2A2E31;--tile:#1C1F21;--tileOn:#2A1015;--field:#1C1F21;--okBg:#10241A;--okLine:#1F4A31;--ok:#4CC27E;--redSoft:#2A1015;--redTxt:#FF8A9A;--segBg:#0D0E0F;--segOn:#2A2E31;--ent:#9AA2A6;--sw:#3A3F43;--shadow:0 0 0 1px #2A2E31;--box:0 0 0 1px #2A2E31,0 30px 80px -20px rgba(0,0,0,.8),0 0 60px -20px rgba(228,3,43,.35)}
+:where(.fm) button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;margin:0;text-align:left}
+:where(.fm) input{font:inherit;color:inherit;border:0;background:none;min-width:0;padding:0;margin:0}
+.fm input:focus{outline:none}
+.fm :focus-visible{outline:2px solid #E4032B;outline-offset:3px;border-radius:12px}
+.fm-scroll{overflow-y:auto;scrollbar-width:none}
+.fm-scroll::-webkit-scrollbar{display:none}
+.fm-pri{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:52px;padding:0 24px;border-radius:16px;background:#E4032B;color:#fff;font-weight:700;font-size:15px;white-space:nowrap;text-align:center;box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 12px 24px -10px rgba(228,3,43,.65);transition:transform .12s,background .2s}
+.fm-pri:hover{background:#CF0227}
+.fm-pri:active{transform:scale(.97)}
+.fm-sec{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 18px;border-radius:16px;background:var(--panel);border:1.5px solid var(--line);color:var(--txt);font-weight:600;font-size:15px;white-space:nowrap;text-align:center;transition:border-color .2s,color .2s}
+.fm-sec:hover{border-color:#E4032B;color:#E4032B}
+.fm-ghost{display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 14px;border-radius:16px;font-weight:600;font-size:15px;color:var(--sub)}
+.fm-ghost:hover{background:var(--soft);color:var(--ink)}
+.fm-x{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--soft);color:var(--txt);flex:none}
+.fm-x:hover{color:#E4032B}
+.fm-field{display:flex;align-items:baseline;gap:8px;padding:14px 18px;border-radius:18px;background:var(--field);border:1.5px solid var(--line);transition:border-color .2s,box-shadow .2s}
+.fm-field:focus-within{border-color:#E4032B;box-shadow:0 0 0 5px rgba(228,3,43,.12)}
+.fm-tile{display:flex;flex-direction:column;justify-content:space-between;gap:10px;min-height:138px;padding:14px;border-radius:20px;background:var(--tile);border:1.5px solid var(--tile);box-shadow:var(--shadow);transition:border-color .2s,background .2s,transform .12s}
+.fm-tile:active{transform:scale(.97)}
+.fm-tile-on{border-color:#E4032B;background:var(--tileOn)}
+.fm-sw{width:44px;height:26px;border-radius:99px;background:var(--sw);position:relative;flex:none;transition:background .25s}
+.fm-sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .3s cubic-bezier(.3,1.4,.5,1)}
+.fm-sw-on{background:#E4032B}
+.fm-sw-on::after{transform:translateX(18px)}
+.fm-opt{display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:20px;background:var(--tile);border:1.5px solid var(--tile);box-shadow:var(--shadow);transition:border-color .2s,background .2s}
+.fm-opt-on{border-color:#E4032B;background:var(--tileOn)}
+.fm-radio{width:22px;height:22px;border-radius:50%;border:2px solid #9AA2A6;flex:none;display:grid;place-items:center}
+.fm-radio svg{opacity:0}
+.fm-opt-on .fm-radio,.fm-row-on .fm-radio{border-color:#E4032B;background:#E4032B}
+.fm-opt-on .fm-radio svg,.fm-row-on .fm-radio svg{opacity:1}
+.fm-pill{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 14px;border-radius:99px;background:var(--panel);border:1.5px solid var(--line);color:var(--txt);font-weight:600;font-size:13px;white-space:nowrap}
+.fm-pill-on{background:var(--txt);border-color:var(--txt);color:var(--panel)}
+.fm-segw{display:inline-flex;gap:3px;padding:3px;border-radius:99px;background:var(--segBg)}
+.fm-seg{height:34px;padding:0 14px;border-radius:99px;font-size:13px;font-weight:700;color:var(--mut);text-align:center}
+.fm-seg-on{background:var(--segOn);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.fm-row{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:14px}
+.fm-row:hover{background:var(--soft)}
+.fm-row-on{background:var(--tileOn)}
+.fm-enter{animation:fmEnter .5s cubic-bezier(.2,.8,.2,1) both}
+.fm-d1{animation-delay:.06s}.fm-d2{animation-delay:.12s}.fm-d3{animation-delay:.18s}
+@keyframes fmEnter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.fm-float{animation:fmFloat 4.6s ease-in-out infinite}
+@keyframes fmFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.fm-grow{animation:fmGrow 1s .2s cubic-bezier(.2,.8,.2,1) both;transform-origin:left center}
+@keyframes fmGrow{from{transform:scaleX(0)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.fm *,.fm *::after{animation:none!important;transition:none!important}}
+</style>
+</helmet>
+<div class="fm {{temaCls}}" role="dialog" aria-modal="true" aria-labelledby="fm-titulo" style="width: {{largura}}; height: {{altura}}; display: flex; flex-direction: column; background: var(--panel); color: var(--txt); font-family: 'DM Sans', system-ui, sans-serif; border-radius: {{raio}}; box-shadow: var(--box); overflow: hidden">
+  <sc-if value="{{isSheet}}" hint-placeholder-val="{{ false }}"><div style="display: flex; justify-content: center; padding-top: 8px; flex: none"><span style="width: 40px; height: 5px; border-radius: 99px; background: var(--line)"></span></div></sc-if>
+
+  <div style="flex: none; padding: {{padHead}}">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <div class="fm-float" style="flex: none"><dc-import name="Icone" icone="calculadora" tamanho="46" hint-size="46px,46px"></dc-import></div>
+      <div style="flex: 1; min-width: 0">
+        <h2 id="fm-titulo" style="margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -.3px; color: var(--ink)">Simular financiamento</h2>
+        <div style="font-size: 13px; color: var(--mut); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Village Gaia · Apto 305 · avaliação R$ 220.000</div>
+      </div>
+      <button type="button" class="fm-x" aria-label="Fechar" onClick="{{fechar}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 14px">
+      <div style="flex: 1; display: flex; gap: 5px">
+        <sc-for list="{{barra}}" as="b" hint-placeholder-count="4"><span style="flex: 1; height: 5px; border-radius: 99px; background: {{b.cor}}"></span></sc-for>
+      </div>
+      <span style="font-size: 12px; font-weight: 700; color: var(--sub); white-space: nowrap">{{passoTxt}}</span>
+    </div>
+  </div>
+
+  <div class="fm-scroll" style="flex: 1; min-height: 0; padding: {{padBody}}">
+
+    <!-- 1 · CLIENTE -->
+    <sc-if value="{{is1}}" hint-placeholder-val="{{ false }}">
+      <div class="fm-enter" style="display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 16px; background: var(--soft); font-size: 13px; line-height: 1.45; color: var(--sub)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E4032B" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 1px"><path d="M4 12h12M12 6l6 6-6 6"></path></svg>
+        <span>Já trouxemos do simulador o imóvel, o valor de avaliação e a renda. Confira e complete.</span>
+      </div>
+      <h3 class="fm-enter fm-d1" style="margin: 18px 0 0; font-size: 24px; line-height: 1.15; font-weight: 800; letter-spacing: -.6px; color: var(--ink)">Renda e idade do cliente</h3>
+      <div class="fm-enter fm-d2" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 14px">
+        <div>
+          <label for="fm-renda" style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: var(--sub); margin-bottom: 6px">Renda familiar bruta<span style="font-size: 11px; font-weight: 700; color: var(--ok)">do simulador</span></label>
+          <div class="fm-field"><span style="font-size: 17px; font-weight: 700; color: var(--mut)">R$</span><input id="fm-renda" type="text" inputmode="decimal" value="2.800,00" style="font-size: 26px; font-weight: 800; letter-spacing: -.6px; width: 100%; color: var(--ink); font-variant-numeric: tabular-nums"></div>
+        </div>
+        <div>
+          <label for="fm-nasc" style="display: block; font-size: 13px; font-weight: 600; color: var(--sub); margin-bottom: 6px">Nascimento do comprador mais velho</label>
+          <div class="fm-field"><input id="fm-nasc" type="text" inputmode="numeric" value="14/03/1993" style="font-size: 26px; font-weight: 800; letter-spacing: -.4px; width: 100%; color: var(--ink); font-variant-numeric: tabular-nums"><span style="font-size: 13px; font-weight: 700; color: #E4032B; white-space: nowrap">33 anos</span></div>
+        </div>
+      </div>
+      <div class="fm-enter fm-d3" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px">
+        <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 99px; background: var(--okBg); color: var(--ok)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>MCMV · Faixa 1</span>
+        <span style="font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 99px; background: var(--soft); color: var(--txt)">4,50% a.a.</span>
+        <span style="font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 99px; background: var(--soft); color: var(--txt)">Prazo de 420 meses</span>
+        <span style="font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 99px; background: var(--soft); color: var(--txt)">Parcela de até R$ 840</span>
+      </div>
+    </sc-if>
+
+    <!-- 2 · PERFIL -->
+    <sc-if value="{{is2}}" hint-placeholder-val="{{ false }}">
+      <h3 class="fm-enter" style="margin: 0; font-size: 24px; line-height: 1.15; font-weight: 800; letter-spacing: -.6px; color: var(--ink)">O que vale para o cliente?</h3>
+      <p class="fm-enter fm-d1" style="margin: 6px 0 0; font-size: 14px; color: var(--sub)">Muda o programa, os juros e o subsídio. Toque para ligar ou desligar.</p>
+      <div class="fm-enter fm-d2" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px">
+        <sc-for list="{{tiles}}" as="t" hint-placeholder-count="4">
+          <button type="button" role="switch" aria-checked="{{t.aria}}" class="{{t.cls}}" onClick="{{t.toggle}}">
+            <span style="display: flex; justify-content: space-between; align-items: flex-start"><dc-import name="Icone" icone="{{t.icone}}" tamanho="50" hint-size="50px,50px"></dc-import><span class="{{t.sw}}"></span></span>
+            <span><span style="display: block; font-size: 15px; line-height: 1.25; font-weight: 700; color: var(--ink)">{{t.t}}</span><span style="display: block; font-size: 12px; line-height: 1.35; color: var(--mut); margin-top: 3px">{{t.d}}</span></span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- 3 · CONDICOES -->
+    <sc-if value="{{is3}}" hint-placeholder-val="{{ false }}">
+      <h3 class="fm-enter" style="margin: 0; font-size: 24px; line-height: 1.15; font-weight: 800; letter-spacing: -.6px; color: var(--ink)">Como o cliente quer pagar?</h3>
+      <div class="fm-enter fm-d1" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-top: 14px" role="radiogroup" aria-label="Sistema de amortização">
+        <sc-for list="{{sistemas}}" as="o" hint-placeholder-count="2">
+          <button type="button" role="radio" aria-checked="{{o.aria}}" class="{{o.cls}}" onClick="{{o.pick}}">
+            <span style="display: flex; align-items: center; gap: 10px"><span class="fm-radio"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span style="font-size: 18px; font-weight: 800; color: var(--ink)">{{o.nome}}</span></span>
+            <span style="font-size: 13px; color: var(--sub)">{{o.desc}}</span>
+            <span style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding-top: 10px; border-top: 1px dashed var(--line)">
+              <span><span style="display: block; font-size: 12px; color: var(--mut)">Financia</span><span style="display: block; font-size: 16px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums">{{o.fin}}</span></span>
+              <span><span style="display: block; font-size: 12px; color: var(--mut)">Parcela</span><span style="display: block; font-size: 16px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums">{{o.parc}}</span></span>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+      <div class="fm-enter fm-d2" style="margin-top: 16px">
+        <div style="font-size: 13px; font-weight: 600; color: var(--sub); margin-bottom: 8px">Prazo</div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <sc-for list="{{prazos}}" as="p" hint-placeholder-count="4"><button type="button" class="{{p.cls}}" aria-pressed="{{p.aria}}" onClick="{{p.pick}}">{{p.rot}}</button></sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- RESULTADO -->
+    <sc-if value="{{isRes}}" hint-placeholder-val="{{ true }}">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start">
+        <div class="fm-enter" style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+          <div style="padding: 16px 18px; border-radius: 20px; background: var(--soft)">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px">
+              <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ok)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Financia até</span>
+              <div class="fm-segw" role="tablist" aria-label="Sistema"><button type="button" role="tab" aria-selected="{{ariaPrice}}" class="{{segPrice}}" onClick="{{usaPrice}}">PRICE</button><button type="button" role="tab" aria-selected="{{ariaSac}}" class="{{segSac}}" onClick="{{usaSac}}">SAC</button></div>
+            </div>
+            <div style="font-size: 34px; font-weight: 800; letter-spacing: -1.2px; color: var(--ink); margin-top: 4px; font-variant-numeric: tabular-nums">{{r.fin}}</div>
+            <div style="font-size: 13px; color: var(--sub); margin-top: 2px">MCMV · Faixa 1 · 4,50% a.a. · 420 meses · {{r.sis}}</div>
+            <div style="display: flex; gap: 2px; height: 10px; margin-top: 14px">
+              <span class="fm-grow" style="width: {{r.pf}}%; background: #E4032B; border-radius: 4px 2px 2px 4px"></span>
+              <span class="fm-grow" style="width: 6%; background: var(--ok); border-radius: 2px"></span>
+              <span class="fm-grow" style="flex: 1; background: var(--ent); border-radius: 2px 4px 4px 2px"></span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px">
+              <div><div style="display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--mut)"><span style="width: 8px; height: 8px; border-radius: 2px; background: #E4032B"></span>1ª parcela</div><div style="font-size: 15px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums">R$ 840,00</div></div>
+              <div><div style="display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--mut)"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--ok)"></span>Subsídio</div><div style="font-size: 15px; font-weight: 800; color: var(--ok); font-variant-numeric: tabular-nums">R$ 13.209</div></div>
+              <div><div style="display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--mut)"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--ent)"></span>Entrada</div><div style="font-size: 15px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums">{{r.ent}}</div></div>
+            </div>
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 0 2px"><dc-import name="Icone" icone="escudo" tamanho="28" hint-size="28px,28px"></dc-import><span style="font-size: 14px; font-weight: 800; color: var(--ink)">Seguradora</span><span style="font-size: 12px; color: var(--mut)">· 1ª parcela</span></div>
+            <div role="radiogroup" aria-label="Seguradora" style="margin-top: 6px">
+              <sc-for list="{{segs}}" as="g" hint-placeholder-count="3">
+                <button type="button" role="radio" aria-checked="{{g.aria}}" class="{{g.cls}}" onClick="{{g.pick}}">
+                  <span class="fm-radio"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+                  <span style="flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: var(--ink)">{{g.nome}}</span>
+                  <span style="font-size: 14px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums">{{g.pri}}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div class="fm-enter fm-d1" style="border-radius: 20px; border: 1.5px dashed var(--line); padding: 16px 16px 10px">
+          <div style="font-size: 14px; font-weight: 800; color: var(--ink)">Vai para o simulador</div>
+          <div style="font-size: 12px; color: var(--mut); margin-top: 2px">Passo 2 · Cliente</div>
+          <div style="display: flex; flex-direction: column; margin-top: 10px">
+            <sc-for list="{{copia}}" as="c" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line)">
+                <span style="font-size: 13px; color: var(--sub)">{{c.k}}</span>
+                <span style="text-align: right"><span style="display: block; font-size: 14px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums">{{c.v}}</span><sc-if value="{{c.p}}" hint-placeholder-val="{{ false }}"><span style="display: block; font-size: 11px; color: var(--mut)">{{c.p}}</span></sc-if></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <div style="flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: {{padFoot}}; border-top: 1px solid var(--line)">
+    <sc-if value="{{isPerg}}" hint-placeholder-val="{{ false }}">
+      <button type="button" class="fm-ghost" onClick="{{voltar}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>{{rotVoltar}}</button>
+      <button type="button" class="fm-pri" onClick="{{avancar}}" style="flex: {{flexPri}}">{{rotAvancar}}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+    </sc-if>
+    <sc-if value="{{isRes}}" hint-placeholder-val="{{ true }}">
+      <button type="button" class="fm-sec" aria-label="Baixar PDF da simulação"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg>{{rotPdf}}</button>
+      <button type="button" class="fm-pri" onClick="{{copiar}}" style="flex: {{flexPri}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="3"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>Copiar para o simulador</button>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","black"],"default":"claro"},"formato":{"editor":"enum","options":["dialog","sheet"],"default":"dialog"},"etapa":{"editor":"enum","options":["1","2","3","resultado"],"default":"resultado"},"onFechar":{"editor":null},"onCopiar":{"editor":null},"$preview":{"width":760,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const ini = { e: this.props.etapa || 'resultado', fgts: true, imovel: false, dep: true, subAnt: false, sistema: 'PRICE', prazo: '420', seg: '15' };
+    const s = Object.assign({}, ini, this.state || {});
+    const set = (o) => this.setState(o);
+    const sheet = this.props.formato === 'sheet';
+    const black = this.props.tema === 'black';
+    const ordem = ['1', '2', '3', 'resultado'];
+    const idx = Math.max(0, ordem.indexOf(s.e));
+    const R = {
+      PRICE: { fin: 'R$ 167.397,73', ent: 'R$ 39.393', pf: '76.1', sis: 'PRICE', pct: '76,09%',
+        segs: [['15', 'Caixa Residencial Mais', 'R$ 840,00'], ['4', 'Tokio Marine', 'R$ 831,97'], ['14', 'Caixa Residencial', 'R$ 825,92']] },
+      SAC: { fin: 'R$ 129.877,57', ent: 'R$ 76.913', pf: '59', sis: 'SAC', pct: '59,04%',
+        segs: [['15', 'Caixa Residencial Mais', 'R$ 840,00'], ['4', 'Tokio Marine', 'R$ 831,49'], ['14', 'Caixa Residencial', 'R$ 825,92']] }
+    };
+    const r = R[s.sistema];
+    const segSel = r.segs.find((g) => g[0] === s.seg) || r.segs[0];
+    const tiles = [
+      { id: 'fgts', icone: 'maleta', t: '3 anos de FGTS', d: 'Somando todos os períodos' },
+      { id: 'imovel', icone: 'chave', t: 'Já tem imóvel na cidade', d: 'Se sim, vai para o SBPE' },
+      { id: 'dep', icone: 'pessoas', t: 'Mais de um comprador ou dependente', d: 'Sem isso, 30% do subsídio' },
+      { id: 'subAnt', icone: 'presente', t: 'Já recebeu subsídio', d: 'Do FGTS ou da União' }
+    ].map((t) => {
+      const on = !!s[t.id];
+      return Object.assign({}, t, { cls: on ? 'fm-tile fm-tile-on' : 'fm-tile', sw: on ? 'fm-sw fm-sw-on' : 'fm-sw', aria: String(on), toggle: () => { const o = {}; o[t.id] = !on; set(o); } });
+    });
+    const sistemas = [
+      { id: 'PRICE', nome: 'PRICE', desc: 'Parcela parecida o prazo todo', fin: 'R$ 167.398', parc: 'R$ 840' },
+      { id: 'SAC', nome: 'SAC', desc: 'Parcela que cai com o tempo', fin: 'R$ 129.878', parc: 'R$ 840 → 310' }
+    ].map((o) => Object.assign({}, o, { cls: s.sistema === o.id ? 'fm-opt fm-opt-on' : 'fm-opt', aria: String(s.sistema === o.id), pick: () => set({ sistema: o.id }) }));
+    const prazos = [['420', 'Máximo · 420 meses'], ['360', '360'], ['300', '300'], ['240', '240']].map((p) => ({
+      rot: p[1], cls: s.prazo === p[0] ? 'fm-pill fm-pill-on' : 'fm-pill', aria: String(s.prazo === p[0]), pick: () => set({ prazo: p[0] })
+    }));
+    const segs = r.segs.map((g) => ({ nome: g[1], pri: g[2], cls: s.seg === g[0] ? 'fm-row fm-row-on' : 'fm-row', aria: String(s.seg === g[0]), pick: () => set({ seg: g[0] }) }));
+    const titulos = { '1': 'Passo 1 de 3 · Cliente', '2': 'Passo 2 de 3 · Perfil', '3': 'Passo 3 de 3 · Condições', resultado: 'Resultado' };
+    const fechar = () => { if (typeof this.props.onFechar === 'function') this.props.onFechar(); };
+    const copiar = () => { if (typeof this.props.onCopiar === 'function') this.props.onCopiar(); };
+    return {
+      temaCls: black ? 'fm-black' : 'fm-claro',
+      isSheet: sheet,
+      largura: sheet ? '390px' : '760px',
+      altura: sheet ? '790px' : '780px',
+      raio: sheet ? '28px 28px 0 0' : '26px',
+      padHead: sheet ? '10px 20px 14px' : '22px 26px 16px',
+      padBody: sheet ? '4px 20px 16px' : '6px 26px 20px',
+      padFoot: sheet ? '12px 20px 26px' : '16px 26px',
+      flexPri: sheet ? '1' : 'none',
+      rotPdf: sheet ? 'PDF' : 'Baixar PDF',
+      barra: ordem.map((k, i) => ({ cor: i <= idx ? '#E4032B' : (black ? '#2A2E31' : '#E1E5E7') })),
+      passoTxt: titulos[s.e] || '',
+      is1: s.e === '1', is2: s.e === '2', is3: s.e === '3', isRes: s.e === 'resultado', isPerg: s.e !== 'resultado',
+      tiles: tiles, sistemas: sistemas, prazos: prazos, segs: segs, r: r,
+      copia: [
+        { k: 'Renda do cliente', v: 'R$ 2.800,00', p: '' },
+        { k: 'Valor do financiamento', v: r.fin, p: r.pct + ' do imóvel' },
+        { k: 'Subsídio', v: 'R$ 13.209,00', p: '6,00% do imóvel' },
+        { k: 'Parcela do financiamento', v: segSel[2], p: segSel[1] }
+      ],
+      segPrice: s.sistema === 'PRICE' ? 'fm-seg fm-seg-on' : 'fm-seg', segSac: s.sistema === 'SAC' ? 'fm-seg fm-seg-on' : 'fm-seg',
+      ariaPrice: String(s.sistema === 'PRICE'), ariaSac: String(s.sistema === 'SAC'),
+      usaPrice: () => set({ sistema: 'PRICE' }), usaSac: () => set({ sistema: 'SAC' }),
+      rotVoltar: idx === 0 ? 'Cancelar' : 'Voltar',
+      rotAvancar: s.e === '3' ? 'Ver resultado' : 'Continuar',
+      voltar: () => { if (idx === 0) fechar(); else set({ e: ordem[idx - 1] }); },
+      avancar: () => set({ e: ordem[Math.min(3, idx + 1)] }),
+      fechar: fechar, copiar: copiar
+    };
+  }
+}
+</script>
+</body>
+</html>

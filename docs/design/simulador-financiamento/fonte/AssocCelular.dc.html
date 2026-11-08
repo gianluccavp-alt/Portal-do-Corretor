@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Simulador Associativo · celular com Simular financiamento</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.ac,.ac *{box-sizing:border-box}
+.ac-claro{--bg:#F5F6F7;--surf:#FFFFFF;--surf2:#FFFFFF;--ink:#3A4043;--title:#2B3033;--grey:#727A7D;--line:#E7E9EA;--okBg:#EFF9F2;--okLine:#C7E7D3;--ok:#1E8E4A;--okTxt:#2E7D4F;--nBg:#F5F6F7;--ctaBg:#FFF6F7;--ctaLine:#F6CDD4;--toast:#2B3033;--toastTxt:#FFFFFF}
+.ac-black{--bg:#0D0E0F;--surf:#16181A;--surf2:#1C1F21;--ink:#ECEEEF;--title:#F2F3F4;--grey:#9AA2A6;--line:#2A2E31;--okBg:#10241A;--okLine:#1F4A31;--ok:#4CC27E;--okTxt:#4CC27E;--nBg:#1C1F21;--ctaBg:linear-gradient(120deg,#2a0b10 0%,#1a1012 50%,#16181A 100%);--ctaLine:rgba(228,3,43,.45);--toast:#ECEEEF;--toastTxt:#0D0E0F}
+:where(.ac) button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;margin:0;text-align:left;-webkit-tap-highlight-color:transparent}
+:where(.ac) input{font:inherit;min-width:0;margin:0}
+.ac :focus-visible{outline:2px solid #E4032B;outline-offset:2px;border-radius:10px}
+.ac-step{display:flex;align-items:center;gap:.7rem;width:100%;min-height:56px;padding:.75rem .8rem;font-size:.85rem;font-weight:600;color:var(--ink);background:var(--surf);border:1px solid var(--line);border-radius:14px}
+.ac-step-open{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.ac-n{display:flex;flex:0 0 auto;width:24px;height:24px;border-radius:50%;align-items:center;justify-content:center;font-size:.74rem;font-weight:700;background:var(--nBg);border:1px solid var(--line);color:var(--grey)}
+.ac-n-on{background:#E4032B;border-color:#E4032B;color:#fff}
+.ac-n-ok{background:var(--okBg);border-color:var(--okLine);color:var(--ok)}
+.ac-sum{flex:1 1 0;min-width:0;text-align:right;font-size:.78rem;font-weight:400;color:var(--grey);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-card{background:var(--surf);border:1px solid var(--line);border-top:0;border-radius:0 0 14px 14px;padding:.9rem .8rem 1rem}
+.ac-lab{display:flex;align-items:center;gap:6px;font-size:.74rem;font-weight:500;color:var(--grey);letter-spacing:.04em;text-transform:uppercase;margin-bottom:.32rem}
+.ac-in{width:100%;min-height:46px;font-size:16px;color:var(--ink);background:var(--surf2);border:1px solid var(--line);border-radius:9px;padding:.6rem .7rem;font-family:inherit}
+.ac-in::placeholder{color:var(--grey)}
+.ac-ok{background:var(--okBg);border-color:var(--okLine);font-weight:700}
+.ac-pair{display:flex;background:var(--surf2);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.ac-pair input{border:0;border-radius:0;background:transparent;min-height:44px}
+.ac-pair input+input{width:78px;flex:none;border-left:1px solid var(--line);text-align:right}
+.ac-pair-ok{background:var(--okBg);border-color:var(--okLine)}
+.ac-pair-ok input{font-weight:700}
+.ac-pair-ok input+input{border-left-color:var(--okLine)}
+.ac-tag{font-size:.6rem;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:99px;background:var(--okBg);color:var(--ok);border:1px solid var(--okLine)}
+.ac-cta{padding:12px;border-radius:14px;background:var(--ctaBg);border:1px solid var(--ctaLine);margin-bottom:1rem}
+.ac-cta-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:48px;margin-top:10px;border-radius:12px;background:#E4032B;color:#fff;font-weight:700;font-size:.95rem;text-align:center;box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 10px 20px -10px rgba(228,3,43,.8);transition:transform .12s}
+.ac-cta-btn:active{transform:scale(.97)}
+.ac-done{padding:12px;border-radius:14px;background:var(--okBg);border:1px solid var(--okLine);margin-bottom:1rem}
+.ac-lnk{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 10px;border-radius:9px;font-size:.82rem;font-weight:700;color:var(--ink);background:var(--surf)}
+.ac-tab{flex:1 1 0;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.22rem;height:62px;font-size:.68rem;font-weight:600;color:var(--grey);text-align:center}
+.ac-tab-on{color:#E4032B;font-weight:700}
+.ac-tab-on::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:46px;height:2px;background:#E4032B;border-radius:0 0 2px 2px}
+.ac-float{animation:acFloat 4.6s ease-in-out infinite}
+@keyframes acFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.ac-up{animation:acUp .45s cubic-bezier(.2,.8,.2,1) both}
+@keyframes acUp{from{transform:translateY(100%)}to{transform:none}}
+.ac-fade{animation:acFade .3s ease both}
+@keyframes acFade{from{opacity:0}to{opacity:1}}
+.ac-pop{animation:acPop .45s cubic-bezier(.2,.8,.2,1) both}
+@keyframes acPop{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
+@media (prefers-reduced-motion:reduce){.ac *{animation:none!important;transition:none!important}}
+</style>
+</helmet>
+<div class="ac {{temaCls}}" style="position: relative; width: 390px; height: 844px; overflow: hidden; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: 'DM Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.5">
+
+  <header style="flex: none; display: flex; align-items: center; gap: .25rem; height: 56px; padding: 0 .75rem 0 .35rem; background: var(--surf); border-bottom: 1px solid var(--line)">
+    <a href="#" aria-label="Voltar ao portal" style="width: 40px; height: 40px; display: grid; place-items: center; color: var(--ink)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg></a>
+    <div style="flex: 1; min-width: 0; font-size: .98rem; font-weight: 700; letter-spacing: -.2px; color: var(--title)">{{titulo}}</div>
+    <sc-if value="{{isClaro}}" hint-placeholder-val="{{ true }}"><img src="/_blob/62e47367b1daf8f281743eb29b78fccd" alt="Grupo Direcional" style="height: 21px; width: auto; display: block"></sc-if>
+  </header>
+
+  <sc-if value="{{isBlack}}" hint-placeholder-val="{{ false }}">
+    <div style="flex: none; padding: .7rem 1.1rem 0"><img src="/_blob/7a801dcc6f73d55e25df73073bf34b47" alt="Black Friday Grupo Direcional, ofertas imperdíveis" style="display: block; width: 100%; height: 124px; object-fit: cover; border-radius: 14px; box-shadow: 0 4px 14px rgba(0,0,0,.3)"></div>
+  </sc-if>
+
+  <div style="flex: none; padding: .7rem 1.1rem .75rem; background: {{ubBg}}; border-bottom: {{ubBd}}">
+    <div style="display: flex; align-items: center; gap: .45rem; margin-bottom: .3rem; font-size: .66rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #E4032B"><span style="width: 16px; height: 2px; border-radius: 2px; background: #E4032B"></span>Village Gaia</div>
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: .6rem"><span style="font-size: .94rem; font-weight: 700; letter-spacing: -.2px; color: var(--title)">Bloco 2 · Apto 305</span><span style="font-size: .84rem; font-weight: 700; color: var(--title)">R$ 220.000,00</span></div>
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: .6rem"><span style="font-size: .76rem; color: var(--grey)">2Q C/S Tipo Meio · 3º andar</span><span style="font-size: .76rem; color: var(--grey)">avaliação</span></div>
+  </div>
+
+  <div style="flex: 1; min-height: 0; overflow: hidden">
+    <div style="padding: .85rem 1.1rem 1.5rem; display: flex; flex-direction: column; gap: .6rem; margin-top: {{rolagem}}">
+      <div class="ac-step"><span class="ac-n ac-n-ok"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span>Empreendimento e unidade</span><span class="ac-sum">Apto 305</span></div>
+      <section>
+        <div class="ac-step ac-step-open"><span class="ac-n ac-n-on">2</span><span>Cliente</span><span class="ac-sum">{{sum2}}</span></div>
+        <div class="ac-card">
+          <sc-if value="{{semCopia}}" hint-placeholder-val="{{ true }}">
+            <div class="ac-cta">
+              <div style="display: flex; align-items: center; gap: 10px">
+                <div class="ac-float" style="flex: none"><dc-import name="Icone" icone="calculadora" tamanho="48" hint-size="48px,48px"></dc-import></div>
+                <div style="min-width: 0"><div style="font-size: .92rem; font-weight: 700; color: var(--title)">Ainda sem a simulação da CAIXA?</div><div style="font-size: .8rem; line-height: 1.4; color: var(--grey)">Calcule e preencha financiamento, subsídio e parcela.</div></div>
+              </div>
+              <button type="button" class="ac-cta-btn" onClick="{{abrir}}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="3"></rect><path d="M8 7h8M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"></path></svg>Simular financiamento</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{copiado}}" hint-placeholder-val="{{ false }}">
+            <div class="ac-done">
+              <div style="display: flex; align-items: center; gap: 10px">
+                <span style="flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--ok); display: grid; place-items: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+                <div style="min-width: 0"><div style="font-size: .88rem; font-weight: 700; color: var(--title)">Financiamento simulado</div><div style="font-size: .76rem; color: var(--okTxt)">Faixa 1 · 4,50% a.a. · 420 meses · PRICE</div></div>
+              </div>
+              <div style="display: flex; gap: 6px; margin-top: 8px"><button type="button" class="ac-lnk" onClick="{{abrir}}">Ver simulação</button><button type="button" class="ac-lnk">Baixar PDF</button></div>
+            </div>
+          </sc-if>
+          <div style="display: flex; flex-direction: column; gap: .8rem">
+            <div><label class="ac-lab" for="ac-renda">Renda do cliente<sc-if value="{{copiado}}" hint-placeholder-val="{{ false }}"><span class="ac-tag">SIMULAÇÃO</span></sc-if></label><input id="ac-renda" class="{{inCls}}" type="text" value="R$ 2.800,00"></div>
+            <div><label class="ac-lab" for="ac-nome">Nome do cliente</label><input id="ac-nome" class="ac-in" type="text" placeholder="Nome do cliente"></div>
+            <div><label class="ac-lab" for="ac-corretor">Corretor</label><input id="ac-corretor" class="ac-in" type="text" placeholder="Seu nome"></div>
+            <div><label class="ac-lab" for="ac-fin">Valor do financiamento<sc-if value="{{copiado}}" hint-placeholder-val="{{ false }}"><span class="ac-tag">SIMULAÇÃO</span></sc-if></label><div class="{{pairCls}}"><input id="ac-fin" class="ac-in" type="text" placeholder="R$ 0,00" value="{{finV}}"><input class="ac-in" type="text" aria-label="Percentual do financiamento" placeholder="%" value="{{finP}}"></div></div>
+            <div><label class="ac-lab" for="ac-sub">Subsídio<sc-if value="{{copiado}}" hint-placeholder-val="{{ false }}"><span class="ac-tag">SIMULAÇÃO</span></sc-if></label><div class="{{pairCls}}"><input id="ac-sub" class="ac-in" type="text" placeholder="R$ 0,00" value="{{subV}}"><input class="ac-in" type="text" aria-label="Percentual do subsídio" placeholder="%" value="{{subP}}"></div></div>
+            <div><label class="ac-lab" for="ac-parc">Parcela do financiamento<sc-if value="{{copiado}}" hint-placeholder-val="{{ false }}"><span class="ac-tag">SIMULAÇÃO</span></sc-if></label><input id="ac-parc" class="{{inCls}}" type="text" placeholder="R$ 0,00" value="{{parcV}}"><div style="font-size: .74rem; color: var(--grey); margin-top: .3rem">{{parcHint}}</div></div>
+          </div>
+        </div>
+      </section>
+      <div class="ac-step"><span class="ac-n">3</span><span>Política da operação</span><span class="ac-sum">Aço</span></div>
+    </div>
+  </div>
+
+  <nav style="flex: none; display: flex; background: var(--surf); border-top: 1px solid var(--line)" aria-label="Abas do simulador">
+    <button type="button" class="ac-tab ac-tab-on" aria-current="page"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"></rect><line x1="8" y1="8" x2="16" y2="8"></line><line x1="8" y1="12" x2="16" y2="12"></line><line x1="8" y1="16" x2="13" y2="16"></line></svg>Dados</button>
+    <button type="button" class="ac-tab"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="20" x2="5" y2="12"></line><line x1="12" y1="20" x2="12" y2="5"></line><line x1="19" y1="20" x2="19" y2="9"></line></svg>Resultado</button>
+  </nav>
+
+  <sc-if value="{{toast}}" hint-placeholder-val="{{ false }}">
+    <div class="ac-pop" role="status" style="position: absolute; left: 50%; bottom: 76px; transform: translateX(-50%); width: 350px; display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 14px; border-radius: 16px; background: var(--toast); color: var(--toastTxt); font-size: .86rem; font-weight: 600; box-shadow: 0 18px 40px -14px rgba(0,0,0,.5)">
+      <span style="width: 22px; height: 22px; border-radius: 50%; background: #1E8E4A; display: grid; place-items: center; flex: none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+      <span style="flex: 1">4 campos preenchidos</span>
+      <button type="button" style="height: 34px; padding: 0 10px; border-radius: 10px; font-weight: 700; color: #FF6B7E">Desfazer</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{aberto}}" hint-placeholder-val="{{ false }}">
+    <div class="ac-fade" style="position: absolute; inset: 0; background: {{veu}}"></div>
+    <div class="ac-up" style="position: absolute; left: 0; right: 0; bottom: 0">
+      <dc-import name="Modal" tema="{{tema}}" formato="sheet" etapa="{{etapaModal}}" on-fechar="{{fechar}}" on-copiar="{{copiar}}" hint-size="390px,790px"></dc-import>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"tema":{"editor":"enum","options":["claro","black"],"default":"claro"},"estado":{"editor":"enum","options":["botao","passo","resultado","copiado"],"default":"botao"},"etapa":{"editor":"enum","options":["1","2","3"],"default":"1"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const est = this.props.estado || 'botao';
+    const tema = this.props.tema === 'black' ? 'black' : 'claro';
+    const black = tema === 'black';
+    const s = Object.assign({ aberto: est === 'passo' || est === 'resultado', copiado: est === 'copiado', toast: false }, this.state || {});
+    const set = (o) => this.setState(o);
+    const c = s.copiado;
+    return {
+      tema: tema, temaCls: black ? 'ac-black' : 'ac-claro', isBlack: black, isClaro: !black,
+      titulo: black ? 'Simulador Black Friday' : 'Simulador Associativo',
+      ubBg: 'var(--surf)', ubBd: '1px solid var(--line)',
+      semCopia: !c, copiado: c, toast: c && s.toast,
+      rolagem: c ? (black ? '-136px' : '-122px') : '0px',
+      sum2: c ? 'R$ 167.397' : 'Renda R$ 2.800',
+      inCls: c ? 'ac-in ac-ok' : 'ac-in', pairCls: c ? 'ac-pair ac-pair-ok' : 'ac-pair',
+      finV: c ? 'R$ 167.397,73' : '', finP: c ? '76,09' : '',
+      subV: c ? 'R$ 13.209,00' : '', subP: c ? '6,00' : '',
+      parcV: c ? 'R$ 840,00' : '',
+      parcHint: c ? 'Caixa Residencial Mais · 1ª parcela' : 'Valor da 1ª parcela na simulação da CAIXA.',
+      aberto: s.aberto,
+      veu: black ? 'rgba(0,0,0,.7)' : 'rgba(28,32,34,.5)',
+      etapaModal: est === 'resultado' || c ? 'resultado' : (est === 'passo' ? (this.props.etapa || '1') : '1'),
+      abrir: () => set({ aberto: true, toast: false }),
+      fechar: () => set({ aberto: false }),
+      copiar: () => set({ aberto: false, copiado: true, toast: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

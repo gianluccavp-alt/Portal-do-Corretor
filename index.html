@@ -8,10 +8,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/home.css?v=bf1">
+<link rel="stylesheet" href="assets/home.css?v=home6">
 <script src="assets/home.js"></script>
 </head>
-<body>
+<body class="pagina-home">
 
 <div class="abertura" aria-hidden="true">
   <img class="abertura-logo" src="assets/img/logo-direcional.jpg" width="600" height="240" alt="">
@@ -31,13 +31,10 @@
   <div class="wrap">
     <a class="brand-lockup" href="index.html" aria-label="Portal do Corretor — início">
       <img class="brand-logo" src="assets/img/logo-direcional-header.png" width="415" height="95" alt="Grupo Direcional">
-      <span class="brand-label">
-        <span class="brand-rule"></span>
-        <span class="brand-name">Portal do Corretor</span>
-      </span>
     </a>
     <nav class="header-links" aria-label="Ferramentas">
       <a class="header-link header-link--bf" href="simulador-associativo-blackfriday.html"><img src="assets/img/icones-3d/calculadora.svg" width="26" height="26" alt="">Simulador Associativo<span class="bf-badge" aria-label="condição Black Friday">Black Friday</span></a>
+      <a class="header-link" href="simulador-financiamento.html"><img src="assets/img/icones-3d/moedas.svg" width="26" height="26" alt="">Financiamento</a>
       <a class="header-link" href="simulador-tabela-direta.html"><img src="assets/img/icones-3d/tabela.svg" width="26" height="26" alt="">Tabela Direta</a>
       <a class="header-link" href="match-unidades.html"><img src="assets/img/icones-3d/alvo.svg" width="26" height="26" alt="">Match de Unidades</a>
     </nav>
@@ -48,6 +45,7 @@
   </div>
   <nav class="menu-folha" id="menu-folha" aria-label="Ferramentas" hidden>
     <a class="menu-link menu-link--bf" href="simulador-associativo-blackfriday.html"><img src="assets/img/icones-3d/calculadora.svg" width="36" height="36" alt="">Simulador Associativo<span class="bf-badge" aria-label="condição Black Friday">Black Friday</span></a>
+    <a class="menu-link" href="simulador-financiamento.html"><img src="assets/img/icones-3d/moedas.svg" width="36" height="36" alt="">Simulador de Financiamento</a>
     <a class="menu-link" href="simulador-tabela-direta.html"><img src="assets/img/icones-3d/tabela.svg" width="36" height="36" alt="">Tabela Direta</a>
     <a class="menu-link" href="match-unidades.html"><img src="assets/img/icones-3d/alvo.svg" width="36" height="36" alt="">Match de Unidades</a>
   </nav>
@@ -57,7 +55,8 @@
 <section class="home-hero">
   <div class="wrap home-hero-in">
     <div class="home-hero-text entra">
-      <h1 class="home-title">Grupo Direcional<br><em>São Paulo Interior</em></h1>
+      <img class="home-logo" src="assets/img/logo-direcional-header.png" width="415" height="95" alt="Grupo Direcional">
+      <h1 class="home-title">Portal <em>do Corretor</em></h1>
       <p class="home-sub">Unidades, valores, plantas e disponibilidade</p>
     </div>
     <div class="home-hero-art entra entra-2" aria-hidden="true">
@@ -111,6 +110,13 @@
           <span class="tool-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>
         </span>
       </a>
+      <a class="tool-card" href="simulador-financiamento.html">
+        <img class="tool-icon" src="assets/img/icones-3d/moedas.svg" width="84" height="84" alt="">
+        <span class="tool-foot">
+          <span class="tool-title">Simulador de Financiamento</span>
+          <span class="tool-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>
+        </span>
+      </a>
       <a class="tool-card" href="simulador-tabela-direta.html">
         <img class="tool-icon" src="assets/img/icones-3d/tabela.svg" width="84" height="84" alt="">
         <span class="tool-foot">
@@ -122,6 +128,22 @@
         <img class="tool-icon" src="assets/img/icones-3d/alvo.svg" width="84" height="84" alt="">
         <span class="tool-foot">
           <span class="tool-title">Match de Unidades</span>
+          <span class="tool-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>
+        </span>
+      </a>
+      <a class="tool-card tool-card--soon" href="em-breve-maquete.html">
+        <span class="tool-soon">Em breve</span>
+        <img class="tool-icon" src="assets/img/icones-3d/predio.svg" width="84" height="84" alt="">
+        <span class="tool-foot">
+          <span class="tool-text"><span class="tool-soon-cel">Em breve</span><span class="tool-title">Maquete 3D Interativa</span></span>
+          <span class="tool-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>
+        </span>
+      </a>
+      <a class="tool-card tool-card--soon" href="em-breve-documentacao.html">
+        <span class="tool-soon">Em breve</span>
+        <img class="tool-icon" src="assets/img/icones-3d/documento.svg" width="84" height="84" alt="">
+        <span class="tool-foot">
+          <span class="tool-text"><span class="tool-soon-cel">Em breve</span><span class="tool-title">Documentação do Cliente</span></span>
           <span class="tool-go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span>
         </span>
       </a>

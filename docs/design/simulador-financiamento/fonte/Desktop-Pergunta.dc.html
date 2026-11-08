@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Simulador de Financiamento · desktop, condições</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F7}
+.dk,.dk *{box-sizing:border-box}
+:where(.dk) button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;margin:0;text-align:left}
+.dk :focus-visible{outline:2px solid #E4032B;outline-offset:3px;border-radius:12px}
+.btn-pri{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:56px;padding:0 28px;border-radius:18px;background:#E4032B;color:#fff;font-weight:700;font-size:16px;white-space:nowrap;box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 12px 24px -10px rgba(228,3,43,.65);transition:transform .12s,background .2s}
+.btn-pri:hover{background:#CF0227}
+.btn-pri:active{transform:scale(.97)}
+.btn-ghost{display:inline-flex;align-items:center;gap:8px;height:56px;padding:0 20px;border-radius:18px;font-weight:600;font-size:15px;color:#5C6467}
+.btn-ghost:hover{background:#fff;color:#2B3033}
+.tl{display:grid;grid-template-columns:24px minmax(0,1fr) auto;column-gap:14px;width:100%;border-radius:14px;padding:0 8px;transition:background .2s}
+.tl:hover{background:#F5F6F7}
+.tl:hover .ed{color:#E4032B}
+.opt{display:flex;flex-direction:column;gap:16px;padding:24px;border-radius:26px;background:#fff;border:1.5px solid #fff;box-shadow:0 1px 2px rgba(58,64,67,.06),0 14px 30px -20px rgba(58,64,67,.35);transition:border-color .2s,background .2s,transform .2s}
+.opt:hover{transform:translateY(-3px)}
+.opt-on{border-color:#E4032B;background:#FFF6F7;box-shadow:0 18px 34px -20px rgba(228,3,43,.5)}
+.radio{width:26px;height:26px;border-radius:50%;border:2px solid #C9CFD2;flex:none;display:grid;place-items:center}
+.opt-on .radio{border-color:#E4032B;background:#E4032B}
+.pill{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 18px;border-radius:99px;background:#fff;border:1.5px solid #E7E9EA;color:#3A4043;font-weight:600;font-size:14px;white-space:nowrap}
+.pill-on{background:#3A4043;border-color:#3A4043;color:#fff}
+.sw{width:48px;height:28px;border-radius:99px;background:#D9DEE1;position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.float{animation:float 4.6s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.now{position:relative}
+.now::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:2px solid #E4032B;animation:pulse 2.2s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.55);opacity:.55}100%{transform:scale(1.35);opacity:0}}
+.live{position:relative}
+.live::after{content:"";position:absolute;inset:-4px;border-radius:50%;background:#1E8E4A;opacity:.25;animation:pulse 2s ease-out infinite}
+kbd{font:inherit;font-size:12px;font-weight:700;padding:3px 7px;border-radius:7px;background:#fff;border:1px solid #E7E9EA;box-shadow:0 1px 0 #E7E9EA}
+@media (prefers-reduced-motion:reduce){.dk *,.dk *::after{animation:none!important;transition:none!important}}
+</style>
+</helmet>
+<div class="dk" style="width: 100%; min-height: 900px; background: #F5F6F7; font-family: 'DM Sans', system-ui, sans-serif; color: #3A4043">
+  <header style="background: #FFFFFF; border-bottom: 1px solid #E7E9EA">
+    <div style="max-width: 1280px; margin: 0 auto; padding: 0 32px; height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+      <a href="#" style="display: flex; align-items: center; gap: 14px; text-decoration: none; color: #3A4043">
+        <img src="/_blob/62e47367b1daf8f281743eb29b78fccd" alt="Grupo Direcional" style="height: 26px; width: auto; display: block">
+        <span style="width: 1px; height: 24px; background: #E7E9EA"></span>
+        <span style="font-size: 15px; font-weight: 700">Simulador de financiamento</span>
+      </a>
+      <button type="button" aria-label="Sair da simulação" style="width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: #F5F6F7"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </div>
+    <div style="height: 3px; background: #F0F2F3"><div style="width: 84%; height: 100%; background: #E4032B"></div></div>
+  </header>
+
+  <main style="max-width: 1280px; margin: 0 auto; padding: 36px 32px 48px; display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start">
+    <aside style="flex: 1 1 300px; max-width: 360px; display: flex; flex-direction: column; gap: 14px">
+      <div style="background: #FFFFFF; border-radius: 28px; padding: 24px 18px 16px; box-shadow: 0 1px 2px rgba(58,64,67,.06), 0 20px 40px -30px rgba(58,64,67,.4)">
+        <div style="padding: 0 8px; display: flex; justify-content: space-between; align-items: baseline">
+          <h2 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.4px; color: #2B3033">Simulação</h2>
+          <span style="font-size: 13px; font-weight: 600; color: #727A7D">5 de 5</span>
+        </div>
+        <div style="margin-top: 14px">
+          <sc-for list="{{feitos}}" as="f" hint-placeholder-count="4">
+            <button type="button" class="tl" aria-label="Editar {{f.rot}}">
+              <span style="display: flex; flex-direction: column; align-items: center">
+                <span style="width: 22px; height: 22px; border-radius: 50%; background: #E4032B; display: grid; place-items: center; margin-top: 14px; flex: none; box-shadow: 0 3px 8px -2px rgba(228,3,43,.55)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+                <span style="flex: 1; width: 2px; background: #E4032B; opacity: .3; margin-top: 3px; min-height: 12px"></span>
+              </span>
+              <span style="display: flex; flex-direction: column; padding: 10px 0 11px; min-width: 0">
+                <span style="font-size: 12px; color: #727A7D">{{f.rot}}</span>
+                <span style="font-size: 15px; font-weight: 600; color: #2B3033">{{f.val}}</span>
+              </span>
+              <span class="ed" style="align-self: center; font-size: 13px; font-weight: 600; color: #727A7D">Editar</span>
+            </button>
+          </sc-for>
+          <div class="tl" style="background: #FFF6F7">
+            <span style="display: flex; flex-direction: column; align-items: center">
+              <span class="now" style="width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 6px solid #E4032B; margin-top: 14px; flex: none"></span>
+              <span style="flex: 1; width: 0; border-left: 2px dashed #D3D8DB; margin-top: 6px; min-height: 12px"></span>
+            </span>
+            <span style="display: flex; flex-direction: column; padding: 10px 0 11px">
+              <span style="font-size: 12px; color: #E4032B; font-weight: 700">Agora</span>
+              <span style="font-size: 15px; font-weight: 700; color: #2B3033">Condições</span>
+            </span>
+            <span></span>
+          </div>
+          <div class="tl" style="height: 44px">
+            <span style="display: flex; flex-direction: column; align-items: center"><span style="width: 12px; height: 12px; border-radius: 50%; border: 2px solid #C9CFD2; margin-top: 15px; flex: none"></span></span>
+            <span style="font-size: 15px; color: #727A7D; font-weight: 500; padding-top: 11px">Resultado</span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #2B3033; color: #FFFFFF; border-radius: 24px; padding: 20px 22px">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8FE0B0"><span class="live" style="width: 8px; height: 8px; border-radius: 50%; background: #4CC27E"></span>Prévia ao vivo</div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; margin-top: 14px">
+          <div><div style="font-size: 12px; color: #B4BBBE">Programa</div><div style="font-size: 16px; font-weight: 800; margin-top: 2px">MCMV · Faixa 1</div></div>
+          <div><div style="font-size: 12px; color: #B4BBBE">Juros</div><div style="font-size: 16px; font-weight: 800; margin-top: 2px">4,50% a.a.</div></div>
+          <div><div style="font-size: 12px; color: #B4BBBE">Prazo</div><div style="font-size: 16px; font-weight: 800; margin-top: 2px">420 meses</div></div>
+          <div><div style="font-size: 12px; color: #B4BBBE">Subsídio</div><div style="font-size: 16px; font-weight: 800; margin-top: 2px; color: #8FE0B0">R$ 13.209</div></div>
+        </div>
+        <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.12); display: flex; justify-content: space-between; align-items: baseline; gap: 10px">
+          <span style="font-size: 13px; color: #B4BBBE">Parcela de até</span>
+          <span style="font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums">R$ 840,00</span>
+        </div>
+      </div>
+    </aside>
+
+    <section style="flex: 999 1 560px; min-width: 0; padding-top: 6px">
+      <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap">
+        <div style="max-width: 620px">
+          <div style="font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #E4032B">Passo 5 · Condições</div>
+          <h1 style="margin: 10px 0 0; font-size: 46px; line-height: 1.05; font-weight: 800; letter-spacing: -1.5px; color: #2B3033">Como o cliente quer pagar?</h1>
+          <p style="margin: 12px 0 0; font-size: 17px; line-height: 1.5; color: #5C6467">Os dois sistemas com os números deste cliente. Dá para trocar depois, no resultado.</p>
+        </div>
+        <div class="float"><dc-import name="Icone" icone="calculadora" tamanho="96" hint-size="96px,96px"></dc-import></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 28px" role="radiogroup" aria-label="Sistema de amortização">
+        <button type="button" role="radio" aria-checked="true" class="opt opt-on">
+          <span style="display: flex; align-items: center; gap: 12px">
+            <span class="radio"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+            <span style="font-size: 24px; font-weight: 800; color: #2B3033">PRICE</span>
+            <span style="margin-left: auto; font-size: 12px; font-weight: 700; color: #1E8E4A; background: #EFF9F2; padding: 4px 10px; border-radius: 99px">Financia mais</span>
+          </span>
+          <span style="font-size: 15px; color: #5C6467">Parcela parecida do começo ao fim. É o que a maioria escolhe no MCMV.</span>
+          <svg viewBox="0 0 300 64" width="100%" height="64" aria-hidden="true" style="display: block"><line x1="0" y1="56" x2="300" y2="56" stroke="#EADDE0"></line><polyline points="4,22 46,21.6 89,20 132,19 175,16.5 218,17.5 261,18 296,26" fill="none" stroke="#E4032B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+          <span style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding-top: 16px; border-top: 1px dashed #EBCFD4">
+            <span><span style="display: block; font-size: 12px; color: #727A7D">Financia</span><span style="display: block; font-size: 18px; font-weight: 800; color: #2B3033; font-variant-numeric: tabular-nums">R$ 167.398</span></span>
+            <span><span style="display: block; font-size: 12px; color: #727A7D">1ª parcela</span><span style="display: block; font-size: 18px; font-weight: 800; color: #2B3033; font-variant-numeric: tabular-nums">R$ 840</span></span>
+            <span><span style="display: block; font-size: 12px; color: #727A7D">Entrada</span><span style="display: block; font-size: 18px; font-weight: 800; color: #2B3033; font-variant-numeric: tabular-nums">R$ 39.393</span></span>
+          </span>
+        </button>
+        <button type="button" role="radio" aria-checked="false" class="opt">
+          <span style="display: flex; align-items: center; gap: 12px">
+            <span class="radio"></span>
+            <span style="font-size: 24px; font-weight: 800; color: #2B3033">SAC</span>
+          </span>
+          <span style="font-size: 15px; color: #5C6467">Parcela que cai todo mês. Financia menos, então a entrada sobe.</span>
+          <svg viewBox="0 0 300 64" width="100%" height="64" aria-hidden="true" style="display: block"><line x1="0" y1="56" x2="300" y2="56" stroke="#E7E9EA"></line><polyline points="4,22 46,26.5 89,30.6 132,34.9 175,38.8 218,43.9 261,48.7 296,56" fill="none" stroke="#2563A8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></polyline></svg>
+          <span style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding-top: 16px; border-top: 1px dashed #E7E9EA">
+            <span><span style="display: block; font-size: 12px; color: #727A7D">Financia</span><span style="display: block; font-size: 18px; font-weight: 800; color: #2B3033; font-variant-numeric: tabular-nums">R$ 129.878</span></span>
+            <span><span style="display: block; font-size: 12px; color: #727A7D">1ª → última</span><span style="display: block; font-size: 18px; font-weight: 800; color: #2B3033; font-variant-numeric: tabular-nums">R$ 840 → 310</span></span>
+            <span><span style="display: block; font-size: 12px; color: #727A7D">Entrada</span><span style="display: block; font-size: 18px; font-weight: 800; color: #B57200; font-variant-numeric: tabular-nums">R$ 76.913</span></span>
+          </span>
+        </button>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 24px 40px; align-items: flex-end; margin-top: 28px">
+        <div>
+          <div style="font-size: 13px; font-weight: 600; color: #5C6467; margin-bottom: 10px">Prazo</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <button type="button" class="pill pill-on" aria-pressed="true">Máximo · 420 meses</button>
+            <button type="button" class="pill" aria-pressed="false">360</button>
+            <button type="button" class="pill" aria-pressed="false">300</button>
+            <button type="button" class="pill" aria-pressed="false">240</button>
+          </div>
+        </div>
+        <button type="button" role="switch" aria-checked="false" style="display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 18px; background: #fff; border: 1.5px solid #E7E9EA">
+          <span><span style="display: block; font-size: 15px; font-weight: 700; color: #2B3033">Financiar menos que o máximo</span><span style="display: block; font-size: 12px; color: #727A7D; margin-top: 2px">Opcional · o resto vira entrada</span></span>
+          <span class="sw"></span>
+        </button>
+      </div>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 36px; padding-top: 24px; border-top: 1px solid #E7E9EA">
+        <button type="button" class="btn-ghost"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>Voltar</button>
+        <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap">
+          <span style="font-size: 13px; color: #727A7D">Pressione <kbd>Enter</kbd> para ver o resultado</span>
+          <button type="button" class="btn-pri">Ver resultado<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      feitos: [
+        { rot: 'Imóvel', val: 'Village Gaia · Apto 305' },
+        { rot: 'Renda familiar', val: 'R$ 2.800/mês' },
+        { rot: 'Comprador mais velho', val: '14/03/1993 · 33 anos' },
+        { rot: 'Perfil', val: 'FGTS 3 anos · com dependente' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
