@@ -292,8 +292,7 @@ window.CITIES = [
         /* maquete 3D (maquete.html), gerada por assets/3d/village-park/scripts (Y para cima, metros, origem no
            centro do terreno). Etapa 1: torres, implantacao e grade; o lazer ainda em volumes simples. */
         maquete: {
-          // so por link direto (maquete.html?e=village-park) ate aprovar
-          botaoVisivel: false,
+          botaoVisivel: true,
           simId: 'park',
           modelo: 'assets/3d/village-park/park.glb?v=4',
           /* FAQ: T1 e T2 terreo ao 19o, T3 terreo ao 18o; no terreo o lugar do final 1 e o hall */
