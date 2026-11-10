@@ -55,6 +55,7 @@
       ' sizes="(max-width: 560px) 84vw, (max-width: 1000px) 46vw, 300px"' +
       ' width="960" height="720" loading="lazy" decoding="async" alt=""' +
       ' onerror="this.onerror=null;this.removeAttribute(\'srcset\');this.src=\'' + esc(emp.heroImg) + '\'">' +
+      (emp.vendido ? '<span class="emp-faixa" aria-label="100% vendido"><span>100% vendido</span></span>' : '') +
       '</span>';
   }
 
