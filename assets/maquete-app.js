@@ -201,7 +201,7 @@ async function iniciar(emp) {
   function aoPassar(idx, x, y) {
     const tip = $('mq-tip');
     const c = idx == null ? null : st.grade.celulas[idx];
-    if (!c) { tip.hidden = true; return; }
+    if (!c || c.estado === 'inexistente') { tip.hidden = true; return; }
     let txt;
     if (c.estado === 'fora') {
       txt = 'Torre ' + c.torre + ' · Fora de venda';
@@ -289,7 +289,7 @@ async function iniciar(emp) {
   function aoClicar(idx) {
     if (idx == null) { fecharPainel(); return; }
     const c = st.grade.celulas[idx];
-    if (!c || c.estado === 'fora') return;
+    if (!c || c.estado === 'fora' || c.estado === 'inexistente') return;
     abrir(idx);
   }
 
@@ -390,18 +390,18 @@ async function iniciar(emp) {
         const achadas = [];
         for (const t of torres) {
           const i = M.indice(gcfg, t, b.andar, b.final);
-          if (i !== -1 && st.grade.celulas[i].estado !== 'fora') achadas.push({ t, i });
+          if (i !== -1 && !/^(fora|inexistente)$/.test(st.grade.celulas[i].estado)) achadas.push({ t, i });
         }
         if (achadas.length) { idx = achadas[0].i; hint = achadas; }
         else {
           for (const t of torres) {
             const i = M.indice(gcfg, t, b.andar, b.final);
-            if (i !== -1) { idx = i; break; }
+            if (i !== -1 && st.grade.celulas[i].estado !== 'inexistente') { idx = i; break; }
           }
         }
       }
     }
-    if (idx === -1) { avisar('Unidade não encontrada'); return; }
+    if (idx === -1 || st.grade.celulas[idx].estado === 'inexistente') { avisar('Unidade não encontrada'); return; }
     if (st.grade.celulas[idx].estado === 'fora') { avisar('Torre fora de venda'); return; }
     if (hint && hint.length > 1) {
       avisar('Mostrando Torre ' + hint[0].t + ' · também existe na ' +
