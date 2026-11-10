@@ -289,6 +289,32 @@ window.CITIES = [
         hideVagas: true,
         tipoRule: 'village-park',
         solNascente: { 1: [2, 7, 8], 2: [3, 4, 5, 6], 3: [2, 7, 8] },
+        /* maquete 3D (maquete.html), gerada por assets/3d/village-park/scripts (Y para cima, metros, origem no
+           centro do terreno). Etapa 1: torres, implantacao e grade; o lazer ainda em volumes simples. */
+        maquete: {
+          botaoVisivel: true,
+          simId: 'park',
+          modelo: 'assets/3d/village-park/park.glb?v=4',
+          /* FAQ: T1 e T2 terreo ao 19o, T3 terreo ao 18o; no terreo o lugar do final 1 e o hall */
+          grade: { torres: [1, 2, 3], andares: 20, finais: 8,
+                   semUnidade: [{ andares: [0], finais: [1] }, { torres: [3], andarMin: 19 }] },
+          /* norte da bussola da implantacao (~20 graus a oeste do "para cima" da planta) e varanda de 1,33 m */
+          norte: [-0.34, -0.94],
+          ateFachada: 1.35,
+          /* torres: T1 (42.4, -26.7) e T2 (-42.4, -26.7) com o eixo maior em z; T3 (0.6, 11.9) com o eixo em x.
+             Avenida em z = -94 (frente), portaria em (-5, -78) */
+          cameras: {
+            geral:     { pos: [118, 128, -196], alvo: [0, 8, -14] },
+            'torre-1': { pos: [122, 46, -48],   alvo: [42.4, 28, -26.7] },
+            'torre-2': { pos: [-122, 46, -48],  alvo: [-42.4, 28, -26.7] },
+            'torre-3': { pos: [22, 44, 92],     alvo: [0.6, 26, 11.9] },
+            frente:    { pos: [0, 32, -176],    alvo: [0, 28, -16] },
+            fundos:    { pos: [-10, 42, 158],   alvo: [0, 25, 0] },
+            lazer:     { pos: [26, 42, -78],    alvo: [-3, 0, -32] },
+            portaria:  { pos: [16, 9, -108],    alvo: [-5, 3, -76] }
+          },
+          ambientes: []
+        },
         tipos: [
           { key: 'tipo-ponta',         label: '3Q C/S Tipo - Ponta' },
           { key: 'tipo-ponta-pcd',     label: '2Q C/S Tipo - Ponta PCD' },

@@ -1,0 +1,219 @@
+{
+ "schema": "park-unidades-layout/1",
+ "unidades_medida": "metros; Z para cima (Blender). No glTF Y-up: (x, y, z)_blender -> (x, z, -y)_gltf",
+ "pe_direito": 2.82,
+ "pavimentos": {
+  "1": 20,
+  "2": 20,
+  "3": 19
+ },
+ "andar_z": "z0 = andar*pe_direito + z_rel[0], z1 = (andar+1)*pe_direito + z_rel[1]",
+ "z_rel": [
+  0.14,
+  -0.14
+ ],
+ "plano": "fundo da varanda: x_local = normal*(5.18 + 0.04); a fachada fica 1.33 m a frente",
+ "sem_unidade_no_terreo": [
+  "01"
+ ],
+ "torres": {
+  "torre-1": {
+   "centro": [
+    42.423,
+    26.741,
+    0.0
+   ],
+   "rotacao_z_graus": 180.0,
+   "finais": {
+    "06": {
+     "face_local": "+x",
+     "y_local": [
+      10.905,
+      14.9
+     ]
+    },
+    "05": {
+     "face_local": "+x",
+     "y_local": [
+      6.66,
+      10.905
+     ]
+    },
+    "04": {
+     "face_local": "+x",
+     "y_local": [
+      -10.905,
+      -6.66
+     ]
+    },
+    "03": {
+     "face_local": "+x",
+     "y_local": [
+      -14.9,
+      -10.905
+     ]
+    },
+    "07": {
+     "face_local": "-x",
+     "y_local": [
+      10.905,
+      14.9
+     ]
+    },
+    "08": {
+     "face_local": "-x",
+     "y_local": [
+      6.66,
+      10.905
+     ]
+    },
+    "01": {
+     "face_local": "-x",
+     "y_local": [
+      -10.905,
+      -6.66
+     ]
+    },
+    "02": {
+     "face_local": "-x",
+     "y_local": [
+      -14.9,
+      -10.905
+     ]
+    }
+   }
+  },
+  "torre-2": {
+   "centro": [
+    -42.423,
+    26.741,
+    0.0
+   ],
+   "rotacao_z_graus": 0.0,
+   "finais": {
+    "06": {
+     "face_local": "+x",
+     "y_local": [
+      10.905,
+      14.9
+     ]
+    },
+    "05": {
+     "face_local": "+x",
+     "y_local": [
+      6.66,
+      10.905
+     ]
+    },
+    "04": {
+     "face_local": "+x",
+     "y_local": [
+      -10.905,
+      -6.66
+     ]
+    },
+    "03": {
+     "face_local": "+x",
+     "y_local": [
+      -14.9,
+      -10.905
+     ]
+    },
+    "07": {
+     "face_local": "-x",
+     "y_local": [
+      10.905,
+      14.9
+     ]
+    },
+    "08": {
+     "face_local": "-x",
+     "y_local": [
+      6.66,
+      10.905
+     ]
+    },
+    "01": {
+     "face_local": "-x",
+     "y_local": [
+      -10.905,
+      -6.66
+     ]
+    },
+    "02": {
+     "face_local": "-x",
+     "y_local": [
+      -14.9,
+      -10.905
+     ]
+    }
+   }
+  },
+  "torre-3": {
+   "centro": [
+    0.553,
+    -11.85,
+    0.0
+   ],
+   "rotacao_z_graus": -90.0,
+   "finais": {
+    "06": {
+     "face_local": "+x",
+     "y_local": [
+      10.905,
+      14.9
+     ]
+    },
+    "05": {
+     "face_local": "+x",
+     "y_local": [
+      6.66,
+      10.905
+     ]
+    },
+    "04": {
+     "face_local": "+x",
+     "y_local": [
+      -10.905,
+      -6.66
+     ]
+    },
+    "03": {
+     "face_local": "+x",
+     "y_local": [
+      -14.9,
+      -10.905
+     ]
+    },
+    "07": {
+     "face_local": "-x",
+     "y_local": [
+      10.905,
+      14.9
+     ]
+    },
+    "08": {
+     "face_local": "-x",
+     "y_local": [
+      6.66,
+      10.905
+     ]
+    },
+    "01": {
+     "face_local": "-x",
+     "y_local": [
+      -10.905,
+      -6.66
+     ]
+    },
+    "02": {
+     "face_local": "-x",
+     "y_local": [
+      -14.9,
+      -10.905
+     ]
+    }
+   }
+  }
+ }
+}

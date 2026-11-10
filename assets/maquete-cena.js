@@ -29,11 +29,11 @@ import { criarModeloProvisorio } from './maquete-provisoria.js';
 
 const DRACO_PATH = 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/gltf/';
 const DUR_ANIM = 800;
-/* norte da cena: a face +x das torres (finais 1, 2, 7 e 8) e a do nascente, entao leste = +x
-   e norte = -z (glTF Y-up). Aproximacao suficiente para a bussola. */
-const NORTE = new THREE.Vector3(0, 0, -1);
-/* afastamento do fundo da varanda ate o plano da fachada (1,1 m de loggia) + folga */
-const ATE_FACHADA = 1.13;
+/* norte padrao da cena (Gaia): a face +x das torres (finais 1, 2, 7 e 8) e a do nascente, entao leste = +x
+   e norte = -z (glTF Y-up). Cada empreendimento pode trocar por cfg.norte = [x, z] (direcao em Three). */
+const NORTE_PADRAO = [0, -1];
+/* afastamento do fundo da varanda ate o plano da fachada (Gaia: 1,1 m de loggia) + folga; cfg.ateFachada troca */
+const ATE_FACHADA_PADRAO = 1.13;
 
 /* cor e forca do emissivo por estado, em cada modo */
 /* env*: ceu (PMREM) refletido nos materiais lisos (vidro, guarda-corpo, agua, unidades); envInt = forca.
@@ -334,6 +334,9 @@ export async function criarCena(container, cfg, ev = {}) {
 }
 
 async function montar(renderer, container, cfg, grade, total, onProgresso, onHover, onClick, extras) {
+  const nn = cfg.norte || NORTE_PADRAO;
+  const NORTE = new THREE.Vector3(nn[0], 0, nn[1]).normalize();
+  const ATE_FACHADA = cfg.ateFachada || ATE_FACHADA_PADRAO;
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(40, 1, 0.4, 4000);
   const ceu = criarCeu();
@@ -601,7 +604,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
     const tab = MODOS[m];
     corEsm.set(tab.esmaecido[0]);
     for (let i = 0; i < total; i++) {
-      semRealce[i] = estados[i] === 'fora' ? 1 : 0;
+      semRealce[i] = estados[i] === 'fora' || estados[i] === 'inexistente' ? 1 : 0;
       const par = tab.estados[estados[i]] || tab.estados['sem-dados'];
       cor.set(par[0]);
       let forca = par[1];

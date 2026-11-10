@@ -53,6 +53,21 @@
     return m ? parseInt(m[0], 10) : NaN;
   }
 
+  /* cfg.semUnidade: posicoes da grade sem apartamento (ex.: hall no lugar do final 1 do terreo, torre com
+     menos andares). Cada regra: { torres?, andares?, andarMin?, finais? }; campo ausente = qualquer. */
+  function existe(cfg, torre, andar, final) {
+    var regras = cfg.semUnidade || [];
+    for (var i = 0; i < regras.length; i++) {
+      var r = regras[i];
+      if (r.torres && r.torres.indexOf(torre) < 0) continue;
+      if (r.andares && r.andares.indexOf(andar) < 0) continue;
+      if (r.andarMin != null && andar < r.andarMin) continue;
+      if (r.finais && r.finais.indexOf(final) < 0) continue;
+      return false;
+    }
+    return true;
+  }
+
   function montarGrade(cfg, units) {
     var total = cfg.torres.length * cfg.andares * cfg.finais;
     var celulas = [];
@@ -78,7 +93,8 @@
     for (i = 0; i < total; i++) {
       p = posicao(cfg, i);
       var estado, un = null;
-      if (!units) estado = 'sem-dados';
+      if (!existe(cfg, p.torre, p.andar, p.final)) estado = 'inexistente';
+      else if (!units) estado = 'sem-dados';
       else if (!venda[p.torre]) estado = 'fora';
       else if (!linhas[i]) estado = 'vendida';
       else {
@@ -126,7 +142,7 @@
     var saida = new Set();
     var tipos = f.tipos || [];
     grade.celulas.forEach(function (c) {
-      if (c.estado === 'fora' || c.estado === 'sem-dados') return;
+      if (c.estado === 'fora' || c.estado === 'sem-dados' || c.estado === 'inexistente') return;
       if (f.soDisponiveis && c.estado !== 'disponivel') return;
       if (tipos.length && !(c.u && tipos.indexOf(c.u.tipo) >= 0)) return;
       if (c.andar < f.andarMin || c.andar > f.andarMax) return;
@@ -159,7 +175,7 @@
   }
 
   var api = {
-    indice: indice, posicao: posicao, codigo: codigo, statusDe: statusDe, montarGrade: montarGrade, resumo: resumo,
+    indice: indice, posicao: posicao, existe: existe, codigo: codigo, statusDe: statusDe, montarGrade: montarGrade, resumo: resumo,
     nascente: nascente, posicaoLabel: posicaoLabel, interpretarBusca: interpretarBusca, filtrar: filtrar,
     vizinhaDisponivel: vizinhaDisponivel, urlsSimuladores: urlsSimuladores, estados: estados
   };

@@ -127,3 +127,22 @@ test('filtrar por sol: nascente usa solNascente do cfg, poente o resto', () => {
   assert.deepEqual([...poen], [M.indice(CFG, 1, 3, 4)]);
   assert.equal(M.filtrar(g, base, CFG).size, 3, 'sem sol: nao filtra');
 });
+
+test('semUnidade: terreno sem final 1 e Torre 3 sem o 19o andar ficam inexistentes, fora do resumo e dos filtros', () => {
+  const cfg = Object.assign({}, CFG, { semUnidade: [{ andares: [0], finais: [1] }, { torres: [3], andarMin: 19 }] });
+  assert.equal(M.existe(cfg, 1, 0, 1), false);
+  assert.equal(M.existe(cfg, 1, 0, 2), true);
+  assert.equal(M.existe(cfg, 3, 19, 4), false);
+  assert.equal(M.existe(cfg, 2, 19, 4), true);
+  const g = M.montarGrade(cfg, [U('BL-01', 0, 1, 'Disponível'), U('BL-03', 18, 2, 'Disponível'), U('BL-02', 3, 3, 'Disponível')]);
+  assert.equal(g.celulas[M.indice(cfg, 1, 0, 1)].estado, 'inexistente');
+  assert.equal(g.celulas[M.indice(cfg, 3, 19, 8)].estado, 'inexistente');
+  assert.equal(g.celulas[M.indice(cfg, 3, 18, 2)].estado, 'disponivel');
+  assert.equal(M.montarGrade(cfg, null).celulas[M.indice(cfg, 3, 19, 1)].estado, 'inexistente');
+  const r = M.resumo(g);
+  assert.equal(r.total, 480 - 3 - 8);          // 469 unidades reais (FAQ do Village Park)
+  const vis = M.filtrar(g, { andarMin: 0, andarMax: 19 }, cfg);
+  assert.equal(vis.has(M.indice(cfg, 2, 0, 1)), false);
+  assert.equal(vis.has(M.indice(cfg, 3, 19, 5)), false);
+  assert.equal(vis.has(M.indice(cfg, 2, 0, 2)), true);
+});
