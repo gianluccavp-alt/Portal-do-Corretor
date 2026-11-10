@@ -350,6 +350,29 @@ html.sem-abertura .entra-3{animation-delay:.24s}
 .emp-thumb{display:block;position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--line)}
 .emp-thumb img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .7s var(--ease)}
 .emp-card:hover .emp-thumb img{transform:scale(1.05)}
+/* Faixa "100% vendido" cruzando o card de ponta a ponta na diagonal.
+   O ângulo acompanha a proporção 4:3 da foto (atan(3/4) ≈ 36,87°); o
+   tamanho do texto escala com a largura do card (container query). */
+.emp-thumb{container-type:inline-size}
+.emp-faixa{
+  position:absolute;left:50%;top:50%;z-index:2;pointer-events:none;
+  width:150%;transform:translate(-50%,-50%) rotate(-36.87deg);
+}
+.emp-faixa span{
+  position:relative;display:block;overflow:hidden;
+  padding:3.6cqw 0;text-align:center;
+  background:linear-gradient(180deg,#F5173F 0%,#D5042A 48%,#B10019 100%);
+  color:#fff;font-size:7.4cqw;font-weight:700;line-height:1;letter-spacing:.2em;text-indent:.2em;text-transform:uppercase;
+  text-shadow:0 1px 2px rgba(90,0,12,.45);
+  box-shadow:0 10px 26px rgba(110,0,14,.38),0 2px 0 rgba(255,255,255,.18) inset,0 -2px 0 rgba(0,0,0,.14) inset;
+  border-top:1.5px solid rgba(255,255,255,.55);border-bottom:1.5px solid rgba(255,255,255,.55);
+}
+/* filetes finos internos, dão acabamento de faixa premium */
+.emp-faixa span::before,.emp-faixa span::after{
+  content:"";position:absolute;left:0;right:0;height:1px;background:rgba(255,255,255,.4);
+}
+.emp-faixa span::before{top:3px}
+.emp-faixa span::after{bottom:3px}
 .emp-thumb-ph{
   position:absolute;inset:0;display:flex;flex-direction:column;gap:.5rem;
   align-items:center;justify-content:center;background:var(--muted);color:var(--grey);

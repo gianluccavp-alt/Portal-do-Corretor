@@ -215,7 +215,7 @@ window.CITIES = [
         titleHtml: 'Seleto <em>Amoreiras</em>',
         sub: 'Na região das Amoreiras, em Campinas, mais um sucesso de Vendas Prix e Direcional. Apartamentos de 2 dormitórios com varanda, grill, lazer completo e vaga de garagem. Um condomínio moderno, seguro e cheio de diversão para toda a família, em uma região que está em constante crescimento.',
         heroImg: 'assets/img/seleto-amoreiras/galeria/08-portaria.jpg', badges: [], pills: [], torres: 3,
-        hideVagas: true, heroBlur: true, theme: 'seleto',
+        hideVagas: true, heroBlur: true, theme: 'seleto', vendido: true,
         tipoRule: 'seleto',
         solNascente: { default: [2, 4, 6, 8], 3: [1, 3, 5, 7] },
         tipos: [
