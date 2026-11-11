@@ -438,6 +438,12 @@ img{display:block;max-width:100%}
 .sim-opt-sub{font-size:13px;color:var(--muted);line-height:1.4}
 .sim-opt-arrow{flex:none;color:var(--muted)}
 .sim-opt-arrow svg{width:18px;height:18px;display:block}
+.dl-step[hidden]{display:none}
+.dl-back{display:inline-flex;align-items:center;gap:4px;margin:-6px 0 8px -6px;padding:6px 10px 6px 6px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);transition:background .15s,color .15s}
+.dl-back:hover{background:var(--tint);color:var(--ink)}
+.dl-back svg{width:16px;height:16px}
+.dl-ic-pdf{background:#fde8eb;color:#c8102e}
+.dl-ic-xls{background:#e3f4ea;color:#1d7a46}
 
 .mtabbar{display:none}
 .m-only,.hx-book{display:none}
