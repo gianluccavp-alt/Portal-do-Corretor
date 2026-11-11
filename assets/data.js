@@ -906,6 +906,79 @@ function exportarUnidadesPdf(comValores) {
   doc.save('unidades-disponiveis-' + slug + (comValores ? '' : '-sem-valores') + '.pdf');
 }
 
+/* ---------- export Excel (mesmas unidades e colunas do PDF) ----------
+   A SheetJS so e baixada no primeiro clique, para nao pesar a pagina. */
+var XLSX_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+var xlsxCarregando = null;
+function carregaXlsx() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  if (xlsxCarregando) return xlsxCarregando;
+  xlsxCarregando = new Promise(function (ok, falha) {
+    var s = document.createElement('script');
+    s.src = XLSX_SRC;
+    s.onload = function () { window.XLSX ? ok(window.XLSX) : falha(); };
+    s.onerror = function () { xlsxCarregando = null; falha(); };
+    document.head.appendChild(s);
+  });
+  return xlsxCarregando;
+}
+
+function exportarUnidadesExcel(comValores) {
+  comValores = comValores !== false;
+  var emp = window.CURRENT_EMP;
+  if (!emp) return;
+  if (!units.length) {
+    alert('Nenhuma unidade disponivel para exportar.');
+    return;
+  }
+  var sortEl = document.getElementById('sort');
+  var list = unidadesFiltradas(sortEl ? sortEl.value : 'num-asc');
+  if (!list.length) {
+    alert('Nenhuma unidade para os filtros selecionados.');
+    return;
+  }
+
+  carregaXlsx().then(function (XLSX) {
+    var hideSol = !!emp.hideSol;
+    var head = ['Tipologia', 'Bloco', 'Andar', 'Final', 'Área Privativa (m²)'];
+    if (!hideSol) head.push('Sol');
+    if (comValores) head.push('Valor Tabela Direta', 'Valor de Avaliação', 'Valor Associativo/Investidor');
+
+    var rows = list.map(function (u) {
+      var d = unitDisplayData(u);
+      var row = [u.tipoLabel, u.identificador || u.bl, u.andar === 0 ? 'Térreo' : u.andar + 'º andar', u.f, u.area];
+      if (!hideSol) row.push(d.sol);
+      if (comValores) row.push(d.vTabela, (u.avaliacao && u.avaliacao > 0) ? u.avaliacao : null, d.vAssoc);
+      return row;
+    });
+
+    var ws = XLSX.utils.aoa_to_sheet([head].concat(rows));
+    // colunas de valor como numero com mascara de real (somam e ordenam no Excel)
+    if (comValores) {
+      var c0 = head.length - 3;
+      for (var r = 1; r <= rows.length; r++) {
+        for (var c = c0; c < head.length; c++) {
+          var cell = ws[XLSX.utils.encode_cell({ r: r, c: c })];
+          if (cell && cell.t === 'n') cell.z = '"R$" #,##0.00';
+        }
+      }
+    }
+    ws['!cols'] = head.map(function (h, i) {
+      var w = h.length;
+      rows.forEach(function (row) { var v = row[i]; if (v != null) w = Math.max(w, String(v).length); });
+      return { wch: Math.min(w + 3, 40) };
+    });
+    ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length, c: head.length - 1 } }) };
+
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Unidades');
+    var slug = (emp.id || emp.nome).toString().trim().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').toLowerCase();
+    XLSX.writeFile(wb, 'unidades-disponiveis-' + slug + (comValores ? '' : '-sem-valores') + '.xlsx');
+  }).catch(function () {
+    alert('Nao foi possivel carregar o gerador de Excel. Verifique a conexao e tente novamente.');
+  });
+}
+
 /* ---------- tabs + zoom ---------- */
 function switchTab(id, btn) {
   var secs = document.querySelectorAll('.sec');
