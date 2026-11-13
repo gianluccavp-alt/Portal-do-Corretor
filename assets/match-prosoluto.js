@@ -215,14 +215,12 @@
 
     var stPS = status(c.pctPS, limPS, comitePS);
     var stPz = status(c.prazo, limPz, comitePz);
-    var stCR;
-    if (c.crLinear <= limCR + 1e-9 && c.crPS <= limCRPS + 1e-9) stCR = 'Aprovado';
-    else if (c.crLinear <= comiteCR + 1e-9 && c.crPS <= limCRPS + 1e-9) stCR = 'Comitê';
-    else stCR = 'Reprovado';
+    var stCR = status(c.crLinear, limCR, comiteCR);
+    var stCRPS = c.crPS <= limCRPS + 1e-9 ? 'Aprovado' : 'Reprovado';
     var stEsc = status(c.crEscal, limCR, comiteCR);
 
-    var itens = [{ id: 'ps', st: stPS }, { id: 'pz', st: stPz }, { id: 'cr', st: stCR }, { id: 'cres', st: stEsc }];
-    var chave = [stPS, stPz, stCR];
+    var itens = [{ id: 'ps', st: stPS }, { id: 'pz', st: stPz }, { id: 'cr', st: stCR }, { id: 'cres', st: stEsc }, { id: 'crps', st: stCRPS }];
+    var chave = [stPS, stPz, stCR, stCRPS];
     var final = chave.every(function (s) { return s === 'Aprovado'; }) ? 'Aprovado'
               : (chave.some(function (s) { return s === 'Reprovado'; }) ? 'Reprovado' : 'Comitê');
     return { itens: itens, final: final };
@@ -237,6 +235,7 @@
       { id: 'ps', grave: true, ok: v[0].st === 'Aprovado' },
       { id: 'prazo', grave: true, ok: v[1].st === 'Aprovado' },
       { id: 'cr', grave: true, ok: v[2].st === 'Aprovado' },
+      { id: 'crps', grave: true, ok: v[4].st === 'Aprovado' },
       { id: 'cresc', grave: false, ok: v[3].st === 'Aprovado' },
       { id: 'venc1', grave: true, ok: TX.diasVenc.indexOf(c.venc1.getDate()) >= 0 &&
           dias(c.venda, c.venc1) >= 0 && dias(c.venda, c.venc1) <= TX.maxDiasVenc1 },
@@ -250,13 +249,13 @@
   }
 
   /* Regra do Match (spec 4.3): o carne passa se todos os itens dele
-     estao ok. Linear usa 'cr'; escalonado usa 'cresc'. */
+     estao ok. Linear usa 'cr' e 'crps'; escalonado usa 'cresc'. */
   var COMUNS = ['ps', 'prazo', 'venc1', 'ato', 'sinais', 'sinaisOrdem', 'anuais', 'parcmin', 'saldo'];
   function aprovacaoDoChecklist(lista) {
     var ok = {};
     lista.forEach(function (x) { ok[x.id] = x.ok; });
     var comuns = COMUNS.every(function (id) { return ok[id]; });
-    return { linear: comuns && ok.cr, escalonado: comuns && ok.cresc };
+    return { linear: comuns && ok.cr && ok.crps, escalonado: comuns && ok.cresc };
   }
   /* Pro Soluto zerado (banco + subsidio + ato cobrem a venda): nao ha
      carne, entao a parcela minima nao se aplica. */
