@@ -422,6 +422,8 @@ window.SimUnidades = (function () {
 
       var codigo = codigoUnidade(r);
       if (!codigo) continue;                  /* vagas de garagem e afins */
+      /* unidades ocultas pelo config (unidadesOcultas), mesmo criterio de assets/data.js */
+      if (cfg && cfg.unidadesOcultas && cfg.unidadesOcultas.indexOf(codigo) >= 0) continue;
 
       var n = numBloco(codigo);
       if (emp.torresVisiveis && emp.torresVisiveis.indexOf(n) < 0) continue;

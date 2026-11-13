@@ -393,6 +393,12 @@ function rowsToUnits(rows, empSheetName, opts) {
     var produto = findFirst(r, [['produto'], ['direcional']]);
     var apMatch = produto ? produto.match(/BL\d+-(\d+)/) : null;
 
+    // unidades ocultas pelo config (unidadesOcultas), ex.: valor em revisao no Salesforce
+    if (cur && cur.unidadesOcultas && cur.unidadesOcultas.length) {
+      var codM = (findFirst(r, [['identificador']]) + ' ' + produto).match(/BL\d+-\d+/);
+      if (codM && cur.unidadesOcultas.indexOf(codM[0]) >= 0) continue;
+    }
+
     var final = parseInt(findFirst(r, [['final'], ['unidade']]) || '0', 10);
     var andar = parseInt(findFirst(r, [['andar']]) || '0', 10);
     var bl    = findFirst(r, [['bloco'], ['etapa'], ['torre']]) || 'BL-01';
