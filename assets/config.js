@@ -290,11 +290,11 @@ window.CITIES = [
         tipoRule: 'village-park',
         solNascente: { 1: [2, 7, 8], 2: [3, 4, 5, 6], 3: [2, 7, 8] },
         /* maquete 3D (maquete.html), gerada por assets/3d/village-park/scripts (Y para cima, metros, origem no
-           centro do terreno). Etapa 1: torres, implantacao e grade; o lazer ainda em volumes simples. */
+           centro do terreno). Etapa 2: lazer mobiliado e sem teto, com o menu de ambientes. */
         maquete: {
           botaoVisivel: true,
           simId: 'park',
-          modelo: 'assets/3d/village-park/park.glb?v=4',
+          modelo: 'assets/3d/village-park/park.glb?v=7',
           /* FAQ: T1 e T2 terreo ao 19o, T3 terreo ao 18o; no terreo o lugar do final 1 e o hall */
           grade: { torres: [1, 2, 3], andares: 20, finais: 8,
                    semUnidade: [{ andares: [0], finais: [1] }, { torres: [3], andarMin: 19 }] },
@@ -313,7 +313,25 @@ window.CITIES = [
             lazer:     { pos: [26, 42, -78],    alvo: [-3, 0, -32] },
             portaria:  { pos: [16, 9, -108],    alvo: [-5, 3, -76] }
           },
-          ambientes: []
+          /* menu do botao Lazer: um angulo por ambiente (mesmas coordenadas das cameras) */
+          ambientes: [
+            { id: 'piscina',       nome: 'Piscina',           pos: [8, 9, -32],     alvo: [-1, 0, -43] },
+            { id: 'quadra',        nome: 'Quadra',            pos: [-5, 16, -42],   alvo: [-5, 0, -27] },
+            { id: 'beach',         nome: 'Beach tennis',      pos: [32, 13, -24],   alvo: [16.5, 0, -24] },
+            { id: 'playground',    nome: 'Playground',        pos: [-11, 11, -24],  alvo: [-21, 0, -33] },
+            { id: 'salao',         nome: 'Salão de festas',   pos: [-14, 13, -22],  alvo: [-14, 0, -11.5] },
+            { id: 'brinquedoteca', nome: 'Brinquedoteca',     pos: [-5.4, 11, -20], alvo: [-5.4, 0, -11.5] },
+            { id: 'academia',      nome: 'Academia',          pos: [1, 12, -21],    alvo: [1, 0, -11.5] },
+            { id: 'pub',           nome: 'Pub de jogos',      pos: [7.3, 15, -15.5],  alvo: [7.3, 0, -12.6] },
+            { id: 'minimarket',    nome: 'Minimarket',        pos: [11.6, 15, -15.5], alvo: [11.6, 0, -12.6] },
+            { id: 'beauty',        nome: 'Beauty',            pos: [7.3, 14, -5.5],   alvo: [7.3, 0, -9.8] },
+            { id: 'cowork',        nome: 'Coworking',         pos: [11.6, 14, -5.5],  alvo: [11.6, 0, -9.8] },
+            { id: 'churrasqueira', nome: 'Churrasqueira',     pos: [30, 12, -30],   alvo: [22.6, 0, -40] },
+            { id: 'club',          nome: 'Village Club',      pos: [38, 17, -2],    alvo: [38, 0, 11] },
+            { id: 'crossfit',      nome: 'Crossfit',          pos: [15, 13, -3],    alvo: [20.5, 0, -13] },
+            { id: 'petplace',      nome: 'Pet place',         pos: [-40, 12, -4],   alvo: [-49.5, 0, 5.5] },
+            { id: 'bikeshare',     nome: 'Bike share',        pos: [-12, 10, -53],   alvo: [-18.5, 0, -48.5] }
+          ]
         },
         tipos: [
           { key: 'tipo-ponta',         label: '3Q C/S Tipo - Ponta' },
