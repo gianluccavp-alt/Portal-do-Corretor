@@ -1774,10 +1774,15 @@ function renderResultado(){
 
     /* veredito */
     var v=c.veredito;
-    var okN=0; for(var q=0;q<v.itens.length;q++) if(v.itens[q].st==='Aprovado') okN++;
-    var sub = v.final==='Aprovado' ? okN+' de '+v.itens.length+' critérios dentro do limite'
+    /* Card: no lugar do prazo entra o C.R. so da parcela do Pro Soluto,
+       que e o sublimite que derruba o C.R. linear (ex.: Aco 10%) */
+    var linhas = v.itens.filter(function(it){ return it.id!=='pz'; });
+    linhas.splice(1, 0, { lab:'C.R. da parcela P.S.', valor:pctf(c.crPS), limite:'máx. '+pctf(v.limCRPS,0),
+      st: c.crPS<=v.limCRPS+1e-9 ? 'Aprovado' : 'Reprovado' });
+    var okN=0; for(var q=0;q<linhas.length;q++) if(linhas[q].st==='Aprovado') okN++;
+    var sub = v.final==='Aprovado' ? okN+' de '+linhas.length+' critérios dentro do limite'
             : (v.final==='Comitê' ? 'passa, mas depende de aprovação do comitê'
-                                  : (v.itens.length-okN)+' de '+v.itens.length+' critérios fora do limite');
+                                  : (linhas.length-okN)+' de '+linhas.length+' critérios fora do limite');
     var ico = v.final==='Aprovado'
       ? '<polyline points="20 6 9 17 4 12"></polyline>'
       : (v.final==='Comitê'
@@ -1792,7 +1797,7 @@ function renderResultado(){
           '<span class="vh-sub">'+sub+'</span></span>'+
         '<span class="vh-mais"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>'+
       '</div>'+
-      v.itens.map(function(it){
+      linhas.map(function(it){
         /* uma linha por criterio: rotulo curto, valor, limite enxuto, selo Ok/! */
         var lab = it.lab.replace('Comprom. de renda','C.R.').replace(' do Pro Soluto','');
         var lim = it.limite.split(' · ')[0];   /* corta o "· P.S. X de Y" que estoura */
