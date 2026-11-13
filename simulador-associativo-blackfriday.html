@@ -1432,11 +1432,10 @@ function avaliarPolitica(c){
   var stPS = status(c.pctPS, limPS, comitePS);
   var stPz = status(c.prazo, limPz, comitePz);
 
-  /* C.R. linear: só aprova se a parcela do P.S. também couber no teto dela */
-  var stCR;
-  if(c.crLinear<=limCR+1e-9 && c.crPS<=limCRPS+1e-9) stCR='Aprovado';
-  else if(c.crLinear<=comiteCR+1e-9 && c.crPS<=limCRPS+1e-9) stCR='Comitê';
-  else stCR='Reprovado';
+  /* C.R. linear olha só o teto total; o teto da parcela do P.S. é um
+     critério à parte (sem comitê), mas os dois entram no veredito final */
+  var stCR   = status(c.crLinear, limCR, comiteCR);
+  var stCRPS = c.crPS<=limCRPS+1e-9 ? 'Aprovado' : 'Reprovado';
 
   var stEsc = status(c.crEscal, limCR, comiteCR);
 
@@ -1445,14 +1444,17 @@ function avaliarPolitica(c){
       st:stPS,  excedeu:c.pctPS-limPS },
     { id:'pz',   lab:'Prazo do Pro Soluto',       valor:c.prazo+' meses', limite:'máx. '+limPz+' meses',
       st:stPz,  excedeu:c.prazo-limPz },
-    { id:'cr',   lab:'Comprom. de renda (linear)', valor:pctf(c.crLinear), limite:'máx. '+pctf(limCR,0)+' · P.S. '+pctf(c.crPS)+' de '+pctf(limCRPS,0),
+    { id:'cr',   lab:'Comprom. de renda (linear)', valor:pctf(c.crLinear), limite:'máx. '+pctf(limCR,0),
       st:stCR,  excedeu:c.crLinear-limCR },
     { id:'cres', lab:'Comprom. de renda (escalonado)', valor:pctf(c.crEscal), limite:'máx. '+pctf(limCR,0),
-      st:stEsc, excedeu:c.crEscal-limCR }
+      st:stEsc, excedeu:c.crEscal-limCR },
+    { id:'crps', lab:'C.R. da parcela P.S.', valor:pctf(c.crPS), limite:'máx. '+pctf(limCRPS,0),
+      st:stCRPS, excedeu:c.crPS-limCRPS }
   ];
 
-  /* Formulário Z144: o veredito final olha %P.S., prazo e C.R. linear */
-  var chave=[stPS,stPz,stCR];
+  /* Formulário Z144: o veredito final olha %P.S., prazo e C.R. linear
+     (total e só da parcela do P.S.) */
+  var chave=[stPS,stPz,stCR,stCRPS];
   var final = chave.every(function(s){return s==='Aprovado';}) ? 'Aprovado'
             : (chave.some(function(s){return s==='Reprovado';}) ? 'Reprovado' : 'Comitê');
 
@@ -1577,6 +1579,10 @@ function checklistAprovacao(c){
     detail: S.renda>0
       ? ('Máximo de '+pctf(c.crLinear)+' ('+brl(c.crLinear*S.renda)+' de '+brl(S.renda)+'), sendo '+pctf(c.crPS)+' só do carnê (limite '+pctf(pol.crPS,0)+'). Status: '+c.veredito.itens[2].st+'.')
       : 'Renda não informada — não foi possível avaliar.' });
+
+  out.push({ id:'crps', grave:true, label:'Comprometimento de renda só da parcela do Pro Soluto (máx. '+pctf(pol.crPS,0)+')',
+    ok: c.veredito.itens[4].st==='Aprovado',
+    detail: S.renda>0 ? ('Máximo de '+pctf(c.crPS)+' ('+brl(c.crPS*S.renda)+' de '+brl(S.renda)+'). Status: '+c.veredito.itens[4].st+'.') : 'Renda não informada — não foi possível avaliar.' });
 
   out.push({ id:'cresc', grave:false, label:'Comprometimento de renda no fluxo escalonado (máx. '+pctf(pol.cr,0)+')',
     ok: c.veredito.itens[3].st==='Aprovado',
@@ -1776,9 +1782,8 @@ function renderResultado(){
     var v=c.veredito;
     /* Card: no lugar do prazo entra o C.R. so da parcela do Pro Soluto,
        que e o sublimite que derruba o C.R. linear (ex.: Aco 10%) */
-    var linhas = v.itens.filter(function(it){ return it.id!=='pz'; });
-    linhas.splice(1, 0, { lab:'C.R. da parcela P.S.', valor:pctf(c.crPS), limite:'máx. '+pctf(v.limCRPS,0),
-      st: c.crPS<=v.limCRPS+1e-9 ? 'Aprovado' : 'Reprovado' });
+    var porId = {}; v.itens.forEach(function(it){ porId[it.id]=it; });
+    var linhas = [porId.ps, porId.crps, porId.cr, porId.cres];
     var okN=0; for(var q=0;q<linhas.length;q++) if(linhas[q].st==='Aprovado') okN++;
     var sub = v.final==='Aprovado' ? okN+' de '+linhas.length+' critérios dentro do limite'
             : (v.final==='Comitê' ? 'passa, mas depende de aprovação do comitê'
@@ -1800,7 +1805,7 @@ function renderResultado(){
       linhas.map(function(it){
         /* uma linha por criterio: rotulo curto, valor, limite enxuto, selo Ok/! */
         var lab = it.lab.replace('Comprom. de renda','C.R.').replace(' do Pro Soluto','');
-        var lim = it.limite.split(' · ')[0];   /* corta o "· P.S. X de Y" que estoura */
+        var lim = it.limite;
         var selo = it.st==='Aprovado' ? 'Ok' : (it.st==='Comitê' ? 'Comitê' : 'Fora');
         return '<div class="vd-item">'+
           '<span class="vi-lab">'+lab+'</span>'+
