@@ -754,10 +754,37 @@
   }
   var lastFocus = null;
 
+  /* Premio do popup: comeca no filtro da lista, mas o seletor dentro do popup
+     troca so a unidade aberta (nao refaz a lista atras). */
+  var modalU = null, modalPremio = 'com';
+  function temPremioUnidade(u) { return (u.folgaVoltaCx || 0) > 0 && !isPromo(u); }
+  function premioSegHtml() {
+    var b = function (v, t) {
+      return '<button type="button" data-premio="' + v + '" aria-pressed="' + (modalPremio === v) + '">' + t + '</button>';
+    };
+    return '<div class="psel" role="group" aria-label="Prêmio">' + b('com', 'Com prêmio') + b('sem', 'Sem prêmio') + '</div>';
+  }
+
   window.abrirUnidadeModal = function (idx) {
     var u = (window.CURRENT_UNITS_LIST || [])[idx];
     if (!u) return;
+    modalU = u;
+    modalPremio = activePremio;
+    renderUnidadeModal();
+    lastFocus = document.activeElement;
+    UMO.classList.add('open');
+    UMO_CARD.scrollTop = 0;
+    syncSheetLock();
+    var fc = UMO_CARD.querySelector('.umo-close:not(.m-only)') || UMO_CARD.querySelector('.umo-close');
+    if (fc && !mqTouch.matches) fc.focus({ preventScroll: true });
+  };
+
+  function renderUnidadeModal() {
+    var u = modalU;
+    var globalPremio = activePremio;
+    activePremio = modalPremio;            // valores do popup seguem o seletor do popup
     var d = unitDisplayData(u);
+    activePremio = globalPremio;
     var pl = plantaDoTipo(u.tipo);
     var desc = descontoTxt(d);
     var closeBtn = function (cls) { return '<button type="button" class="umo-close ' + cls + '" data-close aria-label="Fechar">' + IC.close + '</button>'; };
@@ -771,6 +798,8 @@
             '<span class="pchip tipo">' + esc(u.tipoLabel) + '</span></span>' +
         '</div>' + closeBtn(pl ? 'm-only' : '') +
       '</div>' +
+      // sem a coluna de composicao (Campinas), o seletor de Premio fica logo acima do card
+      (!RP && temPremioUnidade(u) ? '<div class="psel-row"><span class="comp-t">Prêmio</span>' + premioSegHtml() + '</div>' : '') +
       '<div class="acard"><div class="acard-k">Associativo / Investidor</div><div class="acard-v">' + fmt(d.vAssoc) + '</div>' +
         (desc ? '<div class="acard-d">' + desc + '</div>' : '') + '</div>' +
       '<div class="tline"><span>Tabela direta</span><strong>' + fmt(d.vTabela) + '</strong></div>' +
@@ -784,7 +813,8 @@
     var colComp = '';
     if (RP) {
       colComp = '<div class="umo-col c-comp">' +
-        '<div class="comp-wrap"><div class="comp-t">Composição do valor</div><dl class="comp">' +
+        '<div class="comp-wrap"><div class="comp-h"><div class="comp-t">Composição do valor</div>' +
+          (temPremioUnidade(u) ? premioSegHtml() : '') + '</div><dl class="comp">' +
           UNIT_FIELDS.map(function (f) {
             var v = u[f[1]] || 0;
             return '<div><dt>' + f[0] + '</dt><dd' + (v ? '' : ' class="zero"') + '>' + fmt(v) + '</dd></div>';
@@ -810,13 +840,7 @@
     var ncols = 1 + (colComp ? 1 : 0) + (colPlanta ? 1 : 0);
     UMO_CARD.className = 'umo-card lg' + (ncols === 3 ? '' : ' c' + ncols);
     UMO_CARD.innerHTML = '<span class="umo-grab" aria-hidden="true"></span>' + colData + colComp + colPlanta;
-    lastFocus = document.activeElement;
-    UMO.classList.add('open');
-    UMO_CARD.scrollTop = 0;
-    syncSheetLock();
-    var fc = UMO_CARD.querySelector('.umo-close:not(.m-only)') || UMO_CARD.querySelector('.umo-close');
-    if (fc && !mqTouch.matches) fc.focus({ preventScroll: true });
-  };
+  }
   function fecharModalUnidade() {
     if (!UMO.classList.contains('open')) return;
     UMO.classList.remove('open');
@@ -824,7 +848,18 @@
     if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
   }
   document.getElementById('unit-modal-scrim').addEventListener('click', fecharModalUnidade);
-  UMO_CARD.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) fecharModalUnidade(); });
+  UMO_CARD.addEventListener('click', function (e) {
+    if (e.target.closest('[data-close]')) { fecharModalUnidade(); return; }
+    var pb = e.target.closest('[data-premio]');
+    if (pb && modalU && pb.getAttribute('data-premio') !== modalPremio) {
+      var st = UMO_CARD.scrollTop;
+      modalPremio = pb.getAttribute('data-premio');
+      renderUnidadeModal();
+      UMO_CARD.scrollTop = st;
+      var nb = UMO_CARD.querySelector('[data-premio="' + modalPremio + '"]');
+      if (nb) nb.focus({ preventScroll: true });
+    }
+  });
 
   /* =====================================================================
      TELA CHEIA (lightbox) com navegacao entre as imagens do mesmo grupo
