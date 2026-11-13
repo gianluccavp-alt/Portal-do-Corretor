@@ -498,12 +498,9 @@ window.CITIES = [
       {
         id: 'reserva-direcional-jardim-botanico',
         sheetName: 'Reserva Direcional Jardim Botânico',
-        // unidades escondidas do site enquanto o valor e revisto no Salesforce (nov/2026).
-        // Para voltar a mostrar, apague o codigo da lista (ou a lista inteira).
-        unidadesOcultas: [
-          'BL02-0107', 'BL01-0508', 'BL03-0704', 'BL01-1208', 'BL02-0807', 'BL02-0803',
-          'BL02-1007', 'BL01-0801', 'BL03-1302', 'BL03-1201', 'BL02-1501', 'BL03-0004'
-        ],
+        // unidades escondidas do site (ex.: valor em revisao no Salesforce).
+        // Coloque o codigo da unidade (ex.: 'BL02-0107') para esconder; lista vazia = mostra todas.
+        unidadesOcultas: [],
         nome: 'Reserva Direcional Jardim Botânico',
         cidade: 'Ribeirão Preto, SP',
         eyebrow: 'Reserva Direcional Jardim Botânico · Ribeirão Preto, SP',
