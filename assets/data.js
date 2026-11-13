@@ -12,6 +12,7 @@ var activeAndar = 'todos'; // 'todos' | numero do andar em texto ('0' = Terreo)
 var activeVaga = 'todos';    // 'todos' | 'com' (vagas > 0) | 'sem' (vagas = 0)
 var activePremio = 'com';    // 'com' = Com Premio (padrao) | 'sem' = Sem Premio
 var activePromo = 'todos';   // 'todos' | 'promo' (so as unidades marcadas em /promocionais)
+var activeStatus = 'todos';  // 'todos' | 'disponivel' | 'mirror' (coluna "Status da unidade")
 var viewMode = 'list';       // 'list' (padrao) | 'cards'
 var NASCENTE_FINAIS = [3, 4, 5, 6];
 
@@ -194,11 +195,10 @@ function promoBadgeHtml(u, chip) {
   return '<span class="tipw" tabindex="0"><span class="' + (chip ? 'pchip promo' : 'u-promo') + '">Promocional' + INFO_SVG + '</span>' +
     '<span class="tip" role="tooltip">Unidades promocionais n&atilde;o podem ser vendidas com Pr&ecirc;mio.</span></span>';
 }
-/* Selo de status da unidade. Em Ribeirao Preto, unidades com status MIRROR na planilha
-   (coluna "Status da unidade") aparecem como "Mirror" no lugar de "Disponivel". */
+/* Selo de status da unidade. Em qualquer empreendimento, unidades com status MIRROR na
+   planilha (coluna "Status da unidade") aparecem como "Mirror" no lugar de "Disponivel". */
 function isMirror(u) {
-  var emp = window.CURRENT_EMP;
-  return !!(emp && emp._cityId === 'ribeirao-preto') && normKey(u.status) === 'mirror';
+  return normKey(u.status) === 'mirror';
 }
 function statusBadgeHtml(u, chip) {
   var m = isMirror(u);
@@ -539,6 +539,11 @@ function setVaga(v, btn) {
   ddSelect('[id^="vaga-opt-"]', 'vaga-val', btn);
   renderUnits();
 }
+function setStatus(v, btn) {
+  activeStatus = v;
+  ddSelect('[id^="status-opt-"]', 'status-val', btn);
+  renderUnits();
+}
 function setPremio(p, btn) {
   activePremio = p;
   ddSelect('[id^="premio-opt-"]', 'premio-val', btn);
@@ -580,6 +585,10 @@ function clearTorre() {
 function clearVaga() {
   var opt = document.getElementById('vaga-opt-todos');
   if (opt) setVaga('todos', opt);
+}
+function clearStatus() {
+  var opt = document.getElementById('status-opt-todos');
+  if (opt) setStatus('todos', opt);
 }
 function clearPromo() {
   var opt = document.getElementById('promo-opt-todos');
@@ -643,6 +652,8 @@ function unidadesFiltradas(sortVal) {
       if (activeVaga === 'sem' && u.vagas > 0) continue;
     }
     if (activePromo === 'promo' && !isPromo(u)) continue;
+    if (activeStatus === 'mirror' && !isMirror(u)) continue;
+    if (activeStatus === 'disponivel' && isMirror(u)) continue;
     list.push(u);
   }
 
