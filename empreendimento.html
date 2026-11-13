@@ -201,6 +201,7 @@
     torre: fIcon('M5 2h14v20H5zM9 6h.01M15 6h.01M9 10h.01M15 10h.01M9 14h.01M15 14h.01M10 22v-4h4v4', '#5B7FA0'),
     vaga: fIcon('M5 17h14v-5l-2-5H7l-2 5zM8 15a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM16 15a2 2 0 1 0 0 4 2 2 0 0 0 0-4z', '#6B5BB5'),
     promo: fIcon('M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8zM7 5.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z', '#D8695D'),
+    status: fIcon('M22 11.1V12a10 10 0 1 1-5.9-9.1M22 4 12 14l-3-3', '#3B82B0'),
     sort: fIcon('M3 6h18M6 12h12M10 18h4', '#B0568A'),
     andar: fIcon('M12 2 2 7l10 5 10-5zM2 17l10 5 10-5M2 12l10 5 10-5', '#2F8A5B'),
     mais: fIcon('M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6', '#55606A')
@@ -358,6 +359,13 @@
       ddOpt('vaga-opt-sem', 'Sem vaga', false, "setVaga('sem',this)");
     return dropdown({ rowId: 'vaga-row', icon: F_ICONS.vaga, label: 'Vaga', valId: 'vaga-val', value: 'Todas', opts: opts + ddClear('clearVaga') });
   }
+  // filtro Status: Disponivel / Mirror (todos os empreendimentos)
+  function statusDropdownHtml() {
+    var opts = ddOpt('status-opt-todos', 'Todas', true, "setStatus('todos',this)") +
+      ddOpt('status-opt-disponivel', 'Disponível', false, "setStatus('disponivel',this)") +
+      ddOpt('status-opt-mirror', 'Mirror', false, "setStatus('mirror',this)");
+    return dropdown({ rowId: 'status-row', icon: F_ICONS.status, label: 'Status', valId: 'status-val', value: 'Todas', opts: opts + ddClear('clearStatus') });
+  }
   // filtro Promocional (apenas produtos de Ribeirao Preto)
   function promoDropdownHtml() {
     if (!showPromoFilter()) return '';
@@ -509,7 +517,7 @@
       '<div class="fbar lg">' +
         '<div class="fbar-chips">' +
           tipoDropdownHtml() + torreDropdownHtml() + andarDropdownHtml() + solDropdownHtml() + premioDropdownHtml() +
-          vagaDropdownHtml() + promoDropdownHtml() + sortDropdownHtml() + maisFiltrosHtml() +
+          statusDropdownHtml() + vagaDropdownHtml() + promoDropdownHtml() + sortDropdownHtml() + maisFiltrosHtml() +
         '</div>' +
         '<div class="fcount"><strong id="count-label">0</strong> unidades</div>' +
       '</div>' +
