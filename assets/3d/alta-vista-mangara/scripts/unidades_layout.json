@@ -1,0 +1,153 @@
+{
+ "schema": "avm-unidades-layout/1",
+ "unidades_medida": "metros; Z para cima (Blender). No glTF Y-up: (x, y, z)_blender -> (x, z, -y)_gltf",
+ "pe_direito": 2.6,
+ "pavimentos": {
+  "1": 19,
+  "2": 19
+ },
+ "andar_z": "z0 = andar*pe_direito + z_rel[0], z1 = (andar+1)*pe_direito + z_rel[1]",
+ "z_rel": [
+  0.14,
+  -0.16
+ ],
+ "plano": "fundo da varanda: y_local = face*(4.82 + 0.04); a fachada fica 1.00 m a frente",
+ "sem_unidade_no_terreo": [
+  "01",
+  "08"
+ ],
+ "torres": {
+  "torre-1": {
+   "centro": [
+    28.925,
+    13.061,
+    0.0
+   ],
+   "rotacao_z_graus": 0.0,
+   "finais": {
+    "06": {
+     "face_local": "+y",
+     "x_local": [
+      -13.66,
+      -9.63
+     ]
+    },
+    "05": {
+     "face_local": "+y",
+     "x_local": [
+      -9.38,
+      -5.3
+     ]
+    },
+    "04": {
+     "face_local": "+y",
+     "x_local": [
+      5.3,
+      9.38
+     ]
+    },
+    "03": {
+     "face_local": "+y",
+     "x_local": [
+      9.63,
+      13.66
+     ]
+    },
+    "07": {
+     "face_local": "-y",
+     "x_local": [
+      -13.66,
+      -9.63
+     ]
+    },
+    "08": {
+     "face_local": "-y",
+     "x_local": [
+      -9.38,
+      -5.3
+     ]
+    },
+    "01": {
+     "face_local": "-y",
+     "x_local": [
+      5.3,
+      9.38
+     ]
+    },
+    "02": {
+     "face_local": "-y",
+     "x_local": [
+      9.63,
+      13.66
+     ]
+    }
+   }
+  },
+  "torre-2": {
+   "centro": [
+    -29.348,
+    12.162,
+    0.0
+   ],
+   "rotacao_z_graus": 0.0,
+   "finais": {
+    "06": {
+     "face_local": "+y",
+     "x_local": [
+      -13.66,
+      -9.63
+     ]
+    },
+    "05": {
+     "face_local": "+y",
+     "x_local": [
+      -9.38,
+      -5.3
+     ]
+    },
+    "04": {
+     "face_local": "+y",
+     "x_local": [
+      5.3,
+      9.38
+     ]
+    },
+    "03": {
+     "face_local": "+y",
+     "x_local": [
+      9.63,
+      13.66
+     ]
+    },
+    "07": {
+     "face_local": "-y",
+     "x_local": [
+      -13.66,
+      -9.63
+     ]
+    },
+    "08": {
+     "face_local": "-y",
+     "x_local": [
+      -9.38,
+      -5.3
+     ]
+    },
+    "01": {
+     "face_local": "-y",
+     "x_local": [
+      5.3,
+      9.38
+     ]
+    },
+    "02": {
+     "face_local": "-y",
+     "x_local": [
+      9.63,
+      13.66
+     ]
+    }
+   }
+  }
+ }
+}

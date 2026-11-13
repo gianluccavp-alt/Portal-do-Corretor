@@ -68,6 +68,34 @@ window.CITIES = [
           { num: '18', lbl: 'Andares<br>por torre' }
         ],
         torres: 2,
+        /* sol da manha na face +y das torres (finais 3 a 6), pela bussola da implantacao */
+        solNascente: { default: [3, 4, 5, 6] },
+        /* maquete 3D (maquete.html), gerada por assets/3d/alta-vista-mangara/scripts (Y para cima, metros, origem no
+           centro do terreno). Etapa 1: torres, implantacao, edificio garagem e grade; o lazer ainda em volumes simples. */
+        maquete: {
+          // true = botao "Maquete 3D" na pagina do empreendimento (false = so por link direto: maquete.html?e=alta-vista-mangara)
+          botaoVisivel: false,
+          simId: 'alta-vista',
+          modelo: 'assets/3d/alta-vista-mangara/alta-vista.glb?v=2',
+          /* FAQ: terreo ao 18o nas duas torres; no terreo o lugar dos finais 1 e 8 e o hall e o lazer */
+          grade: { torres: [1, 2], andares: 19, finais: 8,
+                   semUnidade: [{ andares: [0], finais: [1, 8] }] },
+          /* norte da bussola da implantacao (~39 graus a oeste do "para cima" da planta) e varanda de 1,00 m */
+          norte: [-0.63, -0.78],
+          ateFachada: 1.05,
+          /* torres com o eixo maior em x: T1 (29.1, 0, -13.0) e T2 (-29.2, 0, -12.1). Av. Graca Aranha ao sul
+             (z positivo), Rua 2 a leste, portaria em (66, 2, 21) */
+          cameras: {
+            geral:     { pos: [95, 115, 150],  alvo: [0, 10, -2] },
+            'torre-1': { pos: [62, 42, 70],    alvo: [29.1, 26, -13.0] },
+            'torre-2': { pos: [-62, 42, 70],   alvo: [-29.2, 26, -12.1] },
+            frente:    { pos: [10, 34, 128],   alvo: [0, 24, -10] },
+            fundos:    { pos: [-6, 46, -125],  alvo: [0, 22, -10] },
+            lazer:     { pos: [28, 36, 72],    alvo: [32, 0, 17] },
+            portaria:  { pos: [86, 10, 30],    alvo: [66, 3, 21] }
+          },
+          ambientes: []
+        },
         implantacao: { img: 'assets/img/alta-vista/plantas/implantacao.jpg', legenda: [] },
         plantas: [
           { tipo: '2q-meio', img: 'assets/img/alta-vista/plantas/planta-2q-meio.png', title: 'Planta-tipo Meio · 2 dormitórios', sub: 'Mangará Nativa · 48 m² · Finais 01, 04, 05 e 08' },
