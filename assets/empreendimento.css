@@ -320,6 +320,15 @@ img{display:block;max-width:100%}
 .dlist dt{font-size:14px;color:var(--muted)}
 .dlist dd{margin:0;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
 .comp-t{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 6px 4px}
+.comp-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 4px;padding-bottom:4px}
+.comp-h .comp-t{padding:0 0 0 6px;white-space:nowrap}
+.psel-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:-6px}
+.psel-row .comp-t{padding:0 0 0 6px}
+.psel{display:inline-flex;gap:0;padding:2px;border-radius:999px;background:var(--tint);flex:none}
+.psel button{height:24px;padding:0 6px;border-radius:999px;font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;transition:background .15s,color .15s}
+.psel button:hover{color:var(--ink)}
+.psel button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.psel button:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
 .comp{margin:0}
 .comp>div{display:flex;justify-content:space-between;gap:12px;padding:8px 6px;border-bottom:1px solid var(--line-2)}
 .comp dt{font-size:13px;color:var(--muted)}
@@ -587,7 +596,7 @@ img{display:block;max-width:100%}
   .umo-top{display:none}
   .umo-head-row{order:1}
   .umo-col.c-planta .pfig{order:2}
-  .acard{order:3}
+  .psel-row,.acard{order:3}
   .tline{order:4}
   .dlist{order:5}
   .comp-wrap{order:6}
