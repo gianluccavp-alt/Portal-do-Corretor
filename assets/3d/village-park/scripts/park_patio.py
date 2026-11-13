@@ -100,9 +100,10 @@ def muros_perimetro(g):
 
 
 def jardins_torres(g):
-    """Muretas dos gardens do terreo: contorno, divisorias entre quintais e corredor do hall (planta local)."""
+    """Muretas dos gardens do terreo (planta local da torre), como as linhas finas da implantacao:
+    contorno, divisorias entre quintais na divisa das varandas (Y_DIV, Y_BUMP0 e o eixo) e nenhum muro no
+    trecho do hall e do final 1, que no terreo e jardim comum (a face -x fica aberta de -Y_DIV a Y_BUMP0)."""
     mx, my = PL.GARDEN_MEIA
-    dv = PL.GARDEN_DIV_Y
     h, e = 1.5, 0.14
 
     def mur(x0, x1, y0, y1):
@@ -110,16 +111,15 @@ def jardins_torres(g):
 
     for (cxp, cyp), giro in PL.TORRES.values():
         with g.em(X(cxp), Y(cyp), 0.0, giro):
-            mur(-mx, mx, my - e, my)
+            mur(-mx, mx, my - e, my)                       # testas (07|06 e 02|03)
             mur(-mx, mx, -my, -my + e)
-            mur(mx - e, mx, -my, 1.2)                 # face +x: passagem para o lazer
-            mur(mx - e, mx, 2.8, my)
-            mur(-mx, -mx + e, -my, -0.9)              # face -x: corredor do hall
-            mur(-mx, -mx + e, 0.9, my)
-            for s in (1, -1):
-                mur(s * X_FACE if s > 0 else -mx, mx if s > 0 else -X_FACE, dv - e / 2, dv + e / 2)
-                mur(s * X_FACE if s > 0 else -mx, mx if s > 0 else -X_FACE, -dv - e / 2, -dv + e / 2)
-                mur(-e / 2, e / 2, s * L2 if s > 0 else -my, my if s > 0 else -L2)
-            mur(X_NOTCH, mx, -e / 2, e / 2)
-            for yy in (-0.9, 0.9):
-                mur(-mx, -X_NOTCH, yy - e / 2, yy + e / 2)
+            mur(mx - e, mx, -my + e, my - e)               # face +x continua (finais 3 a 6)
+            mur(-mx, -mx + e, Y_BUMP0, my - e)             # face -x: gardens 08 e 07
+            mur(-mx, -mx + e, -my + e, -Y_DIV + e / 2)     # face -x: garden 02
+            mur(-e / 2, e / 2, L2, my - e)                 # eixo entre as pontas
+            mur(-e / 2, e / 2, -my + e, -L2)
+            for yy in (Y_DIV, -Y_DIV):                     # ponta | meio, nas duas faces
+                mur(X_FACE, mx - e, yy - e / 2, yy + e / 2)
+                mur(-mx + e, -X_FACE, yy - e / 2, yy + e / 2)
+            mur(X_NOTCH, mx - e, -e / 2, e / 2)            # 05 | 04
+            mur(-mx + e, -X_BUMP, Y_BUMP0, Y_BUMP0 + e)    # fim do garden 08, junto ao hall

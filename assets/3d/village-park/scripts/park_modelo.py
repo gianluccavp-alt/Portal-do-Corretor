@@ -2,7 +2,8 @@
 # Roda DENTRO do Blender (run_all.py ou Blender -b --factory-startup -P run_all.py). Metros, Z para cima,
 # origem no centro do terreno (park_planta.ORIGEM_PX). Modulos executados no mesmo namespace:
 #   park_geo.py (geometria)  park_patio.py (chao, vagas, muros)  park_lazer.py (lazer e apoio)
-#   park_paisagem.py (arvores, canteiros, carros)
+#   park_paisagem.py (arvores, canteiros, carros)  park_moveis.py (pecas de mobiliario, vindas do Gaia)
+#   park_ambientes.py (posicao dos moveis por ambiente e palmeiras do lazer)
 # Medidas: park_planta.py (px da implantacao), park_chao.json (park_mapa.py) e FAQ da ficha tecnica.
 import bpy, bmesh, math, json, os, random
 import numpy as np
@@ -85,6 +86,7 @@ def mat(name, cor='#ffffff', rough=0.85, img=None, tint=False, nrm=None, nrm_str
         img_mean=0.85, emit_img=None, recorte=False, blend=None, uv=None, blend_img=False):
     """cor sRGB (hex) ou rgb linear. tint=True: imagem cinza multiplicada pela cor (baseColorFactor no glTF), com
     compensacao pela media da imagem. recorte=True: alfa MASK. blend=a: transparente com alfa constante a."""
+    assert name not in MATS, 'material repetido: ' + name
     rgb = srgb(cor) if isinstance(cor, str) else cor
     m = bpy.data.materials.new(name)
     m.use_nodes = True
@@ -163,9 +165,7 @@ def materiais_torre():
     mat('vidro_porta', '#3a4a58', 0.08, metal=0.2)
     mat('luz_forro', '#fff4dc', 0.5)
     mat('ferragem', '#2a2b2e', 0.5, metal=0.4)
-    mat('cromo', '#c9ccd0', 0.25, metal=0.8)
-    mat('madeira', '#8a5a3a', 0.7, img='madeira_fina.jpg', tint=True, img_mean=0.6, uv=1.5)
-    mat('ripado_claro', '#b88a5e', 0.7, img='ripado.jpg', tint=True, img_mean=0.82, uv=(1.0, 1.0))
+    mat('ripado_hall', '#b88a5e', 0.7, img='ripado.jpg', tint=True, img_mean=0.82, uv=(1.0, 1.0))
 
 
 def materiais_patio():
@@ -346,7 +346,7 @@ def _hall(g, sx, sy):
     for k in range(n + 1):
         yy = ya + (yb - ya) * k / n
         g.caixa(X_(X_VAR), X_(X_VAR + 0.06), Y_(yy - 0.03), Y_(yy + 0.03), 0.12, 2.7, 'ferragem')
-    g.caixa(X_(X_VAR), X_(X_VAR + 0.02), Y_(Y_DIV + 0.4), Y_(Y_VAR1 - 0.4), 0.12, 2.7, 'ripado_claro')
+    g.caixa(X_(X_VAR), X_(X_VAR + 0.02), Y_(Y_DIV + 0.4), Y_(Y_VAR1 - 0.4), 0.12, 2.7, 'ripado_hall')
 
 
 def _porta_hall(g, sx, sy):
@@ -476,9 +476,12 @@ for _k, _v in _pl.items():
 assert abs(PL.S_PX - S_PX) < 1e-9 and PL.ORIGEM_PX == (1296.0, 1486.0), 'park_geo.X/Y fora de sincronia com park_planta'
 CHAO = json.load(open(SCR + '/park_chao.json'))
 MARCAS = json.load(open(TEXDIR + '/piso_marcas.json'))
+ATL = json.load(open(TEXDIR + '/atlas_lazer.json'))
 _carrega('park_patio.py')
 _carrega('park_paisagem.py')
 _carrega('park_lazer.py')
+_carrega('park_moveis.py')
+_carrega('park_ambientes.py')
 
 # ------------------------------------------------------------------ main
 OBJETOS_EXPORTADOS = []
@@ -489,9 +492,9 @@ def build():
     MATS.clear(); IMAGENS.clear(); UVESC.clear()
     sc = bpy.context.scene
     sc.unit_settings.system = 'METRIC'
-    materiais_torre(); materiais_patio(); materiais_paisagem(); materiais_lazer()
+    materiais_torre(); materiais_patio(); materiais_paisagem(); materiais_lazer(); materiais_moveis()
     gc = Geo('guarda-corpo', ao=False)
-    nomes = ['unidades', 'guarda-corpo', 'entorno', 'entorno-rua', 'terreno', 'lazer', 'vegetacao', 'carros']
+    nomes = ['unidades', 'guarda-corpo', 'entorno', 'entorno-rua', 'terreno', 'lazer', 'moveis', 'vegetacao', 'carros']
     for t, ((cxp, cyp), giro) in sorted(PL.TORRES.items()):
         torre(t, X(cxp), Y(cyp), giro, PL.PAVIMENTOS[t], gc)
         nomes.append('torre-%d' % t)
@@ -511,8 +514,12 @@ def build():
     lz = Geo('lazer')
     lazer(lz)
     lz.objeto()
+    mv = Geo('moveis')
+    moveis(mv)
+    mv.objeto()
     vg = Geo('vegetacao', ao=False)
     paisagem(vg)
+    paisagem_lazer(vg)
     vg.objeto()
     cr = Geo('carros', ao=False)
     carros(cr)

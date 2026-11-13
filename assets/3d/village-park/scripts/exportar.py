@@ -3,7 +3,7 @@ import bpy, os
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..'))
 OUTG = REPO + '/assets/3d/village-park/park.glb'
 NOMES = ['torre-1', 'torre-2', 'torre-3', 'guarda-corpo', 'unidades', 'terreno', 'entorno', 'entorno-rua', 'lazer',
-         'vegetacao', 'carros']
+         'moveis', 'vegetacao', 'carros']
 bpy.context.view_layer.update()
 for o in bpy.data.objects:
     o.select_set(o.name in NOMES)
