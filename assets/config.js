@@ -74,7 +74,7 @@ window.CITIES = [
            centro do terreno). Etapa 1: torres, implantacao, edificio garagem e grade; o lazer ainda em volumes simples. */
         maquete: {
           // true = botao "Maquete 3D" na pagina do empreendimento (false = so por link direto: maquete.html?e=alta-vista-mangara)
-          botaoVisivel: false,
+          botaoVisivel: true,
           simId: 'alta-vista',
           modelo: 'assets/3d/alta-vista-mangara/alta-vista.glb?v=2',
           /* FAQ: terreo ao 18o nas duas torres; no terreo o lugar dos finais 1 e 8 e o hall e o lazer */
