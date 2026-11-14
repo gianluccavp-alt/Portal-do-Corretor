@@ -628,7 +628,7 @@ window.CITIES = [
           // true = botao "Maquete 3D" na pagina do empreendimento (false = so por link direto: maquete.html?e=direcional-conquista-clube-ipiranga)
           botaoVisivel: false,
           simId: 'ipiranga',
-          modelo: 'assets/3d/conquista-ipiranga/ipiranga.glb?v=2',
+          modelo: 'assets/3d/conquista-ipiranga/ipiranga.glb?v=3',
           /* FAQ: terreo + 6, 12 por andar; no terreo o lugar do final 12 e o espaco comum (happy hour, coworking,
              brinquedoteca, mini market) */
           grade: { torres: [1, 2, 3, 4], andares: 7, finais: 12,

@@ -149,7 +149,7 @@ def materiais_torre():
     mat('friso', '#cfc8bd', 0.92, **kw)
     mat('laje_borda', '#e6e1d7', 0.92, **kw)
     mat('cobertura', '#8a8781', 0.95, **kw)
-    mat('janela_banheiro', '#ffffff', 0.3, img='basculante2.png')     # sem luz a noite: so as unidades acendem
+    mat('janela_banheiro', '#ffffff', 0.3, img='basculante2.png', emit_img='basculante2_luz.jpg')   # acesos a noite (pedido do usuario)
     mat('unidade', '#ffffff', 0.25, img='janela_unidade.png')
     mat('caixilho', '#ece9e2', 0.45)
     mat('vidro_porta', '#3a4a58', 0.08, metal=0.2)
