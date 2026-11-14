@@ -623,13 +623,13 @@ window.CITIES = [
         solNascente: { default: [4, 5, 6, 7, 8, 9] },
         /* maquete 3D (maquete.html), gerada por assets/3d/conquista-ipiranga/scripts (Y para cima, metros, origem perto
            do centro do terreno). Etapa 1 (aprovada e liberada em 2026-11-14): 4 torres, implantacao e grade. Etapa 2: lazer mobiliado
-           (gourmet sem teto), iluminacao do condominio a noite, guarita com a placa do logo oficial e o menu de ambientes.
+           (gourmet sem teto), salas do terreo das torres, iluminacao do condominio a noite, guarita com a placa do logo oficial e o menu de ambientes.
            Sem varanda: a cor de cada unidade vai nas janelas dela. Torres 2 e 4 aparecem "fora de venda" (torresVisiveis). */
         maquete: {
           // true = botao "Maquete 3D" na pagina do empreendimento (false = so por link direto: maquete.html?e=direcional-conquista-clube-ipiranga)
           botaoVisivel: true,
           simId: 'ipiranga',
-          modelo: 'assets/3d/conquista-ipiranga/ipiranga.glb?v=5',
+          modelo: 'assets/3d/conquista-ipiranga/ipiranga.glb?v=6',
           /* fachada de cada unidade em planta (gerada com o modelo): o contorno da selecionada segue a parede */
           contornos: 'assets/3d/conquista-ipiranga/ipiranga-contornos.json?v=1',
           /* FAQ: terreo + 6, 12 por andar; no terreo o lugar do final 12 e o espaco comum (happy hour, coworking,
@@ -661,7 +661,12 @@ window.CITIES = [
             { id: 'fitness',    nome: 'Fitness',        pos: [17, 6, 15.5],    alvo: [16.8, 0.5, 23.5] },
             { id: 'petplace',   nome: 'Pet place',      pos: [-13, 10, 12],    alvo: [-13, 0, 1.9] },
             { id: 'bicicletario', nome: 'Bicicletário', pos: [-49, 12, 1],     alvo: [-57.6, 0, -10] },
-            { id: 'guarita',    nome: 'Guarita',        pos: [80, 2.6, 14],    alvo: [69.5, 1.5, 7.3] }
+            { id: 'guarita',    nome: 'Guarita',        pos: [80, 2.6, 14],    alvo: [69.5, 1.5, 7.3] },
+            /* terreo das torres (no lugar do final 12), vistos pela vitrine do bloco da frente */
+            { id: 'happyhour',  nome: 'Espaço happy hour', pos: [35.7, 1.8, 1.4],   alvo: [33.7, 0.9, -4.8] },
+            { id: 'coworking',  nome: 'Coworking e reels', pos: [35.7, 1.8, -17.1], alvo: [33.7, 0.9, -23.3] },
+            { id: 'brinquedoteca', nome: 'Brinquedoteca',  pos: [-43.8, 1.8, 5.9],  alvo: [-47.0, 0.9, 0.2] },
+            { id: 'minimarket', nome: 'Mini market',       pos: [-52.8, 1.8, -11.0], alvo: [-56.0, 0.9, -16.7] }
           ]
         },
         tipos: [
