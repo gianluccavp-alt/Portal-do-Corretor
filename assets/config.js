@@ -71,12 +71,12 @@ window.CITIES = [
         /* sol da manha na face +y das torres (finais 3 a 6), pela bussola da implantacao */
         solNascente: { default: [3, 4, 5, 6] },
         /* maquete 3D (maquete.html), gerada por assets/3d/alta-vista-mangara/scripts (Y para cima, metros, origem no
-           centro do terreno). Etapa 2: lazer mobiliado e sem teto, portaria com marquise e o menu de ambientes. */
+           centro do terreno). Etapa 2: lazer mobiliado e sem teto, portaria com marquise e o menu de ambientes; etapa 3: salas do terreo das torres. */
         maquete: {
           // true = botao "Maquete 3D" na pagina do empreendimento (false = so por link direto: maquete.html?e=alta-vista-mangara)
           botaoVisivel: true,
           simId: 'alta-vista',
-          modelo: 'assets/3d/alta-vista-mangara/alta-vista.glb?v=4',
+          modelo: 'assets/3d/alta-vista-mangara/alta-vista.glb?v=7',
           /* FAQ: terreo ao 18o nas duas torres; no terreo o lugar dos finais 1 e 8 e o hall e o lazer */
           grade: { torres: [1, 2], andares: 19, finais: 8,
                    semUnidade: [{ andares: [0], finais: [1, 8] }] },
@@ -106,7 +106,12 @@ window.CITIES = [
             { id: 'playground',    nome: 'Playground',          pos: [15, 12, 12.5],  alvo: [18.6, 0, 21.7] },
             { id: 'petplace',      nome: 'Pet place',           pos: [58, 8, 31],     alvo: [63.7, 0, 37.7] },
             { id: 'bikeshare',     nome: 'Bike sharing',        pos: [-33, 7, -5],    alvo: [-39.1, 1, 0.3] },
-            { id: 'garagem',       nome: 'Deck da garagem',     pos: [10, 17, -15],   alvo: [-6, 3, -31] }
+            { id: 'garagem',       nome: 'Deck da garagem',     pos: [10, 17, -15],   alvo: [-6, 3, -31] },
+            /* terreo das torres, vistos pelo vidro da fachada sul */
+            { id: 'brinquedoteca', nome: 'Brinquedoteca',       pos: [22.6, 1.8, -3.5],  alvo: [21.4, 0.9, -9.9] },
+            { id: 'minimarket',    nome: 'Mini market',         pos: [25.4, 1.8, -3.6],  alvo: [27.6, 0.9, -9.6] },
+            { id: 'coworking',     nome: 'Coworking',           pos: [-35.6, 1.8, -2.6], alvo: [-36.8, 0.9, -9.0] },
+            { id: 'pilates',       nome: 'Espaço pilates',      pos: [-31.5, 1.8, -2.5], alvo: [-30.9, 0.9, -8.9] }
           ]
         },
         implantacao: { img: 'assets/img/alta-vista/plantas/implantacao.jpg', legenda: [] },

@@ -269,7 +269,7 @@ def quadrante(g, gc, sx, sy, npav, terreo_loja):
         ('x', X_V1, Y_VAR, Y_FACE, 'fachada_clara', -1),          # moldura branca (lado da ponta)
     ]
     for k, (ax, c, a0, a1, m, d) in enumerate(paredes):
-        z0 = PD if (terreo_loja and k < 3) else 0.0      # terreo aberto em vitrine na faixa central e na saliencia
+        z0 = PD if (terreo_loja and sx < 0 and k in (0, 2)) else 0.0   # terreo: vidro da sala B e do hall (lado -x)
         if ax == 'x':
             _face_x(g, X_(c), Y_(a0), Y_(a1), z0, Hp, m, sx * d)
         else:
@@ -312,7 +312,7 @@ def quadrante(g, gc, sx, sy, npav, terreo_loja):
             g.caixa(X_(0.0), X_(X_C), Y_(Y_FACE), Y_(Y_LT), z + 0.30, z + 0.42, 'prumada_escura')
             g.painel(X_(0.55), Y_(Y_LT), X_(X_C), Y_(Y_LT), z + 0.42, z + PD + 0.30, 'brise', (0, 0, X_C / 0.5, PD / 0.5))
         if i == 0:
-            g.caixa(X_(0.0), X_(0.55), Y_(Y_FACE), Y_(Y_LT + 0.02), PD if loja else 0.0, Hp, 'prumada_escura', topo='cobertura')
+            g.caixa(X_(0.0), X_(0.55), Y_(Y_FACE), Y_(Y_LT + 0.02), 0.0, Hp, 'prumada_escura', topo='cobertura')
         if i > 0:
             g.caixa(X_(X_NOTCH), X_(X_NOTCH + 0.62), Y_(0.0), Y_(Y_NOTCH), z, z + 0.10, 'laje_borda')
         # janelas
@@ -336,28 +336,44 @@ def quadrante(g, gc, sx, sy, npav, terreo_loja):
 
 
 def _terreo_loja(g, sx, sy):
-    """Terreo do lado -y no lugar do final do meio: vitrine dos espacos comuns (brinquedoteca e mini market na
-    T1, coworking e pilates na T2) e, no quadrante -x, a porta do hall com marquise na faixa central."""
+    """Terreo do lado -y no lugar dos finais 1 e 8 (implantacao). Lado -x: sala A no vao da varanda do final 8
+    (brinquedoteca na T1, coworking na T2), hall na saliencia com porta de vidro e marquise, sala B na faixa
+    central (mini market na T1, pilates na T2). Lado +x: fechado (paredes cheias e o vao da varanda em vidro
+    escuro). O interior das salas fica em avm_terreo.py (objeto 'moveis')."""
     X_ = lambda v: v * sx
     Y_ = lambda v: v * sy
-    yv = Y_FACE - 0.3
+    zt = PD - 0.18
 
-    def vitrine(xa, xb, yy, n):
-        g.caixa(X_(xa), X_(xb), Y_(yy), Y_(yy + 0.03), 0.12, PD - 0.14, 'vidro_porta')
+    def caixilho(xa, xb, yy, n, z1, vidro='vidro_lazer', porta=None):
+        if vidro == 'vidro_lazer':
+            ya = Y_(yy)
+            x0, x1 = sorted((X_(xa), X_(xb)))
+            g.face([(x1, ya, 0.13), (x0, ya, 0.13), (x0, ya, z1), (x1, ya, z1)], vidro, cor=1.0)
+            g.face([(x0, ya, 0.13), (x1, ya, 0.13), (x1, ya, z1), (x0, ya, z1)], vidro, cor=1.0)
+        else:
+            g.caixa(X_(xa), X_(xb), Y_(yy), Y_(yy + 0.03), 0.12, z1, vidro)
         for k in range(n + 1):
             xx = xa + (xb - xa) * k / n
-            g.caixa(X_(xx - 0.03), X_(xx + 0.03), Y_(yy), Y_(yy + 0.06), 0.12, PD - 0.14, 'ferragem')
-        g.caixa(X_(xa), X_(xb), Y_(yy), Y_(yy + 0.06), 2.30, 2.36, 'ferragem')
+            g.caixa(X_(xx - 0.025), X_(xx + 0.025), Y_(yy - 0.03), Y_(yy + 0.03), 0.12, z1, 'caixilho_ext')
+        for zz in (0.12, 2.1, z1 - 0.04):
+            g.caixa(X_(xa), X_(xb), Y_(yy - 0.03), Y_(yy + 0.03), zz, zz + 0.04, 'caixilho_ext')
+        if porta:
+            for xx in porta:
+                g.caixa(X_(xx - 0.02), X_(xx + 0.02), Y_(yy + 0.03), Y_(yy + 0.07), 0.95, 1.25, 'inox')
 
-    vitrine(0.0, X_B1, yv, 4)
-    vitrine(X_V0, X_DIV0, Y_VAR, 3)
-    g.caixa(X_(0.0), X_(X_B1), Y_(yv), Y_(Y_BUMP), PD - 0.14, PD, 'laje_borda', fundo='varanda_forro', sem_fundo=False)
-    g.piso(min(X_(0.0), X_(X_B1)), max(X_(0.0), X_(X_B1)), min(Y_(yv), Y_(Y_BUMP)), max(Y_(yv), Y_(Y_BUMP)), 0.125, 'varanda_piso')
-    g.piso(min(X_(X_V0), X_(X_DIV1)), max(X_(X_V0), X_(X_DIV1)), min(Y_(Y_VAR), Y_(Y_FACE)), max(Y_(Y_VAR), Y_(Y_FACE)), 0.125, 'varanda_piso')
-    if sx < 0:
-        g.caixa(X_(0.5), X_(2.7), Y_(Y_BUMP - 0.98), Y_(Y_FACE + 2.2), PD - 0.02, PD + 0.12, 'laje_borda', fundo='varanda_forro', sem_fundo=False)
-        for xx in (1.0, 2.2):
-            g.caixa(X_(xx - 0.04), X_(xx + 0.04), Y_(yv - 0.01), Y_(yv + 0.07), 0.12, PD - 0.14, 'ferragem')
+    if sx > 0:
+        caixilho(X_V0, X_DIV0, Y_VAR, 3, PD - 0.14, vidro='vidro_porta')
+        g.piso(min(X_(X_V0), X_(X_DIV1)), max(X_(X_V0), X_(X_DIV1)), min(Y_(Y_VAR), Y_(Y_FACE)), max(Y_(Y_VAR), Y_(Y_FACE)), 0.125, 'varanda_piso')
+        return
+    caixilho(X_V0 + 0.12, X_DIV0, Y_FACE - 0.08, 3, zt)                       # sala A
+    caixilho(0.55, X_C, Y_FACE - 0.04, 2, zt)                                  # sala B
+    g.caixa(X_(0.55), X_(X_C), Y_(Y_FACE - 0.04), Y_(Y_FACE), zt, PD, 'laje_borda')
+    caixilho(X_C, X_B1, Y_BUMP - 0.04, 2, zt, porta=(X_C + 1.05, X_C + 1.13))   # hall: porta de duas folhas
+    g.caixa(X_(X_C), X_(X_B1), Y_(Y_BUMP - 0.04), Y_(Y_BUMP), zt, PD, 'laje_borda')
+    # marquise sobre a porta do hall, com spot
+    g.caixa(X_(X_C - 0.35), X_(X_B1 + 0.35), Y_(Y_BUMP), Y_(Y_BUMP + 1.9), PD - 0.04, PD + 0.1, 'laje_borda',
+            fundo='varanda_forro', sem_fundo=False)
+    g.cil(X_((X_C + X_B1) / 2), Y_(Y_BUMP + 0.95), 0.1, PD - 0.055, PD - 0.04, 'luz_forro', seg=10, tampa=False, base=True)
 
 
 def _cobertura(g, npav):
@@ -474,6 +490,7 @@ _carrega('avm_lazer.py')
 ATL = json.load(open(TEXDIR + '/atlas_lazer.json'))
 _carrega('avm_moveis.py')
 _carrega('avm_ambientes.py')
+_carrega('avm_terreo.py')
 
 # ------------------------------------------------------------------ main
 OBJETOS_EXPORTADOS = []
@@ -484,7 +501,7 @@ def build():
     MATS.clear(); IMAGENS.clear(); UVESC.clear()
     sc = bpy.context.scene
     sc.unit_settings.system = 'METRIC'
-    materiais_torre(); materiais_patio(); materiais_paisagem(); materiais_lazer(); materiais_moveis()
+    materiais_torre(); materiais_patio(); materiais_paisagem(); materiais_lazer(); materiais_moveis(); materiais_terreo()
     gc = Geo('guarda-corpo', ao=False)
     nomes = ['unidades', 'guarda-corpo', 'entorno', 'entorno-rua', 'terreno', 'garagem', 'lazer', 'moveis', 'vegetacao', 'carros']
     for t, (cxp, cyp) in sorted(PL.TORRES.items()):
@@ -511,6 +528,7 @@ def build():
     lz.objeto()
     mv = Geo('moveis')
     moveis(mv)
+    salas_terreo(mv)
     mv.objeto()
     vg = Geo('vegetacao', ao=False)
     paisagem(vg)
