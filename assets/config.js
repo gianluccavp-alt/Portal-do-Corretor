@@ -205,10 +205,10 @@ window.CITIES = [
         tipoRule: 'casa-prado',
         solNascente: { default: [1, 2, 6] },
         /* maquete 3D (maquete.html), gerada por assets/3d/casa-prado/scripts (Y para cima, metros, origem no centro
-           da torre). Etapa 1: torre (plantas de contrato), implantacao, edificio-garagem e lazer em volumes. */
+           da torre). Etapa 1 (liberada em 2026-11-14): torre (plantas de contrato), implantacao, edificio-garagem e lazer em volumes. */
         maquete: {
           // true = botao "Maquete 3D" na pagina do empreendimento (false = so por link direto: maquete.html?e=casa-prado-residencial-riva)
-          botaoVisivel: false,
+          botaoVisivel: true,
           simId: 'casa-prado',
           modelo: 'assets/3d/casa-prado/casa-prado.glb?v=5',
           /* fachada de cada unidade em planta (gerada com o modelo): o contorno da selecionada segue a parede */
