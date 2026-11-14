@@ -93,21 +93,31 @@ VAGAS = [
 ZEBRAS = [(1540, 1120, 1665, 1150, 'v'), (2600, 1260, 2645, 1330, 'h'), (2770, 1575, 2850, 1600, 'v')]
 
 # ------------------------------------------------------------------ lazer e apoio (retangulos px)
-PISCINA_DECK = (2333, 1440, 2556, 1800)
-PISCINA = [(2400, 1474, 2526, 1749)]                   # piscina adulto com deck molhado na ponta norte
-DECK_MOLHADO = (2400, 1474, 2526, 1530)
-PISCINA_INFANTIL = (2371, 1667, 2418, 1741)
-EDIF_SALAO = (2015, 1498, 2306, 1644)                  # academia (oeste), salao de festas e WCs (leste)
-ACADEMIA_X = (2015, 2098)
-WC_X = (2245, 2306)
-DECK_GOURMET = (2015, 1644, 2250, 1700)                # lounge academia, lounge gourmet e wine lounge
-PLAYGROUND = (1914, 1494, 2012, 1629)
-QUADRA_AREIA = (1762, 1502, 1912, 1588)
-CHURRASQUEIRA = (1641, 1447, 1753, 1524)
-LOUNGE_CHURRASQUEIRA = (1588, 1447, 1641, 1524)
-PIQUENIQUE = (1488, 1447, 1570, 1490)
-PRACA = (1780, 1418, 2080, 1494)                       # praca de convivio (13)
+# Etapa 2: posicoes lidas na vista de cima do lazer (perspectiva 782-...-VOO, 2560 x 1024), alinhada a implantacao
+# pela quadra de areia e pela piscina infantil: impl_x = 2015 + (x_voo/1,4222 - 905) * 0,594, idem em y a partir
+# de 1498 (topo do bloco do salao). Confere com a implantacao em ~3 px.
+PISCINA_DECK = (2330, 1461, 2526, 1758)
+PISCINA = [(2434, 1472, 2510, 1746), (2391, 1472, 2434, 1574)]     # adulto: raia funda + deck molhado (raso)
+DECK_MOLHADO = (2391, 1472, 2434, 1574)
+PISCINA_INFANTIL = (2369, 1664, 2412, 1739)
+EDIF_SALAO = (2019, 1498, 2303, 1636)                  # bloco sem teto: academia | salao de festas | copa e WCs
+ACADEMIA_X = (2019, 2101)
+SALAO_X = (2101, 2235)
+WC_X = (2235, 2303)
+DECK_GOURMET = (2107, 1642, 2184, 1710)                # 09 lounge gourmet (deck de madeira)
+LOUNGE_ACADEMIA = (2019, 1636, 2104, 1662)             # 11 lounge academia (faixa em frente a academia)
+WINE_LOUNGE = (2187, 1642, 2306, 1722)                 # 25 wine lounge (gramado com poltronas e fogo)
+PLAYGROUND = (1920, 1520, 2015, 1639)
+QUADRA_AREIA = (1761, 1499, 1916, 1582)
+CHURRASQUEIRA = (1656, 1432, 1754, 1517)               # 15 churrasqueira sem teto (copa + WC)
+LOUNGE_CHURRASQUEIRA = (1611, 1432, 1656, 1517)        # 16 lounge com pergolado de madeira
+PIQUENIQUE = (1530, 1432, 1606, 1517)                  # 17 piquenique (gramado com 2 mesas)
+MESAS_PIQUENIQUE = [(1559, 1449, 0), (1580, 1493, 25)]
+PRACA = (1754, 1413, 2018, 1499)                       # 13 praca de convivio (paver com arvores)
+PASSEIO_LAZER = (2018, 1430, 2330, 1498)               # paver ao norte do bloco do salao
 PORTARIA = (2835, 1541, 2906, 1641)
+MARQUISE_PORTARIA = (2828, 1440, 2915, 1641)           # laje plana que cobre a guarita e o portao de entrada
+TOTEM = (2955, 1508)
 LIXO = (2841, 1735, 2906, 1829)
 PET = (2780, 1858, 2860, 1905)
 CASA_BOMBAS = (755, 1125, 835, 1185)
@@ -129,8 +139,8 @@ ARVORES = [
     (1795, 755, 'verde'), (1921, 755, 'verde_clara'), (2037, 755, 'verde'), (2147, 755, 'verde_clara'),
     (2268, 755, 'verde'), (2384, 755, 'verde_clara'),
     # lazer (praca de convivio e canto do piquenique)
-    (1800, 1440, 'verde'), (1985, 1450, 'verde_clara'), (2060, 1460, 'verde'), (1525, 1500, 'ipe_amarelo'),
-    (2310, 1760, 'verde_clara'), (2860, 1780, 'verde'),
+    (1783, 1455, 'ipe_amarelo'), (1878, 1446, 'verde'), (1959, 1446, 'ipe_amarelo'), (2040, 1448, 'verde'),
+    (1700, 1540, 'verde'), (1645, 1545, 'verde_clara'), (2010, 1660, 'verde_clara'), (2860, 1780, 'verde'),
     # ipes roxos na calcada da avenida e da Rua Joao Francisco Lisboa
     (300, 1160, 'roxa'), (480, 1255, 'roxa'), (710, 1335, 'roxa'), (955, 1410, 'roxa'), (1329, 1535, 'roxa'),
     (1512, 1595, 'roxa'), (1665, 1645, 'roxa'), (1841, 1705, 'roxa'), (2006, 1755, 'roxa'), (2165, 1805, 'roxa'),
@@ -141,7 +151,7 @@ ARVORES = [
 PALMEIRAS = [
     (720, 1085), (790, 1090), (1395, 1085), (1450, 1080),             # pe da torre 2
     (1765, 1110), (1830, 1110), (2470, 1110), (2520, 1105),           # pe da torre 1
-    (2170, 1441), (2210, 1438), (2253, 1441), (2330, 1820),           # lazer
+    (2196, 1431), (2255, 1431), (2318, 1700), (2318, 1730),           # lazer (entrada do bloco e lateral da piscina)
 ]
 # cercas vivas (sebes baixas) em volta dos gardens das torres e do lazer
 SEBES = [
