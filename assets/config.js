@@ -629,6 +629,8 @@ window.CITIES = [
           botaoVisivel: false,
           simId: 'ipiranga',
           modelo: 'assets/3d/conquista-ipiranga/ipiranga.glb?v=3',
+          /* fachada de cada unidade em planta (gerada com o modelo): o contorno da selecionada segue a parede */
+          contornos: 'assets/3d/conquista-ipiranga/ipiranga-contornos.json?v=1',
           /* FAQ: terreo + 6, 12 por andar; no terreo o lugar do final 12 e o espaco comum (happy hour, coworking,
              brinquedoteca, mini market) */
           grade: { torres: [1, 2, 3, 4], andares: 7, finais: 12,

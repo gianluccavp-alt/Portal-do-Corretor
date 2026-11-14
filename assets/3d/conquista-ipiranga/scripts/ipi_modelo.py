@@ -439,6 +439,85 @@ def gardens(g):
                 g.caixa(sx * xd - e / 2, sx * xd + e / 2, ya, yb, 0.0, 1.8, 'parede_externa', topo='pingadeira')
 
 
+# ------------------------------------------------------------------ contorno da unidade selecionada
+def _trecho_fachada(k):
+    """Trecho do contorno do quadrante +x +y que e fachada da unidade k (0 nucleo .. 2 ponta), como polilinha:
+    meio = entre as divisas (com as paredes laterais dos recuos); ponta = da divisa 05|04 ate o eixo maior,
+    contornando a testa."""
+    q = Q
+    pts = contorno_quadrante()
+    x0, x1 = {0: (q['nucleo'], q['div06']), 1: (q['div06'], q['div05']), 2: (q['div05'], 1e9)}[k]
+    out = []
+    for i in range(len(pts) - 1):
+        a, b = pts[i], pts[i + 1]
+        if k == 2 and a[0] >= x0 - 1e-6 and (b[0] >= x0 - 1e-6):
+            seg = [a, b]                     # ponta: tudo depois da divisa, inclusive a testa
+        else:
+            lo, hi = sorted((a[0], b[0]))
+            if hi < x0 - 1e-6 or lo > x1 + 1e-6:
+                continue
+            if abs(a[1] - b[1]) < 1e-6:      # trecho horizontal: corta nas divisas
+                ca = (min(max(a[0], x0), x1), a[1])
+                cb = (min(max(b[0], x0), x1), b[1])
+                if abs(ca[0] - cb[0]) < 1e-6:
+                    continue
+                seg = [ca, cb]
+            else:                            # parede vertical dentro da faixa
+                if not (x0 - 1e-6 <= a[0] <= x1 + 1e-6):
+                    continue
+                if k == 0 and abs(a[0] - x0) < 1e-6 and min(a[1], b[1]) < q['y_fundo'] - 1e-6:
+                    continue
+                seg = [a, b]
+        for p in seg:
+            if not out or abs(out[-1][0] - p[0]) + abs(out[-1][1] - p[1]) > 1e-6:
+                out.append(p)
+    return out
+
+
+def _afasta(pts, d):
+    """Polilinha deslocada d m para a esquerda do percurso (para fora no contorno horario), juntas em esquadria."""
+    out = []
+    n = len(pts)
+    for i in range(n):
+        ns = []
+        if i > 0:
+            ns.append((pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]))
+        if i < n - 1:
+            ns.append((pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]))
+        nrm = []
+        for dx, dy in ns:
+            L = math.hypot(dx, dy) or 1
+            nrm.append((-dy / L, dx / L))
+        mx, my = sum(v[0] for v in nrm), sum(v[1] for v in nrm)
+        Lm = math.hypot(mx, my) or 1
+        mx, my = mx / Lm, my / Lm
+        kk = d / max(0.5, mx * nrm[0][0] + my * nrm[0][1])
+        out.append((pts[i][0] + mx * kk, pts[i][1] + my * kk))
+    return out
+
+
+def exportar_contornos():
+    """ipiranga-contornos.json: por torre e final, a fachada da unidade em planta (x, z do Three, 6 cm para fora da
+    parede). A cena desenha o contorno da unidade selecionada rente a torre: base no piso do andar, topo no teto."""
+    trechos = {k: _afasta(_trecho_fachada(k), 0.06) for k in (0, 1, 2)}
+    out = {'schema': 'contornos-unidade/1', 'pe_direito': PD, 'torres': {}}
+    for t, (cxp, cyp, ang) in sorted(PL.TORRES.items()):
+        cx, cy, a = X(cxp), Y(cyp), math.radians(-ang)
+        ca, sa = math.cos(a), math.sin(a)
+        fin = {}
+        for (sx, sy), finais in FINAIS_Q.items():
+            for k, f in enumerate(finais):
+                pts = []
+                for x, y in trechos[k]:
+                    lx, ly = x * sx, y * sy
+                    bx, by = cx + lx * ca - ly * sa, cy + lx * sa + ly * ca
+                    pts.append([round(bx, 3), round(-by, 3)])           # Three: (x, z) = (x, -y)
+                fin[str(f)] = pts
+        out['torres'][str(t)] = fin
+    with open(os.path.join(SCR, '..', 'ipiranga-contornos.json'), 'w') as fh:
+        json.dump(out, fh, separators=(',', ':'))
+
+
 # ------------------------------------------------------------------ layout para conferencia
 def layout_unidades():
     out = {
@@ -514,6 +593,7 @@ def build():
     carros(cr)
     cr.objeto()
     layout_unidades()
+    exportar_contornos()
     OBJETOS_EXPORTADOS[:] = nomes
     tris = {}
     for o in sc.objects:
