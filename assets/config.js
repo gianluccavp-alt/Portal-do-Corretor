@@ -204,6 +204,32 @@ window.CITIES = [
         heroBlur: true, theme: 'casa-prado',
         tipoRule: 'casa-prado',
         solNascente: { default: [1, 2, 6] },
+        /* maquete 3D (maquete.html), gerada por assets/3d/casa-prado/scripts (Y para cima, metros, origem no centro
+           da torre). Etapa 1: torre (plantas de contrato), implantacao, edificio-garagem e lazer em volumes. */
+        maquete: {
+          // true = botao "Maquete 3D" na pagina do empreendimento (false = so por link direto: maquete.html?e=casa-prado-residencial-riva)
+          botaoVisivel: false,
+          simId: 'casa-prado',
+          modelo: 'assets/3d/casa-prado/casa-prado.glb?v=5',
+          /* fachada de cada unidade em planta (gerada com o modelo): o contorno da selecionada segue a parede */
+          contornos: 'assets/3d/casa-prado/casa-prado-contornos.json?v=1',
+          /* FAQ: terreo + 17; terreo so com os gardens 02 e 06 (o resto e hall e lazer); 17o com as coberturas
+             02, 03, 05 e 06 (no lugar do 01 e do 04 ficam os terracos delas) */
+          grade: { torres: [1], andares: 18, finais: 6,
+                   semUnidade: [{ andares: [0], finais: [1, 3, 4, 5] }, { andares: [17], finais: [1, 4] }] },
+          /* norte da rosa dos ventos do book (~9 graus a leste do "para cima" da implantacao) */
+          norte: [0.156, -0.988],
+          /* torre com o eixo maior em x, frente (finais 06 01 02) para o sul (z positivo); avenida a oeste (x ~ -32),
+             edificio-garagem a leste (x 22..85), piscina em (12, 0, -19) e guarita em (-27, 0, 13) */
+          cameras: {
+            geral:     { pos: [-75, 105, 135], alvo: [18, 6, 0] },
+            'torre-1': { pos: [-58, 48, 78],   alvo: [0, 24, 0] },
+            frente:    { pos: [8, 32, 100],    alvo: [0, 22, 0] },
+            fundos:    { pos: [12, 40, -100],  alvo: [0, 22, 0] },
+            lazer:     { pos: [-20, 30, -48],  alvo: [-2, 0, -18] },
+            portaria:  { pos: [-44, 11, 2],    alvo: [-26, 2, 16] }
+          }
+        },
         tipos: [
           { key: 'garden-ponta', label: '3Q C/S Garden - Ponta' },
           { key: 'tipo-meio',    label: '2Q C/S Tipo - Meio' },
