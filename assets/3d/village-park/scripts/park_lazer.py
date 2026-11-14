@@ -59,8 +59,10 @@ def materiais_lazer():
     mat('reboco_portaria', '#b4b3ae', 0.92, img='reboco_fino.jpg', tint=True, img_mean=0.88, nrm='reboco_fino_n.jpg', nrm_str=0.9, uv=1.6)
     mat('pergolado_grafite', '#2d2f33', 0.6, metal=0.3)
     mat('portao_grafite', '#3b3e42', 0.55, metal=0.3)
-    mat('logo_park', '#ffffff', 0.6, img='logo_park.png', recorte=True)
-    mat('logo_direcional', '#ffffff', 0.6, img='logo_direcional.png', recorte=True)
+    # luz_*: acesas a noite pela cena (com textura, a emissao segue a imagem: logo retroiluminada)
+    mat('luz_logo_park', '#ffffff', 0.6, img='logo_park.png', recorte=True)
+    mat('luz_logo_direcional', '#ffffff', 0.6, img='logo_direcional.png', recorte=True)
+    mat('luz_guarita', '#5a4c3c', 0.1, metal=0.2)
     mat('rede', '#f2f2ee', 0.7, img='alambrado.png', tint=True, recorte=True, img_mean=1.0, uv=(0.25, 0.25))
     mat('atlas', '#ffffff', 0.5, img='atlas_lazer.jpg')
     mat('tela', '#ffffff', 0.25, img='atlas_lazer.jpg')
@@ -574,7 +576,7 @@ def _guarita(g):
     x0, x1, y0, y1 = RM(PL.GUARITA)
     g.caixa(x0 - 0.2, x1 + 0.2, y0 - 0.2, y1 + 0.2, 0, 0.15, 'piso_cinza')
     g.caixa(x0, x1, y0, y1, 0.15, 0.95, 'portico_madeira')
-    g.caixa(x0 + 0.04, x1 - 0.04, y0 + 0.04, y1 - 0.04, 0.95, 2.45, 'vidro_porta')
+    g.caixa(x0 + 0.04, x1 - 0.04, y0 + 0.04, y1 - 0.04, 0.95, 2.45, 'luz_guarita')   # vidro com a sala acesa a noite
     for xx in (x0, x1 - 0.1):                                                    # montantes escuros
         for yy in (y0, y1 - 0.1):
             g.caixa(xx, xx + 0.1, yy, yy + 0.1, 0.95, 2.45, 'pergolado_grafite')
@@ -590,12 +592,42 @@ def _guarita(g):
             g.caixa(xx, xx + 0.12, yy, yy + 0.12, 0.0, 3.0, 'pergolado_grafite')
 
 
+def _poca(g, x, y, r, z=0.05):
+    """mancha de luz no chao (luz_chao: aditiva, so aparece a noite)"""
+    g.face([(x - r, y - r, z), (x + r, y - r, z), (x + r, y + r, z), (x - r, y + r, z)], 'luz_chao',
+           uvs=[(0, 0), (1, 0), (1, 1), (0, 1)], nrm=[(0, 0, 1)] * 4, cor=1.0)
+
+
+def _luzes_portaria(g, yb, xs):
+    """Noite: spots sob os pergolados com manchas no asfalto, guarita acesa e paineis lavados de baixo para cima."""
+    xo, xio, xil, xl = xs
+    for xa, xb in ((xo, xio), (xil, xl)):                               # spots sob o pergolado de cada portico
+        for k in (1, 2, 3):
+            xx = xa + (xb - xa) * k / 4
+            g.cil(xx, yb, 0.12, H_PERGOLA - 0.03, H_PERGOLA, 'luz_poste', seg=10, tampa=False, base=True)
+            _poca(g, xx, yb, 3.6)
+    px0, px1, py0, py1 = RM(PL.PORTICO)                                  # spots do pergolado da guarita
+    for xx in (px0 + 1.4, px1 - 1.4):
+        for yy in (py0 + 1.2, py1 - 1.2):
+            g.cil(xx, yy, 0.1, 2.97, 3.0, 'luz_poste', seg=10, tampa=False, base=True)
+            _poca(g, xx, yy, 2.6, 0.17)
+    for x_fora, lado in ((xl, 1), (xo, -1)):                            # embutidos no chao lavando o painel de madeira
+        xc = x_fora + lado * 1.2
+        y = yb + 0.27
+        for dx in (-0.6, 0.6):
+            g.caixa(xc + dx - 0.12, xc + dx + 0.12, y + 0.15, y + 0.4, 0.14, 0.18, 'luz_poste')
+        g.face([(xc + 1.25, y, 0.15), (xc - 1.25, y, 0.15), (xc - 1.25, y, 6.9), (xc + 1.25, y, 6.9)], 'luz_chao',
+               uvs=[(0, 0.5), (1, 0.5), (1, 1.0), (0, 1.0)], nrm=[(0, 1, 0)] * 4, cor=1.0)
+        _poca(g, xc, y + 1.0, 1.6, 0.16)
+
+
 def _entrada(g):
     yb = Y(PL.VIGA_PORTICO_PY)
     xo, xio, xil, xl = (X(v) for v in PL.PORTARIA_X_PX)
-    _portico(g, xl, xil, yb, logo=('logo_park', 2.0, 2.0 * 772 / 512, 4.4))       # leste: saida, logo do Village Park
-    _portico(g, xo, xio, yb, logo=('logo_direcional', 1.5, 1.5 * 120 / 512, 4.6))  # oeste: entrada, Direcional
+    _portico(g, xl, xil, yb, logo=('luz_logo_park', 2.0, 2.0 * 772 / 512, 4.4))       # leste: saida, logo do Village Park
+    _portico(g, xo, xio, yb, logo=('luz_logo_direcional', 1.5, 1.5 * 120 / 512, 4.6))  # oeste: entrada, Direcional
     _guarita(g)
+    _luzes_portaria(g, yb, (xo, xio, xil, xl))
     for r in PL.PORTOES:
         a0, a1, b0, b1 = RM(r)
         _portao_regua(g, a0, a1, yb - 0.75)

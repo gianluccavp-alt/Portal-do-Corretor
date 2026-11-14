@@ -441,6 +441,8 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
       o.renderOrder = 2;
     } else if (/^luz_/.test(nome)) {
       mt.emissive.copy(mt.color);
+      /* com textura (letreiro/logo), a emissao segue a imagem em vez de acender o recorte inteiro de uma cor */
+      if (mt.map) mt.emissiveMap = mt.map;
       luzes.acesa.add(mt);
     } else if (/^tela/.test(nome)) {
       mt.emissive.set('#ffffff');
