@@ -79,6 +79,8 @@
     if (units) {
       for (i = 0; i < units.length; i++) {
         var u = units[i];
+        /* cfg.torresVenda: so essas torres entram (as outras ficam "fora", ex.: Ipiranga vende so T1 e T3) */
+        if (cfg.torresVenda && cfg.torresVenda.indexOf(torreDe(u.bl)) < 0) continue;
         var idx = indice(cfg, torreDe(u.bl), Number(u.andar), Number(u.f));
         if (idx < 0) { ignoradas++; continue; }
         var st = statusDe(u.status);

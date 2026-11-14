@@ -522,9 +522,48 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
   const ancoraSel = new THREE.Vector3(); // topo do contorno: onde a badge aparece
   let vendoDeDentro = false;
 
+  /* cfg.contornos (opcional): fachada de cada unidade em planta, por torre e final ({ pe_direito, torres: { t: { f:
+     [[x, z], ...] } } }). Com ela o contorno segue a parede (recuos, blocos salientes, testa) do piso ao teto do
+     andar, em vez do retangulo no plano da varanda. Gerado pelo script do modelo (Ipiranga: ipiranga-contornos.json). */
+  let contornos = null;
+  if (cfg.contornos) {
+    fetch(cfg.contornos).then((r) => (r.ok ? r.json() : null)).then((j) => { contornos = j; })
+      .catch((e) => console.warn('[maquete] contornos:', e));
+  }
+
+  function contornoDaFachada(idx) {
+    if (!contornos) return null;
+    const f = (idx % grade.finais) + 1;
+    const resto = Math.floor(idx / grade.finais);
+    const andar = resto % grade.andares;
+    const t = grade.torres[Math.floor(resto / grade.andares)];
+    const planta = contornos.torres[String(t)] && contornos.torres[String(t)][String(f)];
+    if (!planta || planta.length < 2) return null;
+    const pd = contornos.pe_direito;
+    const y0 = andar * pd + (andar ? 0.02 : 0.1);
+    const y1 = (andar + 1) * pd - 0.02;
+    const base = planta.map(([x, z]) => new THREE.Vector3(x, y0, z));
+    const topo = planta.map(([x, z]) => new THREE.Vector3(x, y1, z)).reverse();
+    const pts = base.concat(topo, [base[0]]);
+    /* badge: no topo, sobre o meio do trecho de fachada */
+    const meio = planta[Math.floor((planta.length - 1) / 2)];
+    const prox = planta[Math.floor((planta.length - 1) / 2) + 1] || meio;
+    const ancora = new THREE.Vector3((meio[0] + prox[0]) / 2, y1, (meio[1] + prox[1]) / 2);
+    return { pts, ancora };
+  }
+
   function montarContorno(idx) {
     const info = unidadeInfo(idx);
     if (!info) { contorno.visible = false; return; }
+    const fach = contornoDaFachada(idx);
+    if (fach) {
+      contorno.geometry.dispose();
+      contorno.geometry = new LineGeometry().setPositions(fach.pts.flatMap((v) => v.toArray()));
+      contorno.computeLineDistances();
+      ancoraSel.copy(fach.ancora);
+      contorno.visible = !vendoDeDentro;
+      return;
+    }
     const n = info.normal;
     const t = new THREE.Vector3(0, 1, 0).cross(n).normalize(); // horizontal no plano da fachada
     const tam = info.caixa.getSize(new THREE.Vector3());

@@ -619,6 +619,41 @@ window.CITIES = [
         torresVisiveis: [1, 3], // vendendo apenas Torres 1 e 3 no momento; Torres 2 e 4 ocultas
         hideVagas: true, hideSol: true,
         tipoRule: 'ipiranga',
+        /* sol da manha na face de cima da implantacao (finais 04 a 09), pela bussola (norte ~50 graus a oeste) */
+        solNascente: { default: [4, 5, 6, 7, 8, 9] },
+        /* maquete 3D (maquete.html), gerada por assets/3d/conquista-ipiranga/scripts (Y para cima, metros, origem perto
+           do centro do terreno). Etapa 1 (aprovada e liberada em 2026-11-14): 4 torres, implantacao e grade; o lazer ainda em volumes simples. Sem varanda:
+           a cor de cada unidade vai nas janelas dela. Torres 2 e 4 aparecem "fora de venda" (torresVisiveis). */
+        maquete: {
+          // true = botao "Maquete 3D" na pagina do empreendimento (false = so por link direto: maquete.html?e=direcional-conquista-clube-ipiranga)
+          botaoVisivel: true,
+          simId: 'ipiranga',
+          modelo: 'assets/3d/conquista-ipiranga/ipiranga.glb?v=3',
+          /* fachada de cada unidade em planta (gerada com o modelo): o contorno da selecionada segue a parede */
+          contornos: 'assets/3d/conquista-ipiranga/ipiranga-contornos.json?v=1',
+          /* FAQ: terreo + 6, 12 por andar; no terreo o lugar do final 12 e o espaco comum (happy hour, coworking,
+             brinquedoteca, mini market) */
+          grade: { torres: [1, 2, 3, 4], andares: 7, finais: 12,
+                   semUnidade: [{ andares: [0], finais: [12] }] },
+          /* norte da rosa dos ventos da implantacao (~50 graus a oeste do "para cima" da planta); janelas na fachada */
+          norte: [-0.766, -0.643],
+          ateFachada: 0.35,
+          /* torres com o eixo maior em x: T1 (42.3, 0, -7.0), T2 (42.3, 0, -25.5), T3 (-39.0, 0, -3.6) e
+             T4 (-48.0, 0, -20.6), as duas ultimas giradas 11,3 graus. Rua Itajuba a leste (x ~ 80), guarita em (68.4, 0, 7.1),
+             piscina em (19, 0, 28.5) */
+          cameras: {
+            geral:     { pos: [60, 120, 150],  alvo: [-4, 4, 2] },
+            'torre-1': { pos: [62, 30, 48],    alvo: [42.3, 9, -7.0] },
+            'torre-2': { pos: [64, 32, -72],   alvo: [42.3, 9, -25.5] },
+            'torre-3': { pos: [-22, 30, 46],   alvo: [-39.0, 9, -3.6] },
+            'torre-4': { pos: [-66, 32, -66],  alvo: [-48.0, 9, -20.6] },
+            frente:    { pos: [128, 28, 4],    alvo: [20, 10, -6] },
+            fundos:    { pos: [-30, 48, -112], alvo: [0, 8, -8] },
+            lazer:     { pos: [2, 30, 58],     alvo: [16, 0, 28] },
+            portaria:  { pos: [92, 7, 17],     alvo: [68.4, 2, 7] }
+          },
+          ambientes: []
+        },
         tipos: [
           { key: 'tipo-meio',            label: '2Q Tipo - Meio' },
           { key: 'tipo-ponta',           label: '2Q Tipo - Ponta' },

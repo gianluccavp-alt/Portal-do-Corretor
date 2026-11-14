@@ -146,3 +146,12 @@ test('semUnidade: terreno sem final 1 e Torre 3 sem o 19o andar ficam inexistent
   assert.equal(vis.has(M.indice(cfg, 3, 19, 5)), false);
   assert.equal(vis.has(M.indice(cfg, 2, 0, 2)), true);
 });
+
+test('montarGrade: torresVenda deixa as outras torres fora de venda', () => {
+  const cfg = Object.assign({}, CFG, { torresVenda: [1, 3] });
+  const g = M.montarGrade(cfg, [U('BL-01', 2, 1, 'Disponível'), U('BL-02', 2, 1, 'Disponível'), U('BL-03', 0, 2, 'Reservada')]);
+  assert.equal(g.celulas[M.indice(cfg, 1, 2, 1)].estado, 'disponivel');
+  assert.equal(g.celulas[M.indice(cfg, 2, 2, 1)].estado, 'fora');
+  assert.equal(g.celulas[M.indice(cfg, 3, 0, 2)].estado, 'reservada');
+  assert.deepEqual(g.torresAVenda, [1, 3]);
+});

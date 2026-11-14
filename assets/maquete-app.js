@@ -51,7 +51,7 @@ async function iniciar(emp) {
   /* area de lazer: fotos do book (galeria do empreendimento), sem fachada/torre */
   const fotosLazer = ((emp.galeria && emp.galeria.items) || [])
     .filter((it) => it.img && !/^(fachada|torre)$/i.test(it.title || ''));
-  const gcfg = Object.assign({ solNascente: emp.solNascente }, cfg.grade);
+  const gcfg = Object.assign({ solNascente: emp.solNascente, torresVenda: emp.torresVisiveis || null }, cfg.grade);
   const ANDAR_MAX = gcfg.andares - 1;
 
   const st = {
