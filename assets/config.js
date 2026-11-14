@@ -340,7 +340,7 @@ window.CITIES = [
         maquete: {
           botaoVisivel: true,
           simId: 'park',
-          modelo: 'assets/3d/village-park/park.glb?v=13',
+          modelo: 'assets/3d/village-park/park.glb?v=14',
           /* FAQ: T1 e T2 terreo ao 19o, T3 terreo ao 18o; no terreo o lugar do final 1 e o hall */
           grade: { torres: [1, 2, 3], andares: 20, finais: 8,
                    semUnidade: [{ andares: [0], finais: [1] }, { torres: [3], andarMin: 19 }] },
