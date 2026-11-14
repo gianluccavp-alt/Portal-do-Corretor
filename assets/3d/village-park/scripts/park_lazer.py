@@ -56,6 +56,11 @@ def materiais_lazer():
     mat('porta_veneziana', '#e7e6e1', 0.6, img='ripado.jpg', tint=True, img_mean=0.82, uv=(0.5, 3.0))
     mat('reboco_grafite', '#55565c', 0.92, img='reboco_fino.jpg', tint=True, img_mean=0.88, nrm='reboco_fino_n.jpg', nrm_str=0.7, uv=TILE)
     mat('portico_madeira', '#7a5236', 0.7, img='madeira_fina.jpg', tint=True, img_mean=0.6, uv=1.5)
+    mat('reboco_portaria', '#b4b3ae', 0.92, img='reboco_fino.jpg', tint=True, img_mean=0.88, nrm='reboco_fino_n.jpg', nrm_str=0.9, uv=1.6)
+    mat('pergolado_grafite', '#2d2f33', 0.6, metal=0.3)
+    mat('portao_grafite', '#3b3e42', 0.55, metal=0.3)
+    mat('logo_park', '#ffffff', 0.6, img='logo_park.png', recorte=True)
+    mat('logo_direcional', '#ffffff', 0.6, img='logo_direcional.png', recorte=True)
     mat('rede', '#f2f2ee', 0.7, img='alambrado.png', tint=True, recorte=True, img_mean=1.0, uv=(0.25, 0.25))
     mat('atlas', '#ffffff', 0.5, img='atlas_lazer.jpg')
     mat('tela', '#ffffff', 0.25, img='atlas_lazer.jpg')
@@ -501,23 +506,99 @@ def _vestiarios(g):
         g.caixa(x0 + u, x0 + u + 0.85, y1, y1 + 0.03, z, z + 2.1, 'porta_veneziana')
 
 
-def _entrada(g):
+H_VIGA0, H_VIGA1 = 6.6, 7.4      # viga cinza dos porticos (perspectiva 03-portaria: portao ~2,4 m, painel ~7 m)
+H_PERGOLA = 6.05                 # pergolado escuro pendurado sob a viga
+H_PAINEL = 7.0
+
+
+def _logo(g, xe, xd, y, zc, larg, alt, mat_):
+    """Placa com alfa na face norte (+y), centrada em zc; xe = lado leste (esquerda de quem olha da rua)."""
+    z0, z1 = zc - alt / 2, zc + alt / 2
+    g.face([(xe, y, z0), (xd, y, z0), (xd, y, z1), (xe, y, z1)], mat_, uvs=[(0, 0), (1, 0), (1, 1), (0, 1)],
+           nrm=[(0, 1, 0)] * 4, cor=1.0)
+
+
+def _pergolado(g, x0, x1, y0, y1, z, passo=0.5, ripa=0.08, alt=0.2):
+    """Moldura escura com ripas no sentido y (frente-fundo), como no portico da perspectiva."""
+    m = 'pergolado_grafite'
+    g.caixa(x0, x1, y0, y0 + 0.14, z, z + alt + 0.06, m)
+    g.caixa(x0, x1, y1 - 0.14, y1, z, z + alt + 0.06, m)
+    g.caixa(x0, x0 + 0.14, y0, y1, z, z + alt + 0.06, m)
+    g.caixa(x1 - 0.14, x1, y0, y1, z, z + alt + 0.06, m)
+    n = max(2, int((x1 - x0) / passo))
+    for k in range(1, n):
+        xx = x0 + (x1 - x0) * k / n
+        g.caixa(xx - ripa / 2, xx + ripa / 2, y0 + 0.14, y1 - 0.14, z + 0.04, z + alt, m)
+
+
+def _portao_regua(g, xa, xb, y):
+    """Portao de correr de reguas horizontais (grafite), com montantes."""
+    m = 'portao_grafite'
+    xa, xb = min(xa, xb), max(xa, xb)
+    z = 0.12
+    while z < 2.35:
+        g.caixa(xa, xb, y - 0.025, y + 0.025, z, z + 0.1, m)
+        z += 0.155
+    n = max(2, int((xb - xa) / 2.4))
+    for k in range(n + 1):
+        xx = xa + (xb - xa) * k / n
+        g.caixa(xx - 0.05, xx + 0.05, y - 0.04, y + 0.04, 0.05, 2.4, m)
+
+
+def _portico(g, x_fora, x_ilha, yb, logo=None):
+    """Um portico: painel de madeira com parede cinza atras na ponta de fora, pilar cinza na ilha, viga e pergolado."""
+    lado = 1 if x_fora > x_ilha else -1                 # +1: portico leste (painel cresce para leste)
+    xp0, xp1 = sorted((x_fora, x_fora + lado * 2.4))   # painel de madeira
+    xw0, xw1 = sorted((x_fora - lado * 0.3, x_fora + lado * 3.3))   # parede cinza que continua a viga
+    xi0, xi1 = sorted((x_ilha, x_ilha - lado * 0.6))   # pilar cinza junto a guarita
+    C = 'reboco_portaria'
+    g.caixa(xw0, xw1, yb - 0.55, yb - 0.2, 0, H_VIGA1, C)                       # parede (atras do painel)
+    g.caixa(xp0, xp1, yb - 0.2, yb + 0.25, 0, H_PAINEL, 'portico_madeira', topo='portico_madeira')
+    g.caixa(xi0, xi1, yb - 0.3, yb + 0.3, 0, H_VIGA1, C)                        # pilar da ilha
+    va, vb = sorted((xi0 if lado > 0 else xi1, xw1 if lado > 0 else xw0))
+    g.caixa(va, vb, yb - 0.3, yb + 0.3, H_VIGA0, H_VIGA1, C, fundo=C)           # viga
+    pa, pb = sorted((xi1 if lado > 0 else xi0, xp0 if lado > 0 else xp1))
+    _pergolado(g, pa + 0.1, pb - 0.1, yb - 1.7, yb + 1.7, H_PERGOLA)
+    for xx in (pa + 1.2, (pa + pb) / 2, pb - 1.2):                                # tirantes ate a viga
+        for s_ in (-1, 1):
+            g.tubo([(xx, yb + s_ * 1.6, H_PERGOLA + 0.2), (xx, yb + s_ * 0.3, H_VIGA1 - 0.1)], 0.022, 'pergolado_grafite', seg=5)
+    if logo:
+        mat_, larg, alt, zc = logo
+        xc = (xp0 + xp1) / 2
+        xe, xd = xc + larg / 2, xc - larg / 2
+        _logo(g, xe, xd, yb + 0.26, zc, larg, alt, mat_)
+
+
+def _guarita(g):
+    """Guarita de madeira com faixa de vidro, laje escura e pergolado em volta (perspectiva 03-portaria)."""
     x0, x1, y0, y1 = RM(PL.GUARITA)
-    g.caixa(x0, x1, y0, y1, 0, 0.9, 'portico_madeira')
-    g.caixa(x0 + 0.05, x1 - 0.05, y0 + 0.05, y1 - 0.05, 0.9, 2.7, 'vidro_porta')
-    g.caixa(x0 - 0.3, x1 + 0.3, y0 - 0.3, y1 + 0.3, 2.7, 3.0, 'reboco_grafite')
+    g.caixa(x0 - 0.2, x1 + 0.2, y0 - 0.2, y1 + 0.2, 0, 0.15, 'piso_cinza')
+    g.caixa(x0, x1, y0, y1, 0.15, 0.95, 'portico_madeira')
+    g.caixa(x0 + 0.04, x1 - 0.04, y0 + 0.04, y1 - 0.04, 0.95, 2.45, 'vidro_porta')
+    for xx in (x0, x1 - 0.1):                                                    # montantes escuros
+        for yy in (y0, y1 - 0.1):
+            g.caixa(xx, xx + 0.1, yy, yy + 0.1, 0.95, 2.45, 'pergolado_grafite')
+    for k in range(1, 4):
+        xx = x0 + (x1 - x0) * k / 4
+        g.caixa(xx - 0.03, xx + 0.03, y1 - 0.02, y1 + 0.01, 0.95, 2.45, 'pergolado_grafite')
+    g.caixa(x0, x1, y0, y1, 2.45, 3.9, 'portico_madeira')
+    g.caixa(x0 - 0.35, x1 + 0.35, y0 - 0.35, y1 + 0.35, 3.9, 4.1, 'pergolado_grafite')
     px0, px1, py0, py1 = RM(PL.PORTICO)
-    for xa, xb in ((X(1030), X(1185)), (X(1275), X(1440))):
-        g.caixa(xa, xa + 0.9, py0 + 1.0, py1 - 1.0, 0, 6.0, 'reboco_grafite')
-        g.caixa(xb - 0.6, xb, py0 + 1.0, py1 - 1.0, 0, 6.0, 'portico_madeira')
-        g.caixa(xa, xb, py0 + 1.0, py1 - 1.0, 6.0, 6.8, 'reboco_grafite')
-        g.caixa(xa + 0.9, xb - 0.6, py0 + 1.6, py1 - 1.6, 5.4, 5.55, 'ferro_escuro')
+    _pergolado(g, px0 + 0.65, px1 - 0.65, py0, py1, 3.0, passo=0.45, alt=0.22)
+    for xx in (px0 + 0.75, px1 - 0.87):                                          # pilaretes do pergolado
+        for yy in (py0 + 0.05, py1 - 0.17):
+            g.caixa(xx, xx + 0.12, yy, yy + 0.12, 0.0, 3.0, 'pergolado_grafite')
+
+
+def _entrada(g):
+    yb = Y(PL.VIGA_PORTICO_PY)
+    xo, xio, xil, xl = (X(v) for v in PL.PORTARIA_X_PX)
+    _portico(g, xl, xil, yb, logo=('logo_park', 2.0, 2.0 * 772 / 512, 4.4))       # leste: saida, logo do Village Park
+    _portico(g, xo, xio, yb, logo=('logo_direcional', 1.5, 1.5 * 120 / 512, 4.6))  # oeste: entrada, Direcional
+    _guarita(g)
     for r in PL.PORTOES:
         a0, a1, b0, b1 = RM(r)
-        ym = (b0 + b1) / 2
-        g.painel(a0, ym, a1, ym, 0.05, 2.2, 'gradil_preto', (0, 0, (a1 - a0) / 2.4, 1))
-        g.painel(a1, ym, a0, ym, 0.05, 2.2, 'gradil_preto', (0, 0, (a1 - a0) / 2.4, 1))
-        g.caixa(a0, a1, ym - 0.05, ym + 0.05, 2.15, 2.25, 'ferro_escuro')
+        _portao_regua(g, a0, a1, yb - 0.75)
     for r, h in ((PL.LIXO, 2.8), (PL.APOIO, 3.0)):
         _edificio(g, r, h=h, vidro=(r is PL.APOIO))
     for cx, cy, rr in PL.RESERVATORIOS:

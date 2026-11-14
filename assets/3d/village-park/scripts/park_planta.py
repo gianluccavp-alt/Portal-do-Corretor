@@ -93,6 +93,22 @@ PORTICO = (1185, 460, 1275, 560)
 PORTOES = [(1060, 478, 1185, 492), (1275, 478, 1420, 492)]
 APOIO = (1545, 435, 1640, 480)
 RESERVATORIOS = [(1717, 460, 25), (268, 2325, 28)]                 # (cx, cy, raio) px
+# portaria como na perspectiva 03-portaria (book): dois porticos com viga cinza e pergolado escuro, paineis de
+# madeira nas pontas de fora (logo do Village Park no leste, sobre a saida; Direcional no oeste), pilares cinza na
+# ilha e guarita de madeira e vidro com pergolado. Paisagismo baixo (touceiras, sebes, palmeiras), sem copas.
+VIGA_PORTICO_PY = 490                       # eixo das vigas e dos portoes
+PORTARIA_X_PX = (1060, 1185, 1278, 1420)     # painel oeste, pilar oeste da ilha, pilar leste da ilha, painel leste
+PORTARIA_SEM_ARVORE = (1000, 340, 1470, 660)  # copas medidas aqui saem (eram sebes e palmeiras na implantacao)
+CANTEIROS_PORTARIA = [                        # (retangulo px, especie, altura m)
+    ((1168, 395, 1215, 458), 'touceira_verde', 0.75), ((1243, 395, 1292, 458), 'touceira_verde', 0.75),
+    ((1172, 400, 1210, 425), 'flores_laranja', 0.95), ((1250, 430, 1288, 455), 'flores_laranja', 0.95),
+    ((1166, 470, 1184, 555), 'touceira_clara', 0.6), ((1280, 470, 1296, 555), 'touceira_clara', 0.6),
+    ((1185, 562, 1278, 584), 'touceira_verde', 0.6), ((1205, 562, 1258, 580), 'flores_laranja', 0.85),
+    ((1015, 418, 1068, 464), 'touceira_verde', 0.6), ((1398, 420, 1452, 464), 'touceira_verde', 0.6),
+    ((1030, 425, 1060, 445), 'flores_laranja', 0.9), ((1405, 425, 1440, 445), 'flores_laranja', 0.9),
+]
+SEBES_PORTARIA = [(1022, 468, 1060, 482), (1420, 468, 1458, 482)]   # sebes podadas em frente aos paineis (1,5 m)
+PALMEIRAS_PORTARIA = [(1192, 412), (1178, 446), (1284, 418), (1198, 575), (1262, 572), (1022, 428)]
 
 # zonas onde a segmentacao nao entra (modelado a mao) e onde nao se procuram copas automaticamente
 ZONAS_A_MAO = [(1098, 822, 1645, 1265), (1005, 1265, 1645, 1405)]   # lazer: chao a mao (park_lazer.chao_lazer)

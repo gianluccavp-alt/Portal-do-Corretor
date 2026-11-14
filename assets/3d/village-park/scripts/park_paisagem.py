@@ -20,6 +20,7 @@ def materiais_paisagem():
     mat('touceira_roxa', '#6b4a7a', 0.85, img='touceira.png', tint=True, recorte=True, img_mean=0.75)
     mat('touceira_clara', '#88a44e', 0.85, img='touceira.png', tint=True, recorte=True, img_mean=0.75)
     mat('flores_laranja', '#e0802c', 0.8, img='flores.png', tint=True, recorte=True, img_mean=0.8)
+    mat('sebe_podada', '#3f6b2e', 0.95, img='grama2.jpg', tint=True, img_mean=0.45, uv=0.8)
     mat('terra', '#3e3226', 1.0)
     for nome, cor in CORES_CARRO.items():
         mat('carro_' + nome, cor, 0.28, metal=0.55)
@@ -167,11 +168,32 @@ def arbusto(g, rnd, x, y, r, esp='verde'):
 ESPECIE_DA_COPA = {'rosa': 'ipe_rosa', 'amarela': 'ipe_amarelo', 'roxa': 'roxa', 'oliva': 'oliva', 'branca': 'branca'}
 
 
+def _na_portaria(px, py):
+    x0, y0, x1, y1 = PL.PORTARIA_SEM_ARVORE
+    return x0 <= px <= x1 and y0 <= py <= y1
+
+
+def paisagem_portaria(g):
+    """Jardim da portaria como na perspectiva do book: touceiras e flores baixas, sebes podadas e palmeiras."""
+    rnd = random.Random(49)
+    for (r, esp, alt) in PL.CANTEIROS_PORTARIA:
+        x0, x1, y0, y1 = X(r[0]), X(r[2]), Y(r[3]), Y(r[1])
+        canteiro(g, rnd, x0, x1, y0, y1, esp, alt=alt, passo=0.6 if esp.startswith('touceira') else 0.75,
+                 solo=esp.startswith('touceira'))
+    for r in PL.SEBES_PORTARIA:
+        x0, x1, y0, y1 = X(r[0]), X(r[2]), Y(r[3]), Y(r[1])
+        g.caixa(x0, x1, y0, y1, 0.14, 1.5, 'sebe_podada')
+    for px, py in PL.PALMEIRAS_PORTARIA:
+        palmeira(g, rnd, X(px) + rnd.uniform(-0.15, 0.15), Y(py) + rnd.uniform(-0.15, 0.15), rnd.uniform(0.7, 0.85))
+
+
 def paisagem(g):
     rnd = random.Random(21)
+    paisagem_portaria(g)
+    descarte = Geo('descarte', ao=False)   # copas tiradas da portaria: geradas aqui so para nao mudar o sorteio das outras
     for tipo, px, py in CHAO['arvores']:
         esp = ESPECIE_DA_COPA.get(tipo) or rnd.choice(['verde', 'verde', 'verde_clara', 'verde_escura'])
-        arvore(g, rnd, X(px) + rnd.uniform(-0.2, 0.2), Y(py) + rnd.uniform(-0.2, 0.2), esp, rnd.uniform(0.85, 1.15))
+        arvore(descarte if _na_portaria(px, py) else g, rnd, X(px) + rnd.uniform(-0.2, 0.2), Y(py) + rnd.uniform(-0.2, 0.2), esp, rnd.uniform(0.85, 1.15))
 
 
 # ------------------------------------------------------------------ carros
