@@ -622,11 +622,11 @@ window.CITIES = [
         /* sol da manha na face de cima da implantacao (finais 04 a 09), pela bussola (norte ~50 graus a oeste) */
         solNascente: { default: [4, 5, 6, 7, 8, 9] },
         /* maquete 3D (maquete.html), gerada por assets/3d/conquista-ipiranga/scripts (Y para cima, metros, origem perto
-           do centro do terreno). Etapa 1: 4 torres, implantacao e grade; o lazer ainda em volumes simples. Sem varanda:
+           do centro do terreno). Etapa 1 (aprovada e liberada em 2026-11-14): 4 torres, implantacao e grade; o lazer ainda em volumes simples. Sem varanda:
            a cor de cada unidade vai nas janelas dela. Torres 2 e 4 aparecem "fora de venda" (torresVisiveis). */
         maquete: {
           // true = botao "Maquete 3D" na pagina do empreendimento (false = so por link direto: maquete.html?e=direcional-conquista-clube-ipiranga)
-          botaoVisivel: false,
+          botaoVisivel: true,
           simId: 'ipiranga',
           modelo: 'assets/3d/conquista-ipiranga/ipiranga.glb?v=3',
           /* fachada de cada unidade em planta (gerada com o modelo): o contorno da selecionada segue a parede */
