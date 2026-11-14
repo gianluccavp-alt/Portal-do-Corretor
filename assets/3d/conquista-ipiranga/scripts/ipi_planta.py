@@ -184,3 +184,30 @@ CARROS = [
     (1630, 268, 101), (2045, 350, 0), (2050, 600, 0), (1820, 855, 0), (904, 1265, 101), (1165, 1455, 101),
     (2820, 1660, -10), (2540, 1820, -10),
 ]
+
+# ------------------------------------------------------------------ etapa 2: iluminacao do condominio (px)
+# A implantacao nao desenha postes: posicoes escolhidas nas faixas de grama e nos passeios, a cada ~25 m ao longo
+# das ruas internas, conferidas com ipi_ver.py. Postes de rua 5 m (luminaria LED com poca de luz larga), postes de
+# jardim 3,2 m com globo no lazer e balizadores baixos nos caminhos dos halls.
+POSTES_RUA = [
+    # rua principal, passeio norte (pe dos jardins da T1/T3) e passeio sul (frente do lazer)
+    (1425, 1100), (2160, 1100), (2660, 1100), (3180, 1100),
+    (1520, 1488), (2080, 1488), (2640, 1488),
+    # trecho oeste em diagonal (passeio ao pe da T3) e o patio de vagas a sudoeste
+    (720, 1212), (1060, 1150),
+    # rua norte-sul entre as torres (faixas de grama ao lado das vagas)
+    (1748, 470), (1748, 860), (2116, 330), (2116, 700), (2116, 1000),
+    # rua leste do lazer e a juncao das vagas a sudoeste
+    (2925, 1530), (2895, 1820), (1340, 1515),
+]
+POSTES_JARDIM = [
+    (1838, 1500), (1990, 1505), (2040, 1815), (2500, 1555), (2500, 1810), (1470, 1725), (1800, 1740),
+    (1500, 1060), (1735, 1065),
+]
+BALIZADORES = [
+    # caminhos dos halls (dos dois lados)
+    (2800, 1010), (2800, 1050), (2876, 1010), (2876, 1050), (2800, 600), (2800, 640), (2876, 600), (2876, 640),
+    (1030, 1050), (1050, 1120), (1070, 1000), (850, 640), (870, 700), (900, 660),
+    # passeio da guarita
+    (3300, 1150), (3300, 1210),
+]

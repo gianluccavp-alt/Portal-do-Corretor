@@ -273,6 +273,51 @@ def _parede(g, a, b, z0, z1, m):
     g.face([(a[0], a[1], z0), (b[0], b[1], z0), (b[0], b[1], z1), (a[0], a[1], z1)], m)
 
 
+def _vaos_sala():
+    """Trechos de vidro da sala comum do terreo (quadrante -x -y, coordenadas da torre): frente do bloco saliente
+    (b06..g06 em y_fachada) e a lateral voltada para o recuo do hall (g06, de y_fundo a y_fachada)."""
+    q = Q
+    g6, b6, yF, yS = q['g06'], q['b06'], q['y_fundo'], q['y_fachada']
+    return [((-g6, -yS), (-b6, -yS)), ((-g6, -yF), (-g6, -yS))]
+
+
+def _parede_terreo(g, a, b):
+    """Parede do terreo de a a b; onde coincide com um vao da sala comum vira vitrine (vidro, montantes, verga)."""
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    L = math.hypot(dx, dy)
+    if L < 1e-6:
+        return
+    ux, uy = dx / L, dy / L
+    vaos = []
+    for p, q_ in _vaos_sala():
+        # colinear: os dois pontos do vao na reta de a-b
+        if all(abs((pt[0] - a[0]) * uy - (pt[1] - a[1]) * ux) < 1e-4 for pt in (p, q_)):
+            t0 = (p[0] - a[0]) * ux + (p[1] - a[1]) * uy
+            t1 = (q_[0] - a[0]) * ux + (q_[1] - a[1]) * uy
+            t0, t1 = max(0.0, min(t0, t1)), min(L, max(t0, t1))
+            if t1 - t0 > 1e-3:
+                vaos.append((t0, t1))
+    P_ = lambda t: (a[0] + ux * t, a[1] + uy * t)
+    t = 0.0
+    for t0, t1 in sorted(vaos):
+        if t0 > t:
+            _parede(g, P_(t), P_(t0), 0.0, PD, 'fachada_base')
+        A, B = P_(t0), P_(t1)
+        _parede(g, A, B, 0.0, 0.13, 'fachada_base')
+        _parede(g, A, B, PD - 0.12, PD, 'fachada_base')
+        for (p0, p1) in ((A, B), (B, A)):
+            g.face([(p0[0], p0[1], 0.13), (p1[0], p1[1], 0.13), (p1[0], p1[1], PD - 0.12), (p0[0], p0[1], PD - 0.12)], 'vidro_lazer_sala')
+        n = max(2, round((t1 - t0) / 1.1))
+        for k in range(n + 1):
+            c = P_(t0 + (t1 - t0) * k / n)
+            g.caixa(c[0] - 0.03, c[0] + 0.03, c[1] - 0.03, c[1] + 0.03, 0.13, PD - 0.12, 'ferragem')
+        for zz in (0.13, 2.28):
+            g.caixa(min(A[0], B[0]) - 0.03, max(A[0], B[0]) + 0.03, min(A[1], B[1]) - 0.03, max(A[1], B[1]) + 0.03, zz, zz + 0.05, 'ferragem')
+        t = t1
+    if t < L - 1e-6:
+        _parede(g, P_(t), b, 0.0, PD, 'fachada_base')
+
+
 def _abertura(g, gu, plano, c, a0, a1, z0, z1, m, sx, sy, unidade=None):
     """Janela no quadrante (sx, sy): quad com a textura (na malha da unidade quando `unidade` for o indice) +
     caixilho em relevo e peitoril. plano 'y': fachada y = c (a0..a1 em x); plano 'x': testa x = c (a0..a1 em y)."""
@@ -304,29 +349,6 @@ def _abertura(g, gu, plano, c, a0, a1, z0, z1, m, sx, sy, unidade=None):
     bx(a1, a1 + f, z0, z1)
 
 
-def _sala_terreo(g, sx, sy):
-    """Espaco de uso comum no lugar do final 12 (terreo, quadrante -x -y): vitrine na linha do guarda-corpo dos
-    gardens, piso, forro e a parede do recuo com uma porta de vidro."""
-    q = Q
-    X_ = lambda v: v * sx
-    Y_ = lambda v: v * sy
-    x0, x1 = q['nucleo'], q['g06']
-    y0, y1 = q['y_fundo'], q['y_fachada']
-    g.piso(min(X_(x0), X_(x1)), max(X_(x0), X_(x1)), min(Y_(y0), Y_(y1)), max(Y_(y0), Y_(y1)), 0.13, 'piso_hall')
-    # vitrine (vidro + montantes) na frente e nas laterais
-    yy = y1 - 0.06
-    g.caixa(X_(x0), X_(x1), Y_(yy), Y_(yy + 0.03), 0.13, PD - 0.12, 'vidro_porta')
-    n = 4
-    for k in range(n + 1):
-        xx = x0 + (x1 - x0) * k / n
-        g.caixa(X_(xx - 0.03), X_(xx + 0.03), Y_(yy - 0.02), Y_(yy + 0.05), 0.13, PD - 0.12, 'ferragem')
-    g.caixa(X_(x0), X_(x1), Y_(yy - 0.02), Y_(yy + 0.05), 2.30, 2.36, 'ferragem')
-    for xx in (x0, x1):
-        g.caixa(X_(xx - 0.02), X_(xx + 0.02), Y_(y0), Y_(yy), 0.13, PD - 0.12, 'vidro_porta')
-    # laje sobre a sala (forro) e platibanda baixa na linha da fachada
-    g.caixa(X_(x0), X_(x1), Y_(y0), Y_(y1), PD - 0.12, PD, 'laje_borda', fundo='forro', sem_fundo=False)
-
-
 def _hall(g):
     """Entrada do hall no nucleo, face -y: porta de vidro recuada e marquise."""
     q = Q
@@ -336,6 +358,7 @@ def _hall(g):
         g.caixa(xx - 0.03, xx + 0.03, -yN - 0.05, -yN, 0.0, 2.45, 'ferragem')
     g.caixa(-xn - 0.6, xn + 0.6, -yN - 2.0, -yN, 2.65, 2.85, 'laje_borda', fundo='forro', sem_fundo=False)
     g.cil(0, -yN - 1.0, 0.1, 2.635, 2.65, 'luz_forro', seg=8, tampa=False, base=True)
+    g.tapete(-2.6, 2.6, -yN - 3.8, -yN + 1.4, 0.14, 'luz_chao', (0, 0, 1, 1))     # poca de luz da marquise (noite)
     g.piso(-xn, xn, -yN - 2.0, -yN, 0.08, 'piso_hall')
 
 
@@ -367,7 +390,7 @@ def torre(n, cx, cy, giro, npav, gu):
             no_fundo = abs(a[1] - b[1]) < 1e-6 and abs(abs(a[1]) - yF) < 1e-6
             lateral = abs(a[0] - b[0]) < 1e-6 and abs(a[0]) < q['fim'] - 0.5
             corpo = 'terracota' if no_fundo else ('fachada_lateral' if lateral else 'fachada_clara')
-            _parede(g, a, b, 0.0, PD, 'fachada_base')
+            _parede_terreo(g, a, b)
             _parede(g, a, b, PD, Hp, corpo)
             # faixa bege na altura das janelas e friso de laje, andar a andar
             dx, dy = b[0] - a[0], b[1] - a[1]
@@ -398,7 +421,8 @@ def torre(n, cx, cy, giro, npav, gu):
                 z = andar * PD
                 sala_comum = (andar == 0 and (sx, sy) == (-1, -1))
                 for k, plano, c, a0, a1, tipo in ab:
-                    if sala_comum and k == 0:
+                    if sala_comum and (k == 0 or (k is None and plano == 'y' and abs(c - q['y_fachada']) < 1e-6
+                                                  and a0 >= q['g06'] and a1 <= q['b06'])):
                         continue
                     zz = BASCULANTE if tipo == 'basc' else JANELA
                     if k is None:
@@ -406,8 +430,6 @@ def torre(n, cx, cy, giro, npav, gu):
                     else:
                         _abertura(g, gu, plano, c, a0, a1, z + zz[0], z + zz[1], 'unidade', sx, sy,
                                   unidade=indice(n, andar, finais[k]))
-            if (sx, sy) == (-1, -1):
-                _sala_terreo(g, sx, sy)
         _hall(g)
         _cobertura(g, Hp)
     return g.objeto()
@@ -553,6 +575,11 @@ MARCAS = json.load(open(TEXDIR + '/piso_marcas.json'))
 _carrega('ipi_patio.py')
 _carrega('ipi_paisagem.py')
 _carrega('ipi_lazer.py')
+_carrega('ipi_luzes.py')
+ATL = json.load(open(TEXDIR + '/atlas_lazer.json'))
+_carrega('ipi_moveis.py')
+_carrega('ipi_ambientes.py')
+_carrega('ipi_terreo.py')
 
 # ------------------------------------------------------------------ main
 OBJETOS_EXPORTADOS = []
@@ -563,9 +590,9 @@ def build():
     MATS.clear(); IMAGENS.clear(); UVESC.clear()
     sc = bpy.context.scene
     sc.unit_settings.system = 'METRIC'
-    materiais_torre(); materiais_patio(); materiais_paisagem(); materiais_lazer()
+    materiais_torre(); materiais_patio(); materiais_paisagem(); materiais_lazer(); materiais_luzes(); materiais_moveis(); materiais_terreo()
     gu = GeoUn('unidades')
-    nomes = ['unidades', 'entorno', 'entorno-rua', 'terreno', 'lazer', 'vegetacao', 'carros']
+    nomes = ['unidades', 'entorno', 'entorno-rua', 'terreno', 'lazer', 'moveis', 'vegetacao', 'carros']
     for t, (cxp, cyp, ang) in sorted(PL.TORRES.items()):
         torre(t, X(cxp), Y(cyp), -ang, PL.PAVIMENTOS[t], gu)
         nomes.append('torre-%d' % t)
@@ -585,7 +612,12 @@ def build():
     r.objeto()
     lz = Geo('lazer')
     lazer(lz)
+    luzes(lz)
     lz.objeto()
+    mv = Geo('moveis')
+    moveis(mv)
+    salas_terreo(mv)
+    mv.objeto()
     vg = Geo('vegetacao', ao=False)
     paisagem(vg)
     vg.objeto()
