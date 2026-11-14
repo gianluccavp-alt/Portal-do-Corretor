@@ -77,5 +77,11 @@ for x, y, g in P.CARROS:
     pts = [(x + u * math.cos(a) - v * math.sin(a), y + u * math.sin(a) + v * math.cos(a))
            for u, v in ((-48, -20), (48, -20), (48, 20), (-48, 20))]
     pol(pts, (255, 60, 60), 2)
+for x, y in P.POSTES_RUA:
+    d.ellipse([q((x - 14, y - 14)), q((x + 14, y + 14))], fill=(255, 255, 0, 255), outline=(0, 0, 0))
+for x, y in P.POSTES_JARDIM:
+    d.ellipse([q((x - 10, y - 10)), q((x + 10, y + 10))], fill=(255, 160, 0, 255), outline=(0, 0, 0))
+for x, y in P.BALIZADORES:
+    d.ellipse([q((x - 6, y - 6)), q((x + 6, y + 6))], fill=(255, 255, 255, 255), outline=(0, 0, 0))
 im = im.resize((int(im.size[0] * esc), int(im.size[1] * esc)), Image.LANCZOS)
 im.save(sys.argv[2], quality=88)

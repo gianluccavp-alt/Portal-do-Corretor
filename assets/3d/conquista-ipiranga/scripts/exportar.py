@@ -2,7 +2,7 @@
 import bpy, os
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..'))
 OUTG = REPO + '/assets/3d/conquista-ipiranga/ipiranga.glb'
-NOMES = ['torre-1', 'torre-2', 'torre-3', 'torre-4', 'unidades', 'terreno', 'entorno', 'entorno-rua', 'lazer',
+NOMES = ['torre-1', 'torre-2', 'torre-3', 'torre-4', 'unidades', 'terreno', 'entorno', 'entorno-rua', 'lazer', 'moveis',
          'vegetacao', 'carros']
 bpy.context.view_layer.update()
 for o in bpy.data.objects:

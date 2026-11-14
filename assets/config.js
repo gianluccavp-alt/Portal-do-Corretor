@@ -622,13 +622,14 @@ window.CITIES = [
         /* sol da manha na face de cima da implantacao (finais 04 a 09), pela bussola (norte ~50 graus a oeste) */
         solNascente: { default: [4, 5, 6, 7, 8, 9] },
         /* maquete 3D (maquete.html), gerada por assets/3d/conquista-ipiranga/scripts (Y para cima, metros, origem perto
-           do centro do terreno). Etapa 1 (aprovada e liberada em 2026-11-14): 4 torres, implantacao e grade; o lazer ainda em volumes simples. Sem varanda:
-           a cor de cada unidade vai nas janelas dela. Torres 2 e 4 aparecem "fora de venda" (torresVisiveis). */
+           do centro do terreno). Etapa 1 (aprovada e liberada em 2026-11-14): 4 torres, implantacao e grade. Etapa 2: lazer mobiliado
+           (gourmet sem teto), iluminacao do condominio a noite, guarita com a placa do logo oficial e o menu de ambientes.
+           Sem varanda: a cor de cada unidade vai nas janelas dela. Torres 2 e 4 aparecem "fora de venda" (torresVisiveis). */
         maquete: {
           // true = botao "Maquete 3D" na pagina do empreendimento (false = so por link direto: maquete.html?e=direcional-conquista-clube-ipiranga)
           botaoVisivel: true,
           simId: 'ipiranga',
-          modelo: 'assets/3d/conquista-ipiranga/ipiranga.glb?v=3',
+          modelo: 'assets/3d/conquista-ipiranga/ipiranga.glb?v=5',
           /* fachada de cada unidade em planta (gerada com o modelo): o contorno da selecionada segue a parede */
           contornos: 'assets/3d/conquista-ipiranga/ipiranga-contornos.json?v=1',
           /* FAQ: terreo + 6, 12 por andar; no terreo o lugar do final 12 e o espaco comum (happy hour, coworking,
@@ -652,7 +653,16 @@ window.CITIES = [
             lazer:     { pos: [2, 30, 58],     alvo: [16, 0, 28] },
             portaria:  { pos: [92, 7, 17],     alvo: [68.4, 2, 7] }
           },
-          ambientes: []
+          /* x = (px - 1900) * 0,0452 e z = (py - 1000) * 0,0452 na implantacao */
+          ambientes: [
+            { id: 'piscina',    nome: 'Piscina',        pos: [5, 12, 21],      alvo: [18, 0, 30] },
+            { id: 'gourmet',    nome: 'Varanda gourmet', pos: [-23, 11, 23],   alvo: [-12.5, 0, 28.5] },
+            { id: 'playground', nome: 'Playground',     pos: [4, 12, 39],      alvo: [0.8, 0, 28.5] },
+            { id: 'fitness',    nome: 'Fitness',        pos: [17, 6, 15.5],    alvo: [16.8, 0.5, 23.5] },
+            { id: 'petplace',   nome: 'Pet place',      pos: [-13, 10, 12],    alvo: [-13, 0, 1.9] },
+            { id: 'bicicletario', nome: 'Bicicletário', pos: [-49, 12, 1],     alvo: [-57.6, 0, -10] },
+            { id: 'guarita',    nome: 'Guarita',        pos: [80, 2.6, 14],    alvo: [69.5, 1.5, 7.3] }
+          ]
         },
         tipos: [
           { key: 'tipo-meio',            label: '2Q Tipo - Meio' },

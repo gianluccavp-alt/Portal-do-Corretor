@@ -336,6 +336,7 @@ def _hall(g):
         g.caixa(xx - 0.03, xx + 0.03, -yN - 0.05, -yN, 0.0, 2.45, 'ferragem')
     g.caixa(-xn - 0.6, xn + 0.6, -yN - 2.0, -yN, 2.65, 2.85, 'laje_borda', fundo='forro', sem_fundo=False)
     g.cil(0, -yN - 1.0, 0.1, 2.635, 2.65, 'luz_forro', seg=8, tampa=False, base=True)
+    g.tapete(-2.6, 2.6, -yN - 3.8, -yN + 1.4, 0.14, 'luz_chao', (0, 0, 1, 1))     # poca de luz da marquise (noite)
     g.piso(-xn, xn, -yN - 2.0, -yN, 0.08, 'piso_hall')
 
 
@@ -553,6 +554,10 @@ MARCAS = json.load(open(TEXDIR + '/piso_marcas.json'))
 _carrega('ipi_patio.py')
 _carrega('ipi_paisagem.py')
 _carrega('ipi_lazer.py')
+_carrega('ipi_luzes.py')
+ATL = json.load(open(TEXDIR + '/atlas_lazer.json'))
+_carrega('ipi_moveis.py')
+_carrega('ipi_ambientes.py')
 
 # ------------------------------------------------------------------ main
 OBJETOS_EXPORTADOS = []
@@ -563,9 +568,9 @@ def build():
     MATS.clear(); IMAGENS.clear(); UVESC.clear()
     sc = bpy.context.scene
     sc.unit_settings.system = 'METRIC'
-    materiais_torre(); materiais_patio(); materiais_paisagem(); materiais_lazer()
+    materiais_torre(); materiais_patio(); materiais_paisagem(); materiais_lazer(); materiais_luzes(); materiais_moveis()
     gu = GeoUn('unidades')
-    nomes = ['unidades', 'entorno', 'entorno-rua', 'terreno', 'lazer', 'vegetacao', 'carros']
+    nomes = ['unidades', 'entorno', 'entorno-rua', 'terreno', 'lazer', 'moveis', 'vegetacao', 'carros']
     for t, (cxp, cyp, ang) in sorted(PL.TORRES.items()):
         torre(t, X(cxp), Y(cyp), -ang, PL.PAVIMENTOS[t], gu)
         nomes.append('torre-%d' % t)
@@ -585,7 +590,11 @@ def build():
     r.objeto()
     lz = Geo('lazer')
     lazer(lz)
+    luzes(lz)
     lz.objeto()
+    mv = Geo('moveis')
+    moveis(mv)
+    mv.objeto()
     vg = Geo('vegetacao', ao=False)
     paisagem(vg)
     vg.objeto()

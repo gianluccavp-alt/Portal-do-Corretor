@@ -4,6 +4,11 @@ Fora do Blender, num venv com numpy e pillow:  python ipi_tex.py
   tex/vaga_drenante.jpg  uma vaga de piso drenante (faixas de concreto e grama), u = largura da vaga, v = fundo
   tex/janela_unidade.png janela de dormitorio em cinza claro (1 folha de vidro + 2 de veneziana, FAQ); e o mapa de
                          detalhe da malha "unidades": a cena multiplica pela cor do status (verde, vermelho, cinza)
+  tex/placa_conquista.jpg placa da guarita (perspectiva do acesso): fundo branco, moldura azul e o logo oficial do
+                         pack do Drive (tex/logo_conquista.png, "541.8_PACK LOGO ... V1F.png"), com DIRECIONAL e
+                         CLUBE IPIRANGA em azul-marinho para aparecerem no fundo branco
+  tex/vidro_guarita.jpg  vidro da guarita de dia (reflexo azulado) e tex/vidro_guarita_luz.jpg o mesmo vidro com a
+                         sala acesa (mapa de emissao: a cena acende a noite, como as janelas das torres)
 """
 import os
 import numpy as np
@@ -67,7 +72,44 @@ def janela_unidade():
     Image.fromarray((np.clip(rgb, 0, 1) * 255).astype(np.uint8)).save(os.path.join(TEX, 'janela_unidade.png'))
 
 
+
+
+def placa():
+    W, H = 1024, 448
+    im = Image.new('RGB', (W, H), (247, 247, 244))
+    px = np.asarray(im, np.float32)
+    b = 14
+    azul = np.array([86, 170, 226], np.float32)
+    px[:b, :] = azul; px[-b:, :] = azul; px[:, :b] = azul; px[:, -b:] = azul
+    logo = Image.open(os.path.join(TEX, 'logo_conquista.png')).convert('RGBA')
+    lw = int(W * 0.78)
+    logo = logo.resize((lw, int(logo.size[1] * lw / logo.size[0])), Image.LANCZOS)
+    L = np.asarray(logo, np.float32)
+    rgb, a = L[..., :3], L[..., 3:] / 255.0
+    branco = (rgb.min(axis=2) > 200)[..., None]
+    rgb = np.where(branco, np.array([28, 47, 92], np.float32), rgb)      # branco do logo -> azul-marinho
+    x0, y0 = (W - lw) // 2, (H - logo.size[1]) // 2
+    reg = px[y0:y0 + logo.size[1], x0:x0 + lw]
+    px[y0:y0 + logo.size[1], x0:x0 + lw] = reg * (1 - a) + rgb * a
+    Image.fromarray(px.clip(0, 255).astype(np.uint8)).save(os.path.join(TEX, 'placa_conquista.jpg'), quality=92)
+
+
+
+def vidro_guarita():
+    W, H = 128, 128
+    yy = np.linspace(0, 1, H)[:, None] * np.ones((1, W))
+    dia = np.stack([0.20 + 0.16 * yy, 0.26 + 0.17 * yy, 0.31 + 0.18 * yy], -1)
+    Image.fromarray((dia.clip(0, 1) * 255).astype(np.uint8)).save(os.path.join(TEX, 'vidro_guarita.jpg'), quality=90)
+    xx = np.linspace(-1, 1, W)[None, :] * np.ones((H, 1))
+    k = np.clip(1.0 - 0.35 * xx ** 2 - 0.5 * (1 - yy) ** 2, 0, 1)        # forro aceso, mais claro no alto
+    luz = np.stack([1.0 * k, 0.83 * k, 0.6 * k], -1) * 0.85
+    luz[int(H * 0.72):, :] *= 0.45                                          # bancada escura embaixo
+    Image.fromarray((luz.clip(0, 1) * 255).astype(np.uint8)).save(os.path.join(TEX, 'vidro_guarita_luz.jpg'), quality=90)
+
+
 if __name__ == '__main__':
     vaga()
     janela_unidade()
+    placa()
+    vidro_guarita()
     print('ok', os.listdir(TEX))
