@@ -110,6 +110,19 @@ CANTEIROS_PORTARIA = [                        # (retangulo px, especie, altura m
 SEBES_PORTARIA = [(1022, 468, 1060, 482), (1420, 468, 1458, 482)]   # sebes podadas em frente aos paineis (1,5 m)
 PALMEIRAS_PORTARIA = [(1192, 412), (1178, 446), (1284, 418), (1198, 575), (1262, 572), (1022, 428)]
 
+# postes do estacionamento (px): nos canteiros e faixas de grama junto das vagas, ~25 m entre si. O gerador encosta
+# cada um no gramado mais proximo (park_chao.json) para nao cair em vaga ou pista.
+POSTES_PATIO = (
+    [(228, y) for y in (620, 900, 1180, 1460, 1740, 2020, 2300)] +                       # oeste, junto do muro
+    [(2352, y) for y in (620, 900, 1180, 1460, 1740, 2020, 2300)] +                      # leste, junto do muro
+    [(x, 418) for x in (420, 720, 1820, 2120)] +                                         # vagas junto da avenida
+    [(x, 818) for x in (640, 900, 1700, 1960)] +                                         # frente das torres
+    [(582, y) for y in (1040, 1320, 1600)] + [(2002, y) for y in (1040, 1320, 1600)] +   # entre torres e vagas laterais
+    [(x, 1778) for x in (1000, 1300, 1560)] +                                            # atras da torre 3
+    [(x, round(2000 + (x - 600) * 100 / 1400)) for x in (560, 880, 1200, 1520, 1840, 2080)] +   # canteiro central sul
+    [(x, round(2345 + (x - 440) * 90 / 1880)) for x in (480, 820, 1160, 1500, 1840, 2180)]       # muro sul
+)
+
 # zonas onde a segmentacao nao entra (modelado a mao) e onde nao se procuram copas automaticamente
 ZONAS_A_MAO = [(1098, 822, 1645, 1265), (1005, 1265, 1645, 1405)]   # lazer: chao a mao (park_lazer.chao_lazer)
 SEM_ARVORE_AUTO = [

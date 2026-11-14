@@ -340,7 +340,7 @@ window.CITIES = [
         maquete: {
           botaoVisivel: true,
           simId: 'park',
-          modelo: 'assets/3d/village-park/park.glb?v=11',
+          modelo: 'assets/3d/village-park/park.glb?v=13',
           /* FAQ: T1 e T2 terreo ao 19o, T3 terreo ao 18o; no terreo o lugar do final 1 e o hall */
           grade: { torres: [1, 2, 3], andares: 20, finais: 8,
                    semUnidade: [{ andares: [0], finais: [1] }, { torres: [3], andarMin: 19 }] },
@@ -372,7 +372,8 @@ window.CITIES = [
             { id: 'minimarket',    nome: 'Minimarket',        pos: [11.6, 15, -15.5], alvo: [11.6, 0, -12.6] },
             { id: 'beauty',        nome: 'Beauty',            pos: [7.3, 14, -5.5],   alvo: [7.3, 0, -9.8] },
             { id: 'cowork',        nome: 'Coworking',         pos: [11.6, 14, -5.5],  alvo: [11.6, 0, -9.8] },
-            { id: 'churrasqueira', nome: 'Churrasqueira',     pos: [30, 12, -30],   alvo: [22.6, 0, -40] },
+            { id: 'churrasqueira', nome: 'Churrasqueira T1',  pos: [30, 12, -30],   alvo: [22.6, 0, -40] },
+            { id: 'churrasqueira-2', nome: 'Churrasqueira T2', pos: [-24, 12, 15],  alvo: [-34.3, 0, 5.4] },
             { id: 'club',          nome: 'Village Club',      pos: [38, 17, -2],    alvo: [38, 0, 11] },
             { id: 'crossfit',      nome: 'Crossfit',          pos: [15, 13, -3],    alvo: [20.5, 0, -13] },
             { id: 'petplace',      nome: 'Pet place',         pos: [-40, 12, -4],   alvo: [-49.5, 0, 5.5] },

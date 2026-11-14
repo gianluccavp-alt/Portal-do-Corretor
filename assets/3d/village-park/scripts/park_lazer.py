@@ -621,6 +621,35 @@ def _luzes_portaria(g, yb, xs):
         _poca(g, xc, y + 1.0, 1.6, 0.16)
 
 
+def _poste_patio(g, x, y, h=6.0):
+    """poste de estacionamento: haste escura e luminaria de braco duplo (a face de baixo acende a noite)"""
+    g.cil(x, y, 0.07, 0.0, h, 'ferro_escuro', seg=8, r2=0.05, tampa=False)
+    g.caixa(x - 0.75, x + 0.75, y - 0.05, y + 0.05, h - 0.06, h, 'ferro_escuro')
+    for dx in (-0.75, 0.75):
+        g.caixa(x + dx - 0.28, x + dx + 0.28, y - 0.12, y + 0.12, h - 0.12, h + 0.02, 'ferro_escuro', fundo='luz_poste')
+
+
+def _no_gramado(px, py, raio=45):
+    """ponto de gramado (px) mais proximo de (px, py), pelos retangulos de grama de park_chao.json"""
+    melhor, d_m = (px, py), 1e9
+    for x0, y0, x1, y1 in CHAO['grama']:
+        if x1 < px - raio or x0 > px + raio or y1 < py - raio or y0 > py + raio:
+            continue
+        qx, qy = min(max(px, x0 + 1), x1 - 1), min(max(py, y0 + 1), y1 - 1)
+        d = (qx - px) ** 2 + (qy - py) ** 2
+        if d < d_m:
+            melhor, d_m = (qx, qy), d
+    return melhor
+
+
+def postes_patio(g):
+    for px, py in PL.POSTES_PATIO:
+        qx, qy = _no_gramado(px, py)
+        x, y = X(qx), Y(qy)
+        _poste_patio(g, x, y)
+        _poca(g, x, y, 13.0, 0.06)
+
+
 def _entrada(g):
     yb = Y(PL.VIGA_PORTICO_PY)
     xo, xio, xil, xl = (X(v) for v in PL.PORTARIA_X_PX)
@@ -659,3 +688,4 @@ def lazer(g):
     x0, x1, y0, y1 = RM(PL.PET)
     _cerca(g, x0, x1, y0, y1, 1.2, mat='gradil_preto', passo=2.4, z=0.0)
     _entrada(g)
+    postes_patio(g)
