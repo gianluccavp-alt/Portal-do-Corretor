@@ -93,6 +93,35 @@ PORTICO = (1185, 460, 1275, 560)
 PORTOES = [(1060, 478, 1185, 492), (1275, 478, 1420, 492)]
 APOIO = (1545, 435, 1640, 480)
 RESERVATORIOS = [(1717, 460, 25), (268, 2325, 28)]                 # (cx, cy, raio) px
+# portaria como na perspectiva 03-portaria (book): dois porticos com viga cinza e pergolado escuro, paineis de
+# madeira nas pontas de fora (logo do Village Park no leste, sobre a saida; Direcional no oeste), pilares cinza na
+# ilha e guarita de madeira e vidro com pergolado. Paisagismo baixo (touceiras, sebes, palmeiras), sem copas.
+VIGA_PORTICO_PY = 490                       # eixo das vigas e dos portoes
+PORTARIA_X_PX = (1060, 1185, 1278, 1420)     # painel oeste, pilar oeste da ilha, pilar leste da ilha, painel leste
+PORTARIA_SEM_ARVORE = (1000, 340, 1470, 660)  # copas medidas aqui saem (eram sebes e palmeiras na implantacao)
+CANTEIROS_PORTARIA = [                        # (retangulo px, especie, altura m)
+    ((1168, 395, 1215, 458), 'touceira_verde', 0.75), ((1243, 395, 1292, 458), 'touceira_verde', 0.75),
+    ((1172, 400, 1210, 425), 'flores_laranja', 0.95), ((1250, 430, 1288, 455), 'flores_laranja', 0.95),
+    ((1166, 470, 1184, 555), 'touceira_clara', 0.6), ((1280, 470, 1296, 555), 'touceira_clara', 0.6),
+    ((1185, 562, 1278, 584), 'touceira_verde', 0.6), ((1205, 562, 1258, 580), 'flores_laranja', 0.85),
+    ((1015, 418, 1068, 464), 'touceira_verde', 0.6), ((1398, 420, 1452, 464), 'touceira_verde', 0.6),
+    ((1030, 425, 1060, 445), 'flores_laranja', 0.9), ((1405, 425, 1440, 445), 'flores_laranja', 0.9),
+]
+SEBES_PORTARIA = [(1022, 468, 1060, 482), (1420, 468, 1458, 482)]   # sebes podadas em frente aos paineis (1,5 m)
+PALMEIRAS_PORTARIA = [(1192, 412), (1178, 446), (1284, 418), (1198, 575), (1262, 572), (1022, 428)]
+
+# postes do estacionamento (px): nos canteiros e faixas de grama junto das vagas, ~25 m entre si. O gerador encosta
+# cada um no gramado mais proximo (park_chao.json) para nao cair em vaga ou pista.
+POSTES_PATIO = (
+    [(228, y) for y in (620, 900, 1180, 1460, 1740, 2020, 2300)] +                       # oeste, junto do muro
+    [(2352, y) for y in (620, 900, 1180, 1460, 1740, 2020, 2300)] +                      # leste, junto do muro
+    [(x, 418) for x in (420, 720, 1820, 2120)] +                                         # vagas junto da avenida
+    [(x, 818) for x in (640, 900, 1700, 1960)] +                                         # frente das torres
+    [(582, y) for y in (1040, 1320, 1600)] + [(2002, y) for y in (1040, 1320, 1600)] +   # entre torres e vagas laterais
+    [(x, 1778) for x in (1000, 1300, 1560)] +                                            # atras da torre 3
+    [(x, round(2000 + (x - 600) * 100 / 1400)) for x in (560, 880, 1200, 1520, 1840, 2080)] +   # canteiro central sul
+    [(x, round(2345 + (x - 440) * 90 / 1880)) for x in (480, 820, 1160, 1500, 1840, 2180)]       # muro sul
+)
 
 # zonas onde a segmentacao nao entra (modelado a mao) e onde nao se procuram copas automaticamente
 ZONAS_A_MAO = [(1098, 822, 1645, 1265), (1005, 1265, 1645, 1405)]   # lazer: chao a mao (park_lazer.chao_lazer)
