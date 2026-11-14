@@ -71,12 +71,12 @@ window.CITIES = [
         /* sol da manha na face +y das torres (finais 3 a 6), pela bussola da implantacao */
         solNascente: { default: [3, 4, 5, 6] },
         /* maquete 3D (maquete.html), gerada por assets/3d/alta-vista-mangara/scripts (Y para cima, metros, origem no
-           centro do terreno). Etapa 1: torres, implantacao, edificio garagem e grade; o lazer ainda em volumes simples. */
+           centro do terreno). Etapa 2: lazer mobiliado e sem teto, portaria com marquise e o menu de ambientes. */
         maquete: {
           // true = botao "Maquete 3D" na pagina do empreendimento (false = so por link direto: maquete.html?e=alta-vista-mangara)
           botaoVisivel: true,
           simId: 'alta-vista',
-          modelo: 'assets/3d/alta-vista-mangara/alta-vista.glb?v=2',
+          modelo: 'assets/3d/alta-vista-mangara/alta-vista.glb?v=4',
           /* FAQ: terreo ao 18o nas duas torres; no terreo o lugar dos finais 1 e 8 e o hall e o lazer */
           grade: { torres: [1, 2], andares: 19, finais: 8,
                    semUnidade: [{ andares: [0], finais: [1, 8] }] },
@@ -92,9 +92,22 @@ window.CITIES = [
             frente:    { pos: [10, 34, 128],   alvo: [0, 24, -10] },
             fundos:    { pos: [-6, 46, -125],  alvo: [0, 22, -10] },
             lazer:     { pos: [28, 36, 72],    alvo: [32, 0, 17] },
-            portaria:  { pos: [86, 10, 30],    alvo: [66, 3, 21] }
+            portaria:  { pos: [80, 9, 9],      alvo: [66.4, 2.5, 20.6] }
           },
-          ambientes: []
+          /* menu do botao Lazer: um angulo por ambiente (mesmas coordenadas das cameras) */
+          ambientes: [
+            { id: 'piscina',       nome: 'Piscina',             pos: [36, 15, 9],     alvo: [44, 0, 23.3] },
+            { id: 'salao',         nome: 'Salão de festas',     pos: [29.1, 15, 12.5], alvo: [29.1, 0, 21] },
+            { id: 'academia',      nome: 'Academia',            pos: [23, 12, 13],    alvo: [23.5, 0, 21] },
+            { id: 'wine',          nome: 'Wine lounge',         pos: [37, 10, 36],    alvo: [31, 0, 26.5] },
+            { id: 'churrasqueira', nome: 'Churrasqueira',       pos: [3, 13, 6.5],    alvo: [3, 0, 16.1] },
+            { id: 'piquenique',    nome: 'Piquenique',          pos: [-4, 9, 9],      alvo: [-1.5, 0, 16] },
+            { id: 'quadra',        nome: 'Quadra de areia',     pos: [11.8, 11, 11],  alvo: [11.8, 0, 19.6] },
+            { id: 'playground',    nome: 'Playground',          pos: [15, 12, 12.5],  alvo: [18.6, 0, 21.7] },
+            { id: 'petplace',      nome: 'Pet place',           pos: [58, 8, 31],     alvo: [63.7, 0, 37.7] },
+            { id: 'bikeshare',     nome: 'Bike sharing',        pos: [-33, 7, -5],    alvo: [-39.1, 1, 0.3] },
+            { id: 'garagem',       nome: 'Deck da garagem',     pos: [10, 17, -15],   alvo: [-6, 3, -31] }
+          ]
         },
         implantacao: { img: 'assets/img/alta-vista/plantas/implantacao.jpg', legenda: [] },
         plantas: [

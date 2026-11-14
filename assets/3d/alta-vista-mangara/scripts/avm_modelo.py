@@ -1,8 +1,9 @@
-# avm_modelo.py -- reconstroi do zero a cena do Alta Vista Mangara (maquete externa, etapa 1).
+# avm_modelo.py -- reconstroi do zero a cena do Alta Vista Mangara (maquete externa, etapa 2: lazer mobiliado e sem teto).
 # Roda DENTRO do Blender (run_all.py ou Blender -b --factory-startup -P run_all.py). Metros, Z para cima,
 # origem no centro do terreno (avm_planta.ORIGEM_PX). Modulos executados no mesmo namespace:
 #   avm_geo.py (geometria)  avm_patio.py (chao, vagas, deck da garagem, muros, ruas)  avm_lazer.py (lazer e apoio)
-#   avm_paisagem.py (arvores, palmeiras, carros)
+#   avm_paisagem.py (arvores, palmeiras, carros)  avm_moveis.py (pecas de mobiliario, vindas do Gaia)
+#   avm_ambientes.py (posicao dos moveis por ambiente e canteiros do lazer)
 # Medidas: avm_planta.py (px da implantacao), plantas tipo e FAQ da ficha tecnica.
 import bpy, bmesh, math, json, os, random
 import numpy as np
@@ -164,7 +165,7 @@ def materiais_torre():
     mat('vidro_porta', '#3a4a58', 0.08, metal=0.2)
     mat('luz_forro', '#fff4dc', 0.5)
     mat('ferragem', '#2a2b2e', 0.5, metal=0.4)
-    mat('ripado_claro', '#c79a6b', 0.7, img='ripado.jpg', tint=True, img_mean=0.82, uv=(1.0, 1.0))
+    mat('ripado_hall', '#c79a6b', 0.7, img='ripado.jpg', tint=True, img_mean=0.82, uv=(1.0, 1.0))
     mat('brise', '#5d6672', 0.6, img='gradil.png', tint=True, recorte=True, img_mean=1.0, uv=(0.5, 0.5))
 
 
@@ -470,6 +471,9 @@ MARCAS = json.load(open(TEXDIR + '/piso_marcas.json'))
 _carrega('avm_patio.py')
 _carrega('avm_paisagem.py')
 _carrega('avm_lazer.py')
+ATL = json.load(open(TEXDIR + '/atlas_lazer.json'))
+_carrega('avm_moveis.py')
+_carrega('avm_ambientes.py')
 
 # ------------------------------------------------------------------ main
 OBJETOS_EXPORTADOS = []
@@ -480,9 +484,9 @@ def build():
     MATS.clear(); IMAGENS.clear(); UVESC.clear()
     sc = bpy.context.scene
     sc.unit_settings.system = 'METRIC'
-    materiais_torre(); materiais_patio(); materiais_paisagem(); materiais_lazer()
+    materiais_torre(); materiais_patio(); materiais_paisagem(); materiais_lazer(); materiais_moveis()
     gc = Geo('guarda-corpo', ao=False)
-    nomes = ['unidades', 'guarda-corpo', 'entorno', 'entorno-rua', 'terreno', 'garagem', 'lazer', 'vegetacao', 'carros']
+    nomes = ['unidades', 'guarda-corpo', 'entorno', 'entorno-rua', 'terreno', 'garagem', 'lazer', 'moveis', 'vegetacao', 'carros']
     for t, (cxp, cyp) in sorted(PL.TORRES.items()):
         torre(t, X(cxp), Y(cyp), PL.PAVIMENTOS[t], gc)
         nomes.append('torre-%d' % t)
@@ -505,8 +509,12 @@ def build():
     lz = Geo('lazer')
     lazer(lz)
     lz.objeto()
+    mv = Geo('moveis')
+    moveis(mv)
+    mv.objeto()
     vg = Geo('vegetacao', ao=False)
     paisagem(vg)
+    paisagem_lazer(vg)
     vg.objeto()
     cr = Geo('carros', ao=False)
     carros(cr)
