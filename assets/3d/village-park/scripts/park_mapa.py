@@ -1,25 +1,33 @@
 #!/usr/bin/env python3
-"""park_mapa.py -- mede o chao do Village Park direto da implantacao (assets/img/village-park/plantas/implantacao.jpg,
-2600 x 2870 px, 0,079 m/px) e grava park_chao.json, lido pelo gerador no Blender.
+"""park_mapa.py -- monta o chao do Village Park e grava park_chao.json, lido pelo gerador no Blender.
 
-Fora do Blender, num venv com numpy e pillow:  python park_mapa.py [saida_conferencia.jpg]
+Fora do Blender, num venv com numpy, pillow e shapely:  python park_mapa.py [pasta_de_conferencia]
 
-O que sai (tudo em px da imagem; x para a direita, y para baixo):
-  asfalto / grama / passeio : retangulos (x0, y0, x1, y1) sem sobreposicao, da segmentacao por cor
-  guias                     : trechos da divisa asfalto-grama (x0, y0, x1, y1, lado de fora)
-  bordas_passeio            : trechos da divisa do passeio levantado
-  linhas                    : retangulos das faixas brancas pintadas no asfalto (vagas, zebras)
-  arvores                   : (tipo, x, y) pelas copas coloridas
-  carros                    : (x, y, giro) da lista a mao em park_planta.py (o chao embaixo e reconstruido)
-Zonas tratadas a mao (torres e lazer, em park_planta.py) ficam fora da segmentacao.
+O chao e desenhado a mao em park_chao_mao.py (poligonos em px da implantacao,
+assets/img/village-park/plantas/implantacao.jpg, 2600 x 2870 px, 0,079 m/px). Daqui sai, tudo em px da imagem
+(x para a direita, y para baixo):
+  tri_asfalto / tri_grama / tri_passeio : triangulos [x0, y0, x1, y1, x2, y2] sem sobreposicao
+  guias          : trechos da divisa asfalto-grama [x0, y0, x1, y1, nx, ny], (nx, ny) apontando para a grama
+  bordas_passeio : trechos da borda da calcada levantada [x0, y0, x1, y1, nx, ny], normal para fora
+  tri_faixas     : triangulos das faixas pintadas (vagas e faixas de pedestre), recortadas pelo asfalto
+  grama          : retangulos (x0, y0, x1, y1) do gramado, numa grade de 2 px (postes procuram o gramado aqui)
+  arvores        : (tipo, x, y) pelas copas coloridas da implantacao
+  carros         : (x, y, giro) da lista a mao em park_planta.py
+As faixas das vagas nao sao copiadas pixel a pixel: em cada fileira o passo e a fase das divisorias sao medidos
+no desenho e as linhas cobrem a fileira inteira (o desenho tem carros e copas por cima).
 """
-import json, os, sys
+import json, math, os, sys
 import numpy as np
 from PIL import Image, ImageDraw
+import shapely
+from shapely.geometry import Polygon, MultiPolygon, LineString, Point, box
+from shapely.ops import unary_union
+from shapely.prepared import prep
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, AQUI)
 import park_planta as P
+import park_chao_mao as M
 
 IMG = os.path.join(AQUI, '..', '..', '..', 'img', 'village-park', 'plantas', 'implantacao.jpg')
 im = Image.open(IMG).convert('RGB')
@@ -28,32 +36,8 @@ H, W = a.shape[:2]
 r_, g_, b_ = a[..., 0], a[..., 1], a[..., 2]
 mn = a.mean(2)
 sat = a.max(2) - a.min(2)
-
-# ------------------------------------------------------------------ classes por cor
+branco = (sat < 30) & (mn >= 200)
 DESC, ASF, GRAMA, CLARO = 0, 1, 2, 3
-branco = (sat < 28) & (mn >= 205)
-cl = np.zeros((H, W), np.uint8)
-cl[(sat < 16) & (mn > 98) & (mn < 146)] = ASF
-cl[(sat < 22) & (mn >= 146) & (mn < 205)] = CLARO
-cl[(g_ > r_ + 6) & (g_ > b_ + 12)] = GRAMA
-
-
-def poligono(pts):
-    m = Image.new('L', (W, H), 0)
-    ImageDraw.Draw(m).polygon([tuple(p) for p in pts], fill=1)
-    return np.asarray(m).astype(bool)
-
-
-def retangulos(rs):
-    m = np.zeros((H, W), bool)
-    for x0, y0, x1, y1 in rs:
-        m[int(y0):int(y1), int(x0):int(x1)] = True
-    return m
-
-
-area = poligono(P.TERRENO) | retangulos([P.AVENIDA])
-mao = retangulos(P.ZONAS_A_MAO)          # lazer modelado a mao (vazio na etapa 1)
-cl[~area] = DESC
 
 
 def caixa(m, r):
@@ -69,6 +53,94 @@ def desvio(v, r):
     return np.sqrt(np.maximum(m2 - m1 * m1, 0))
 
 
+def retangulos(rs):
+    m = np.zeros((H, W), bool)
+    for x0, y0, x1, y1 in rs:
+        m[int(y0):int(y1), int(x0):int(x1)] = True
+    return m
+
+
+# ------------------------------------------------------------------ geometria do chao (park_chao_mao.py)
+def _no_ref(ref, g):
+    if ref == 'img':
+        return g
+    return shapely.transform(g, lambda c: np.array([M.L(u, v) for u, v in c]))
+
+
+def _ret_redondo(x0, y0, x1, y1, rr):
+    rr = min(rr, (x1 - x0) / 2 - 0.01, (y1 - y0) / 2 - 0.01)
+    return box(x0 + rr, y0 + rr, x1 - rr, y1 - rr).buffer(rr, quad_segs=6)
+
+
+def forma(ref, f):
+    t = f[0]
+    if t == 'r':
+        g = box(*f[1:5])
+    elif t == 'rr':
+        g = _ret_redondo(*f[1:])
+    elif t == 'q':
+        x0, y0, x1, y1, cx, cy, rr = f[1:]
+        g = box(x0, y0, x1, y1).intersection(Point(cx, cy).buffer(rr, quad_segs=16))
+    elif t == 'arco':
+        cx, cy, r0, r1, poli = f[1:]
+        g = Point(cx, cy).buffer(r1, quad_segs=24)
+        if r0:
+            g = g.difference(Point(cx, cy).buffer(r0, quad_segs=24))
+        g = g.intersection(Polygon(poli))
+    else:
+        g = Polygon(f[1])
+    return _no_ref(ref, g)
+
+
+def uniao(lista):
+    return unary_union([forma(ref, f) for ref, f in lista])
+
+
+def _limpa(g):
+    g = shapely.set_precision(g.buffer(0), 0.05)
+    g = g.buffer(0.3, join_style=2).buffer(-0.6, join_style=2).buffer(0.3, join_style=2)   # tira lascas < 0,6 px
+    return g
+
+
+def calcadas_torres():
+    out = []
+    for (cx, cy), giro in P.TORRES.values():
+        mx_, my_ = (98, 278) if giro in (0.0, 180.0) else (278, 98)
+        out.append(box(cx - mx_, cy - my_, cx + mx_, cy + my_))
+    return unary_union(out)
+
+
+terreno = Polygon(P.TERRENO)
+regiao = unary_union([terreno, box(*P.AVENIDA)]).difference(unary_union([box(*r) for r in P.ZONAS_A_MAO]))
+arcos = unary_union([Point(c).buffer(M.R_ARCO[1], quad_segs=24).intersection(Polygon(bx)) for c, bx in M.ARCOS])
+# limpa cada classe uma vez e so depois recorta (as divisas ficam com os mesmos vertices dos dois lados)
+G_PAS = _limpa(uniao(M.PASSEIO).union(calcadas_torres()).intersection(regiao))
+G_ASF = _limpa(uniao(M.ASFALTO).difference(uniao(M.CANTEIROS)).difference(arcos).intersection(regiao))
+G_ASF = G_ASF.difference(G_PAS)
+
+
+def raster(g, val, cl):
+    """Pinta o poligono (ou multipoligono, com furos) no mapa de classes."""
+    m = Image.new('L', (W, H), 0)
+    d = ImageDraw.Draw(m)
+    for p in getattr(g, 'geoms', [g]):
+        if p.is_empty:
+            continue
+        d.polygon([tuple(c) for c in p.exterior.coords], fill=1)
+        for it in p.interiors:
+            d.polygon([tuple(c) for c in it.coords], fill=0)
+    cl[np.asarray(m).astype(bool)] = val
+
+
+area = np.zeros((H, W), np.uint8)
+raster(regiao, 1, area)
+area = area.astype(bool)
+cl = np.zeros((H, W), np.uint8)
+cl[area] = GRAMA
+raster(G_ASF, ASF, cl)
+raster(G_PAS, CLARO, cl)
+cl[~area] = DESC
+
 # ------------------------------------------------------------------ copas (cores do paisagismo da implantacao)
 lum = mn.astype(np.float64)
 textura = desvio(lum, 3)
@@ -80,134 +152,117 @@ COPAS = {
     'verde': (g_ >= r_) & (g_ > b_) & (lum < 62) & (sat > 12),
     'branca': (mn > 165) & (sat < 36) & (textura > 16),
 }
-copa = np.zeros((H, W), bool)
-for m in COPAS.values():
-    copa |= m
-copa &= caixa(copa, 4) > 45          # so manchas cheias: tira faixa pintada e borda de guia
-copa = caixa(copa, 4) > 3             # e a franja de sombra/brilho em volta da copa
-cl[copa] = DESC
-
-# ------------------------------------------------------------------ carros: manchas de cor ou brilho sobre o asfalto
-def corridas(mask, eixo, minimo):
-    """Pixels que pertencem a corridas retas de pelo menos `minimo` px ao longo do eixo."""
-    m = mask if eixo == 1 else mask.T
-    out = np.zeros_like(m)
-    for i in range(m.shape[0]):
-        d = np.diff(np.concatenate([[0], m[i].astype(np.int8), [0]]))
-        for s, e in zip(np.nonzero(d == 1)[0], np.nonzero(d == -1)[0]):
-            if e - s >= minimo:
-                out[i, s:e] = True
-    return out if eixo == 1 else out.T
 
 
-linha0 = corridas(branco, 1, 12) | corridas(branco, 0, 12)
-linha0 &= caixa(linha0, 3) < 30          # faixas finas (carro branco e cheio)
-linha0 = caixa(linha0, 2) > 0
-carros, mancha_carro = [list(c) for c in P.CARROS], np.zeros((H, W), bool)
-for x, y, giro in carros:
-    w2, h2 = (32, 15) if giro == 0 else (15, 32)
-    mancha_carro[y - h2:y + h2, x - w2:x + w2] = True
-cl[mancha_carro & (cl != GRAMA)] = DESC
+# ------------------------------------------------------------------ faixas pintadas
+def _amostra(ref, aa, bb, eixo):
+    """Mascara de branco amostrada numa grade (aa ao longo da fileira, bb na profundidade) -> [len(bb), len(aa)]."""
+    A_, B_ = np.meshgrid(aa, bb)
+    if eixo == 'v':
+        U, V = A_, B_
+    else:
+        U, V = B_, A_
+    if ref == 'L':
+        X_ = M.ORIGEM_L[0] + U * M._C - V * M._S
+        Y_ = M.ORIGEM_L[1] + U * M._S + V * M._C
+    else:
+        X_, Y_ = U, V
+    xi = np.clip(np.round(X_).astype(int), 0, W - 1)
+    yi = np.clip(np.round(Y_).astype(int), 0, H - 1)
+    return branco[yi, xi]
 
 
-def preencher(cl, alvo):
-    """Pixels desconhecidos herdam a classe da vizinhanca (dilatacoes sucessivas: copas, carros, textos, faixas)."""
-    cl = cl.copy()
-    for _ in range(120):
-        falta = (cl == DESC) & alvo
-        if not falta.any():
-            break
-        cont = np.stack([caixa(cl == k, 2) for k in (ASF, GRAMA, CLARO)])
-        melhor = cont.argmax(0) + 1
-        tem = cont.max(0) > 0
-        cl[falta & tem] = melhor[falta & tem]
-    return cl
+def _passo_fase(perfil, aa, pmin, pmax):
+    """Melhor (passo, fase) para divisorias regulares: soma do perfil nas posicoes fase + k * passo."""
+    melhor = (-1, None, None)
+    da = aa[1] - aa[0]
+    suave = np.convolve(perfil, np.ones(3) / 3, 'same')
+    for p in np.arange(pmin, pmax + 0.01, 0.1):
+        for f in np.arange(0, p, 0.5):
+            pos = np.arange(aa[0] + f, aa[-1] + 0.01, p)
+            idx = np.clip(np.round((pos - aa[0]) / da).astype(int), 0, len(aa) - 1)
+            sc = suave[idx].mean()
+            if sc > melhor[0]:
+                melhor = (sc, p, f)
+    return melhor
 
 
-def _ultimo(cl, eixo, rev):
-    """Para cada pixel: classe e distancia do ultimo pixel conhecido ao longo do eixo (rev = do fim para o inicio)."""
-    c = cl if eixo == 1 else cl.T
-    if rev:
-        c = c[:, ::-1]
-    hh, ww = c.shape
-    idx = np.where(c != DESC, np.arange(ww)[None, :], -1)
-    idx = np.maximum.accumulate(idx, axis=1)
-    cls = np.take_along_axis(c, np.maximum(idx, 0), 1)
-    cls[idx < 0] = DESC
-    dist = np.where(idx < 0, 10 ** 6, np.arange(ww)[None, :] - idx)
-    if rev:
-        cls, dist = cls[:, ::-1], dist[:, ::-1]
-    return (cls, dist) if eixo == 1 else (cls.T, dist.T)
+LARG = 1.6     # largura da faixa pintada, px (~13 cm)
 
 
-def preencher_cruz(cl, alvo, alcance=24):
-    """Copa sobre calcada reta: se os dois lados na horizontal (ou na vertical) concordam, a classe atravessa
-    a copa em linha reta. Reconstroi bordas retilineas melhor que a dilatacao."""
-    cl = cl.copy()
-    falta = (cl == DESC) & alvo
-    (le, dle), (ri, dri) = _ultimo(cl, 1, False), _ultimo(cl, 1, True)
-    (up, dup), (dn, ddn) = _ultimo(cl, 0, False), _ultimo(cl, 0, True)
-    h_ok = (le == ri) & (le != DESC) & (dle + dri < 2 * alcance)
-    v_ok = (up == dn) & (up != DESC) & (dup + ddn < 2 * alcance)
-    # quando os dois eixos concordam com classes diferentes, vale o vao mais curto
-    usa_h = h_ok & (~v_ok | (dle + dri <= dup + ddn))
-    usa_v = v_ok & ~usa_h
-    cl[falta & usa_h] = le[falta & usa_h]
-    cl[falta & usa_v] = up[falta & usa_v]
-    return cl
+def _quad(ref, eixo, a0, a1, b0, b1):
+    """Retangulo no referencial da fileira -> 4 cantos na imagem (anti-horario na imagem)."""
+    if eixo == 'v':
+        cs = [(a0, b0), (a1, b0), (a1, b1), (a0, b1)]
+    else:
+        cs = [(b0, a0), (b1, a0), (b1, a1), (b0, a1)]
+    if ref == 'L':
+        cs = [M.L(u, v) for u, v in cs]
+    return [round(c, 2) for p in cs for c in p]
 
 
-def moda(cl, r, alvo):
-    cont = np.stack([caixa(cl == k, r) for k in (ASF, GRAMA, CLARO)])
-    out = cl.copy()
-    out[alvo] = (cont.argmax(0) + 1)[alvo]
+def fileira(ref, ret, eixo, pmin, pmax):
+    x0, y0, x1, y1 = ret
+    a0, a1, b0, b1 = (x0, x1, y0, y1) if eixo == 'v' else (y0, y1, x0, x1)
+    aa = np.arange(a0, a1 + 0.01, 0.5)
+    prof = b1 - b0
+    bb = np.arange(b0 + prof * 0.2, b1 - prof * 0.2, 1.0)
+    perfil = _amostra(ref, aa, bb, eixo).mean(0)
+    sc, p, f = _passo_fase(perfil, aa, pmin, pmax)
+    out = []
+    if sc < (0.05 if pmax < 20 else 0.15):          # fileira sem divisorias legiveis no desenho
+        return out, (round(p, 1), round(sc, 2), 'descartada')
+    for pos in np.arange(a0 + f, a1 + 0.01, p):
+        if pos < a0 - 0.5 or pos > a1 + 0.5:
+            continue
+        out.append(_quad(ref, eixo, pos - LARG / 2, pos + LARG / 2, b0, b1))
+    # linhas paralelas (fundo, meio e frente): fracao de branco ao longo da fileira, fora das divisorias
+    bb2 = np.arange(b0 - 3, b1 + 3.01, 0.5)
+    q = _amostra(ref, aa, bb2, eixo).mean(1)
+    linhas = []
+    i = 0
+    while i < len(bb2):
+        if q[i] > 0.4:
+            j = i
+            while j < len(bb2) and q[j] > 0.4:
+                j += 1
+            linhas.append((bb2[i] + bb2[j - 1]) / 2)
+            i = j
+        else:
+            i += 1
+    for bpos in linhas:
+        out.append(_quad(ref, eixo, a0, a1, bpos - LARG / 2, bpos + LARG / 2))
+    return out, (round(p, 1), round(sc, 2), [round(v, 1) for v in linhas])
+
+
+def zebra(ref, ret, dirc, larg=4.0):
+    x0, y0, x1, y1 = ret
+    out = []
+    if dirc == 'x':
+        k = x0
+        while k + larg <= x1 + 0.1:
+            out.append(_quad(ref, 'v', k, k + larg, y0, y1))
+            k += 2 * larg
+    else:
+        k = y0
+        while k + larg <= y1 + 0.1:
+            out.append(_quad(ref, 'v', x0, x1, k, k + larg))
+            k += 2 * larg
     return out
 
 
-def componentes_pequenos(m, minimo, k=4):
-    """Mascara (resolucao cheia) das manchas de m com menos de `minimo` px (rotulagem numa grade de k px)."""
-    hh, ww = H // k, W // k
-    g = m[:hh * k, :ww * k].reshape(hh, k, ww, k).mean((1, 3)) > 0.5
-    rot = np.zeros((hh, ww), np.int32)
-    peq = np.zeros((hh, ww), bool)
-    n = 0
-    for y0, x0 in zip(*np.nonzero(g)):
-        if rot[y0, x0]:
-            continue
-        n += 1
-        pilha, cel_ = [(y0, x0)], []
-        rot[y0, x0] = n
-        while pilha:
-            y, x = pilha.pop()
-            cel_.append((y, x))
-            for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                yy, xx = y + dy, x + dx
-                if 0 <= yy < hh and 0 <= xx < ww and g[yy, xx] and not rot[yy, xx]:
-                    rot[yy, xx] = n
-                    pilha.append((yy, xx))
-        if len(cel_) * k * k < minimo:
-            for y, x in cel_:
-                peq[y, x] = True
-    out = np.zeros((H, W), bool)
-    out[:hh * k, :ww * k] = np.repeat(np.repeat(peq, k, 0), k, 1)
-    return out & m
+faixas, relatorio = [], []
+for fl in M.FILEIRAS:
+    q, info = fileira(*fl)
+    faixas += q
+    relatorio.append((fl[0], fl[1], info))
+for ref, ret, dirc in M.ZEBRAS:
+    faixas += zebra(ref, ret, dirc)
+# so dentro do asfalto (nada de faixa boiando sobre canteiro ou calcada)
+G_FAIXAS = unary_union([Polygon([(q[i], q[i + 1]) for i in range(0, 8, 2)]) for q in faixas]).intersection(G_ASF)
 
-
-cl = preencher_cruz(cl, area)
-cl = preencher(cl, area)
-for k_, minimo in ((ASF, 2500), (CLARO, 2500), (GRAMA, 500)):     # sombra de copa, carro claro, gramadinho perdido
-    cl[componentes_pequenos(cl == k_, minimo)] = DESC
-cl = preencher_cruz(cl, area)
-cl = preencher(cl, area)
-cl = moda(cl, 5, area)          # 0,9 m: tira guia pintada, sombra, carro esquecido e serrilhado da imagem
-cl = moda(cl, 2, area)
-# calcada em volta das torres (a faixa escura da implantacao e a sombra da platibanda)
-for (cx, cy), giro in P.TORRES.values():
-    mx_, my_ = (98, 278) if giro in (0.0, 180.0) else (278, 98)
-    cl[int(cy - my_):int(cy + my_), int(cx - mx_):int(cx + mx_)] = CLARO
-cl[~area] = DESC
-
-# ------------------------------------------------------------------ retangulos e divisas (grade de 2 px)
+# ------------------------------------------------------------------ arvores (copas)
+saida = {'escala_m_px': P.S_PX}
 C = 2
 
 
@@ -217,7 +272,7 @@ def reduz(m):
 
 
 def decompor(m):
-    abertos, saida = {}, []
+    abertos, out = {}, []
     for y in range(m.shape[0] + 1):
         corr = set()
         if y < m.shape[0] and m[y].any():
@@ -225,70 +280,35 @@ def decompor(m):
             corr = set(zip(np.nonzero(d == 1)[0].tolist(), np.nonzero(d == -1)[0].tolist()))
         for c in list(abertos):
             if c not in corr:
-                saida.append([c[0] * C, abertos.pop(c) * C, c[1] * C, y * C])
+                out.append([c[0] * C, abertos.pop(c) * C, c[1] * C, y * C])
         for c in corr:
             abertos.setdefault(c, y)
-    return saida
+    return out
 
 
-def bordas(m, viz=None):
-    """Divisa de m em trechos (x0, y0, x1, y1, lado de fora). viz: so onde o lado de fora pertence a viz."""
-    seg = []
-    hh, ww = m.shape
-    pm = np.pad(m, 1)
-    pv = np.pad(viz if viz is not None else np.ones_like(m), 1)
-    # horizontais: entre linha y-1 e y
-    for y in range(hh + 1):
-        cima, baixo = pm[y, 1:-1], pm[y + 1, 1:-1]
-        for lado, ok in (('n', baixo & ~cima & pv[y, 1:-1]), ('s', cima & ~baixo & pv[y + 1, 1:-1])):
-            d = np.diff(np.concatenate([[0], ok.astype(np.int8), [0]]))
-            for i0, i1 in zip(np.nonzero(d == 1)[0], np.nonzero(d == -1)[0]):
-                seg.append([int(i0) * C, y * C, int(i1) * C, y * C, lado])
-    for x in range(ww + 1):
-        esq, dir_ = pm[1:-1, x], pm[1:-1, x + 1]
-        for lado, ok in (('o', dir_ & ~esq & pv[1:-1, x]), ('l', esq & ~dir_ & pv[1:-1, x + 1])):
-            d = np.diff(np.concatenate([[0], ok.astype(np.int8), [0]]))
-            for i0, i1 in zip(np.nonzero(d == 1)[0], np.nonzero(d == -1)[0]):
-                seg.append([x * C, int(i0) * C, x * C, int(i1) * C, lado])
-    return seg
+dq = Image.new('L', (W, H), 0)
+for q in faixas:
+    ImageDraw.Draw(dq).polygon([(q[i], q[i + 1]) for i in range(0, 8, 2)], fill=1)
+lin = np.asarray(dq).astype(bool)
 
-
-livre = area & ~mao
-saida = {'escala_m_px': P.S_PX, 'grade_px': C}
-
-# ------------------------------------------------------------------ faixas brancas no asfalto
-asf_viz = caixa(cl == ASF, 4) > 30
-
-
-bw = branco & asf_viz & livre & ~copa & ~retangulos([P.AVENIDA])
-lin = corridas(bw, 1, 12) | corridas(bw, 0, 12)
-# linhas pintadas sao finas: a espessura na direcao transversal nao passa de 4 px
-fino = caixa(lin, 3) < 30
-lin &= fino | corridas(bw, 1, 40) | corridas(bw, 0, 40)
-C1 = C
-C = 1
-saida['linhas'] = decompor(lin)
-C = C1
-
-# ------------------------------------------------------------------ arvores (copas)
 cel = 12
 cand = []
 for tipo, m in COPAS.items():
     m = m & area & ~retangulos(P.SEM_ARVORE_AUTO)
     if tipo == 'branca':
-        m &= ~(caixa(lin, 8) > 0)
+        m &= ~(caixa(lin | branco & (cl == ASF), 8) > 0)
     hh, ww = H // cel, W // cel
     fr = m[:hh * cel, :ww * cel].reshape(hh, cel, ww, cel).mean((1, 3))
     lim = 0.6 if tipo == 'branca' else 0.5 if tipo == 'oliva' else 0.36
     for cy, cx in zip(*np.nonzero(fr > lim)):
         cand.append((float(fr[cy, cx]), tipo, int((cx + 0.5) * cel), int((cy + 0.5) * cel)))
 cand.sort(key=lambda t: -t[0])
-ocupado = reduz(cl == ASF)
-arv, covas = [], []
+ocupado = reduz(cl == ASF)       # o tronco fica na grama ou na calcada, nunca no asfalto
+arv = []
 for sc, tipo, px, py in cand:
     if ocupado[min(py // C, ocupado.shape[0] - 1), min(px // C, ocupado.shape[1] - 1)]:
         ok = None
-        for rr in range(3, 13, 3):          # copa na borda do canteiro: o tronco vai para a grama ao lado
+        for rr in range(3, 16, 3):          # copa na borda do canteiro: o tronco vai para a grama ao lado
             for dx, dy in ((rr, 0), (-rr, 0), (0, rr), (0, -rr)):
                 qx, qy = px + dx, py + dy
                 if 0 <= qy < H and 0 <= qx < W and not ocupado[qy // C, qx // C] and area[qy, qx]:
@@ -296,51 +316,97 @@ for sc, tipo, px, py in cand:
                     break
             if ok:
                 break
-        if ok:
-            px, py = ok
-        else:
-            covas.append((px, py))          # canteiro estreito sumiu sob as copas: devolve a grama
+        if not ok:
+            continue                        # copa no meio do asfalto (carro, sombra): sem arvore
+        px, py = ok
     if any((px - q[1]) ** 2 + (py - q[2]) ** 2 < 30 ** 2 for q in arv):
         continue
     arv.append((tipo, px, py))
-for px, py in covas:
-    r = 13
-    y0, y1, x0, x1 = max(0, py - r), min(H, py + r + 1), max(0, px - r), min(W, px + r + 1)
-    gy, gx = np.ogrid[y0:y1, x0:x1]
-    disco = (gy - py) ** 2 + (gx - px) ** 2 <= r * r
-    sub = cl[y0:y1, x0:x1]
-    sub[disco & (sub == ASF)] = GRAMA
-livre = area & ~mao
-m_asf, m_gr, m_pas = reduz((cl == ASF) & livre), reduz((cl == GRAMA) & livre), reduz((cl == CLARO) & livre)
-m_mao = reduz(mao & area)
-saida.update({
-    'asfalto': decompor(m_asf), 'grama': decompor(m_gr), 'passeio': decompor(m_pas),
-    'guias': bordas(m_asf, m_gr | m_mao),
-    'bordas_passeio': bordas(m_pas, m_asf | m_gr | m_mao),
-})
+G_GRA = regiao.difference(G_ASF).difference(G_PAS)
+G_GRA = MultiPolygon([p for p in getattr(G_GRA, 'geoms', [G_GRA]) if p.geom_type == 'Polygon' and p.area > 2])
 
-saida['arvores'] = arv
-saida['carros'] = carros
+
+# ------------------------------------------------------------------ triangulos, guias e bordas
+def triangulos(g):
+    out = []
+    for p in getattr(g, 'geoms', [g]):
+        if p.is_empty or p.area < 0.05:
+            continue
+        for t in shapely.constrained_delaunay_triangles(p).geoms:
+            cs = list(t.exterior.coords)[:3]
+            out.append([round(v, 2) for c in cs for v in c])
+    return out
+
+
+def _segmentos(linhas):
+    for ln in getattr(linhas, 'geoms', [linhas]):
+        if ln.geom_type == 'LineString':
+            cs = list(ln.coords)
+            for i in range(len(cs) - 1):
+                yield cs[i], cs[i + 1]
+        elif hasattr(ln, 'geoms'):
+            yield from _segmentos(ln)
+
+
+def divisa(g_dentro, g_lado=None):
+    """Trechos da borda de g_dentro que encostam em g_lado; normal apontando para g_lado (ou para fora)."""
+    linhas = g_dentro.boundary.intersection(g_lado.boundary) if g_lado is not None else g_dentro.boundary
+    pd = prep(g_dentro)
+    out = []
+    for (x0, y0), (x1, y1) in _segmentos(linhas):
+        L_ = math.hypot(x1 - x0, y1 - y0)
+        if L_ < 0.2:
+            continue
+        nx, ny = -(y1 - y0) / L_, (x1 - x0) / L_
+        mx, my = (x0 + x1) / 2, (y0 + y1) / 2
+        if pd.contains(Point(mx + nx * 0.3, my + ny * 0.3)):
+            nx, ny = -nx, -ny
+        out.append([round(x0, 2), round(y0, 2), round(x1, 2), round(y1, 2), round(nx, 4), round(ny, 4)])
+    return out
+
+
+saida.update({
+    'tri_asfalto': triangulos(G_ASF),
+    'tri_grama': triangulos(G_GRA),
+    'tri_passeio': triangulos(G_PAS),
+    'guias': divisa(G_ASF, G_GRA),
+    'bordas_passeio': divisa(G_PAS),
+    'tri_faixas': triangulos(G_FAIXAS),
+    'grama': decompor(reduz((cl == GRAMA) & area)),
+    'arvores': arv,
+    'carros': [list(c) for c in P.CARROS],
+})
 
 json.dump(saida, open(os.path.join(AQUI, 'park_chao.json'), 'w'), separators=(',', ':'))
 print({k: len(v) for k, v in saida.items() if isinstance(v, list)})
 
 # ------------------------------------------------------------------ conferencia visual
 if len(sys.argv) > 1:
-    pal = np.array([[255, 255, 255], [70, 70, 76], [70, 150, 60], [205, 203, 195]], np.uint8)
-    vis_ = Image.fromarray(pal[cl])
-    d = ImageDraw.Draw(vis_, 'RGBA')
-    for x0, y0, x1, y1 in saida['linhas']:
-        d.rectangle((x0, y0, x1 - 1, y1 - 1), fill=(255, 255, 255, 255))
-    for x0, y0, x1, y1, _l in saida['guias']:
-        d.line((x0, y0, x1, y1), fill=(255, 200, 0, 255), width=1)
-    for r in P.ZONAS_A_MAO:
-        d.rectangle(r, outline=(255, 0, 255, 255), width=3)
+    pasta = sys.argv[1]
+    os.makedirs(pasta, exist_ok=True)
+    with open(os.path.join(pasta, 'fileiras.txt'), 'w') as fo:
+        for ref, ret, info in relatorio:
+            fo.write(f'{ref} {ret} passo/score/paralelas {info}\n')
+    base = im.copy()
+    ov = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(ov)
+    for g, cor in ((G_GRA, (40, 200, 40, 70)), (G_ASF, (40, 40, 60, 90)), (G_PAS, (255, 160, 0, 110))):
+        for p in getattr(g, 'geoms', [g]):
+            if p.is_empty:
+                continue
+            d.polygon([tuple(c) for c in p.exterior.coords], fill=cor, outline=(255, 0, 255, 255))
+            for it in p.interiors:
+                d.polygon([tuple(c) for c in it.coords], outline=(255, 0, 255, 255))
+    for q in faixas:
+        d.polygon([(q[i], q[i + 1]) for i in range(0, 8, 2)], fill=(255, 0, 0, 230))
     for t, x, y in arv:
-        c = {'rosa': (230, 80, 170), 'amarela': (250, 220, 0), 'verde': (0, 90, 0), 'branca': (240, 240, 255),
-             'roxa': (140, 70, 160), 'oliva': (160, 160, 60)}[t]
-        d.ellipse((x - 9, y - 9, x + 9, y + 9), fill=c + (255,), outline=(0, 0, 0, 255))
-    for x, y, gr in carros:
-        w2, h2 = (28, 13) if gr == 0 else (13, 28)
-        d.rectangle((x - w2, y - h2, x + w2, y + h2), outline=(255, 0, 0, 255), width=2)
-    vis_.save(sys.argv[1], quality=88)
+        d.ellipse((x - 5, y - 5, x + 5, y + 5), outline=(0, 0, 255, 255), width=2)
+    Image.alpha_composite(base.convert('RGBA'), ov).convert('RGB').save(os.path.join(pasta, 'sobreposto.png'))
+    pal = np.array([[255, 255, 255], [70, 70, 76], [70, 150, 60], [205, 203, 195]], np.uint8)
+    vis = Image.fromarray(pal[cl])
+    dv = ImageDraw.Draw(vis)
+    for q in faixas:
+        dv.polygon([(q[i], q[i + 1]) for i in range(0, 8, 2)], fill=(255, 255, 255))
+    for x0, y0, x1, y1, nx, ny in saida['guias']:
+        dv.line((x0, y0, x1, y1), fill=(255, 200, 0), width=1)
+    vis.save(os.path.join(pasta, 'chao.png'))

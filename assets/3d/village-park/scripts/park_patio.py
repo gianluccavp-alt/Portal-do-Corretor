@@ -1,4 +1,4 @@
-# park_patio.py -- chao do condominio a partir de park_chao.json (segmentacao da implantacao por park_mapa.py):
+# park_patio.py -- chao do condominio a partir de park_chao.json (park_mapa.py, poligonos de park_chao_mao.py):
 # grama, asfalto com guia, passeios levantados com meio-fio, faixas pintadas, avenida e muros de divisa.
 # Executado por park_modelo.py dentro do Blender.
 import math
@@ -16,32 +16,52 @@ def _ret(g, r, z, mat):
     g.piso(X(x0), X(x1), Y(y1), Y(y0), z, mat)
 
 
+def _tri(g, t, z, mat):
+    """Triangulo em px virado para cima (a imagem tem y para baixo: o sentido inverte ao passar para metros)."""
+    p = [(X(t[0]), Y(t[1]), z), (X(t[2]), Y(t[3]), z), (X(t[4]), Y(t[5]), z)]
+    if (p[1][0] - p[0][0]) * (p[2][1] - p[0][1]) - (p[1][1] - p[0][1]) * (p[2][0] - p[0][0]) < 0:
+        p.reverse()
+    g.face(p, mat)
+
+
+def _parede(g, a, b, z0, z1, n, mat):
+    """Face vertical de a a b (metros) voltada para a normal n (metros, no plano)."""
+    cs = [(a[0], a[1], z0), (b[0], b[1], z0), (b[0], b[1], z1), (a[0], a[1], z1)]
+    # normal de (b - a) x z: (dy, -dx)
+    if (b[1] - a[1]) * n[0] - (b[0] - a[0]) * n[1] < 0:
+        cs.reverse()
+    g.face(cs, mat)
+
+
+def _trecho(s):
+    """[x0, y0, x1, y1, nx, ny] em px -> pontos e normal em metros."""
+    a, b = (X(s[0]), Y(s[1])), (X(s[2]), Y(s[3]))
+    return a, b, (s[4], -s[5])
+
+
 def chao(g):
-    for r in CHAO['grama']:
-        _ret(g, r, Z_GRAMA, 'grama')
-    for r in CHAO['asfalto']:
-        _ret(g, r, Z_ASF, 'asfalto')
-    for r in CHAO['passeio']:
-        _ret(g, r, Z_PASSEIO, 'concreto')
+    for t in CHAO['tri_grama']:
+        _tri(g, t, Z_GRAMA, 'grama')
+    for t in CHAO['tri_asfalto']:
+        _tri(g, t, Z_ASF, 'asfalto')
+    for t in CHAO['tri_passeio']:
+        _tri(g, t, Z_PASSEIO, 'concreto')
+    for t in CHAO['tri_faixas']:
+        _tri(g, t, Z_LINHA, 'faixa')
     # meio-fio: lateral do passeio levantado
-    for x0, y0, x1, y1, lado in CHAO['bordas_passeio']:
-        if lado in 'ns':
-            _face_y(g, Y(y0), X(x0), X(x1), 0.0, Z_PASSEIO, 'meio_fio', 1 if lado == 'n' else -1)
-        else:
-            _face_x(g, X(x0), Y(y0), Y(y1), 0.0, Z_PASSEIO, 'meio_fio', 1 if lado == 'l' else -1)
-    # guia entre o asfalto e a grama (do lado da grama)
-    for x0, y0, x1, y1, lado in CHAO['guias']:
-        if lado == 'n':
-            g.caixa(X(x0), X(x1), Y(y0), Y(y0) + E_GUIA, 0.0, Z_PASSEIO, 'meio_fio')
-        elif lado == 's':
-            g.caixa(X(x0), X(x1), Y(y0) - E_GUIA, Y(y0), 0.0, Z_PASSEIO, 'meio_fio')
-        elif lado == 'o':
-            g.caixa(X(x0) - E_GUIA, X(x0), Y(y1), Y(y0), 0.0, Z_PASSEIO, 'meio_fio')
-        else:
-            g.caixa(X(x0), X(x0) + E_GUIA, Y(y1), Y(y0), 0.0, Z_PASSEIO, 'meio_fio')
-    # faixas pintadas (vagas, zebras, PCD)
-    for r in CHAO['linhas']:
-        _ret(g, r, Z_LINHA, 'faixa')
+    for s in CHAO['bordas_passeio']:
+        a, b, n = _trecho(s)
+        _parede(g, a, b, 0.0, Z_PASSEIO, n, 'meio_fio')
+    # guia entre o asfalto e a grama, do lado da grama: topo, face para o asfalto e face para a grama
+    for s in CHAO['guias']:
+        a, b, n = _trecho(s)
+        a2, b2 = (a[0] + n[0] * E_GUIA, a[1] + n[1] * E_GUIA), (b[0] + n[0] * E_GUIA, b[1] + n[1] * E_GUIA)
+        topo = [(a[0], a[1], Z_PASSEIO), (b[0], b[1], Z_PASSEIO), (b2[0], b2[1], Z_PASSEIO), (a2[0], a2[1], Z_PASSEIO)]
+        if (b[0] - a[0]) * (a2[1] - a[1]) - (b[1] - a[1]) * (a2[0] - a[0]) < 0:
+            topo.reverse()
+        g.face(topo, 'meio_fio')
+        _parede(g, a, b, Z_ASF, Z_PASSEIO, (-n[0], -n[1]), 'meio_fio')
+        _parede(g, a2, b2, 0.0, Z_PASSEIO, n, 'meio_fio')
 
 
 def avenida(g):
