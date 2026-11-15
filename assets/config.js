@@ -587,6 +587,36 @@ window.CITIES = [
         hideVagas: true,
         tipoRule: 'jardim-botanico',
         solNascente: { default: [3, 4, 5, 6] },
+        /* maquete 3D (maquete.html), gerada por assets/3d/jardim-botanico/scripts (Y para cima, metros, origem perto do
+           centro do lote). Etapa 1: tres torres (implantacao + plantas tipo), chao lido na implantacao, vagas,
+           edificio-garagem (terreo + cobertura) e lazer em volumes. */
+        maquete: {
+          // true = botao "Maquete 3D" na pagina do empreendimento (false = so por link direto: maquete.html?e=reserva-direcional-jardim-botanico)
+          botaoVisivel: false,
+          simId: 'botanico',
+          modelo: 'assets/3d/jardim-botanico/jardim-botanico.glb?v=2',
+          /* fachada de cada unidade em planta (gerada com o modelo): o contorno da selecionada segue a parede */
+          contornos: 'assets/3d/jardim-botanico/jardim-botanico-contornos.json?v=1',
+          /* ficha tecnica: torres 1 e 2 terreo + 15, torre 3 terreo + 16; 8 por andar; terreo sem o final 01 (hall) */
+          grade: { torres: [1, 2, 3], andares: 17, finais: 8,
+                   semUnidade: [{ andares: [0], finais: [1] }, { torres: [1, 2], andares: [16] }] },
+          /* norte da rosa dos ventos da implantacao (~43 graus a direita do "para cima" da planta) */
+          norte: [0.682, -0.731],
+          distanciaMax: 420,
+          /* lote comprido em x (366 m): garagem a oeste (x ~ -160), avenida e entrada a leste (guarita em (165, 0, -1.8)).
+             Torres com o eixo maior em x: T1 (121.5, 0, -2.7), T2 (49.1, 0, -3.6), T3 (-47.3, 0, -4.3); piscina em
+             (-2.6, 0, -12.2). x = (px - 7000) / 36,5 e z = (py - 1000) / 36,5 na implantacao */
+          cameras: {
+            geral:     { pos: [30, 128, 198],  alvo: [0, 6, -4] },
+            'torre-1': { pos: [150, 42, 70],   alvo: [121.5, 20, -2.7] },
+            'torre-2': { pos: [78, 42, 70],    alvo: [49.1, 20, -3.6] },
+            'torre-3': { pos: [-18, 44, 70],   alvo: [-47.3, 21, -4.3] },
+            frente:    { pos: [235, 34, 30],   alvo: [140, 14, -4] },
+            fundos:    { pos: [-235, 60, 70],  alvo: [-140, 4, -4] },
+            lazer:     { pos: [10, 34, 30],    alvo: [-2, 0, -12] },
+            portaria:  { pos: [190, 7, 14],    alvo: [163, 3, 3] }
+          }
+        },
         tipos: [
           { key: 'tipo-ponta',         label: '2Q C/S Tipo - Ponta' },
           { key: 'garden-ponta',       label: '2Q C/S Garden - Ponta' },

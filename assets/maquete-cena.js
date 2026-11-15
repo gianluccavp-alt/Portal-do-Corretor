@@ -488,7 +488,7 @@ async function montar(renderer, container, cfg, grade, total, onProgresso, onHov
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
   controls.minDistance = 6;
-  controls.maxDistance = 340;
+  controls.maxDistance = cfg.distanciaMax || 340; // lote comprido (Jardim Botanico: 366 m) pede mais
   controls.maxPolarAngle = Math.PI / 2 - 0.06;
   controls.screenSpacePanning = false;
 
