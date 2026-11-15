@@ -588,11 +588,11 @@ window.CITIES = [
         tipoRule: 'jardim-botanico',
         solNascente: { default: [3, 4, 5, 6] },
         /* maquete 3D (maquete.html), gerada por assets/3d/jardim-botanico/scripts (Y para cima, metros, origem perto do
-           centro do lote). Etapa 1: tres torres (implantacao + plantas tipo), chao lido na implantacao, vagas,
+           centro do lote). Etapa 1 (liberada em 2026-11-14): tres torres (implantacao + plantas tipo), chao lido na implantacao, vagas,
            edificio-garagem (terreo + cobertura) e lazer em volumes. */
         maquete: {
           // true = botao "Maquete 3D" na pagina do empreendimento (false = so por link direto: maquete.html?e=reserva-direcional-jardim-botanico)
-          botaoVisivel: false,
+          botaoVisivel: true,
           simId: 'botanico',
           modelo: 'assets/3d/jardim-botanico/jardim-botanico.glb?v=2',
           /* fachada de cada unidade em planta (gerada com o modelo): o contorno da selecionada segue a parede */
