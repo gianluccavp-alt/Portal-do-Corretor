@@ -348,6 +348,8 @@ window.CITIES = [
       {
         id: 'village-park',
         sheetName: 'Village Park',
+        // unidades Mirror escondidas do site ate serem ajustadas; para liberar, tire o codigo da lista.
+        unidadesOcultas: ['BL03-0206', 'BL02-0801', 'BL02-0702', 'BL02-0908'],
         nome: 'Village Park',
         cidade: 'Ribeirão Preto, SP',
         eyebrow: 'Village Park · Ribeirão Preto, SP',
