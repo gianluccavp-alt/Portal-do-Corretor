@@ -468,6 +468,16 @@
   var PADRAO_UTEIS = [0, 1, 2, 0, 1];
   var TODOS = ['G', 'J', 'V'];
 
+  /* Ajuste de 18/11/2026 (viagem do Vitor): a partir da semana de 16/11
+     a folga de fim de semana passa a girar Gabriel -> Juliana -> Vitor
+     (16/11, 23/11, 30/11, 07/12...). Quem folgou na semana anterior pega
+     o fim de semana completo, como antes. Na semana de 16/11 em si, os
+     dias úteis são fixos: Seg e Ter já aconteceram, Qua passou pra
+     Juliana, Qui pro Vitor e Sex pro Gabriel (que folga no fim de semana). */
+  var N_AJUSTE = 11;
+  var CICLO_AJUSTE = ['G', 'J', 'V'];
+  var UTEIS_AJUSTE = ['V', 'J', 'J', 'V', 'G'];
+
   /* Nas semanas em que quem folga no fim de semana é a Juliana, o padrão
      acima deixava ela com só 1 dia útil (quarta), enquanto Gabriel e Vitor
      sempre têm 2 dias úteis na semana da própria folga. A partir da semana
@@ -506,11 +516,17 @@
 
     var folga = CICLO_FDS[mod(1 + n, 3)];
     var domingo = CICLO_FDS[mod(n, 3)];
+    if (n >= N_AJUSTE) {
+      folga = CICLO_AJUSTE[mod(n - N_AJUSTE, 3)];
+      domingo = CICLO_AJUSTE[mod(n - N_AJUSTE - 1, 3)];
+    }
     var soSabado = TODOS.filter(function (p) { return p !== folga && p !== domingo; })[0];
 
     var inicio = mod(1 + n, 3);
     var uteis;
-    if (n >= N_RODIZIO) {
+    if (n === N_AJUSTE) {
+      uteis = UTEIS_AJUSTE;
+    } else if (n >= N_RODIZIO) {
       uteis = [folga, soSabado, domingo, soSabado, folga];
     } else if (inicio === 1 && n >= 1) {
       uteis = UTEIS_FOLGA_JU;
