@@ -77,6 +77,7 @@ window.CITIES = [
           botaoVisivel: true,
           simId: 'alta-vista',
           modelo: 'assets/3d/alta-vista-mangara/alta-vista.glb?v=7',
+          contornos: 'assets/3d/alta-vista-mangara/alta-vista-contornos.json?v=1',
           /* FAQ: terreo ao 18o nas duas torres; no terreo o lugar dos finais 1 e 8 e o hall e o lazer */
           grade: { torres: [1, 2], andares: 19, finais: 8,
                    semUnidade: [{ andares: [0], finais: [1, 8] }] },
@@ -369,6 +370,7 @@ window.CITIES = [
           botaoVisivel: true,
           simId: 'park',
           modelo: 'assets/3d/village-park/park.glb?v=14',
+          contornos: 'assets/3d/village-park/park-contornos.json?v=1',
           /* FAQ: T1 e T2 terreo ao 19o, T3 terreo ao 18o; no terreo o lugar do final 1 e o hall */
           grade: { torres: [1, 2, 3], andares: 20, finais: 8,
                    semUnidade: [{ andares: [0], finais: [1] }, { torres: [3], andarMin: 19 }] },
@@ -483,6 +485,7 @@ window.CITIES = [
           botaoVisivel: true,
           simId: 'gaia',
           modelo: 'assets/3d/village-gaia/gaia.glb',
+          contornos: 'assets/3d/village-gaia/gaia-contornos.json?v=1',
           grade: { torres: [1, 2, 3], andares: 20, finais: 8 },
           /* torres do modelo real: centros em x = 31.9 (T1), -26.2 (T2), -84.5 (T3), z = -19.7;
              varandas (unidades) nas faces +x (finais 1, 2, 7, 8) e -x (finais 3 a 6) */
