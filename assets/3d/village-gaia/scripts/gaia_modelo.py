@@ -441,6 +441,67 @@ def layout_unidades():
     with open(SCR + '/unidades_layout.json', 'w') as fh:
         json.dump(out, fh, indent=1, ensure_ascii=False)
 
+# ------------------------------------------------------------------ contorno da unidade selecionada
+# fachada de cada unidade no quadrante +x +y (local), do eixo menor (y = 0) para a testa: meio = laje tecnica,
+# saliencia do dormitorio e varanda ate a divisoria; ponta = varanda, fachada lateral, testa e recorte ate o eixo maior.
+# Na varanda o contorno passa pela borda da laje (guarda-corpo), que e o limite da unidade visto de fora.
+FACHADA_Q = {
+    'meio': [(LAJE_TEC, 0.0), (LAJE_TEC, Y_BUMP0), (BUMP, Y_BUMP0), (BUMP, Y_BUMP1), (HW, Y_BUMP1), (HW, Y_DIV)],
+    'ponta': [(HW, Y_DIV), (HW, L / 2), (NOTCH_X, L / 2), (NOTCH_X, L / 2 - NOTCH_D), (0.0, L / 2 - NOTCH_D)],
+}
+CONTORNO_LADO = -1     # percurso com o lado de fora a direita
+FINAIS_Q = {(1, 1): {'meio': 1, 'ponta': 2}, (1, -1): {'meio': 8, 'ponta': 7},
+            (-1, 1): {'meio': 4, 'ponta': 3}, (-1, -1): {'meio': 5, 'ponta': 6}}
+
+
+def _contorno_torres():
+    return {int(n.split('-')[1]): (cx, cy, 0.0) for n, (cx, cy) in TORRES.items()}
+
+
+def _afasta(pts, d):
+    """Polilinha deslocada d m para a esquerda do percurso (d < 0: para a direita), juntas em esquadria."""
+    out = []
+    n = len(pts)
+    for i in range(n):
+        ns = []
+        if i > 0:
+            ns.append((pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]))
+        if i < n - 1:
+            ns.append((pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]))
+        nrm = []
+        for dx, dy in ns:
+            L_ = math.hypot(dx, dy) or 1
+            nrm.append((-dy / L_, dx / L_))
+        mx, my = sum(v[0] for v in nrm), sum(v[1] for v in nrm)
+        Lm = math.hypot(mx, my) or 1
+        mx, my = mx / Lm, my / Lm
+        kk = d / max(0.5, mx * nrm[0][0] + my * nrm[0][1])
+        out.append((pts[i][0] + mx * kk, pts[i][1] + my * kk))
+    return out
+
+
+def exportar_contornos():
+    """gaia-contornos.json: por torre e final, a fachada da unidade em planta (x, z do Three, 6 cm para fora da
+    parede). A cena desenha o contorno da unidade selecionada rente a torre: base no piso do andar, topo no teto."""
+    trechos = {k: _afasta(v, CONTORNO_LADO * 0.06) for k, v in FACHADA_Q.items()}
+    out = {'schema': 'contornos-unidade/1', 'pe_direito': PD, 'torres': {}}
+    for t, (cx, cy, giro) in sorted(_contorno_torres().items()):
+        a = math.radians(giro)
+        ca, sa = math.cos(a), math.sin(a)
+        fin = {}
+        for (sx, sy), finais in FINAIS_Q.items():
+            for k, f in finais.items():
+                pts = []
+                for x, y in trechos[k]:
+                    lx, ly = x * sx, y * sy
+                    bx, by = cx + lx * ca - ly * sa, cy + lx * sa + ly * ca
+                    pts.append([round(bx, 3), round(-by, 3)])           # Three: (x, z) = (x, -y)
+                fin[str(f)] = pts
+        out['torres'][str(t)] = fin
+    with open(os.path.join(SCR, '..', 'gaia-contornos.json'), 'w') as fh:
+        json.dump(out, fh, separators=(',', ':'))
+
+
 # ------------------------------------------------------------------ modulos (mesmo namespace)
 def _carrega(nome):
     p = SCR + '/' + nome
@@ -513,6 +574,7 @@ def build():
     carros(cr)
     cr.objeto()
     layout_unidades()
+    exportar_contornos()
     OBJETOS_EXPORTADOS[:] = nomes
     tris = {}
     for o in sc.objects:
