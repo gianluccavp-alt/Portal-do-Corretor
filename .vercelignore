@@ -6,3 +6,11 @@ docs/
 .impeccable/
 # tests/fixtures/vendas.json e buscado em runtime (modo demo de pendencias): manter
 tests/*.test.js
+
+# Segredos locais: nunca publicar
+.env
+.env.*
+scripts/
+
+# Dados de vendas locais: nunca publicar
+dados-locais/
