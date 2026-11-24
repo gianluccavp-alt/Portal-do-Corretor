@@ -819,3 +819,11 @@ window.PENDENCIAS_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7
    Vazio = modo demonstracao (dados ficticios na memoria da aba, nada e
    gravado). Com URL preenchida, ?demo=1 na pagina forca o modo demo. */
 window.VISITAS_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzmOPIHUN6Nl5EYmH_htPcpFveqfS2UYfZ4yaAb5mV-BC2KtqBeYORc6OJvWV9zUB8/exec';
+
+/* ---------- Resultado do mes (/resultado-mes) ----------
+   URL .../exec do Web App de docs/apps-script-resultado-mes.gs (projeto
+   Apps Script da planilha RELATORIO VENDAS 2.0). A senha fica no Apps
+   Script, nunca aqui. Vazio + localhost = modo demonstracao com
+   dados-locais/resultado-mes.json. */
+window.RESULTADO_MES_APPS_SCRIPT_URL =
+  'https://script.google.com/macros/s/AKfycbwOijOp42t6zr9rp27xgGgHuZ7kZ24HueTprKT4aLuhuJr-Q2qSVI4pCU2A5LFdNy0/exec';

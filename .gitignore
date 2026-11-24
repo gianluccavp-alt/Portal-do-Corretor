@@ -2,3 +2,10 @@
 .DS_Store
 .impeccable/
 .superpowers/
+
+# Segredos locais (token do Salesforce etc.)
+.env
+.env.*
+
+# Dados de vendas puxados do Salesforce (tem nomes de clientes): nunca versionar
+/dados-locais/
