@@ -12,8 +12,9 @@
      virou comercial: conta como COMERCIAL.
    Regras de 2026-11-25:
    - Assinatura vem do relatorio D4Sign SPI (envios de PCV), cruzado
-     pela OP: o envio NAO cancelado mais recente decide (Finalizado =
-     assinado). So cancelados = cancelado; nenhum envio = sem envio.
+     pela OP: o envio NAO cancelado mais recente decide. Assinado =
+     Finalizado OU "Cliente assinou?" marcado, mesmo faltando as outras
+     assinaturas. So cancelados = cancelado; nenhum envio = sem envio.
      Venda anterior ao primeiro envio do relatorio (18/09/2025) sem
      envio usa o campo "Cliente assinou PCV" dos relatorios de venda:
      com data = assinado; vazio = nao assinado.
@@ -142,7 +143,6 @@
       fid: texto(o.fid),
       fidOk: !!texto(o.fid),
       assinatura: '',
-      clienteAssinou: false,
       cidade: cidadeDe(o.emp),
       canal: canalDe(o.imob),
       venda: venda,
@@ -195,7 +195,7 @@
     return v;
   }
 
-  /* aba "Envios D4Sign" -> { 'OP-1': { assinatura, clienteAssinou } } */
+  /* aba "Envios D4Sign" -> { 'OP-1': 'assinado' | 'aguardando' | 'cancelado' } */
   function lerD4sign(aba) {
     var cab = (aba.cabecalho || []).map(texto);
     var idx = {};
@@ -220,8 +220,8 @@
             (b.status === 'finalizado') - (a.status === 'finalizado');
         });
       var e = vivos[0];
-      if (!e) saida[k] = { assinatura: 'cancelado', clienteAssinou: false };
-      else saida[k] = { assinatura: e.status === 'finalizado' ? 'assinado' : 'aguardando', clienteAssinou: e.cliente };
+      if (!e) saida[k] = 'cancelado';
+      else saida[k] = e.status === 'finalizado' || e.cliente ? 'assinado' : 'aguardando';
     });
     return saida;
   }
@@ -248,10 +248,9 @@
       .map(function (v) {
         if (!envios) return v;
         var e = envios[v.op];
-        if (e) v.assinatura = e.assinatura;
+        if (e) v.assinatura = e;
         else if (v.venda && v.venda < D4_INICIO) v.assinatura = v.pcv ? 'assinado' : 'nao_assinado';
         else v.assinatura = 'sem_envio';
-        v.clienteAssinou = !!(e && e.clienteAssinou);
         return v;
       })
       .sort(function (a, b) { return b.dataConta.localeCompare(a.dataConta) || a.op.localeCompare(b.op); });
