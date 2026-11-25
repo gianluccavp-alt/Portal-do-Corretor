@@ -5,7 +5,7 @@
    Fica no MESMO projeto do script que copia os relatorios do Salesforce
    (docs/apps-script-vendas-salesforce.gs) e usa o CONFIG de la.
    Le as abas "VENDAS SPI XIMENES" e "VENDAS SPI 2.0 XIMENES" e devolve so
-   as linhas do mes pedido. A senha e conferida AQUI, no servidor: sem ela
+   as linhas do mes pedido, mais os envios D4Sign dessas OPs (aba "Envios D4Sign"). A senha e conferida AQUI, no servidor: sem ela
    nenhum dado sai da planilha.
 
    ---------- COMO PUBLICAR (uma vez) ----------
@@ -40,6 +40,7 @@ function testeResultado() {
   var mes = Utilities.formatDate(new Date(), CONFIG.fuso, 'yyyy-MM');
   var r = resMes_(mes);
   Logger.log('Mes ' + mes + ': ' + r.abas.map(function (a) { return a.aba + ' ' + a.linhas.length + ' linhas'; }).join(' | ') +
+    ' | D4Sign: ' + (r.d4sign ? r.d4sign.linhas.length + ' envios' : 'aba Envios D4Sign ainda nao existe') +
     ' | meses disponiveis: ' + r.meses.length + ' | atualizado: ' + r.atualizadoEm);
 }
 
@@ -53,7 +54,8 @@ function doPost(e) {
     if (!senha || req.senha !== senha) throw new ResFalha('senha', 'Senha incorreta.');
     if (req.acao !== 'mes') throw new ResFalha('interno', 'Acao desconhecida.');
     var mes = String(req.mes || '');
-    if (!/^\d{4}-\d{2}$/.test(mes)) mes = Utilities.formatDate(new Date(), CONFIG.fuso, 'yyyy-MM');
+    // mes (2026-11), trimestre (2026-T4) ou ano (2026)
+    if (!/^\d{4}(-(\d{2}|T[1-4]))?$/.test(mes)) mes = Utilities.formatDate(new Date(), CONFIG.fuso, 'yyyy-MM');
     resposta = resMesComCache_(mes);
     resposta.ok = true;
   } catch (err) {
@@ -86,7 +88,8 @@ function resMesComCache_(mes) {
 function resMes_(mes) {
   var planilha = SpreadsheetApp.openById(CONFIG.planilhaId);
   var meses = {};
-  var abas = CONFIG.relatorios.map(function (rel) {
+  var ops = {};
+  var abas = CONFIG.relatorios.filter(function (rel) { return !rel.d4sign; }).map(function (rel) {
     var sh = planilha.getSheetByName(rel.aba);
     if (!sh || sh.getLastRow() < 2) return { aba: rel.aba, cabecalho: [], linhas: [] };
     var valores = sh.getDataRange().getValues();
@@ -94,6 +97,7 @@ function resMes_(mes) {
     var iVenda = cab.indexOf('Data da venda');
     var iConf = cab.indexOf('Data Confirmação Venda 2.0');
     if (iVenda < 0 || iConf < 0) throw new ResFalha('interno', 'Aba ' + rel.aba + ' sem as colunas de data.');
+    var iNome = cab.indexOf('Nome da oportunidade');
     var linhas = [];
     for (var i = 1; i < valores.length; i++) {
       var bruta = valores[i];
@@ -103,7 +107,11 @@ function resMes_(mes) {
       if (mesConta) meses[mesConta] = true;
       // devolve tudo que PODE contar no mes; a regra final e aplicada na pagina.
       // So formata as linhas do mes: formatar a planilha toda leva ~30 s.
-      if (mVenda === mes || mConf === mes) linhas.push(bruta.map(resCelula_));
+      if (resNoPeriodo_(mVenda, mes) || resNoPeriodo_(mConf, mes)) {
+        linhas.push(bruta.map(resCelula_));
+        var op = resOp_(bruta[iNome]);
+        if (op) ops[op] = true;
+      }
     }
     return { aba: rel.aba, cabecalho: cab, linhas: linhas };
   });
@@ -112,8 +120,43 @@ function resMes_(mes) {
     meses: Object.keys(meses).filter(function (m) { return /^\d{4}-\d{2}$/.test(m); }).sort().reverse(),
     atualizadoEm: PropertiesService.getScriptProperties().getProperty('ULTIMA_ATUALIZACAO') || '',
     intervaloMinutos: CONFIG.intervaloMinutos,
-    abas: abas
+    abas: abas,
+    d4sign: resD4sign_(planilha, ops)
   };
+}
+
+/* 'yyyy-MM' pertence ao periodo pedido? (mesma regra de assets/resultado-mes.js) */
+function resNoPeriodo_(mes, periodo) {
+  if (!mes) return false;
+  var tri = periodo.match(/^(\d{4})-T([1-4])$/);
+  if (tri) return mes.slice(0, 4) === tri[1] && Math.ceil(Number(mes.slice(5, 7)) / 3) === Number(tri[2]);
+  return mes.indexOf(periodo) === 0;
+}
+
+function resOp_(v) {
+  var m = String(v || '').match(/OP-\d+/i);
+  return m ? m[0].toUpperCase() : '';
+}
+
+/* Envios das OPs do mes, so com o necessario: o link do documento nao sai da
+   planilha e a oportunidade vai apenas como numero da OP. Sem a aba, devolve
+   null e a pagina mostra a assinatura como indisponivel. */
+function resD4sign_(planilha, ops) {
+  var cfg = CONFIG.relatorios.filter(function (rel) { return rel.d4sign; })[0];
+  var sh = cfg && planilha.getSheetByName(cfg.aba);
+  if (!sh || sh.getLastRow() < 2) return null;
+  var valores = sh.getDataRange().getValues();
+  var cab = valores[0].map(String);
+  var nomes = ['Envio D4Sign: Oportunidade', 'Envio D4Sign: Status', 'Envio D4Sign: Cliente assinou?', 'Envio D4Sign: Data de criação'];
+  var idx = nomes.map(function (n) { return cab.indexOf(n); });
+  if (idx.some(function (i) { return i < 0; })) throw new ResFalha('interno', 'Aba ' + cfg.aba + ' sem as colunas do D4Sign.');
+  var linhas = [];
+  for (var i = 1; i < valores.length; i++) {
+    var op = resOp_(valores[i][idx[0]]);
+    if (!ops[op]) continue;
+    linhas.push([op, resCelula_(valores[i][idx[1]]), resCelula_(valores[i][idx[2]]), resCelula_(valores[i][idx[3]])]);
+  }
+  return { cabecalho: nomes, linhas: linhas };
 }
 
 /* 'yyyy-MM' de uma celula de data (o fuso do projeto e o de Sao Paulo) */
@@ -123,10 +166,14 @@ function resMesDe_(v) {
   return m ? m[1] + '-' + m[2] : '';
 }
 
+/* Monta a data na mao (o fuso do projeto e o de Sao Paulo): formatDate e lento
+   demais para um ano inteiro de linhas. */
 function resCelula_(v) {
   if (v instanceof Date) {
+    var dois = function (n) { return ('0' + n).slice(-2); };
+    var data = v.getFullYear() + '-' + dois(v.getMonth() + 1) + '-' + dois(v.getDate());
     var temHora = v.getHours() || v.getMinutes() || v.getSeconds();
-    return Utilities.formatDate(v, CONFIG.fuso, temHora ? "yyyy-MM-dd'T'HH:mm" : 'yyyy-MM-dd');
+    return temHora ? data + 'T' + dois(v.getHours()) + ':' + dois(v.getMinutes()) : data;
   }
   return v;
 }

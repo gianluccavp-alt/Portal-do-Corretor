@@ -1,5 +1,6 @@
 /**
  * Vendas SPI XIMENES: Salesforce -> Google Sheets.
+ * Tambem copia o relatorio D4Sign SPI para a aba "Envios D4Sign".
  *
  * Roda DENTRO da planilha (Extensoes > Apps Script) e, a cada 30 minutos, copia
  * dois relatorios do Salesforce para duas abas:
@@ -12,9 +13,9 @@
  * execucao. Quando o relatorio e maior, o script roda o mesmo relatorio por
  * intervalos de "Data de criacao" (campo nunca vazio) e junta os pedacos. Os
  * intervalos usados ficam guardados e sao reaproveitados nas proximas rodadas
- * (cerca de 14 execucoes de relatorio por atualizacao, em vez de 30+).
+ * (cerca de 19 execucoes de relatorio por atualizacao com o D4Sign, em vez de 40+).
  * ATENCAO: o Salesforce limita a 500 execucoes de relatorio POR HORA para a
- * empresa inteira. Cada atualizacao gasta ~14, entao a 30 min sao ~28 por hora.
+ * empresa inteira. Cada atualizacao gasta ~19, entao a 30 min sao ~38 por hora.
  * Antes de baixar o intervalo, veja se sobra folga (erro 403 = limite atingido).
  *
  * INSTALACAO (uma vez):
@@ -40,7 +41,9 @@ var CONFIG = {
   planilhaId: '1WGgOMdVP_FMTjXgNpi5dodX44YNH-dqv4Cb5yglb0l4', // RELATORIO VENDAS 2.0
   relatorios: [
     { aba: 'VENDAS SPI XIMENES', id: '00OU600000OaAcYMAV' },
-    { aba: 'VENDAS SPI 2.0 XIMENES', id: '00OU600000O7OxRMAV' }
+    { aba: 'VENDAS SPI 2.0 XIMENES', id: '00OU600000O7OxRMAV' },
+    // relatorio D4Sign SPI: tabular, sem Data de criacao da OP; divide pelo filtro de data do proprio relatorio
+    { aba: 'Envios D4Sign', id: '00OU600000NJLYHMA5', d4sign: true, particao: 'filtroDeData' }
   ],
   apiVersao: 'v62.0',
   fuso: 'America/Sao_Paulo',
@@ -180,6 +183,7 @@ function total_(resultado) {
 
 /** Divide o relatorio por intervalos de data de criacao ate cada um caber em 2.000 linhas. */
 function porParticoes_(rel, desc) {
+  var pedaco = rel.particao === 'filtroDeData' ? comPeriodo_ : comPedaco_;
   var chave = 'PARTICOES_' + rel.id;
   var props = PropertiesService.getScriptProperties();
   var salvas = props.getProperty(chave);
@@ -188,7 +192,7 @@ function porParticoes_(rel, desc) {
 
   while (fila.length) {
     if (++profundidade > 14) throw new Error('Particionamento de ' + rel.aba + ' nao convergiu.');
-    var pedidos = fila.map(function (r) { return corpoRelatorio_(rel.id, comPedaco_(desc.reportMetadata, r[0], r[1]), true); });
+    var pedidos = fila.map(function (r) { return corpoRelatorio_(rel.id, pedaco(desc.reportMetadata, r[0], r[1]), true); });
     var respostas = sfFetchAll_(pedidos);
     var proxima = [];
     respostas.forEach(function (j, i) {
@@ -224,6 +228,13 @@ function comPedaco_(metaOriginal, ini, fim) {
   return m;
 }
 
+/** Mesmo intervalo [ini, fim), usando o filtro de data padrao do relatorio (as duas pontas dele sao inclusivas). */
+function comPeriodo_(metaOriginal, ini, fim) {
+  var m = JSON.parse(JSON.stringify(metaOriginal));
+  m.standardDateFilter = { column: m.standardDateFilter.column, durationValue: 'CUSTOM', startDate: ini, endDate: isoDeDias_(diasDesde1970_(fim) - 1) };
+  return m;
+}
+
 function diasDesde1970_(iso) { return Math.floor(Date.parse(iso + 'T00:00:00Z') / 86400000); }
 function isoDeDias_(d) { return new Date(d * 86400000).toISOString().slice(0, 10); }
 
@@ -241,7 +252,8 @@ function achatar_(desc, resultado) {
   var cols = desc.reportMetadata.detailColumns;
   var rows = [];
   Object.keys(resultado.factMap).forEach(function (chave) {
-    if (chave === 'T!T') return;
+    // relatorio tabular guarda as linhas em T!T; nos agrupados, T!T e so o total
+    if (chave === 'T!T' && desc.reportMetadata.reportFormat !== 'TABULAR') return;
     (resultado.factMap[chave].rows || []).forEach(function (linha) {
       rows.push(linha.dataCells.map(function (c, i) {
         var tipo = info[cols[i]].dataType, v = c.value;

@@ -10,8 +10,20 @@
      anteriores (atendimento, visita, elaboracao) e as perdidas.
    - Venda com check comercial E facilitada comecou facilitada e
      virou comercial: conta como COMERCIAL.
-   - Resultado oficial (regra de hoje): comerciais em Contrato
-     comunicado ou Fechado e ganho + facilitadas confirmadas.
+   Regras de 2026-11-25:
+   - Assinatura vem do relatorio D4Sign SPI (envios de PCV), cruzado
+     pela OP: o envio NAO cancelado mais recente decide (Finalizado =
+     assinado). So cancelados = cancelado; nenhum envio = sem envio.
+     Venda anterior ao primeiro envio do relatorio (18/09/2025) sem
+     envio usa o campo "Cliente assinou PCV" dos relatorios de venda:
+     com data = assinado; vazio = nao assinado.
+   - Periodo: mes ('2026-11'), trimestre ('2026-T4') ou ano ('2026').
+   - FID preenchido (numero) = aprovado; vazio = pendente.
+   - Pendencias (assinatura, FID, sinal) olham todas as vendas do mes,
+     com ou sem Data Confirmacao 2.0.
+   - Imobiliaria: "CANAL IMOB" = Canal Imob; "VENDAS SPI" (Direcional e
+     Riva) = House. O resto so aparece em "Todas".
+   - Cidade vem do empreendimento (o relatorio nao traz cidade).
    Funciona no navegador (window.ResultadoMes) e no Node (testes).
    ============================================================ */
 (function (raiz) {
@@ -33,11 +45,33 @@
     ranking: 'Ranking',
     comercial: 'Venda Comercial?',
     facilitada: 'Venda facilitada',
-    origem: 'Origem da Conta'
+    origem: 'Origem da Conta',
+    fid: 'FID'
+  };
+
+  var D4_INICIO = '2025-09-18';
+
+  var COLUNAS_D4 = {
+    op: 'Envio D4Sign: Oportunidade',
+    status: 'Envio D4Sign: Status',
+    cliente: 'Envio D4Sign: Cliente assinou?',
+    criado: 'Envio D4Sign: Data de criação'
+  };
+
+  var CIDADES = {
+    'Alta Vista Mangará': 'Campinas',
+    'Cores da Mata Mangará': 'Campinas',
+    'Parque Alto Mangará': 'Campinas',
+    'Casa Prado Residencial Riva': 'Campinas',
+    'Seleto Amoreiras': 'Campinas',
+    'Village Park': 'Ribeirão Preto',
+    'Village Gaia': 'Ribeirão Preto',
+    'Reserva Direcional Jardim Botânico': 'Ribeirão Preto',
+    'Direcional Conquista Clube Ipiranga': 'Ribeirão Preto',
+    'Conquista Vila da Mata': 'Sorocaba'
   };
 
   var FASES_ANTES = ['em atendimento', 'visita agendada', 'visita realizada', 'em elaboração', 'em elaboracao', 'em análise', 'em analise', 'proposta reprovada'];
-  var FASES_OFICIAIS_COMERCIAL = ['contrato comunicado', 'fechado e ganho'];
 
   function texto(v) { return v === null || v === undefined ? '' : String(v).trim(); }
   function sim(v) {
@@ -75,6 +109,20 @@
     return m ? m[0].toUpperCase() : [texto(unidade), texto(emp), texto(nome)].join('|');
   }
 
+  function nomeCliente(nome) {
+    var m = texto(nome).match(/Cliente:\s*(.+)$/i);
+    return m ? m[1].trim() : '';
+  }
+
+  function cidadeDe(emp) { return CIDADES[texto(emp)] || 'Outras'; }
+
+  function canalDe(imob) {
+    var t = texto(imob).toUpperCase();
+    if (t.indexOf('CANAL IMOB') >= 0) return 'canal';
+    if (t.indexOf('VENDAS SPI') >= 0) return 'house';
+    return '';
+  }
+
   /* linha crua (array) + cabecalho -> objeto com os campos usados */
   function lerLinha(cab, linha) {
     var o = {};
@@ -90,6 +138,13 @@
     return {
       chave: chaveOp(o.nome, o.unidade, o.emp),
       op: op ? op[0].toUpperCase() : texto(o.nome),
+      cliente: nomeCliente(o.nome),
+      fid: texto(o.fid),
+      fidOk: !!texto(o.fid),
+      assinatura: '',
+      clienteAssinou: false,
+      cidade: cidadeDe(o.emp),
+      canal: canalDe(o.imob),
       venda: venda,
       conf: conf,
       fase: texto(o.fase),
@@ -122,6 +177,7 @@
         if (!atual) { porChave[v.chave] = v; ordem.push(v.chave); return; }
         if (!atual.conf && v.conf) atual.conf = v.conf;
         if (!atual.pcv && v.pcv) atual.pcv = v.pcv;
+        if (!atual.fid && v.fid) { atual.fid = v.fid; atual.fidOk = true; }
         if (v.boleto) atual.boleto = true;
         if (v.cartao) atual.cartao = true;
         if (idx === 0 && !atual.valor && v.valor) atual.valor = v.valor;
@@ -136,17 +192,68 @@
     v.pelaConfirmacao = !!v.conf;
     v.confirmada = !!v.conf;
     v.sinalPago = v.boleto || v.cartao;
-    v.oficial = v.tipo === 'comercial'
-      ? FASES_OFICIAIS_COMERCIAL.indexOf(v.fase.toLowerCase()) >= 0
-      : v.confirmada;
     return v;
   }
 
-  function vendasDoMes(abas, mes) {
+  /* aba "Envios D4Sign" -> { 'OP-1': { assinatura, clienteAssinou } } */
+  function lerD4sign(aba) {
+    var cab = (aba.cabecalho || []).map(texto);
+    var idx = {};
+    Object.keys(COLUNAS_D4).forEach(function (k) { idx[k] = cab.indexOf(COLUNAS_D4[k]); });
+    var porOp = {};
+    (aba.linhas || []).forEach(function (l) {
+      var m = texto(l[idx.op]).match(/OP-\d+/i);
+      if (!m) return;
+      var k = m[0].toUpperCase();
+      (porOp[k] || (porOp[k] = [])).push({
+        status: texto(l[idx.status]).toLowerCase(),
+        cliente: sim(l[idx.cliente]),
+        criado: texto(l[idx.criado])
+      });
+    });
+    var saida = {};
+    Object.keys(porOp).forEach(function (k) {
+      var vivos = porOp[k].filter(function (e) { return e.status !== 'cancelado'; })
+        /* mais recente primeiro; na mesma data, o Finalizado vale */
+        .sort(function (a, b) {
+          return dataIso(b.criado).localeCompare(dataIso(a.criado)) ||
+            (b.status === 'finalizado') - (a.status === 'finalizado');
+        });
+      var e = vivos[0];
+      if (!e) saida[k] = { assinatura: 'cancelado', clienteAssinou: false };
+      else saida[k] = { assinatura: e.status === 'finalizado' ? 'assinado' : 'aguardando', clienteAssinou: e.cliente };
+    });
+    return saida;
+  }
+
+  function tipoPeriodo(p) {
+    if (/^\d{4}$/.test(p)) return 'ano';
+    return /^\d{4}-T[1-4]$/.test(p) ? 'tri' : 'mes';
+  }
+  /* periodo do tipo pedido que contem o mes 'yyyy-MM' */
+  function periodoDe(mes, tipo) {
+    if (tipo === 'ano') return mes.slice(0, 4);
+    if (tipo === 'tri') return mes.slice(0, 4) + '-T' + Math.ceil(Number(mes.slice(5, 7)) / 3);
+    return mes;
+  }
+  function noPeriodo(mes, p) { return !!mes && periodoDe(mes, tipoPeriodo(p)) === p; }
+
+  /* d4sign ausente (Web App antigo): assinatura fica '' (desconhecida) */
+  function vendasDoMes(abas, mes, d4sign) {
+    var envios = d4sign && d4sign.linhas ? lerD4sign(d4sign) : null;
     return cruzar(abas)
       .filter(function (v) { return faseConta(v.fase); })
       .map(classificar)
-      .filter(function (v) { return v.mesConta === mes; })
+      .filter(function (v) { return noPeriodo(v.mesConta, mes); })
+      .map(function (v) {
+        if (!envios) return v;
+        var e = envios[v.op];
+        if (e) v.assinatura = e.assinatura;
+        else if (v.venda && v.venda < D4_INICIO) v.assinatura = v.pcv ? 'assinado' : 'nao_assinado';
+        else v.assinatura = 'sem_envio';
+        v.clienteAssinou = !!(e && e.clienteAssinou);
+        return v;
+      })
       .sort(function (a, b) { return b.dataConta.localeCompare(a.dataConta) || a.op.localeCompare(b.op); });
   }
 
@@ -168,30 +275,48 @@
       .sort(function (a, b) { return b.n - a.n || b.vgv - a.vgv; });
   }
 
+  function temPendencia(v, qual) {
+    if (qual === 'assinatura') return !!v.assinatura && v.assinatura !== 'assinado';
+    if (qual === 'fid') return !v.fidOk;
+    if (qual === 'sinal') return !v.sinalPago;
+    return v.assinatura === 'assinado' && v.fidOk && v.sinalPago;
+  }
+
+  /* filtro com varias marcadas: basta ter uma delas; nenhuma marcada = todas */
+  function temAlguma(v, quais) {
+    return !quais.length || quais.some(function (q) { return temPendencia(v, q); });
+  }
+
+  /* filtros do topo: valem para a pagina inteira */
+  function filtrarGeral(vendas, g) {
+    return vendas.filter(function (v) {
+      return (!g.emp || v.emp === g.emp) && (!g.cidade || v.cidade === g.cidade) && (!g.canal || v.canal === g.canal);
+    });
+  }
+
   function resumo(vendas) {
     function f(tipo, conf) {
       return soma(vendas.filter(function (v) {
         return (tipo === null || v.tipo === tipo) && (conf === null || v.confirmada === conf);
       }));
     }
-    var pendentes = vendas.filter(function (v) { return !v.confirmada; });
+    function pend(qual) { return vendas.filter(function (v) { return temPendencia(v, qual); }).length; }
     var total = soma(vendas);
+    var temD4 = vendas.some(function (v) { return !!v.assinatura; });
     return {
       total: total,
-      ticket: total.n ? total.vgv / total.n : 0,
-      oficial: soma(vendas.filter(function (v) { return v.oficial; })),
-      pendentes: soma(pendentes),
       matriz: {
         comercial: { ok: f('comercial', true), sem: f('comercial', false), total: f('comercial', null) },
         facilitada: { ok: f('facilitada', true), sem: f('facilitada', false), total: f('facilitada', null) },
         total: { ok: f(null, true), sem: f(null, false), total: total }
       },
-      sinal: {
-        pcvESinal: pendentes.filter(function (v) { return v.pcv && v.sinalPago; }).length,
-        soPcv: pendentes.filter(function (v) { return v.pcv && !v.sinalPago; }).length,
-        soSinal: pendentes.filter(function (v) { return !v.pcv && v.sinalPago; }).length,
-        nenhum: pendentes.filter(function (v) { return !v.pcv && !v.sinalPago; }).length,
-        total: pendentes.length
+      pendencias: {
+        temD4: temD4,
+        total: total.n,
+        assinatura: pend('assinatura'),
+        fid: pend('fid'),
+        sinal: pend('sinal'),
+        semPendencia: pend('nenhuma')
       },
       empreendimentos: agrupar(vendas, 'emp'),
       imobiliarias: agrupar(vendas, 'imob')
@@ -207,6 +332,15 @@
     classificar: classificar,
     vendasDoMes: vendasDoMes,
     resumo: resumo,
+    lerD4sign: lerD4sign,
+    temPendencia: temPendencia,
+    temAlguma: temAlguma,
+    tipoPeriodo: tipoPeriodo,
+    periodoDe: periodoDe,
+    noPeriodo: noPeriodo,
+    filtrarGeral: filtrarGeral,
+    canalDe: canalDe,
+    cidadeDe: cidadeDe,
     dataIso: dataIso
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

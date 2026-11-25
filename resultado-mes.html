@@ -19,7 +19,8 @@
   --ok:#1B7A40;--ok-bg:#EFF9F2;--ok-line:#C7E7D3;
   --warn:#8A5700;--warn-bg:#FFF7E6;--warn-line:#F1DCAE;
   --err:#C4001C;--err-bg:#FDEEF0;
-  --foco:0 0 0 3px rgba(228,3,43,.10)
+  --foco:0 0 0 3px rgba(228,3,43,.10);
+  --com:#E4032B;--fac:#8A9094
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
@@ -39,21 +40,19 @@ h1,h2,p{margin:0}
 
 .btn{font-weight:500;font-size:.88rem;padding:.62rem 1.05rem;border-radius:9px;border:1px solid var(--hair);background:#fff;color:var(--ink);cursor:pointer;min-height:42px;display:inline-flex;align-items:center;justify-content:center;gap:.45rem;transition:.15s}
 .btn:hover:not(:disabled){border-color:var(--red);color:var(--red)}
-.btn:focus-visible,.chip:focus-visible,.cel:focus-visible{outline:none;border-color:var(--red);box-shadow:var(--foco)}
+.btn:focus-visible,.cel:focus-visible{outline:none;border-color:var(--red);box-shadow:var(--foco)}
 .btn:disabled{opacity:.45;cursor:default}
 .btn-p{background:var(--red);border-color:var(--red);color:#fff}
 .btn-p:hover:not(:disabled){background:var(--red-deep);border-color:var(--red-deep);color:#fff}
 .btn-ico{padding:.62rem .7rem}
 .inp{font-size:.9rem;padding:.6rem .7rem;border-radius:9px;border:1px solid var(--hair);background:#fff;color:var(--ink);min-height:42px}
 .inp:focus{outline:none;border-color:var(--red);box-shadow:var(--foco)}
-.chip{font-size:.78rem;padding:.42rem .8rem;border-radius:999px;border:1px solid var(--hair);background:#fff;color:var(--slate);cursor:pointer;min-height:36px;transition:.15s}
-.chip:hover{border-color:var(--red);color:var(--red)}
-.chip[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
 .tag{display:inline-flex;align-items:center;font-size:.72rem;font-weight:500;padding:.16rem .55rem;border-radius:999px;white-space:nowrap;border:1px solid transparent}
 .t-com{background:var(--ink);color:#fff}
 .t-fac{background:#fff;color:var(--ink);border-color:#9AA1A4}
 .t-ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok-line)}
 .t-sem{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-line)}
+.t-err{background:var(--err-bg);color:var(--err);border-color:#F5C2C9}
 
 /* ---------- senha ---------- */
 .gate{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:28px 16px;border-bottom:0}
@@ -75,29 +74,69 @@ h1,h2,p{margin:0}
 @media (max-width:480px){.gate-card{padding:28px 22px 26px}}
 
 /* ---------- topo ---------- */
-.topo{max-width:1280px;margin:0 auto;padding:2rem 2rem 1.75rem;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"step logo" "titulo ctrl" ". status";column-gap:2rem;row-gap:.55rem;align-items:center}
-.topo .step{grid-area:step}
-.topo h1{grid-area:titulo}
-.topo-logo{grid-area:logo;justify-self:end}
-.mes-ctrl{grid-area:ctrl;justify-self:end}
-.atualizacao{grid-area:status;justify-self:end}
+.topo{max-width:1280px;margin:0 auto;padding:1.75rem 2rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1.25rem 2rem}
+.topo-esq{display:flex;flex-direction:column;gap:.75rem;min-width:0}
+/* logo, periodo e status numa coluna so, centrados no mesmo eixo */
+.topo-dir{display:flex;flex-direction:column;align-items:center;gap:.9rem;flex-shrink:0}
 .topo h1{font-size:2.15rem;font-weight:800;letter-spacing:-.6px;line-height:1.15}
 .topo h1 span{color:var(--red)}
+.topo h1 b{font-weight:inherit}
 .topo-logo{height:40px;width:auto}
-.mes-ctrl{display:flex;gap:.5rem;align-items:center}
-.mes-ctrl select{min-width:200px;font-weight:700}
 .atualizacao{display:flex;align-items:center;gap:.45rem;font-size:.8rem;color:var(--slate)}
 .dot{width:8px;height:8px;border-radius:50%;background:#1E8E4A;flex-shrink:0}
 .dot.velho{background:#F2B544}
 .sair{background:none;border:0;padding:0;color:var(--slate);font-size:.8rem;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 .sair:hover{color:var(--red)}
-@media (max-width:700px){
-  .topo{padding:1.25rem 1.1rem 1.4rem;grid-template-columns:minmax(0,1fr);grid-template-areas:"logo" "step" "titulo" "ctrl" "status";row-gap:.6rem}
-  .topo h1{font-size:1.6rem;margin-bottom:.4rem}
-  .topo-logo{justify-self:start;height:30px;margin-bottom:.5rem}
-  .mes-ctrl,.atualizacao{justify-self:stretch}
-  .mes-ctrl select{flex:1;min-width:0}
+
+/* ---------- periodo ---------- */
+.per{position:relative;display:flex;gap:.5rem;align-items:center}
+.per .sel-botao{min-width:230px;font-weight:700;font-size:.9rem;position:relative;justify-content:center;padding:.5rem 2.25rem;text-align:center}
+.per .sel-botao svg{position:absolute;right:.75rem}
+.per-painel{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);z-index:30;width:300px;padding:.75rem;display:flex;flex-direction:column;gap:.7rem;background:#fff;border:1px solid var(--hair);border-radius:12px;box-shadow:0 14px 36px rgba(20,26,30,.14)}
+.per-painel .seg{display:grid;grid-template-columns:repeat(3,1fr)}
+.per-ano{display:flex;align-items:center;justify-content:space-between;font-weight:700}
+.per-ano .btn{min-height:34px;padding:.35rem .5rem}
+.per-grade{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem}
+.per-grade.duas-col{grid-template-columns:repeat(2,1fr)}
+.per-op{min-height:42px;padding:.35rem;border:1px solid var(--hair);border-radius:9px;background:#fff;font-size:.85rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.25}
+.per-op small{font-size:.7rem;color:var(--slate)}
+.per-op:hover:not(:disabled){border-color:var(--red);color:var(--red)}
+.per-op:focus-visible{outline:none;box-shadow:var(--foco);border-color:var(--red)}
+.per-op:disabled{opacity:.35;cursor:default}
+.per-op[aria-pressed="true"],.per-op[aria-pressed="true"]:hover{background:var(--red);border-color:var(--red);color:#fff}
+.per-op[aria-pressed="true"] small{color:#fff}
+@media (max-width:760px){
+  .topo{padding:1.25rem 1.1rem 1.4rem;flex-direction:column-reverse;align-items:stretch;gap:1rem}
+  .topo h1{font-size:1.6rem}
+  .topo-logo{height:30px}
+  .per .sel-botao{flex:1;min-width:0}
+  .per > .sel{flex:1}
+  .per > .sel .sel-botao{width:100%}
 }
+
+/* ---------- seletor (assets/seletor.js) ---------- */
+.sel{position:relative;min-width:0}
+.sel-botao{width:100%;min-height:42px;display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.5rem .75rem;border:1px solid var(--hair);border-radius:9px;background:#fff;cursor:pointer;text-align:left;transition:border-color .15s,box-shadow .15s}
+.sel-botao:hover{border-color:#F3A6B3}
+.sel-botao:focus-visible,.sel-botao[aria-expanded="true"]{outline:none;border-color:var(--red);box-shadow:var(--foco)}
+.sel-botao svg{flex:none;color:var(--slate);transition:transform .15s}
+.sel-botao[aria-expanded="true"] svg{transform:rotate(180deg);color:var(--red)}
+.sel-valor{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sel-painel{position:absolute;top:calc(100% + 6px);left:0;z-index:30;min-width:100%;width:max-content;max-width:min(360px,calc(100vw - 32px));padding:.35rem;display:flex;flex-direction:column;gap:.3rem;background:#fff;border:1px solid var(--hair);border-radius:12px;box-shadow:0 14px 36px rgba(20,26,30,.14)}
+.sel-painel.a-direita{left:auto;right:0}
+.sel-busca{min-height:38px;font-size:.85rem;width:100%}
+.sel-lista{max-height:296px;overflow-y:auto;overscroll-behavior:contain}
+.sel-item{display:flex;align-items:center;gap:.55rem;min-height:38px;padding:.45rem .6rem;border-radius:8px;font-size:.85rem;line-height:1.3;cursor:pointer}
+.sel-item:hover,.sel-item:focus{outline:none;background:var(--err-bg)}
+.sel-item[aria-selected="true"]{font-weight:700;color:var(--red-deep)}
+.sel-marca{width:14px;height:14px;flex:none;position:relative}
+.sel-item[aria-selected="true"] .sel-marca::after{content:"";position:absolute;left:4px;top:0;width:4px;height:9px;border:solid var(--red);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.sel-caixa{width:16px;height:16px;flex:none;position:relative;border:1.5px solid #B9BEC0;border-radius:5px;background:#fff}
+.sel-item[aria-selected="true"] .sel-caixa{background:var(--red);border-color:var(--red)}
+.sel-item[aria-selected="true"] .sel-caixa::after{content:"";position:absolute;left:4.5px;top:1.5px;width:3.5px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.sel-nada{padding:.6rem;font-size:.82rem;color:var(--slate)}
+.sel-limpar{border:0;border-top:1px solid var(--hair);background:none;padding:.55rem .6rem .35rem;text-align:left;font-size:.8rem;font-weight:500;color:var(--red);cursor:pointer}
+.sel-limpar:disabled{color:var(--slate);opacity:.45;cursor:default}
 
 /* ---------- conteudo ---------- */
 .conteudo{max-width:1280px;margin:0 auto;padding:1.75rem 2rem 4rem;display:flex;flex-direction:column;gap:1.5rem;transition:opacity .2s}
@@ -107,16 +146,19 @@ h1,h2,p{margin:0}
 .estado{padding:3rem 1.5rem;text-align:center;display:flex;flex-direction:column;align-items:center;gap:.8rem;color:var(--slate)}
 .aviso-demo{padding:12px 16px;border:1px dashed var(--warn-line);background:var(--warn-bg);color:var(--warn);border-radius:12px;font-size:13.5px}
 
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));overflow:hidden}
+/* o seletor abre por cima dos cartoes seguintes */
+.gerais{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:.9rem;align-items:end;padding:1rem 1.15rem}
+.gerais .btn{white-space:nowrap}
+@media (max-width:760px){.gerais{grid-template-columns:minmax(0,1fr)}}
+
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:hidden}
 .stat{padding:1.2rem 1.35rem;display:flex;flex-direction:column;gap:.25rem;border-right:1px solid var(--hair)}
 .stat:last-child{border-right:0}
 .stat.dest{background:var(--ok-bg)}
 .stat.dest .lab,.stat.dest .stat-v,.stat.dest .stat-d{color:var(--ok)}
 .stat-v{font-size:2rem;font-weight:800;letter-spacing:-.5px;line-height:1.1}
-.stat-v.warn{color:var(--warn)}
 .stat-d{font-size:.85rem;color:var(--slate)}
-@media (max-width:960px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat:nth-child(2n){border-right:0}.stat:nth-child(-n+2){border-bottom:1px solid var(--hair)}}
-@media (max-width:480px){.stat{padding:1rem}.stat-v{font-size:1.5rem}.stat-d{font-size:.78rem}}
+@media (max-width:760px){.stats{grid-template-columns:minmax(0,1fr)}.stat{padding:1rem;border-right:0;border-bottom:1px solid var(--hair)}.stat:last-child{border-bottom:0}.stat-v{font-size:1.6rem}}
 
 .matriz-box{overflow-x:auto}
 .matriz{min-width:720px;display:grid;grid-template-columns:200px repeat(3,minmax(0,1fr));padding:.5rem}
@@ -132,18 +174,33 @@ h1,h2,p{margin:0}
 
 .duas{display:flex;flex-wrap:wrap;gap:1.5rem}
 .painel{padding:1.35rem;display:flex;flex-direction:column;gap:1rem}
-.bar{height:8px;border-radius:999px;background:#F0F1F2;overflow:hidden;display:flex}
-.bar span{display:block;height:100%}
-.sinal-l{display:flex;align-items:center;gap:.75rem;padding:.65rem 0;border-top:1px dashed var(--hair)}
+.pend-l{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.45rem .75rem;align-items:center;width:100%;padding:.75rem .35rem;border:0;border-top:1px dashed var(--hair);background:none;text-align:left;cursor:pointer;transition:background .15s}
+.pend-l:hover:not(:disabled){background:var(--muted)}
+.pend-l:disabled{cursor:default}
+.pend-l:focus-visible{outline:none;box-shadow:var(--foco)}
+.pend-t{display:flex;flex-direction:column}
+.pend-t b{font-weight:500;font-size:.9rem}
+.pend-t span{font-size:.78rem;color:var(--slate)}
+.pend-n{font-weight:800;font-size:1.25rem;line-height:1}
+.pend-barra{grid-column:1/-1;height:6px;border-radius:999px;background:#F0F1F2;overflow:hidden}
+.pend-barra i{display:block;height:100%;background:var(--red)}
+.pend-ok .pend-barra i{background:#1E8E4A}
 .sw{width:10px;height:10px;border-radius:3px;flex:none}
-.sinal-t{flex:1;display:flex;flex-direction:column}
-.sinal-t b{font-weight:500;font-size:.9rem}
-.sinal-t span{font-size:.78rem;color:var(--slate)}
 .legenda{display:flex;gap:1rem;font-size:.75rem;color:var(--slate)}
 .legenda span{display:inline-flex;align-items:center;gap:.35rem}
-.emp-l{display:grid;grid-template-columns:minmax(140px,1.3fr) minmax(100px,2fr) 40px 96px 92px;gap:.9rem;align-items:center;padding:.6rem 0;border-top:1px dashed var(--hair);font-size:.87rem}
+.emp-l{display:grid;grid-template-columns:minmax(140px,1.3fr) minmax(100px,2fr) 40px 96px 92px;gap:.9rem;align-items:center;padding:.55rem 0;border-top:1px dashed var(--hair);font-size:.87rem}
 .emp-l .r{text-align:right}
-@media (max-width:640px){.emp-l{grid-template-columns:1fr 40px 84px;row-gap:.35rem}.emp-l .bar{grid-column:1/-1;grid-row:2}.emp-l .conf{display:none}}
+.emp-barra{display:flex;min-width:0}
+.emp-seg{display:flex;flex-direction:column;gap:3px;min-width:24px;flex-basis:0}
+.emp-seg b{font-size:.75rem;font-weight:700;line-height:1;text-align:center}
+.emp-seg i{display:block;height:10px;background:var(--com)}
+.emp-seg:first-child i{border-radius:999px 0 0 999px}
+.emp-seg:last-child i{border-radius:0 999px 999px 0}
+.emp-seg:only-child i{border-radius:999px}
+.emp-seg.fac i{background:var(--fac)}
+.emp-seg.com b{color:var(--com)}
+.emp-seg.fac b{color:#5E666A}
+@media (max-width:640px){.emp-l{grid-template-columns:1fr 40px 84px;row-gap:.35rem}.emp-l .emp-barra{grid-column:1/-1;grid-row:2}.emp-l .conf{display:none}}
 
 .tbl-box{overflow-x:auto;border:1px solid var(--hair);border-radius:10px}
 .tbl{width:100%;border-collapse:collapse;font-size:.85rem}
@@ -154,16 +211,30 @@ h1,h2,p{margin:0}
 .tbl .r{text-align:right}
 .tbl .nw{white-space:nowrap}
 .tbl .fraco{font-size:.75rem;color:var(--slate)}
-.tbl-ops{min-width:1180px}
+.tbl-ops{min-width:1100px;font-size:.8rem}
+.tbl-ops th{white-space:normal;line-height:1.3;vertical-align:bottom}
+.tbl-ops th,.tbl-ops td{padding:.65rem .45rem}
+.tbl-ops .tag{font-size:.7rem;padding:.14rem .45rem}
+.tbl-ops .un-emp{max-width:130px;min-width:96px;line-height:1.35}
+.tbl-ops .op-cli{min-width:150px;max-width:190px}
+.tbl-ops .cli{font-size:.75rem;color:var(--slate-2);line-height:1.35;margin-top:.1rem}
 .tbl-imob{min-width:680px}
-.filtros{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center}
-.filtros .div{width:1px;align-self:stretch;background:var(--hair);margin:0 .3rem}
-.filtros select{min-height:36px;padding:.35rem .6rem;font-size:.8rem;max-width:260px}
+.barra-f{display:flex;flex-wrap:wrap;gap:.9rem 1.1rem;align-items:flex-end;padding:.9rem 1rem;background:var(--bg);border-radius:12px}
+.grupo{display:flex;flex-direction:column;gap:.35rem}
+.grupo .lab{font-size:.68rem}
+.seg{display:inline-flex;gap:2px;padding:3px;background:#fff;border:1px solid var(--hair);border-radius:10px}
+.seg button{border:0;background:none;border-radius:7px;padding:0 .75rem;min-height:34px;font-size:.8rem;color:var(--slate-2);cursor:pointer;white-space:nowrap}
+.seg button:hover{color:var(--red)}
+.seg button[aria-pressed="true"]{background:var(--red);color:#fff;font-weight:500}
+.seg button:focus-visible{outline:none;box-shadow:var(--foco)}
+.barra-f .sel-botao{font-size:.8rem}
+.g-sel{flex:1 1 170px;min-width:0;max-width:300px}
+.limpar{background:none;border:0;padding:0 .2rem;min-height:42px;color:var(--red);font-size:.8rem;font-weight:500;cursor:pointer;text-decoration:underline;text-underline-offset:2px;margin-left:auto}
+.limpar:disabled{color:var(--slate);opacity:.45;cursor:default;text-decoration:none}
 .busca-l{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
-.busca-l input{width:260px}
-@media (max-width:640px){.busca-l,.busca-l input{width:100%}.busca-l .btn{flex:1}.filtros select{flex:1 1 100%;max-width:none}.filtros .div{display:none}}
+.busca-l input{width:300px}
+@media (max-width:640px){.busca-l,.busca-l input{width:100%}.busca-l .btn{flex:1}.grupo,.g-sel{flex:1 1 100%;max-width:none}.seg{display:flex;flex-wrap:wrap}.seg button{flex:1 1 auto}}
 .vazio{padding:2rem;text-align:center;color:var(--slate);font-size:.9rem}
-.nota{font-size:.78rem;color:var(--slate);max-width:90ch}
 </style>
 </head>
 <body>
@@ -201,20 +272,41 @@ h1,h2,p{margin:0}
 <div id="app" hidden>
   <header class="hero">
     <div class="topo">
-      <div class="step">Relatório de vendas · SPI</div>
-      <img class="topo-logo" src="assets/img/logo-direcional-header.png" alt="Direcional">
-      <h1>Vendas do mês <span id="mes-nome"></span></h1>
-        <div class="mes-ctrl">
-          <button class="btn btn-ico" id="mes-ant" type="button" aria-label="Mês anterior">
+      <div class="topo-esq">
+        <div class="step">Relatório de vendas · SPI</div>
+        <h1>Vendas do <b id="per-titulo">mês</b> <span id="mes-nome"></span></h1>
+      </div>
+      <div class="topo-dir">
+        <img class="topo-logo" src="assets/img/logo-direcional-header.png" alt="Direcional">
+        <div class="per" id="per">
+          <button class="btn btn-ico" id="per-ant" type="button" aria-label="Período anterior">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <label class="sr" for="mes">Mês</label>
-          <select class="inp" id="mes"></select>
-          <button class="btn btn-ico" id="mes-prox" type="button" aria-label="Próximo mês">
+          <div class="sel">
+            <button class="sel-botao" id="per-botao" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="per-painel">
+              <span class="sel-valor" id="per-valor"></span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          <button class="btn btn-ico" id="per-prox" type="button" aria-label="Próximo período">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
           </button>
+          <div class="per-painel" id="per-painel" role="dialog" aria-label="Escolher período" hidden>
+            <div class="seg" role="group" aria-label="Filtrar por">
+              <button type="button" data-per="mes">Mês</button>
+              <button type="button" data-per="tri">Trimestre</button>
+              <button type="button" data-per="ano">Ano</button>
+            </div>
+            <div class="per-ano" id="per-ano">
+              <button class="btn" id="per-ano-ant" type="button" aria-label="Ano anterior">‹</button>
+              <span class="num" id="per-ano-txt" aria-live="polite"></span>
+              <button class="btn" id="per-ano-prox" type="button" aria-label="Próximo ano">›</button>
+            </div>
+            <div class="per-grade" id="per-grade"></div>
+          </div>
         </div>
         <div class="atualizacao"><span class="dot" id="dot" aria-hidden="true"></span><span id="atualizacao">Carregando…</span><span aria-hidden="true">·</span><button class="sair" id="sair" type="button">Sair</button></div>
+      </div>
     </div>
   </header>
 
@@ -229,11 +321,21 @@ h1,h2,p{margin:0}
 
     <div id="painel" hidden style="display:flex;flex-direction:column;gap:inherit">
 
-      <section aria-label="Resumo do mês" class="card stats">
-        <div class="stat dest"><span class="lab">VGV do mês</span><span class="stat-v num" id="s-vgv"></span><span class="stat-d num" id="s-vgv-d"></span><span class="stat-d num" id="s-vgv-n"></span></div>
-        <div class="stat"><span class="lab">Resultado oficial</span><span class="stat-v num" id="s-oficial"></span><span class="stat-d">Comerciais comunicadas ou ganhas + facilitadas confirmadas</span></div>
-        <div class="stat"><span class="lab">Aguardando confirmação</span><span class="stat-v num warn" id="s-pend"></span><span class="stat-d num" id="s-pend-d"></span></div>
-        <div class="stat"><span class="lab">Vendas em tempo real</span><span class="stat-v num" id="s-total"></span><span class="stat-d">Comerciais e facilitadas, com e sem confirmação</span></div>
+      <section aria-label="Filtros gerais" class="card gerais">
+        <div class="campo"><label class="lab" for="g-emp">Empreendimento</label><select class="inp" id="g-emp"></select></div>
+        <div class="campo"><label class="lab" for="g-cidade">Cidade</label><select class="inp" id="g-cidade"></select></div>
+        <div class="campo"><label class="lab" for="g-canal">Imobiliária</label><select class="inp" id="g-canal">
+          <option value="">House e Canal Imob</option>
+          <option value="house">House</option>
+          <option value="canal">Canal Imob</option>
+        </select></div>
+        <button class="btn" id="g-limpar" type="button">Limpar filtros</button>
+      </section>
+
+      <section aria-label="Resumo do período" class="card stats">
+        <div class="stat"><span class="lab">VGV Venda Comercial</span><span class="stat-v num" id="s-com"></span><span class="stat-d num" id="s-com-d"></span></div>
+        <div class="stat"><span class="lab">VGV Venda Facilitada</span><span class="stat-v num" id="s-fac"></span><span class="stat-d num" id="s-fac-d"></span></div>
+        <div class="stat dest"><span class="lab">VGV Total do <span class="per-tipo">mês</span></span><span class="stat-v num" id="s-vgv"></span><span class="stat-d num" id="s-vgv-d"></span></div>
       </section>
 
       <section aria-labelledby="t-matriz" style="display:flex;flex-direction:column;gap:.8rem">
@@ -267,19 +369,18 @@ h1,h2,p{margin:0}
       </section>
 
       <div class="duas">
-        <section aria-labelledby="t-sinal" class="card painel" style="flex:1 1 360px">
+        <section aria-labelledby="t-pend" class="card painel" style="flex:1 1 360px">
           <div style="display:flex;flex-direction:column;gap:.3rem">
-            <h2 id="t-sinal" class="step">Pagamento do sinal</h2>
-            <p class="sub" style="font-size:.85rem" id="sinal-sub"></p>
+            <h2 id="t-pend" class="step">Tipo de pendências</h2>
+            <p class="sub" style="font-size:.85rem" id="pend-sub"></p>
           </div>
-          <div class="bar" style="height:14px" id="sinal-bar" role="img"></div>
-          <div id="sinal-lista"></div>
+          <div id="pend-lista"></div>
         </section>
 
         <section aria-labelledby="t-emp" class="card painel" style="flex:2 1 540px">
           <div class="cab">
             <h2 id="t-emp" class="step">Por empreendimento</h2>
-            <div class="legenda"><span><i class="sw" style="background:#3A4043"></i>Comercial</span><span><i class="sw" style="background:#B9BEC0"></i>Facilitada</span></div>
+            <div class="legenda"><span><i class="sw" style="background:var(--com)"></i>Comercial</span><span><i class="sw" style="background:var(--fac)"></i>Facilitada</span></div>
           </div>
           <div id="emp-lista"></div>
         </section>
@@ -302,32 +403,54 @@ h1,h2,p{margin:0}
       <section id="ops" aria-labelledby="t-ops" class="card painel">
         <div class="cab" style="align-items:center">
           <div style="display:flex;flex-direction:column;gap:.2rem">
-            <h2 id="t-ops" class="step">OPs do mês</h2>
+            <h2 id="t-ops" class="step">Lista de oportunidades</h2>
             <span class="sub" id="ops-sub"></span>
           </div>
           <div class="busca-l">
-            <label for="busca" class="sr">Buscar OP, unidade, corretor</label>
-            <input id="busca" class="inp" type="search" placeholder="Buscar OP, unidade, corretor…" autocomplete="off">
+            <label for="busca" class="sr">Buscar OP, cliente, unidade, corretor</label>
+            <input id="busca" class="inp" type="search" placeholder="Buscar OP, cliente, unidade, corretor…" autocomplete="off">
             <button class="btn" id="exportar" type="button">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
               Exportar CSV
             </button>
           </div>
         </div>
-        <div class="filtros" role="group" aria-label="Filtros">
-          <button class="chip" type="button" data-chip="todas">Todas</button>
-          <button class="chip" type="button" data-chip="comercial">Comerciais</button>
-          <button class="chip" type="button" data-chip="facilitada">Facilitadas</button>
-          <button class="chip" type="button" data-chip="ok">Confirmadas</button>
-          <button class="chip" type="button" data-chip="sem">Sem confirmação</button>
-          <span class="div" aria-hidden="true"></span>
-          <select class="inp" id="f-emp" aria-label="Empreendimento"></select>
-          <select class="inp" id="f-imob" aria-label="Imobiliária"></select>
+        <div class="barra-f" role="group" aria-label="Filtros da lista">
+          <div class="grupo">
+            <span class="lab" id="r-tipo">Tipo de venda</span>
+            <div class="seg" role="group" aria-labelledby="r-tipo">
+              <button type="button" data-seg="tipo" data-v="">Todas</button>
+              <button type="button" data-seg="tipo" data-v="comercial">Comerciais</button>
+              <button type="button" data-seg="tipo" data-v="facilitada">Facilitadas</button>
+            </div>
+          </div>
+          <div class="grupo">
+            <span class="lab" id="r-conf">Confirmação 2.0</span>
+            <div class="seg" role="group" aria-labelledby="r-conf">
+              <button type="button" data-seg="conf" data-v="">Todas</button>
+              <button type="button" data-seg="conf" data-v="ok">Confirmadas</button>
+              <button type="button" data-seg="conf" data-v="sem">Pendentes</button>
+            </div>
+          </div>
+          <div class="grupo g-sel">
+            <label class="lab" for="f-pend">Pendência</label>
+            <select class="inp" id="f-pend" multiple>
+              <option value="assinatura">Sem assinatura</option>
+              <option value="fid">FID pendente</option>
+              <option value="sinal">Sinal pendente</option>
+              <option value="nenhuma">Sem pendência</option>
+            </select>
+          </div>
+          <div class="grupo g-sel">
+            <label class="lab" for="f-imob">Equipe / imobiliária</label>
+            <select class="inp" id="f-imob"></select>
+          </div>
+          <button class="limpar" id="f-limpar" type="button">Limpar</button>
         </div>
         <div class="tbl-box">
           <table class="tbl tbl-ops">
             <thead><tr>
-              <th>Data que conta</th><th>OP</th><th>Unidade</th><th>Tipo</th><th>Fase</th><th>Confirmação 2.0</th><th>PCV</th><th>Sinal</th><th>Imobiliária / corretor</th><th class="r">Valor</th>
+              <th>Data</th><th>OP / cliente</th><th>Unidade</th><th>Tipo</th><th>Fase</th><th>Confirmação 2.0</th><th>FID</th><th>Assinatura</th><th>Sinal</th><th>Imobiliária / corretor</th><th class="r">Valor</th>
             </tr></thead>
             <tbody id="ops-corpo"></tbody>
           </table>
@@ -335,14 +458,13 @@ h1,h2,p{margin:0}
         </div>
         <div style="display:flex;justify-content:center"><button class="btn" id="ops-mais" type="button"></button></div>
       </section>
-
-      <p class="nota">Fonte: relatórios VENDAS SPI XIMENES e VENDAS SPI 2.0 XIMENES do Salesforce, cruzados pelo número da OP (OP repetida conta uma vez). Com Data Confirmação 2.0 a venda entra no mês da confirmação; sem ela, no mês da data da venda. Entram as fases a partir de Proposta Aprovada. OP marcada como comercial e facilitada conta como comercial.</p>
     </div>
   </main>
 </div>
 
 <script src="assets/config.js"></script>
 <script src="assets/resultado-mes.js"></script>
+<script src="assets/seletor.js"></script>
 <script src="assets/resultado-mes-app.js"></script>
 </body>
 </html>
