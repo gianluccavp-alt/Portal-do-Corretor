@@ -33,7 +33,7 @@ window.SIM_EMPS = [
     inicioObra:'2025-04-01', entrega:'2028-01-31', pctPS:0.15, prazoPadrao:52, parcMin:150,
     sheetName:'Village Park' },
   { id:'botanico', cod:'574V', nome:'Reserva Direcional Jardim Botânico', cidade:'Ribeirão Preto',
-    inicioObra:'2024-04-01', entrega:'2026-12-31', pctPS:0.18, prazoPadrao:52, parcMin:150,
+    inicioObra:'2024-04-01', entrega:'2027-03-31', pctPS:0.18, prazoPadrao:52, parcMin:150,
     sheetName:'Reserva Direcional Jardim Botânico' },
   { id:'ipiranga', cod:'785V', nome:'Conquista Clube Ipiranga', cidade:'Ribeirão Preto',
     inicioObra:'2026-06-01', entrega:'2028-08-31', pctPS:0.15, prazoPadrao:36, parcMin:150,

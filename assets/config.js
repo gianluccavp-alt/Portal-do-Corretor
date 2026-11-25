@@ -587,7 +587,7 @@ window.CITIES = [
         sub: 'O seu Direcional no coração da Zona Sul, com o Reserva Jardim Botânico você tem o privilégio de morar em um dos bairros mais bem localizados de Ribeirão Preto. Um condomínio único, idealizado para pessoas que valorizam a exclusividade. Mais do que a localização diferenciada, destaque a segurança de viver em um condomínio fechado e a comodidade de estar próximo a tudo o que mais importa é a possibilidade de descobrir coisas novas, que aumentam a qualidade de vida no dia a dia.',
         heroImg: 'assets/img/jardim-botanico/galeria/01-fachada.jpg',
         heroBlur: true, theme: 'jardim-botanico',
-        entrega: '2026-12-31',
+        entrega: '2027-03-31',
         badges: [], pills: [], torres: 3,
         hideVagas: true,
         tipoRule: 'jardim-botanico',
