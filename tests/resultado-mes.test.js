@@ -101,8 +101,9 @@ test('assinatura vem do D4Sign: ultimo envio nao cancelado decide', () => {
   const por = {};
   R.vendasDoMes(abas, '2026-11', envios).forEach((v) => { por[v.op] = v; });
   assert.equal(por['OP-1'].assinatura, 'assinado');
-  assert.equal(por['OP-2'].assinatura, 'aguardando');
-  assert.equal(por['OP-2'].clienteAssinou, true);
+  // OP-2: o envio mais recente ainda aguarda outros, mas o cliente ja assinou
+  assert.equal(por['OP-2'].assinatura, 'assinado');
+  // envio cancelado nao vale, mesmo com o cliente marcado como assinado
   assert.equal(por['OP-3'].assinatura, 'cancelado');
   assert.equal(por['OP-4'].assinatura, 'aguardando');
   assert.equal(por['OP-5'].assinatura, 'sem_envio');

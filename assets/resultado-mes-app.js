@@ -458,7 +458,7 @@
       : 'Assinatura, FID e sinal nas ' + plural(p.total, 'venda', 'vendas') + '. Uma venda pode ter mais de uma pendência.' +
         (p.temD4 ? '' : ' Assinatura indisponível: dados do D4Sign ainda não chegaram.');
     var itens = [
-      { id: 'assinatura', titulo: 'Sem assinatura', desc: 'PCV não finalizado', n: p.assinatura, off: !p.temD4 },
+      { id: 'assinatura', titulo: 'Sem assinatura', desc: 'Cliente ainda não assinou o PCV', n: p.assinatura, off: !p.temD4 },
       { id: 'fid', titulo: 'FID pendente', desc: 'Venda sem número de FID', n: p.fid },
       { id: 'sinal', titulo: 'Sinal pendente', desc: 'Sem boleto/PIX nem cartão pago', n: p.sinal },
       { id: 'nenhuma', titulo: 'Sem pendência', desc: 'Assinada, com FID e sinal pago', n: p.semPendencia, off: !p.temD4 }
@@ -626,7 +626,6 @@
       var a = ASSINATURA[v.assinatura];
       if (!a) td.appendChild(el('span', 'fraco', '–'));
       else td.appendChild(tag(a.cls, a.txt));
-      if (v.assinatura === 'aguardando' && v.clienteAssinou) td.appendChild(el('div', 'fraco nw', 'cliente já assinou')).style.marginTop = '.25rem';
       tr.appendChild(td);
 
       td = el('td');
