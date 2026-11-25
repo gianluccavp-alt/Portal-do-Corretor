@@ -48,7 +48,7 @@ test('comercial + facilitada conta como comercial', () => {
   assert.equal(v.virouComercial, true);
 });
 
-test('resumo: matriz, oficial e sinal', () => {
+test('resumo: matriz', () => {
   const abas = [aba([
     { op: 1, venda: '2026-11-01', conf: '2026-11-02', fase: 'Fechado e ganho', valor: 300000 },
     { op: 2, venda: '2026-11-01', fase: 'Proposta Aprovada', valor: 200000, pcv: '2026-11-01', cartao: 'Sim' },
@@ -60,12 +60,10 @@ test('resumo: matriz, oficial e sinal', () => {
   const r = R.resumo(R.vendasDoMes(abas, '2026-11'));
   assert.equal(r.total.n, 6);
   assert.equal(r.total.vgv, 900000);
-  assert.equal(r.oficial.n, 2);
   assert.equal(r.matriz.comercial.ok.n, 1);
   assert.equal(r.matriz.comercial.sem.n, 1);
   assert.equal(r.matriz.facilitada.ok.n, 1);
   assert.equal(r.matriz.facilitada.sem.n, 3);
-  assert.deepEqual(r.sinal, { pcvESinal: 1, soPcv: 1, soSinal: 1, nenhum: 1, total: 4 });
   assert.equal(r.empreendimentos[0].n, 6);
 });
 
@@ -75,4 +73,119 @@ test('le datas no formato brasileiro e booleanos em texto', () => {
   assert.equal(v.tipo, 'facilitada');
   assert.equal(v.boleto, true);
   assert.equal(v.valor, 1234.5);
+});
+
+test('cliente sai do nome da oportunidade e FID preenchido vale aprovado', () => {
+  const l = linha({ op: 8, venda: '2026-11-01' });
+  l[CAB.indexOf('Nome da oportunidade')] = 'OP-8 - Cliente: MARIA TESTE';
+  l[CAB.indexOf('FID')] = '747247';
+  const v = R.lerLinha(CAB, l);
+  assert.equal(v.cliente, 'MARIA TESTE');
+  assert.equal(v.fidOk, true);
+  assert.equal(R.lerLinha(CAB, linha({ op: 9, venda: '2026-11-01' })).fidOk, false);
+});
+
+const CAB_D4 = ['Envio D4Sign: Oportunidade', 'Envio D4Sign: Status', 'Envio D4Sign: Cliente assinou?', 'Envio D4Sign: Data de criação'];
+const d4 = (linhas) => ({ cabecalho: CAB_D4, linhas });
+
+test('assinatura vem do D4Sign: ultimo envio nao cancelado decide', () => {
+  const abas = [aba([1, 2, 3, 4, 5].map((op) => ({ op, venda: '2026-11-01', pcv: '2026-11-01' })))];
+  const envios = d4([
+    ['OP-1 - Cliente: A', 'Cancelado', false, '2026-11-02'],
+    ['OP-1 - Cliente: A', 'Finalizado', true, '2026-11-01'],
+    ['OP-2 - Cliente: B', 'Finalizado', true, '2026-11-01'],
+    ['OP-2 - Cliente: B', 'Aguardando Assinaturas', true, '2026-11-03'],
+    ['OP-3 - Cliente: C', 'Cancelado', true, '2026-11-01'],
+    ['OP-4 - Cliente: D', 'Aguardando Signatários', false, '2026-11-01']
+  ]);
+  const por = {};
+  R.vendasDoMes(abas, '2026-11', envios).forEach((v) => { por[v.op] = v; });
+  assert.equal(por['OP-1'].assinatura, 'assinado');
+  assert.equal(por['OP-2'].assinatura, 'aguardando');
+  assert.equal(por['OP-2'].clienteAssinou, true);
+  assert.equal(por['OP-3'].assinatura, 'cancelado');
+  assert.equal(por['OP-4'].assinatura, 'aguardando');
+  assert.equal(por['OP-5'].assinatura, 'sem_envio');
+});
+
+test('sem dados do D4Sign a assinatura fica desconhecida, nao pendente', () => {
+  const lista = R.vendasDoMes([aba([{ op: 1, venda: '2026-11-01', boleto: 'Sim' }])], '2026-11');
+  assert.equal(lista[0].assinatura, '');
+  const p = R.resumo(lista).pendencias;
+  assert.equal(p.temD4, false);
+  assert.equal(p.assinatura, 0);
+});
+
+test('pendencias olham todas as vendas do mes, confirmadas ou nao', () => {
+  const l = [
+    { op: 1, venda: '2026-11-01', conf: '2026-11-02', boleto: 'Sim' },
+    { op: 2, venda: '2026-11-01' },
+    { op: 3, venda: '2026-11-01', cartao: 'Sim' }
+  ];
+  const abas = [aba(l)];
+  abas[0].linhas[0][CAB.indexOf('FID')] = '1';
+  abas[0].linhas[2][CAB.indexOf('FID')] = '3';
+  const envios = d4([['OP-1', 'Finalizado', true, '2026-11-01']]);
+  const p = R.resumo(R.vendasDoMes(abas, '2026-11', envios)).pendencias;
+  assert.deepEqual(p, { temD4: true, total: 3, assinatura: 2, fid: 1, sinal: 1, semPendencia: 1 });
+});
+
+test('house, canal imob e cidade', () => {
+  assert.equal(R.canalDe('DIRECIONAL VENDAS SPI – EQUIPE OTAVIO'), 'house');
+  assert.equal(R.canalDe('RIVA VENDAS SPI – EQUIPE X'), 'house');
+  assert.equal(R.canalDe('SPI - CANAL IMOB PJ - VITOR'), 'canal');
+  assert.equal(R.canalDe('DDS SPI - KAREN'), '');
+  assert.equal(R.cidadeDe('Village Gaia'), 'Ribeirão Preto');
+  assert.equal(R.cidadeDe('Casa Prado Residencial Riva'), 'Campinas');
+  assert.equal(R.cidadeDe('Conquista Vila da Mata'), 'Sorocaba');
+  assert.equal(R.cidadeDe('Conquista Araraquara'), 'Outras');
+});
+
+test('filtros gerais combinam empreendimento, cidade e canal', () => {
+  const lista = R.vendasDoMes([aba([
+    { op: 1, venda: '2026-11-01', emp: 'Village Gaia', imob: 'SPI - CANAL IMOB PJ - A' },
+    { op: 2, venda: '2026-11-01', emp: 'Village Park', imob: 'DIRECIONAL VENDAS SPI - B' },
+    { op: 3, venda: '2026-11-01', emp: 'Seleto Amoreiras', imob: 'DIRECIONAL VENDAS SPI - B' }
+  ])], '2026-11');
+  const ops = (g) => R.filtrarGeral(lista, g).map((v) => v.op).sort();
+  assert.deepEqual(ops({ emp: '', cidade: 'Ribeirão Preto', canal: '' }), ['OP-1', 'OP-2']);
+  assert.deepEqual(ops({ emp: '', cidade: 'Ribeirão Preto', canal: 'house' }), ['OP-2']);
+  assert.deepEqual(ops({ emp: 'Seleto Amoreiras', cidade: '', canal: '' }), ['OP-3']);
+});
+
+test('periodo pode ser mes, trimestre ou ano', () => {
+  const abas = [aba([
+    { op: 1, venda: '2026-10-05' }, { op: 2, venda: '2026-12-30' }, { op: 3, venda: '2026-09-30' },
+    { op: 4, venda: '2025-12-31', conf: '2026-01-02' }, { op: 5, venda: '2025-11-01' }
+  ])];
+  const ops = (p) => R.vendasDoMes(abas, p).map((v) => v.op).sort();
+  assert.deepEqual(ops('2026-10'), ['OP-1']);
+  assert.deepEqual(ops('2026-T4'), ['OP-1', 'OP-2']);
+  assert.deepEqual(ops('2026'), ['OP-1', 'OP-2', 'OP-3', 'OP-4']);
+  assert.deepEqual(ops('2025'), ['OP-5']);
+  assert.equal(R.periodoDe('2026-11', 'tri'), '2026-T4');
+  assert.equal(R.periodoDe('2026-03', 'tri'), '2026-T1');
+  assert.equal(R.periodoDe('2026-11', 'ano'), '2026');
+  assert.equal(R.tipoPeriodo('2026-T2'), 'tri');
+});
+
+test('venda anterior ao D4Sign sem envio usa o campo Cliente assinou PCV', () => {
+  const abas = [aba([
+    { op: 1, venda: '2025-03-01', pcv: '2025-03-02' }, { op: 2, venda: '2025-03-01' },
+    { op: 3, venda: '2025-10-01', pcv: '2025-10-02' }, { op: 4, venda: '2025-03-01', pcv: '2025-03-02' }
+  ])];
+  const l = R.vendasDoMes(abas, '2025', d4([['OP-4', 'Aguardando Assinaturas', false, '2025-09-20']]));
+  const a = (op) => l.find((v) => v.op === op).assinatura;
+  assert.equal(a('OP-1'), 'assinado');
+  assert.equal(a('OP-2'), 'nao_assinado');
+  assert.equal(a('OP-3'), 'sem_envio');
+  assert.equal(a('OP-4'), 'aguardando');
+});
+
+test('varias pendencias marcadas: entra a venda que tiver qualquer uma', () => {
+  const v = { assinatura: 'assinado', fidOk: false, sinalPago: true };
+  assert.equal(R.temAlguma(v, ['sinal', 'fid']), true);
+  assert.equal(R.temAlguma(v, ['sinal', 'assinatura']), false);
+  assert.equal(R.temAlguma(v, []), true);
+  assert.equal(R.temPendencia({ assinatura: '', fidOk: true, sinalPago: true }, 'nenhuma'), false);
 });

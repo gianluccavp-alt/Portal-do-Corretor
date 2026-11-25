@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 export const RELATORIOS = [
   { aba: 'VENDAS SPI XIMENES', id: '00OU600000OaAcYMAV' },
   { aba: 'VENDAS SPI 2.0 XIMENES', id: '00OU600000O7OxRMAV' },
+  { aba: 'Envios D4Sign', id: '00OU600000NJLYHMA5', d4sign: true, particao: 'filtroDeData' },
 ];
 
 const LIMITE_API = 2000;
@@ -75,12 +76,20 @@ function comPedaco(desc, ini, fim) {
   return m;
 }
 
+// mesmo [ini, fim), pelo filtro de data do proprio relatorio (pontas inclusivas)
+function comPeriodo(desc, ini, fim) {
+  const m = structuredClone(desc.reportMetadata);
+  m.standardDateFilter = { column: m.standardDateFilter.column, durationValue: 'CUSTOM', startDate: iso(ini), endDate: iso(new Date(fim.getTime() - 86400000)) };
+  return m;
+}
+
 function achatar(desc, resultado) {
   const info = desc.reportExtendedMetadata.detailColumnInfo;
   const cols = desc.reportMetadata.detailColumns;
   const rows = [];
   for (const [chave, fato] of Object.entries(resultado.factMap)) {
-    if (chave === 'T!T') continue;
+    // tabular guarda as linhas em T!T; nos agrupados, T!T e so o total
+    if (chave === 'T!T' && desc.reportMetadata.reportFormat !== 'TABULAR') continue;
     for (const linha of fato.rows || []) {
       rows.push(linha.dataCells.map((c, i) => {
         const tipo = info[cols[i]].dataType, v = c.value;
@@ -99,7 +108,8 @@ function achatar(desc, resultado) {
   };
 }
 
-export async function puxarRelatorio(sf, id, log = () => {}) {
+export async function puxarRelatorio(sf, id, log = () => {}, particao = '') {
+  const dividir = particao === 'filtroDeData' ? comPeriodo : comPedaco;
   const desc = await sf.descrever(id);
   const nome = desc.reportMetadata.name;
   const completo = await sf.executar(id, desc.reportMetadata, true);
@@ -112,7 +122,7 @@ export async function puxarRelatorio(sf, id, log = () => {}) {
   const linhas = [];
   let pedacos = 0, formato;
   async function pedaco(ini, fim) {
-    const m = comPedaco(desc, ini, fim);
+    const m = dividir(desc, ini, fim);
     const n = total(await sf.executar(id, m, false));
     if (n === 0) return;
     if (n > MARGEM && fim - ini > 86400000) {
@@ -135,8 +145,8 @@ export async function puxarRelatorio(sf, id, log = () => {}) {
 
 export async function puxarTodos(sf, log = () => {}) {
   const saida = [];
-  for (const { aba, id } of RELATORIOS) {
-    const r = await puxarRelatorio(sf, id, log);
+  for (const { aba, id, particao } of RELATORIOS) {
+    const r = await puxarRelatorio(sf, id, log, particao);
     if (r.rows.length !== r.esperado) {
       throw new Error(`${aba}: veio ${r.rows.length} linhas, o Salesforce informa ${r.esperado}. Nao vou gravar dados incompletos.`);
     }

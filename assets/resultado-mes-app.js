@@ -16,7 +16,7 @@
   var CHAVE_SESSAO = 'resultado_mes_senha';
   var MSG_SENHA = 'Senha incorreta. Confira maiúsculas e tente de novo.';
   var TIMEOUT = 60000;
-  var PAGINA_OPS = Infinity; // mostra a lista inteira
+  var PAGINA_OPS_LONGO = 300; // trimestre e ano: o resto sai no botao "Ver todas"
   var PAGINA_IMOB = 8;
   var FUSO = 'America/Sao_Paulo';
   var MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
@@ -26,12 +26,29 @@
     mes: mesAtual(),
     meses: [],
     cache: {},
-    vendas: [],
+    todas: [],   // todas as vendas do mes
+    vendas: [],  // depois dos filtros gerais
     resumo: null,
-    filtro: { tipo: '', conf: '', emp: '', imob: '', busca: '' },
-    verOps: PAGINA_OPS,
+    geral: { emp: '', cidade: '', canal: '' }, // mantidos ao trocar de mes
+    filtro: filtroVazio(),
+    verOps: Infinity,
     verImob: PAGINA_IMOB
   };
+
+  function filtroVazio() { return { tipo: '', conf: '', pend: [], imob: '', busca: '' }; }
+  var seletores = {};
+  var PERIODOS = { mes: 'mês', tri: 'trimestre', ano: 'ano' };
+  function tipoAtual() { return R.tipoPeriodo(estado.mes); }
+  function noTexto() { return 'no ' + PERIODOS[tipoAtual()]; }
+  function paginaOps() { return tipoAtual() === 'mes' ? Infinity : PAGINA_OPS_LONGO; }
+  var ASSINATURA = {
+    assinado: { cls: 't-ok', txt: 'Assinado' },
+    aguardando: { cls: 't-sem', txt: 'Aguardando' },
+    cancelado: { cls: 't-err', txt: 'Cancelado' },
+    nao_assinado: { cls: 't-err', txt: 'Não assinado' },
+    sem_envio: { cls: 't-err', txt: 'Não enviado' }
+  };
+  var CANAIS = { house: 'House', canal: 'Canal Imob' };
 
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, txt) {
@@ -48,16 +65,15 @@
     p.forEach(function (x) { if (x.type === 'year') a = x.value; if (x.type === 'month') m = x.value; });
     return a + '-' + m;
   }
-  function nomeMes(ym, capital) {
-    var p = ym.split('-');
-    var n = MESES[Number(p[1]) - 1] || ym;
+  /* '2026-11', '2026-T4' ou '2026' por extenso */
+  function nomePeriodo(p, capital) {
+    var tipo = R.tipoPeriodo(p);
+    if (tipo === 'ano') return p;
+    var ano = p.slice(0, 4);
+    if (tipo === 'tri') return p.slice(6) + 'º trimestre' + (capital ? ' de ' : ' ') + ano;
+    var n = MESES[Number(p.slice(5, 7)) - 1] || p;
     if (capital) n = n.charAt(0).toUpperCase() + n.slice(1);
-    return n + (capital ? ' de ' : ' ') + p[0];
-  }
-  function somaMes(ym, d) {
-    var p = ym.split('-').map(Number);
-    var t = p[0] * 12 + (p[1] - 1) + d;
-    return Math.floor(t / 12) + '-' + String(t % 12 + 1).padStart(2, '0');
+    return n + (capital ? ' de ' : ' ') + ano;
   }
   var fmtInt = new Intl.NumberFormat('pt-BR');
   var fmtReal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
@@ -104,6 +120,8 @@
       var json;
       try { json = JSON.parse(texto); } catch (e) { throw falha('formato', 'O Web App não respondeu no formato esperado.'); }
       if (!json.ok) throw falha(json.erro || 'interno', json.mensagem || 'Erro no Web App.');
+      /* o Web App antigo ignora trimestre/ano e devolve o mes atual */
+      if (json.mes !== mes && R.tipoPeriodo(mes) !== 'mes') throw falha('versao', 'O filtro por trimestre e ano precisa da versão nova do Web App no Apps Script.');
       return json;
     }).finally(function () { clearTimeout(timer); });
   }
@@ -117,7 +135,8 @@
       }).then(function (j) { demo = j; return j; });
     return carga.then(function (d) {
       var meses = {};
-      var abas = d.abas.map(function (a) {
+      var d4 = d.abas.filter(function (a) { return a.aba === 'Envios D4Sign'; })[0] || null;
+      var abas = d.abas.filter(function (a) { return a !== d4; }).map(function (a) {
         var iV = a.cabecalho.indexOf('Data da venda');
         var iC = a.cabecalho.indexOf('Data Confirmação Venda 2.0');
         return {
@@ -125,11 +144,11 @@
           linhas: a.linhas.filter(function (l) {
             var mv = R.dataIso(l[iV]).slice(0, 7), mc = R.dataIso(l[iC]).slice(0, 7);
             if (mc || mv) meses[mc || mv] = true;
-            return mv === mes || mc === mes;
+            return R.noPeriodo(mv, mes) || R.noPeriodo(mc, mes);
           })
         };
       });
-      return { ok: true, mes: mes, meses: Object.keys(meses).sort().reverse(), atualizadoEm: d.atualizadoEm, intervaloMinutos: 30, abas: abas };
+      return { ok: true, mes: mes, meses: Object.keys(meses).sort().reverse(), atualizadoEm: d.atualizadoEm, intervaloMinutos: 30, abas: abas, d4sign: d4 };
     });
   }
 
@@ -161,6 +180,7 @@
     try { sessionStorage.removeItem(CHAVE_SESSAO); } catch (e) { /* ignora */ }
     estado.senha = '';
     estado.cache = {};
+    estado.geral = { emp: '', cidade: '', canal: '' };
     mostrarGate(msg);
   }
   function iniciarGate() {
@@ -198,13 +218,18 @@
     $('erro').hidden = qual !== 'erro';
     $('painel').hidden = qual !== 'ok';
   }
+  var pedidoAtual = 0; // resposta atrasada de um periodo anterior e ignorada
   function carregar(mes) {
     estado.mes = mes;
-    if (estado.cache[mes]) { receber(estado.cache[mes]); return; }
+    if (estado.cache[mes]) { pedidoAtual++; receber(estado.cache[mes]); return; }
     if ($('painel').hidden) mostrarEstado('carregando');
     else $('conteudo').classList.add('carregando');
-    $('mes-nome').textContent = nomeMes(mes);
-    chamar(mes).then(receber).catch(function (f) {
+    desenharPeriodo();
+    var pedido = ++pedidoAtual;
+    chamar(mes).then(function (res) {
+      if (pedido === pedidoAtual) receber(res);
+    }).catch(function (f) {
+      if (pedido !== pedidoAtual) return;
       $('conteudo').classList.remove('carregando');
       if (f.codigo === 'senha') { sair(MSG_SENHA); return; }
       $('erro-txt').textContent = f.mensagem;
@@ -215,43 +240,168 @@
     estado.cache[res.mes] = res;
     estado.mes = res.mes;
     if (res.meses && res.meses.length) estado.meses = res.meses.filter(function (m) { return m >= '2015-01'; });
-    estado.vendas = R.vendasDoMes(res.abas, res.mes);
-    estado.resumo = R.resumo(estado.vendas);
-    estado.filtro = { tipo: '', conf: '', emp: '', imob: '', busca: '' };
-    estado.verOps = PAGINA_OPS;
+    estado.todas = R.vendasDoMes(res.abas, res.mes, res.d4sign);
+    estado.filtro = filtroVazio();
     estado.verImob = PAGINA_IMOB;
     $('busca').value = '';
     $('conteudo').classList.remove('carregando');
     desenharTopo(res);
+    aplicarGeral();
+    mostrarEstado('ok');
+  }
+
+  /* ---------- filtros gerais ---------- */
+  function aplicarGeral() {
+    preencherGerais();
+    estado.vendas = R.filtrarGeral(estado.todas, estado.geral);
+    estado.resumo = R.resumo(estado.vendas);
+    estado.verOps = paginaOps();
+    estado.verImob = PAGINA_IMOB;
     desenharResumo();
     desenharMatriz();
-    desenharSinal();
+    desenharPendencias();
     desenharEmpreendimentos();
     desenharImobiliarias();
     preencherSelects();
     desenharOps();
-    mostrarEstado('ok');
+  }
+
+  function encher(sel, todos, valores, rotulo) {
+    sel.textContent = '';
+    var o = el('option', null, todos); o.value = ''; sel.appendChild(o);
+    valores.forEach(function (v) { var op = el('option', null, rotulo ? rotulo(v) : v); op.value = v; sel.appendChild(op); });
+  }
+
+  function unicos(lista, campo) {
+    var m = {};
+    lista.forEach(function (v) { if (v[campo]) m[v[campo]] = true; });
+    return Object.keys(m).sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); });
+  }
+
+  /* o que esta escolhido continua na lista mesmo sem venda no mes */
+  function preencherGerais() {
+    var g = estado.geral;
+    function com(lista, atual) { return atual && lista.indexOf(atual) < 0 ? lista.concat(atual) : lista; }
+    var daCidade = estado.todas.filter(function (v) { return !g.cidade || v.cidade === g.cidade; });
+    encher($('g-emp'), 'Todos os empreendimentos', com(unicos(daCidade, 'emp'), g.emp));
+    var cidades = com(unicos(estado.todas, 'cidade'), g.cidade);
+    cidades.sort(function (a, b) { return (a === 'Outras') - (b === 'Outras') || a.localeCompare(b, 'pt-BR'); });
+    encher($('g-cidade'), 'Todas as cidades', cidades);
+    $('g-emp').value = g.emp;
+    $('g-cidade').value = g.cidade;
+    $('g-canal').value = g.canal;
+    seletores['g-emp'].atualizar();
+    seletores['g-cidade'].atualizar();
+    seletores['g-canal'].atualizar();
+    $('g-limpar').disabled = !g.emp && !g.cidade && !g.canal;
   }
 
   /* ---------- topo ---------- */
-  function desenharTopo(res) {
-    $('mes-nome').textContent = nomeMes(estado.mes);
-    var sel = $('mes');
+  /* meses com venda (o atual sempre entra) */
+  function mesesDisponiveis() {
     var lista = estado.meses.slice();
-    var atual = mesAtual();
-    if (lista.indexOf(atual) < 0) lista.unshift(atual);
-    if (lista.indexOf(estado.mes) < 0) lista.push(estado.mes);
-    lista.sort().reverse();
-    sel.textContent = '';
-    lista.forEach(function (m) {
-      var o = el('option', null, nomeMes(m, true));
-      o.value = m;
-      if (m === estado.mes) o.selected = true;
-      sel.appendChild(o);
-    });
+    if (lista.indexOf(mesAtual()) < 0) lista.push(mesAtual());
+    return lista;
+  }
+  /* periodos de um tipo que tem venda, do mais antigo para o mais novo */
+  function periodos(tipo) {
+    var m = {};
+    mesesDisponiveis().forEach(function (x) { m[R.periodoDe(x, tipo)] = true; });
+    if (tipo === tipoAtual()) m[estado.mes] = true;
+    return Object.keys(m).sort();
+  }
+
+  function desenharPeriodo() {
+    var tipo = tipoAtual();
+    Array.prototype.forEach.call(document.querySelectorAll('.per-tipo'), function (e) { e.textContent = PERIODOS[tipo]; });
+    /* no trimestre o proprio nome ja diz o que e: "Vendas do 4º trimestre 2026" */
+    $('per-titulo').textContent = tipo === 'tri' ? '' : PERIODOS[tipo];
+    $('mes-nome').textContent = nomePeriodo(estado.mes);
+    $('per-valor').textContent = nomePeriodo(estado.mes, true);
+    var lista = periodos(tipo);
     var i = lista.indexOf(estado.mes);
-    $('mes-ant').disabled = i >= lista.length - 1;
-    $('mes-prox').disabled = i <= 0;
+    $('per-ant').disabled = i <= 0;
+    $('per-prox').disabled = i >= lista.length - 1;
+  }
+
+  /* o painel navega por ano e tipo sem carregar nada ate o clique na opcao */
+  var vista = { tipo: 'mes', ano: '' };
+  function anos() { return periodos('ano'); }
+
+  function desenharPainelPeriodo() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-per]'), function (b) {
+      b.setAttribute('aria-pressed', b.dataset.per === vista.tipo ? 'true' : 'false');
+    });
+    var porAno = vista.tipo === 'ano';
+    $('per-ano').hidden = porAno;
+    $('per-ano-txt').textContent = vista.ano;
+    var lista = anos();
+    $('per-ano-ant').disabled = vista.ano <= lista[0];
+    $('per-ano-prox').disabled = vista.ano >= lista[lista.length - 1];
+
+    var temVenda = {};
+    periodos(vista.tipo).forEach(function (p) { temVenda[p] = true; });
+    var opcoes = porAno
+      ? lista.slice().reverse().map(function (a) { return { valor: a, txt: a }; })
+      : vista.tipo === 'tri'
+        ? ['jan a mar', 'abr a jun', 'jul a set', 'out a dez'].map(function (d, i) { return { valor: vista.ano + '-T' + (i + 1), txt: (i + 1) + 'º tri', sub: d }; })
+        : MESES.map(function (n, i) { return { valor: vista.ano + '-' + String(i + 1).padStart(2, '0'), txt: n.charAt(0).toUpperCase() + n.slice(1, 3) }; });
+    var grade = $('per-grade');
+    grade.textContent = '';
+    grade.classList.toggle('duas-col', vista.tipo === 'tri');
+    opcoes.forEach(function (o) {
+      var b = el('button', 'per-op num', o.txt);
+      b.type = 'button';
+      if (o.sub) b.appendChild(el('small', null, o.sub));
+      b.disabled = !temVenda[o.valor];
+      b.setAttribute('aria-pressed', o.valor === estado.mes ? 'true' : 'false');
+      b.setAttribute('aria-label', nomePeriodo(o.valor, true));
+      b.addEventListener('click', function () { fecharPeriodo(true); carregar(o.valor); });
+      grade.appendChild(b);
+    });
+  }
+
+  function abrirPeriodo() {
+    vista = { tipo: tipoAtual(), ano: estado.mes.slice(0, 4) };
+    desenharPainelPeriodo();
+    $('per-painel').hidden = false;
+    $('per-botao').setAttribute('aria-expanded', 'true');
+    var atual = $('per-grade').querySelector('[aria-pressed="true"]');
+    if (atual) atual.focus();
+  }
+  function fecharPeriodo(devolverFoco) {
+    if ($('per-painel').hidden) return;
+    $('per-painel').hidden = true;
+    $('per-botao').setAttribute('aria-expanded', 'false');
+    if (devolverFoco) $('per-botao').focus();
+  }
+
+  function andarPeriodo(passo) {
+    var lista = periodos(tipoAtual());
+    var alvo = lista[lista.indexOf(estado.mes) + passo];
+    if (alvo) carregar(alvo);
+  }
+
+  function iniciarPeriodo() {
+    $('per-botao').addEventListener('click', function () { if ($('per-painel').hidden) abrirPeriodo(); else fecharPeriodo(false); });
+    $('per-ant').addEventListener('click', function () { andarPeriodo(-1); });
+    $('per-prox').addEventListener('click', function () { andarPeriodo(1); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-per]'), function (b) {
+      b.addEventListener('click', function () { vista.tipo = b.dataset.per; desenharPainelPeriodo(); });
+    });
+    $('per-ano-ant').addEventListener('click', function () { vista.ano = String(Number(vista.ano) - 1); desenharPainelPeriodo(); });
+    $('per-ano-prox').addEventListener('click', function () { vista.ano = String(Number(vista.ano) + 1); desenharPainelPeriodo(); });
+    $('per').addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape' && !$('per-painel').hidden) { ev.preventDefault(); fecharPeriodo(true); }
+    });
+    /* composedPath: a opcao clicada pode ja ter saido da tela quando o evento sobe */
+    document.addEventListener('click', function (ev) {
+      if (ev.composedPath().indexOf($('per')) < 0) fecharPeriodo(false);
+    });
+  }
+
+  function desenharTopo(res) {
+    desenharPeriodo();
 
     var txt = 'Sem data de atualização';
     var velho = true;
@@ -277,14 +427,14 @@
 
   /* ---------- resumo ---------- */
   function desenharResumo() {
-    var r = estado.resumo;
-    $('s-vgv').textContent = mi(r.total.vgv);
-    $('s-vgv-d').textContent = r.total.n ? 'Ticket médio ' + mi(r.ticket) : 'Nenhuma venda no mês';
-    $('s-vgv-n').textContent = r.total.n ? 'Em ' + plural(r.total.n, 'venda', 'vendas') : '';
-    $('s-total').textContent = fmtInt.format(r.total.n);
-    $('s-oficial').textContent = fmtInt.format(r.oficial.n);
-    $('s-pend').textContent = fmtInt.format(r.pendentes.n);
-    $('s-pend-d').textContent = mi(r.pendentes.vgv) + ' · contam pela data da venda';
+    var m = estado.resumo.matriz;
+    function detalhe(c) {
+      return c.n ? plural(c.n, 'venda', 'vendas') + ' · ticket médio ' + mi(c.vgv / c.n) : 'Nenhuma venda';
+    }
+    [['com', m.comercial.total], ['fac', m.facilitada.total], ['vgv', m.total.total]].forEach(function (x) {
+      $('s-' + x[0]).textContent = mi(x[1].vgv);
+      $('s-' + x[0] + '-d').textContent = detalhe(x[1]);
+    });
   }
 
   function desenharMatriz() {
@@ -301,40 +451,43 @@
     });
   }
 
-  function desenharSinal() {
-    var s = estado.resumo.sinal;
-    $('sinal-sub').textContent = s.total
-      ? 'As ' + plural(s.total, 'venda', 'vendas') + ' sem Data Confirmação 2.0, pelo que falta para confirmar.'
-      : 'Todas as vendas do mês já têm Data Confirmação 2.0.';
+  function desenharPendencias() {
+    var p = estado.resumo.pendencias;
+    $('pend-sub').textContent = !p.total
+      ? 'Nenhuma venda para conferir.'
+      : 'Assinatura, FID e sinal nas ' + plural(p.total, 'venda', 'vendas') + '. Uma venda pode ter mais de uma pendência.' +
+        (p.temD4 ? '' : ' Assinatura indisponível: dados do D4Sign ainda não chegaram.');
     var itens = [
-      { cor: '#1E8E4A', titulo: 'PCV assinado e sinal pago', desc: 'Só falta o sistema confirmar', n: s.pcvESinal },
-      { cor: '#3A4043', titulo: 'PCV assinado, sinal em aberto', desc: 'Cobrar boleto/PIX ou cartão', n: s.soPcv },
-      { cor: '#9AA1A4', titulo: 'Sinal pago, PCV sem assinatura', desc: 'Cobrar assinatura do contrato', n: s.soSinal },
-      { cor: '#F2B544', titulo: 'Nem PCV nem sinal', desc: 'Maior risco de não confirmar no mês', n: s.nenhum }
+      { id: 'assinatura', titulo: 'Sem assinatura', desc: 'PCV não finalizado', n: p.assinatura, off: !p.temD4 },
+      { id: 'fid', titulo: 'FID pendente', desc: 'Venda sem número de FID', n: p.fid },
+      { id: 'sinal', titulo: 'Sinal pendente', desc: 'Sem boleto/PIX nem cartão pago', n: p.sinal },
+      { id: 'nenhuma', titulo: 'Sem pendência', desc: 'Assinada, com FID e sinal pago', n: p.semPendencia, off: !p.temD4 }
     ];
-    var bar = $('sinal-bar');
-    bar.textContent = '';
-    bar.setAttribute('aria-label', itens.map(function (i) { return i.n + ' ' + i.titulo; }).join(', '));
-    var lista = $('sinal-lista');
+    var lista = $('pend-lista');
     lista.textContent = '';
     itens.forEach(function (i) {
-      if (s.total) {
-        var seg = el('span');
-        seg.style.width = (i.n / s.total * 100) + '%';
-        seg.style.background = i.cor;
-        bar.appendChild(seg);
-      }
-      var l = el('div', 'sinal-l');
-      var sw = el('span', 'sw');
-      sw.style.background = i.cor;
-      sw.setAttribute('aria-hidden', 'true');
-      var t = el('div', 'sinal-t');
+      var b = el('button', 'pend-l' + (i.id === 'nenhuma' ? ' pend-ok' : ''));
+      b.type = 'button';
+      b.disabled = !!i.off || !i.n;
+      var t = el('span', 'pend-t');
       t.appendChild(el('b', null, i.titulo));
       t.appendChild(el('span', null, i.desc));
-      l.appendChild(sw);
-      l.appendChild(t);
-      l.appendChild(el('span', 'num', fmtInt.format(i.n))).style.cssText = 'font-weight:700;font-size:1.05rem';
-      lista.appendChild(l);
+      b.appendChild(t);
+      b.appendChild(el('span', 'pend-n num', i.off ? '–' : fmtInt.format(i.n)));
+      var barra = el('span', 'pend-barra');
+      barra.setAttribute('aria-hidden', 'true');
+      var cheio = el('i');
+      cheio.style.width = (!i.off && p.total ? i.n / p.total * 100 : 0) + '%';
+      barra.appendChild(cheio);
+      b.appendChild(barra);
+      b.addEventListener('click', function () {
+        estado.filtro = filtroVazio();
+        estado.filtro.pend = [i.id];
+        $('busca').value = '';
+        reiniciarOps();
+        $('ops').scrollIntoView({ block: 'start' });
+      });
+      lista.appendChild(b);
     });
   }
 
@@ -342,17 +495,27 @@
     var lista = $('emp-lista');
     lista.textContent = '';
     var g = estado.resumo.empreendimentos;
-    if (!g.length) { lista.appendChild(el('p', 'vazio', 'Nenhuma venda no mês.')); return; }
+    if (!g.length) { lista.appendChild(el('p', 'vazio', 'Nenhuma venda ' + noTexto() + '.')); return; }
     var max = g[0].n;
     g.forEach(function (e) {
       var l = el('div', 'emp-l');
       l.appendChild(el('span', null, e.nome)).style.fontWeight = '500';
-      var bar = el('div', 'bar');
-      var c = el('span'); c.style.width = (e.comerciais / max * 100) + '%'; c.style.background = '#3A4043';
-      var f = el('span'); f.style.width = (e.facilitadas / max * 100) + '%'; f.style.background = '#B9BEC0';
-      bar.appendChild(c); bar.appendChild(f);
-      bar.setAttribute('aria-hidden', 'true');
-      l.appendChild(bar);
+      var trilho = el('div', 'emp-barra');
+      var bar = trilho.appendChild(el('div', 'emp-barra'));
+      bar.style.width = (e.n / max * 100) + '%';
+      bar.style.minWidth = '48px';
+      [['com', e.comerciais, 'comerciais'], ['fac', e.facilitadas, 'facilitadas']].forEach(function (x) {
+        if (!x[1]) return;
+        var seg = el('div', 'emp-seg ' + x[0]);
+        seg.style.flexGrow = x[1];
+        seg.title = x[1] + ' ' + x[2];
+        seg.appendChild(el('b', 'num', fmtInt.format(x[1])));
+        seg.appendChild(el('i'));
+        bar.appendChild(seg);
+      });
+      trilho.setAttribute('role', 'img');
+      trilho.setAttribute('aria-label', e.comerciais + ' comerciais e ' + e.facilitadas + ' facilitadas');
+      l.appendChild(trilho);
       l.appendChild(el('span', 'num r', fmtInt.format(e.n))).style.fontWeight = '700';
       var conf = l.appendChild(el('span', 'num r conf', e.confirmadas + ' confirm.'));
       conf.style.cssText = 'font-size:.78rem;color:var(--slate)';
@@ -386,15 +549,11 @@
 
   /* ---------- lista de OPs ---------- */
   function preencherSelects() {
-    function encher(sel, todos, valores, rotulo) {
-      sel.textContent = '';
-      var o = el('option', null, todos); o.value = ''; sel.appendChild(o);
-      valores.forEach(function (v) { var op = el('option', null, rotulo ? rotulo(v) : v); op.value = v; sel.appendChild(op); });
-    }
-    var emps = estado.resumo.empreendimentos.map(function (e) { return e.nome; }).sort();
     var imobs = estado.resumo.imobiliarias.map(function (e) { return e.nome; }).sort();
-    encher($('f-emp'), 'Todos os empreendimentos', emps);
-    encher($('f-imob'), 'Todas as imobiliárias', imobs, limparImob);
+    if (imobs.indexOf(estado.filtro.imob) < 0) estado.filtro.imob = '';
+    encher($('f-imob'), 'Todas as equipes', imobs, limparImob);
+    $('f-imob').value = estado.filtro.imob;
+    seletores['f-imob'].atualizar();
   }
 
   function filtradas() {
@@ -404,28 +563,29 @@
       if (f.tipo && v.tipo !== f.tipo) return false;
       if (f.conf === 'ok' && !v.confirmada) return false;
       if (f.conf === 'sem' && v.confirmada) return false;
-      if (f.emp && v.emp !== f.emp) return false;
+      if (!R.temAlguma(v, f.pend)) return false;
       if (f.imob && v.imob !== f.imob) return false;
-      if (b && [v.op, v.unidade, v.emp, v.imob, v.corretor, v.fase].join(' ').toLowerCase().indexOf(b) < 0) return false;
+      if (b && [v.op, v.cliente, v.unidade, v.emp, v.imob, v.corretor, v.fase, v.fid].join(' ').toLowerCase().indexOf(b) < 0) return false;
       return true;
     });
   }
 
-  function desenharChips() {
+  function desenharFiltros() {
     var f = estado.filtro;
-    Array.prototype.forEach.call(document.querySelectorAll('[data-chip]'), function (c) {
-      var k = c.dataset.chip;
-      var on = k === 'todas' ? !f.tipo && !f.conf : (k === f.tipo || k === f.conf);
-      c.setAttribute('aria-pressed', on ? 'true' : 'false');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-seg]'), function (c) {
+      c.setAttribute('aria-pressed', f[c.dataset.seg] === c.dataset.v ? 'true' : 'false');
     });
-    $('f-emp').value = f.emp;
+    Array.prototype.forEach.call($('f-pend').options, function (o) { o.selected = f.pend.indexOf(o.value) >= 0; });
     $('f-imob').value = f.imob;
+    seletores['f-pend'].atualizar();
+    seletores['f-imob'].atualizar();
+    $('f-limpar').disabled = !f.tipo && !f.conf && !f.pend.length && !f.imob && !f.busca;
   }
 
   function tag(cls, txt) { return el('span', 'tag ' + cls, txt); }
 
   function desenharOps() {
-    desenharChips();
+    desenharFiltros();
     var lista = filtradas();
     var corpo = $('ops-corpo');
     corpo.textContent = '';
@@ -436,11 +596,14 @@
       td.appendChild(el('div', 'fraco', v.pelaConfirmacao ? 'Confirmação 2.0' : 'Data da venda'));
       tr.appendChild(td);
 
-      tr.appendChild(el('td', 'num nw', v.op)).style.fontWeight = '500';
+      td = el('td', 'op-cli');
+      td.appendChild(el('div', 'num nw', v.op)).style.fontWeight = '700';
+      if (v.cliente) td.appendChild(el('div', 'cli', titulo(v.cliente)));
+      tr.appendChild(td);
 
       td = el('td');
       td.appendChild(el('div', 'nw', v.unidade)).style.fontWeight = '500';
-      td.appendChild(el('div', 'fraco nw', v.emp));
+      td.appendChild(el('div', 'fraco un-emp', v.emp));
       tr.appendChild(td);
 
       td = el('td');
@@ -448,18 +611,28 @@
       if (v.virouComercial) td.appendChild(el('div', 'fraco nw', 'era facilitada')).style.marginTop = '.25rem';
       tr.appendChild(td);
 
-      tr.appendChild(el('td', 'nw', v.fase));
+      tr.appendChild(el('td', null, v.fase));
 
       td = el('td');
       td.appendChild(v.confirmada ? tag('t-ok', 'Confirmada ' + dm(v.conf)) : tag('t-sem', 'Pendente'));
       tr.appendChild(td);
 
-      var pcv = tr.appendChild(el('td', 'num nw', v.pcv ? 'Assinado ' + dm(v.pcv) : 'Não assinado'));
-      if (!v.pcv) pcv.style.color = 'var(--slate)';
+      td = el('td');
+      var fid = td.appendChild(v.fidOk ? tag('t-ok', 'Aprovado') : tag('t-sem', 'Pendente'));
+      if (v.fidOk) fid.title = 'FID ' + v.fid;
+      tr.appendChild(td);
 
-      var sinal = v.boleto && v.cartao ? 'Boleto/PIX e cartão' : v.boleto ? 'Boleto/PIX' : v.cartao ? 'Cartão' : 'Não pago';
-      var tdS = tr.appendChild(el('td', 'nw', sinal));
-      tdS.style.color = v.sinalPago ? 'var(--ok)' : 'var(--slate)';
+      td = el('td');
+      var a = ASSINATURA[v.assinatura];
+      if (!a) td.appendChild(el('span', 'fraco', '–'));
+      else td.appendChild(tag(a.cls, a.txt));
+      if (v.assinatura === 'aguardando' && v.clienteAssinou) td.appendChild(el('div', 'fraco nw', 'cliente já assinou')).style.marginTop = '.25rem';
+      tr.appendChild(td);
+
+      td = el('td');
+      var sinal = td.appendChild(v.sinalPago ? tag('t-ok', 'Pago') : tag('t-sem', 'Pendente'));
+      if (v.sinalPago) sinal.title = v.boleto && v.cartao ? 'Boleto/PIX e cartão' : v.boleto ? 'Boleto/PIX' : 'Cartão';
+      tr.appendChild(td);
 
       td = el('td');
       td.appendChild(el('div', null, limparImob(v.imob))).style.fontSize = '.8rem';
@@ -472,7 +645,7 @@
     $('ops-vazio').hidden = lista.length > 0;
     var total = estado.vendas.length;
     $('ops-sub').textContent = lista.length === total
-      ? plural(total, 'venda', 'vendas') + ' no mês'
+      ? plural(total, 'venda', 'vendas') + ' ' + noTexto()
       : plural(lista.length, 'venda', 'vendas') + ' de ' + fmtInt.format(total) + ' · ' + mi(lista.reduce(function (s, v) { return s + v.valor; }, 0));
     var mais = $('ops-mais');
     mais.hidden = lista.length <= estado.verOps;
@@ -481,15 +654,16 @@
   }
 
   function exportar() {
-    var cols = ['Data que conta', 'Conta por', 'OP', 'Unidade', 'Empreendimento', 'Tipo', 'Era facilitada', 'Fase',
-      'Data da venda', 'Data Confirmação 2.0', 'PCV assinado', 'Boleto/PIX pago', 'Cartão pago', 'Imobiliária', 'Corretor', 'Valor'];
+    var cols = ['Data', 'Conta por', 'OP', 'Cliente', 'Unidade', 'Empreendimento', 'Cidade', 'Tipo', 'Era facilitada', 'Fase',
+      'Data da venda', 'Data Confirmação 2.0', 'FID', 'Número do FID', 'Assinatura (D4Sign)', 'Boleto/PIX pago', 'Cartão pago', 'Imobiliária', 'House/Canal Imob', 'Corretor', 'Valor'];
     /* celula que comeca com = + - @ vira formula no Excel: prefixa com ' */
     function q(v) { var s = String(v === undefined || v === null ? '' : v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
     function br(iso) { return iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4) : ''; }
     var linhas = filtradas().map(function (v) {
-      return [br(v.dataConta), v.pelaConfirmacao ? 'Confirmação 2.0' : 'Data da venda', v.op, v.unidade, v.emp,
+      return [br(v.dataConta), v.pelaConfirmacao ? 'Confirmação 2.0' : 'Data da venda', v.op, v.cliente, v.unidade, v.emp, v.cidade,
         v.tipo === 'comercial' ? 'Comercial' : 'Facilitada', v.virouComercial ? 'Sim' : 'Não', v.fase, br(v.venda), br(v.conf),
-        br(v.pcv), v.boleto ? 'Sim' : 'Não', v.cartao ? 'Sim' : 'Não', v.imob, v.corretor,
+        v.fidOk ? 'Aprovado' : 'Pendente', v.fid, ASSINATURA[v.assinatura] ? ASSINATURA[v.assinatura].txt : '',
+        v.boleto ? 'Sim' : 'Não', v.cartao ? 'Sim' : 'Não', v.imob, CANAIS[v.canal] || '', v.corretor,
         v.valor.toFixed(2).replace('.', ',')].map(q).join(';');
     });
     var csv = '﻿' + [cols.join(';')].concat(linhas).join('\r\n');
@@ -501,37 +675,54 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
   }
 
-  function reiniciarOps() { estado.verOps = PAGINA_OPS; desenharOps(); }
+  function reiniciarOps() { estado.verOps = paginaOps(); desenharOps(); }
 
   function iniciarControles() {
-    $('mes').addEventListener('change', function () { carregar(this.value); });
-    $('mes-ant').addEventListener('click', function () {
-      var s = $('mes'); if (s.selectedIndex < s.options.length - 1) carregar(s.options[s.selectedIndex + 1].value);
-    });
-    $('mes-prox').addEventListener('click', function () {
-      var s = $('mes'); if (s.selectedIndex > 0) carregar(s.options[s.selectedIndex - 1].value);
-    });
+    ['g-emp', 'g-cidade', 'g-canal', 'f-imob'].forEach(function (id) { seletores[id] = window.Seletor.criar($(id)); });
+    seletores['f-pend'] = window.Seletor.criar($('f-pend'), { vazio: 'Todas as situações' });
+    iniciarPeriodo();
     $('tentar').addEventListener('click', function () { carregar(estado.mes); });
 
     Array.prototype.forEach.call(document.querySelectorAll('#matriz .cel'), function (b) {
       b.addEventListener('click', function () {
         estado.filtro.tipo = b.dataset.tipo;
         estado.filtro.conf = b.dataset.conf;
+        estado.filtro.pend = [];
         reiniciarOps();
         $('ops').scrollIntoView({ block: 'start' });
       });
     });
-    Array.prototype.forEach.call(document.querySelectorAll('[data-chip]'), function (c) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-seg]'), function (c) {
       c.addEventListener('click', function () {
-        var k = c.dataset.chip, f = estado.filtro;
-        if (k === 'todas') { f.tipo = ''; f.conf = ''; }
-        else if (k === 'comercial' || k === 'facilitada') f.tipo = f.tipo === k ? '' : k;
-        else f.conf = f.conf === k ? '' : k;
+        estado.filtro[c.dataset.seg] = c.dataset.v;
         reiniciarOps();
       });
     });
-    $('f-emp').addEventListener('change', function () { estado.filtro.emp = this.value; reiniciarOps(); });
+    $('f-pend').addEventListener('change', function () {
+      var antes = estado.filtro.pend;
+      var marcadas = Array.prototype.filter.call(this.options, function (o) { return o.selected; }).map(function (o) { return o.value; });
+      /* "Sem pendencia" nao combina com as outras: vale a que foi marcada por ultimo */
+      if (marcadas.indexOf('nenhuma') >= 0 && marcadas.length > 1) {
+        marcadas = antes.indexOf('nenhuma') < 0 ? ['nenhuma'] : marcadas.filter(function (x) { return x !== 'nenhuma'; });
+      }
+      estado.filtro.pend = marcadas;
+      reiniciarOps();
+    });
     $('f-imob').addEventListener('change', function () { estado.filtro.imob = this.value; reiniciarOps(); });
+    $('f-limpar').addEventListener('click', function () {
+      estado.filtro = filtroVazio();
+      $('busca').value = '';
+      reiniciarOps();
+    });
+    $('g-emp').addEventListener('change', function () { estado.geral.emp = this.value; aplicarGeral(); });
+    $('g-cidade').addEventListener('change', function () {
+      var cidade = this.value;
+      estado.geral.cidade = cidade;
+      if (cidade && estado.geral.emp && R.cidadeDe(estado.geral.emp) !== cidade) estado.geral.emp = '';
+      aplicarGeral();
+    });
+    $('g-canal').addEventListener('change', function () { estado.geral.canal = this.value; aplicarGeral(); });
+    $('g-limpar').addEventListener('click', function () { estado.geral = { emp: '', cidade: '', canal: '' }; aplicarGeral(); });
     var t;
     $('busca').addEventListener('input', function () {
       var v = this.value;
