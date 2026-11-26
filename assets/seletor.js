@@ -80,7 +80,7 @@
       var m = marcadas();
       if (!multi) return m.length ? m[0].textContent : '';
       if (!m.length) return opcoes.vazio || 'Todas';
-      return m.length === 1 ? m[0].textContent : m.length + ' selecionadas';
+      return m.length === 1 ? m[0].textContent : m.length + ' ' + (opcoes.varias || 'selecionadas');
     }
     function pintarValor() {
       valor.textContent = textoBotao();
@@ -90,6 +90,10 @@
       return Array.prototype.filter.call(lista.children, function (i) { return !i.hidden; });
     }
     function montarLista() {
+      /* quem ouve o change pode refazer as opcoes: mantem rolagem e foco */
+      var rolagem = lista.scrollTop;
+      var focado = Array.prototype.indexOf.call(lista.children, document.activeElement);
+      var chave = focado >= 0 ? lista.children[focado].dataset.v : null;
       lista.textContent = '';
       Array.prototype.forEach.call(select.options, function (o, i) {
         var item = el('div', 'sel-item');
@@ -97,6 +101,7 @@
         item.setAttribute('aria-selected', o.selected ? 'true' : 'false');
         item.tabIndex = -1;
         item.dataset.i = i;
+        item.dataset.v = o.value;
         var marca = el('span', multi ? 'sel-caixa' : 'sel-marca');
         marca.setAttribute('aria-hidden', 'true');
         item.appendChild(marca);
@@ -104,6 +109,11 @@
         lista.appendChild(item);
       });
       filtrar();
+      lista.scrollTop = rolagem;
+      if (chave !== null) {
+        var volta = Array.prototype.filter.call(lista.children, function (i) { return i.dataset.v === chave; })[0];
+        if (volta) volta.focus({ preventScroll: true });
+      }
     }
     function filtrar() {
       var q = semAcento(busca.value.trim());
@@ -165,7 +175,7 @@
     });
     lista.addEventListener('click', function (ev) {
       var item = ev.target.closest('.sel-item');
-      if (item) { escolher(item); if (multi) item.focus(); }
+      if (item) { if (multi) item.focus({ preventScroll: true }); escolher(item); }
     });
     painel.addEventListener('keydown', function (ev) {
       var vis = itens();

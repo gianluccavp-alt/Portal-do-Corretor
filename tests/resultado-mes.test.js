@@ -149,9 +149,9 @@ test('filtros gerais combinam empreendimento, cidade e canal', () => {
     { op: 3, venda: '2026-11-01', emp: 'Seleto Amoreiras', imob: 'DIRECIONAL VENDAS SPI - B' }
   ])], '2026-11');
   const ops = (g) => R.filtrarGeral(lista, g).map((v) => v.op).sort();
-  assert.deepEqual(ops({ emp: '', cidade: 'Ribeirão Preto', canal: '' }), ['OP-1', 'OP-2']);
-  assert.deepEqual(ops({ emp: '', cidade: 'Ribeirão Preto', canal: 'house' }), ['OP-2']);
-  assert.deepEqual(ops({ emp: 'Seleto Amoreiras', cidade: '', canal: '' }), ['OP-3']);
+  assert.deepEqual(ops({ emps: [], cidade: 'Ribeirão Preto', canal: '' }), ['OP-1', 'OP-2']);
+  assert.deepEqual(ops({ emps: [], cidade: 'Ribeirão Preto', canal: 'house' }), ['OP-2']);
+  assert.deepEqual(ops({ emps: ['Seleto Amoreiras'], cidade: '', canal: '' }), ['OP-3']);
 });
 
 test('periodo pode ser mes, trimestre ou ano', () => {
@@ -189,4 +189,46 @@ test('varias pendencias marcadas: entra a venda que tiver qualquer uma', () => {
   assert.equal(R.temAlguma(v, ['sinal', 'assinatura']), false);
   assert.equal(R.temAlguma(v, []), true);
   assert.equal(R.temPendencia({ assinatura: '', fidOk: true, sinalPago: true }, 'nenhuma'), false);
+});
+
+const resposta = (mes, linhas, extra) => Object.assign({
+  ok: true, mes, meses: ['2026-11', '2026-09'], atualizadoEm: '2026-11-26 10:00', intervaloMinutos: 30,
+  abas: [Object.assign({ aba: 'VENDAS SPI XIMENES' }, aba(linhas))],
+  d4sign: { cabecalho: ['Envio D4Sign: Oportunidade', 'Envio D4Sign: Status', 'Envio D4Sign: Cliente assinou?', 'Envio D4Sign: Data de criação'], linhas: [] }
+}, extra);
+
+test('periodo com varios meses', () => {
+  const p = '2025-11+2026-09';
+  assert.equal(R.tipoPeriodo(p), 'multi');
+  assert.equal(R.noPeriodo('2025-11', p), true);
+  assert.equal(R.noPeriodo('2026-09', p), true);
+  assert.equal(R.noPeriodo('2026-10', p), false);
+  assert.equal(R.noPeriodo('', p), false);
+});
+
+test('juntar meses: soma, nao duplica OP e usa a carga mais antiga', () => {
+  const repetida = { op: 2, venda: '2026-09-30', conf: '2026-11-02' };
+  const j = R.juntarRespostas([
+    resposta('2026-09', [{ op: 1, venda: '2026-09-10' }, repetida], { atualizadoEm: '2026-11-26 09:30' }),
+    resposta('2026-11', [repetida, { op: 3, venda: '2026-11-05' }])
+  ], '2026-09+2026-11');
+  assert.equal(j.mes, '2026-09+2026-11');
+  assert.equal(j.atualizadoEm, '2026-11-26 09:30');
+  assert.deepEqual(R.vendasDoMes(j.abas, j.mes, j.d4sign).map((v) => v.op).sort(), ['OP-1', 'OP-2', 'OP-3']);
+});
+
+test('juntar meses: sem D4Sign em um deles a assinatura fica desconhecida', () => {
+  const j = R.juntarRespostas([
+    resposta('2026-09', [{ op: 1, venda: '2026-09-10' }], { d4sign: null }),
+    resposta('2026-11', [{ op: 3, venda: '2026-11-05' }])
+  ], '2026-09+2026-11');
+  assert.equal(j.d4sign, null);
+  assert.deepEqual(R.vendasDoMes(j.abas, j.mes, j.d4sign).map((v) => v.assinatura), ['', '']);
+});
+
+test('filtro geral aceita varios empreendimentos; nenhum = todos', () => {
+  const vendas = ['Village Gaia', 'Village Park', 'Seleto Amoreiras'].map((emp) => ({ emp, cidade: R.cidadeDe(emp), canal: '' }));
+  const nomes = (emps) => R.filtrarGeral(vendas, { emps, cidade: '', canal: '' }).map((v) => v.emp);
+  assert.deepEqual(nomes(['Village Gaia', 'Seleto Amoreiras']), ['Village Gaia', 'Seleto Amoreiras']);
+  assert.equal(nomes([]).length, 3);
 });
