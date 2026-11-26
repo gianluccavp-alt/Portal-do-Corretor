@@ -29,15 +29,17 @@
     todas: [],   // todas as vendas do mes
     vendas: [],  // depois dos filtros gerais
     resumo: null,
-    geral: { emp: '', cidade: '', canal: '' }, // mantidos ao trocar de mes
+    geral: geralVazio(), // mantidos ao trocar de mes
     filtro: filtroVazio(),
     verOps: Infinity,
     verImob: PAGINA_IMOB
   };
 
+  function geralVazio() { return { emps: [], cidade: '', canal: '' }; }
   function filtroVazio() { return { tipo: '', conf: '', pend: [], imob: '', busca: '' }; }
   var seletores = {};
-  var PERIODOS = { mes: 'mês', tri: 'trimestre', ano: 'ano' };
+  var PERIODOS = { mes: 'mês', tri: 'trimestre', ano: 'ano', multi: 'período' };
+  var BUSCAS_JUNTAS = 3; // varios meses: quantas consultas ao Web App por vez
   function tipoAtual() { return R.tipoPeriodo(estado.mes); }
   function noTexto() { return 'no ' + PERIODOS[tipoAtual()]; }
   function paginaOps() { return tipoAtual() === 'mes' ? Infinity : PAGINA_OPS_LONGO; }
@@ -65,9 +67,25 @@
     p.forEach(function (x) { if (x.type === 'year') a = x.value; if (x.type === 'month') m = x.value; });
     return a + '-' + m;
   }
-  /* '2026-11', '2026-T4' ou '2026' por extenso */
+  /* varios meses: ate 3 aparecem pelo nome; mais que isso, a quantidade */
+  function nomeVarios(p, curto) {
+    var meses = p.split('+');
+    var anos = meses.map(function (m) { return m.slice(0, 4); });
+    var mesmoAno = anos.every(function (a) { return a === anos[0]; });
+    if (meses.length > 3) return meses.length + ' meses' + (mesmoAno ? ' de ' + anos[0] : '');
+    var nomes = meses.map(function (m, i) {
+      var n = MESES[Number(m.slice(5, 7)) - 1];
+      if (curto) n = n.charAt(0).toUpperCase() + n.slice(1, 3);
+      if (mesmoAno) return n;
+      return n + (curto ? '/' + anos[i].slice(2) : ' ' + anos[i]);
+    });
+    return nomes.join(' + ') + (mesmoAno ? ' ' + anos[0] : '');
+  }
+
+  /* '2026-11', '2026-T4', '2026' ou '2026-09+2026-11' por extenso */
   function nomePeriodo(p, capital) {
     var tipo = R.tipoPeriodo(p);
+    if (tipo === 'multi') return nomeVarios(p, capital);
     if (tipo === 'ano') return p;
     var ano = p.slice(0, 4);
     if (tipo === 'tri') return p.slice(6) + 'º trimestre' + (capital ? ' de ' : ' ') + ano;
@@ -179,8 +197,9 @@
   function sair(msg) {
     try { sessionStorage.removeItem(CHAVE_SESSAO); } catch (e) { /* ignora */ }
     estado.senha = '';
+    pedidoAtual++; // descarta carga que ainda esteja em andamento
     estado.cache = {};
-    estado.geral = { emp: '', cidade: '', canal: '' };
+    estado.geral = geralVazio();
     mostrarGate(msg);
   }
   function iniciarGate() {
@@ -226,7 +245,7 @@
     else $('conteudo').classList.add('carregando');
     desenharPeriodo();
     var pedido = ++pedidoAtual;
-    chamar(mes).then(function (res) {
+    buscarPeriodo(mes, pedido).then(function (res) {
       if (pedido === pedidoAtual) receber(res);
     }).catch(function (f) {
       if (pedido !== pedidoAtual) return;
@@ -234,6 +253,32 @@
       if (f.codigo === 'senha') { sair(MSG_SENHA); return; }
       $('erro-txt').textContent = f.mensagem;
       mostrarEstado('erro');
+    });
+  }
+  /* varios meses: um pedido por mes (o Web App so entende um periodo por vez) */
+  function buscarPeriodo(periodo, pedido) {
+    if (R.tipoPeriodo(periodo) !== 'multi') return chamar(periodo);
+    var meses = periodo.split('+');
+    var respostas = [];
+    var proximo = 0;
+    var falhou = false;
+    function puxar() {
+      if (falhou || pedido !== pedidoAtual || proximo >= meses.length) return Promise.resolve();
+      var i = proximo++;
+      var carga = estado.cache[meses[i]] ? Promise.resolve(estado.cache[meses[i]]) : chamar(meses[i]);
+      return carga.then(function (res) {
+        if (pedido !== pedidoAtual) return; // outro periodo (ou saiu): para aqui
+        estado.cache[meses[i]] = res;
+        respostas[i] = res;
+        return puxar();
+      }, function (f) { falhou = true; throw f; });
+    }
+    var filas = [];
+    for (var n = 0; n < Math.min(BUSCAS_JUNTAS, meses.length); n++) filas.push(puxar());
+    return Promise.all(filas).then(function () {
+      /* pedido trocado no meio: quem chamou descarta a resposta */
+      if (pedido !== pedidoAtual) return null;
+      return R.juntarRespostas(respostas, periodo);
     });
   }
   function receber(res) {
@@ -268,7 +313,7 @@
 
   function encher(sel, todos, valores, rotulo) {
     sel.textContent = '';
-    var o = el('option', null, todos); o.value = ''; sel.appendChild(o);
+    if (todos !== null) { var o = el('option', null, todos); o.value = ''; sel.appendChild(o); }
     valores.forEach(function (v) { var op = el('option', null, rotulo ? rotulo(v) : v); op.value = v; sel.appendChild(op); });
   }
 
@@ -281,19 +326,23 @@
   /* o que esta escolhido continua na lista mesmo sem venda no mes */
   function preencherGerais() {
     var g = estado.geral;
-    function com(lista, atual) { return atual && lista.indexOf(atual) < 0 ? lista.concat(atual) : lista; }
+    function com(lista, atuais) {
+      return lista.concat([].concat(atuais).filter(function (x) { return x && lista.indexOf(x) < 0; }));
+    }
     var daCidade = estado.todas.filter(function (v) { return !g.cidade || v.cidade === g.cidade; });
-    encher($('g-emp'), 'Todos os empreendimentos', com(unicos(daCidade, 'emp'), g.emp));
+    var emps = com(unicos(daCidade, 'emp'), g.emps);
+    emps.sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); });
+    encher($('g-emp'), null, emps);
+    Array.prototype.forEach.call($('g-emp').options, function (o) { o.selected = g.emps.indexOf(o.value) >= 0; });
     var cidades = com(unicos(estado.todas, 'cidade'), g.cidade);
     cidades.sort(function (a, b) { return (a === 'Outras') - (b === 'Outras') || a.localeCompare(b, 'pt-BR'); });
     encher($('g-cidade'), 'Todas as cidades', cidades);
-    $('g-emp').value = g.emp;
     $('g-cidade').value = g.cidade;
     $('g-canal').value = g.canal;
     seletores['g-emp'].atualizar();
     seletores['g-cidade'].atualizar();
     seletores['g-canal'].atualizar();
-    $('g-limpar').disabled = !g.emp && !g.cidade && !g.canal;
+    $('g-limpar').disabled = !g.emps.length && !g.cidade && !g.canal;
   }
 
   /* ---------- topo ---------- */
@@ -305,6 +354,7 @@
   }
   /* periodos de um tipo que tem venda, do mais antigo para o mais novo */
   function periodos(tipo) {
+    if (tipo === 'multi') return [estado.mes];
     var m = {};
     mesesDisponiveis().forEach(function (x) { m[R.periodoDe(x, tipo)] = true; });
     if (tipo === tipoAtual()) m[estado.mes] = true;
@@ -315,17 +365,19 @@
     var tipo = tipoAtual();
     Array.prototype.forEach.call(document.querySelectorAll('.per-tipo'), function (e) { e.textContent = PERIODOS[tipo]; });
     /* no trimestre o proprio nome ja diz o que e: "Vendas do 4º trimestre 2026" */
-    $('per-titulo').textContent = tipo === 'tri' ? '' : PERIODOS[tipo];
+    $('per-titulo').textContent = tipo === 'multi' ? 'de' : tipo === 'tri' ? 'do' : 'do ' + PERIODOS[tipo];
     $('mes-nome').textContent = nomePeriodo(estado.mes);
     $('per-valor').textContent = nomePeriodo(estado.mes, true);
     var lista = periodos(tipo);
     var i = lista.indexOf(estado.mes);
-    $('per-ant').disabled = i <= 0;
-    $('per-prox').disabled = i >= lista.length - 1;
+    $('per-ant').disabled = tipo === 'multi' || i <= 0;
+    $('per-prox').disabled = tipo === 'multi' || i >= lista.length - 1;
+    $('per-botao').title = tipo === 'multi'
+      ? estado.mes.split('+').map(function (m) { return nomePeriodo(m, true); }).join(', ') : '';
   }
 
   /* o painel navega por ano e tipo sem carregar nada ate o clique na opcao */
-  var vista = { tipo: 'mes', ano: '' };
+  var vista = { tipo: 'mes', ano: '', marcados: [] };
   function anos() { return periodos('ano'); }
 
   function desenharPainelPeriodo() {
@@ -354,15 +406,44 @@
       b.type = 'button';
       if (o.sub) b.appendChild(el('small', null, o.sub));
       b.disabled = !temVenda[o.valor];
-      b.setAttribute('aria-pressed', o.valor === estado.mes ? 'true' : 'false');
+      var marcavel = vista.tipo === 'mes';
+      var marcado = marcavel ? vista.marcados.indexOf(o.valor) >= 0 : o.valor === estado.mes;
+      b.setAttribute('aria-pressed', marcado ? 'true' : 'false');
       b.setAttribute('aria-label', nomePeriodo(o.valor, true));
-      b.addEventListener('click', function () { fecharPeriodo(true); carregar(o.valor); });
+      b.addEventListener('click', function () {
+        if (!marcavel) { fecharPeriodo(true); carregar(o.valor); return; }
+        var i = vista.marcados.indexOf(o.valor);
+        if (i < 0) vista.marcados.push(o.valor); else vista.marcados.splice(i, 1);
+        desenharPainelPeriodo();
+        var novo = $('per-grade').querySelector('[data-valor="' + o.valor + '"]');
+        if (novo) novo.focus();
+      });
+      b.dataset.valor = o.valor;
       grade.appendChild(b);
     });
+
+    $('per-acoes').hidden = vista.tipo !== 'mes';
+    var n = vista.marcados.length;
+    $('per-contagem').textContent = n ? plural(n, 'mês marcado', 'meses marcados') : 'Marque um ou mais meses';
+    $('per-limpar').disabled = !n;
+    $('per-aplicar').disabled = !n;
+  }
+
+  function aplicarMeses() {
+    if (!vista.marcados.length) return;
+    var periodo = vista.marcados.slice().sort().join('+');
+    fecharPeriodo(true);
+    carregar(periodo);
   }
 
   function abrirPeriodo() {
-    vista = { tipo: tipoAtual(), ano: estado.mes.slice(0, 4) };
+    var varios = tipoAtual() === 'multi';
+    var meses = varios || tipoAtual() === 'mes' ? estado.mes.split('+') : [];
+    vista = {
+      tipo: varios ? 'mes' : tipoAtual(),
+      ano: (varios ? meses[meses.length - 1] : estado.mes).slice(0, 4),
+      marcados: meses
+    };
     desenharPainelPeriodo();
     $('per-painel').hidden = false;
     $('per-botao').setAttribute('aria-expanded', 'true');
@@ -389,6 +470,8 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-per]'), function (b) {
       b.addEventListener('click', function () { vista.tipo = b.dataset.per; desenharPainelPeriodo(); });
     });
+    $('per-limpar').addEventListener('click', function () { vista.marcados = []; desenharPainelPeriodo(); });
+    $('per-aplicar').addEventListener('click', aplicarMeses);
     $('per-ano-ant').addEventListener('click', function () { vista.ano = String(Number(vista.ano) - 1); desenharPainelPeriodo(); });
     $('per-ano-prox').addEventListener('click', function () { vista.ano = String(Number(vista.ano) + 1); desenharPainelPeriodo(); });
     $('per').addEventListener('keydown', function (ev) {
@@ -677,7 +760,8 @@
   function reiniciarOps() { estado.verOps = paginaOps(); desenharOps(); }
 
   function iniciarControles() {
-    ['g-emp', 'g-cidade', 'g-canal', 'f-imob'].forEach(function (id) { seletores[id] = window.Seletor.criar($(id)); });
+    ['g-cidade', 'g-canal', 'f-imob'].forEach(function (id) { seletores[id] = window.Seletor.criar($(id)); });
+    seletores['g-emp'] = window.Seletor.criar($('g-emp'), { vazio: 'Todos os empreendimentos', varias: 'selecionados' });
     seletores['f-pend'] = window.Seletor.criar($('f-pend'), { vazio: 'Todas as situações' });
     iniciarPeriodo();
     $('tentar').addEventListener('click', function () { carregar(estado.mes); });
@@ -713,15 +797,18 @@
       $('busca').value = '';
       reiniciarOps();
     });
-    $('g-emp').addEventListener('change', function () { estado.geral.emp = this.value; aplicarGeral(); });
+    $('g-emp').addEventListener('change', function () {
+      estado.geral.emps = Array.prototype.filter.call(this.options, function (o) { return o.selected; }).map(function (o) { return o.value; });
+      aplicarGeral();
+    });
     $('g-cidade').addEventListener('change', function () {
       var cidade = this.value;
       estado.geral.cidade = cidade;
-      if (cidade && estado.geral.emp && R.cidadeDe(estado.geral.emp) !== cidade) estado.geral.emp = '';
+      if (cidade) estado.geral.emps = estado.geral.emps.filter(function (e) { return R.cidadeDe(e) === cidade; });
       aplicarGeral();
     });
     $('g-canal').addEventListener('change', function () { estado.geral.canal = this.value; aplicarGeral(); });
-    $('g-limpar').addEventListener('click', function () { estado.geral = { emp: '', cidade: '', canal: '' }; aplicarGeral(); });
+    $('g-limpar').addEventListener('click', function () { estado.geral = geralVazio(); aplicarGeral(); });
     var t;
     $('busca').addEventListener('input', function () {
       var v = this.value;

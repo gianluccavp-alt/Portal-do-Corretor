@@ -19,6 +19,7 @@
      envio usa o campo "Cliente assinou PCV" dos relatorios de venda:
      com data = assinado; vazio = nao assinado.
    - Periodo: mes ('2026-11'), trimestre ('2026-T4') ou ano ('2026').
+     Varios meses escolhidos (2026-11-26) = '2026-09+2026-11': soma tudo.
    - FID preenchido (numero) = aprovado; vazio = pendente.
    - Pendencias (assinatura, FID, sinal) olham todas as vendas do mes,
      com ou sem Data Confirmacao 2.0.
@@ -227,6 +228,7 @@
   }
 
   function tipoPeriodo(p) {
+    if (p.indexOf('+') >= 0) return 'multi';
     if (/^\d{4}$/.test(p)) return 'ano';
     return /^\d{4}-T[1-4]$/.test(p) ? 'tri' : 'mes';
   }
@@ -236,7 +238,46 @@
     if (tipo === 'tri') return mes.slice(0, 4) + '-T' + Math.ceil(Number(mes.slice(5, 7)) / 3);
     return mes;
   }
-  function noPeriodo(mes, p) { return !!mes && periodoDe(mes, tipoPeriodo(p)) === p; }
+  function noPeriodo(mes, p) {
+    if (!mes) return false;
+    if (tipoPeriodo(p) === 'multi') return p.split('+').indexOf(mes) >= 0;
+    return periodoDe(mes, tipoPeriodo(p)) === p;
+  }
+
+  /* Junta as respostas de varios meses ANTES das regras: a OP que vier em duas
+     respostas e unificada pelo cruzar, como no trimestre. Se um mes vier sem
+     D4Sign, a assinatura fica desconhecida (nunca "Nao enviado" por engano). */
+  function juntarRespostas(respostas, periodo) {
+    function juntar(tabelas) {
+      var porNome = {};
+      var saida = [];
+      tabelas.forEach(function (t) {
+        var chave = JSON.stringify([t.aba || '', t.cabecalho]);
+        var alvo = porNome[chave];
+        if (!alvo) {
+          alvo = porNome[chave] = { aba: t.aba, cabecalho: t.cabecalho, linhas: [] };
+          saida.push(alvo);
+        }
+        alvo.linhas = alvo.linhas.concat(t.linhas || []);
+      });
+      return saida;
+    }
+    /* a aba principal de todos os meses vem antes da aba 2.0 */
+    var abas = [];
+    respostas.forEach(function (r) {
+      (r.abas || []).forEach(function (a, i) { (abas[i] || (abas[i] = [])).push(a); });
+    });
+    var temD4 = respostas.every(function (r) { return r.d4sign && r.d4sign.linhas; });
+    return {
+      ok: true,
+      mes: periodo,
+      meses: respostas[0].meses,
+      atualizadoEm: respostas.map(function (r) { return r.atualizadoEm || ''; }).sort()[0],
+      intervaloMinutos: respostas[0].intervaloMinutos,
+      abas: abas.reduce(function (lista, grupo) { return lista.concat(juntar(grupo)); }, []),
+      d4sign: temD4 ? juntar(respostas.map(function (r) { return { cabecalho: r.d4sign.cabecalho, linhas: r.d4sign.linhas }; }))[0] : null
+    };
+  }
 
   /* d4sign ausente (Web App antigo): assinatura fica '' (desconhecida) */
   function vendasDoMes(abas, mes, d4sign) {
@@ -289,7 +330,7 @@
   /* filtros do topo: valem para a pagina inteira */
   function filtrarGeral(vendas, g) {
     return vendas.filter(function (v) {
-      return (!g.emp || v.emp === g.emp) && (!g.cidade || v.cidade === g.cidade) && (!g.canal || v.canal === g.canal);
+      return (!g.emps.length || g.emps.indexOf(v.emp) >= 0) && (!g.cidade || v.cidade === g.cidade) && (!g.canal || v.canal === g.canal);
     });
   }
 
@@ -337,6 +378,7 @@
     tipoPeriodo: tipoPeriodo,
     periodoDe: periodoDe,
     noPeriodo: noPeriodo,
+    juntarRespostas: juntarRespostas,
     filtrarGeral: filtrarGeral,
     canalDe: canalDe,
     cidadeDe: cidadeDe,

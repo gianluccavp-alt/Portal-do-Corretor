@@ -105,6 +105,9 @@ h1,h2,p{margin:0}
 .per-op:disabled{opacity:.35;cursor:default}
 .per-op[aria-pressed="true"],.per-op[aria-pressed="true"]:hover{background:var(--red);border-color:var(--red);color:#fff}
 .per-op[aria-pressed="true"] small{color:#fff}
+.per-acoes{display:flex;flex-direction:column;gap:.35rem;padding-top:.6rem;border-top:1px solid var(--hair)}
+.per-acoes > div{display:flex;align-items:center;justify-content:space-between}
+.per-acoes .limpar{margin:0}
 @media (max-width:760px){
   .topo{padding:1.25rem 1.1rem 1.4rem;flex-direction:column-reverse;align-items:stretch;gap:1rem}
   .topo h1{font-size:1.6rem}
@@ -274,7 +277,7 @@ h1,h2,p{margin:0}
     <div class="topo">
       <div class="topo-esq">
         <div class="step">Relatório de vendas · SPI</div>
-        <h1>Vendas do <b id="per-titulo">mês</b> <span id="mes-nome"></span></h1>
+        <h1>Vendas <b id="per-titulo">do mês</b> <span id="mes-nome"></span></h1>
       </div>
       <div class="topo-dir">
         <img class="topo-logo" src="assets/img/logo-direcional-header.png" alt="Direcional">
@@ -303,6 +306,13 @@ h1,h2,p{margin:0}
               <button class="btn" id="per-ano-prox" type="button" aria-label="Próximo ano">›</button>
             </div>
             <div class="per-grade" id="per-grade"></div>
+            <div class="per-acoes" id="per-acoes">
+              <span class="sub" id="per-contagem" aria-live="polite"></span>
+              <div>
+                <button class="limpar" id="per-limpar" type="button">Limpar</button>
+                <button class="btn btn-p" id="per-aplicar" type="button">Aplicar</button>
+              </div>
+            </div>
           </div>
         </div>
         <div class="atualizacao"><span class="dot" id="dot" aria-hidden="true"></span><span id="atualizacao">Carregando…</span><span aria-hidden="true">·</span><button class="sair" id="sair" type="button">Sair</button></div>
@@ -322,7 +332,7 @@ h1,h2,p{margin:0}
     <div id="painel" hidden style="display:flex;flex-direction:column;gap:inherit">
 
       <section aria-label="Filtros gerais" class="card gerais">
-        <div class="campo"><label class="lab" for="g-emp">Empreendimento</label><select class="inp" id="g-emp"></select></div>
+        <div class="campo"><label class="lab" for="g-emp">Empreendimento</label><select class="inp" id="g-emp" multiple></select></div>
         <div class="campo"><label class="lab" for="g-cidade">Cidade</label><select class="inp" id="g-cidade"></select></div>
         <div class="campo"><label class="lab" for="g-canal">Imobiliária</label><select class="inp" id="g-canal">
           <option value="">House e Canal Imob</option>
