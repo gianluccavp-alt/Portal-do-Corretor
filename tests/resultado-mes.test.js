@@ -139,7 +139,39 @@ test('house, canal imob e cidade', () => {
   assert.equal(R.cidadeDe('Village Gaia'), 'Ribeirão Preto');
   assert.equal(R.cidadeDe('Casa Prado Residencial Riva'), 'Campinas');
   assert.equal(R.cidadeDe('Conquista Vila da Mata'), 'Sorocaba');
-  assert.equal(R.cidadeDe('Conquista Araraquara'), 'Outras');
+  assert.equal(R.cidadeDe('Compra e Venda de Bens Imóveis V - BNDU SPI'), 'Ribeirão Preto');
+  assert.equal(R.cidadeDe('Compra e Venda de Bens Imóveis III - SP'), 'Campinas');
+  assert.equal(R.cidadeDe('Conquista Nature'), 'Campinas');
+  assert.equal(R.cidadeDe('Reserva Antonieta'), 'Campinas');
+  assert.equal(R.cidadeDe('Conquista Macaúba'), 'Ribeirão Preto');
+  assert.equal(R.cidadeDe('Conquista Horizonte'), 'Ribeirão Preto');
+  for (const e of ['Módulo 1', 'Módulo 2', 'Módulo 3', 'Lotes']) assert.equal(R.cidadeDe('Dream Santo Antônio - ' + e), 'São Carlos', e);
+  assert.equal(R.cidadeDe('Residencial Parque das Flores'), 'Piracicaba');
+  assert.equal(R.cidadeDe('Parque das Cerejeiras - Condomínio 4 - Mod. 3'), 'Bragança Paulista');
+  const doCadastro = {
+    'Conquista Araraquara': 'Araraquara', 'Rise Parque Prado': 'Campinas', 'Alentejo Residencial': 'Campinas',
+    'Village Novus II': 'Ribeirão Preto', 'Conquista Vila Acqua': 'Sorocaba', 'Conquista Votorantim - 2ª Etapa': 'Votorantim',
+    'Conquista Parque Hipólito': 'Limeira', 'Reserva do Alto': 'Valinhos', 'Viva Vida Paineiras': 'Piracicaba',
+    'Parque das Cerejeiras - CondomÃ\u00adnio 2 - Mod. 5': 'Bragança Paulista'
+  };
+  for (const [emp, cidade] of Object.entries(doCadastro)) assert.equal(R.cidadeDe(emp), cidade, emp);
+  assert.equal(R.cidadeDe('Empreendimento Novo'), 'Outras');
+});
+
+test('contrato distratado nao conta, mesmo com a fase Fechado e ganho', () => {
+  const cab = CAB.concat('Oportunidade: Status Contrato');
+  const com = (p, status) => linha(p).concat(status);
+  const abas = [
+    { cabecalho: cab, linhas: [
+      com({ op: 1, venda: '2026-11-01', fase: 'Fechado e ganho' }, 'Distratado'),
+      com({ op: 2, venda: '2026-11-01', fase: 'Fechado e ganho' }, 'Ativado'),
+      com({ op: 3, venda: '2026-11-01' }, ''),
+      com({ op: 4, venda: '2026-11-01' }, 'Ativado')
+    ] },
+    /* basta uma das abas marcar o distrato */
+    { cabecalho: cab, linhas: [com({ op: 4, venda: '2026-11-01' }, 'Distratado')] }
+  ];
+  assert.deepEqual(R.vendasDoMes(abas, '2026-11').map((v) => v.op).sort(), ['OP-2', 'OP-3']);
 });
 
 test('filtros gerais combinam empreendimento, cidade e canal', () => {
@@ -149,9 +181,11 @@ test('filtros gerais combinam empreendimento, cidade e canal', () => {
     { op: 3, venda: '2026-11-01', emp: 'Seleto Amoreiras', imob: 'DIRECIONAL VENDAS SPI - B' }
   ])], '2026-11');
   const ops = (g) => R.filtrarGeral(lista, g).map((v) => v.op).sort();
-  assert.deepEqual(ops({ emps: [], cidade: 'Ribeirão Preto', canal: '' }), ['OP-1', 'OP-2']);
-  assert.deepEqual(ops({ emps: [], cidade: 'Ribeirão Preto', canal: 'house' }), ['OP-2']);
-  assert.deepEqual(ops({ emps: ['Seleto Amoreiras'], cidade: '', canal: '' }), ['OP-3']);
+  assert.deepEqual(ops({ emps: [], cidades: ['Ribeirão Preto'], canal: '' }), ['OP-1', 'OP-2']);
+  assert.deepEqual(ops({ emps: [], cidades: ['Ribeirão Preto'], canal: 'house' }), ['OP-2']);
+  assert.deepEqual(ops({ emps: [], cidades: ['Ribeirão Preto', 'Campinas'], canal: '' }), ['OP-1', 'OP-2', 'OP-3']);
+  assert.deepEqual(ops({ emps: [], cidades: ['Campinas', 'Sorocaba'], canal: '' }), ['OP-3']);
+  assert.deepEqual(ops({ emps: ['Seleto Amoreiras'], cidades: [], canal: '' }), ['OP-3']);
 });
 
 test('periodo pode ser mes, trimestre ou ano', () => {
@@ -228,7 +262,7 @@ test('juntar meses: sem D4Sign em um deles a assinatura fica desconhecida', () =
 
 test('filtro geral aceita varios empreendimentos; nenhum = todos', () => {
   const vendas = ['Village Gaia', 'Village Park', 'Seleto Amoreiras'].map((emp) => ({ emp, cidade: R.cidadeDe(emp), canal: '' }));
-  const nomes = (emps) => R.filtrarGeral(vendas, { emps, cidade: '', canal: '' }).map((v) => v.emp);
+  const nomes = (emps) => R.filtrarGeral(vendas, { emps, cidades: [], canal: '' }).map((v) => v.emp);
   assert.deepEqual(nomes(['Village Gaia', 'Seleto Amoreiras']), ['Village Gaia', 'Seleto Amoreiras']);
   assert.equal(nomes([]).length, 3);
 });
