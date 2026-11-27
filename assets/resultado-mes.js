@@ -414,7 +414,56 @@
     };
   }
 
+  /* ---------- filtros avancados da lista ---------- */
+  var SEM = '(sem)'; // marca de ranking ou origem em branco
+
+  function avancadoVazio() {
+    return { fases: [], corretores: [], emps: [], assinaturas: [], sinais: [], rankings: [], origens: [],
+      dataBase: 'venda', dataDe: '', dataAte: '', valorDe: null, valorAte: null };
+  }
+
+  /* limites inclusivos; vazio = sem limite; digitados invertidos, sao trocados */
+  function noIntervalo(x, de, ate) {
+    var temDe = de !== '' && de !== null;
+    var temAte = ate !== '' && ate !== null;
+    if (temDe && temAte && de > ate) { var troca = de; de = ate; ate = troca; }
+    return (!temDe || x >= de) && (!temAte || x <= ate);
+  }
+
+  /* no mesmo campo basta uma das marcadas; campos diferentes se combinam */
+  function passaAvancado(v, a) {
+    function entre(lista, valor) { return !lista.length || lista.indexOf(valor) >= 0; }
+    if (!entre(a.fases, v.fase) || !entre(a.corretores, v.corretor) || !entre(a.emps, v.emp)) return false;
+    if (!entre(a.assinaturas, v.assinatura) || !entre(a.rankings, v.ranking || SEM) || !entre(a.origens, v.origem || SEM)) return false;
+    if (a.sinais.length && !a.sinais.some(function (q) { return q === 'pendente' ? !v.sinalPago : !!v[q]; })) return false;
+    if (a.dataDe || a.dataAte) {
+      var data = v[a.dataBase];
+      if (!data || !noIntervalo(data, a.dataDe, a.dataAte)) return false;
+    }
+    return noIntervalo(v.valor, a.valorDe, a.valorAte);
+  }
+
+  /* campos em uso; cada par de/ate conta um */
+  function contarAvancados(a) {
+    var listas = ['fases', 'corretores', 'emps', 'assinaturas', 'sinais', 'rankings', 'origens'];
+    return listas.filter(function (k) { return a[k].length; }).length +
+      (a.dataDe || a.dataAte ? 1 : 0) + (a.valorDe !== null || a.valorAte !== null ? 1 : 0);
+  }
+
+  /* campo digitado: ponto separa milhar e virgula os centavos; sem numero = null */
+  function lerValor(t) {
+    var limpo = texto(t).replace(/[^\d,]/g, '').replace(',', '.');
+    if (!/\d/.test(limpo)) return null;
+    var n = Number(limpo);
+    return isFinite(n) ? n : null;
+  }
+
   var api = {
+    SEM: SEM,
+    avancadoVazio: avancadoVazio,
+    passaAvancado: passaAvancado,
+    contarAvancados: contarAvancados,
+    lerValor: lerValor,
     COLUNAS: COLUNAS,
     faseConta: faseConta,
     chaveOp: chaveOp,
