@@ -366,6 +366,9 @@
       .sort(function (a, b) { return b.n - a.n || b.vgv - a.vgv; });
   }
 
+  /* ranking: maior VGV primeiro; no empate, mais vendas */
+  function porVgv(a, b) { return b.vgv - a.vgv || b.n - a.n; }
+
   function temPendencia(v, qual) {
     if (qual === 'assinatura') return !!v.assinatura && v.assinatura !== 'assinado';
     if (qual === 'fid') return !v.fidOk;
@@ -410,7 +413,7 @@
         semPendencia: pend('nenhuma')
       },
       empreendimentos: agrupar(vendas, 'emp'),
-      imobiliarias: agrupar(vendas, 'imob')
+      imobiliarias: agrupar(vendas, 'imob').sort(porVgv)
     };
   }
 

@@ -616,15 +616,15 @@
       var tr = el('tr');
       tr.appendChild(el('td', 'num fraco', i + 1));
       tr.appendChild(el('td', null, limparImob(x.nome))).style.fontWeight = '500';
-      tr.appendChild(el('td', 'num r', x.comerciais));
-      tr.appendChild(el('td', 'num r', x.facilitadas));
-      tr.appendChild(el('td', 'num r', x.confirmadas));
-      tr.appendChild(el('td', 'num r', x.n)).style.fontWeight = '700';
+      tr.appendChild(el('td', 'num c', x.comerciais));
+      tr.appendChild(el('td', 'num c', x.facilitadas));
+      tr.appendChild(el('td', 'num c', x.confirmadas));
+      tr.appendChild(el('td', 'num c', x.n)).style.fontWeight = '700';
       tr.appendChild(el('td', 'num r nw', mi(x.vgv)));
       corpo.appendChild(tr);
     });
     $('imob-sub').textContent = g.length > PAGINA_IMOB && estado.verImob < g.length
-      ? 'Top ' + PAGINA_IMOB + ' de ' + g.length + ' por quantidade'
+      ? 'Top ' + PAGINA_IMOB + ' de ' + g.length + ' por VGV'
       : plural(g.length, 'imobiliária/equipe', 'imobiliárias/equipes');
     var mais = $('imob-mais');
     mais.hidden = g.length <= PAGINA_IMOB;

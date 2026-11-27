@@ -303,3 +303,10 @@ test('lerValor entende o formato brasileiro', () => {
   assert.equal(R.lerValor(''), null);
   assert.equal(R.lerValor('abc'), null);
 });
+
+test('ranking de imobiliaria e por VGV; no empate, quantidade', () => {
+  const v = (imob, valor) => ({ imob, emp: 'Village Gaia', tipo: 'comercial', confirmada: false, valor, assinatura: '' });
+  const r = R.resumo([v('A', 100), v('A', 100), v('A', 100), v('B', 900), v('C', 150), v('C', 150)]);
+  assert.deepEqual(r.imobiliarias.map((x) => x.nome), ['B', 'A', 'C']);
+  assert.equal(r.empreendimentos[0].n, 6);
+});
