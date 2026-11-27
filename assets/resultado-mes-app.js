@@ -35,7 +35,7 @@
     verImob: PAGINA_IMOB
   };
 
-  function geralVazio() { return { emps: [], cidade: '', canal: '' }; }
+  function geralVazio() { return { emps: [], cidades: [], canal: '' }; }
   function filtroVazio() { return { tipo: '', conf: '', pend: [], imob: '', busca: '' }; }
   var seletores = {};
   var PERIODOS = { mes: 'mês', tri: 'trimestre', ano: 'ano', multi: 'período' };
@@ -329,20 +329,20 @@
     function com(lista, atuais) {
       return lista.concat([].concat(atuais).filter(function (x) { return x && lista.indexOf(x) < 0; }));
     }
-    var daCidade = estado.todas.filter(function (v) { return !g.cidade || v.cidade === g.cidade; });
+    var daCidade = estado.todas.filter(function (v) { return !g.cidades.length || g.cidades.indexOf(v.cidade) >= 0; });
     var emps = com(unicos(daCidade, 'emp'), g.emps);
     emps.sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); });
     encher($('g-emp'), null, emps);
     Array.prototype.forEach.call($('g-emp').options, function (o) { o.selected = g.emps.indexOf(o.value) >= 0; });
-    var cidades = com(unicos(estado.todas, 'cidade'), g.cidade);
+    var cidades = com(unicos(estado.todas, 'cidade'), g.cidades);
     cidades.sort(function (a, b) { return (a === 'Outras') - (b === 'Outras') || a.localeCompare(b, 'pt-BR'); });
-    encher($('g-cidade'), 'Todas as cidades', cidades);
-    $('g-cidade').value = g.cidade;
+    encher($('g-cidade'), null, cidades);
+    Array.prototype.forEach.call($('g-cidade').options, function (o) { o.selected = g.cidades.indexOf(o.value) >= 0; });
     $('g-canal').value = g.canal;
     seletores['g-emp'].atualizar();
     seletores['g-cidade'].atualizar();
     seletores['g-canal'].atualizar();
-    $('g-limpar').disabled = !g.emps.length && !g.cidade && !g.canal;
+    $('g-limpar').disabled = !g.emps.length && !g.cidades.length && !g.canal;
   }
 
   /* ---------- topo ---------- */
@@ -757,11 +757,16 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
   }
 
+  function selecionados(sel) {
+    return Array.prototype.filter.call(sel.options, function (o) { return o.selected; }).map(function (o) { return o.value; });
+  }
+
   function reiniciarOps() { estado.verOps = paginaOps(); desenharOps(); }
 
   function iniciarControles() {
-    ['g-cidade', 'g-canal', 'f-imob'].forEach(function (id) { seletores[id] = window.Seletor.criar($(id)); });
+    ['g-canal', 'f-imob'].forEach(function (id) { seletores[id] = window.Seletor.criar($(id)); });
     seletores['g-emp'] = window.Seletor.criar($('g-emp'), { vazio: 'Todos os empreendimentos', varias: 'selecionados' });
+    seletores['g-cidade'] = window.Seletor.criar($('g-cidade'), { vazio: 'Todas as cidades', varias: 'cidades' });
     seletores['f-pend'] = window.Seletor.criar($('f-pend'), { vazio: 'Todas as situações' });
     iniciarPeriodo();
     $('tentar').addEventListener('click', function () { carregar(estado.mes); });
@@ -783,7 +788,7 @@
     });
     $('f-pend').addEventListener('change', function () {
       var antes = estado.filtro.pend;
-      var marcadas = Array.prototype.filter.call(this.options, function (o) { return o.selected; }).map(function (o) { return o.value; });
+      var marcadas = selecionados(this);
       /* "Sem pendencia" nao combina com as outras: vale a que foi marcada por ultimo */
       if (marcadas.indexOf('nenhuma') >= 0 && marcadas.length > 1) {
         marcadas = antes.indexOf('nenhuma') < 0 ? ['nenhuma'] : marcadas.filter(function (x) { return x !== 'nenhuma'; });
@@ -798,13 +803,13 @@
       reiniciarOps();
     });
     $('g-emp').addEventListener('change', function () {
-      estado.geral.emps = Array.prototype.filter.call(this.options, function (o) { return o.selected; }).map(function (o) { return o.value; });
+      estado.geral.emps = selecionados(this);
       aplicarGeral();
     });
     $('g-cidade').addEventListener('change', function () {
-      var cidade = this.value;
-      estado.geral.cidade = cidade;
-      if (cidade) estado.geral.emps = estado.geral.emps.filter(function (e) { return R.cidadeDe(e) === cidade; });
+      var cidades = selecionados(this);
+      estado.geral.cidades = cidades;
+      if (cidades.length) estado.geral.emps = estado.geral.emps.filter(function (e) { return cidades.indexOf(R.cidadeDe(e)) >= 0; });
       aplicarGeral();
     });
     $('g-canal').addEventListener('change', function () { estado.geral.canal = this.value; aplicarGeral(); });

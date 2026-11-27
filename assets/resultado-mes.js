@@ -25,6 +25,8 @@
      com ou sem Data Confirmacao 2.0.
    - Imobiliaria: "CANAL IMOB" = Canal Imob; "VENDAS SPI" (Direcional e
      Riva) = House. O resto so aparece em "Todas".
+   - Contrato distratado (coluna "Oportunidade: Status Contrato") nao
+     conta, mesmo que a fase continue "Fechado e ganho" (2026-11-27).
    - Cidade vem do empreendimento (o relatorio nao traz cidade).
    Funciona no navegador (window.ResultadoMes) e no Node (testes).
    ============================================================ */
@@ -48,7 +50,8 @@
     comercial: 'Venda Comercial?',
     facilitada: 'Venda facilitada',
     origem: 'Origem da Conta',
-    fid: 'FID'
+    fid: 'FID',
+    contrato: 'Oportunidade: Status Contrato'
   };
 
   var D4_INICIO = '2025-09-18';
@@ -70,7 +73,53 @@
     'Village Gaia': 'Ribeirão Preto',
     'Reserva Direcional Jardim Botânico': 'Ribeirão Preto',
     'Direcional Conquista Clube Ipiranga': 'Ribeirão Preto',
-    'Conquista Vila da Mata': 'Sorocaba'
+    'Compra e Venda de Bens Imóveis V - BNDU SPI': 'Ribeirão Preto',
+    'Conquista Vila da Mata': 'Sorocaba',
+    /* informadas pelo comercial em 2026-11-27. O cadastro do Salesforce esta
+       errado na BNDU V (diz Belo Horizonte) e o comercial manteve a Reserva
+       Antonieta em Campinas (o cadastro diz Limeira) */
+    'Compra e Venda de Bens Imóveis III - SP': 'Campinas',
+    'Conquista Nature': 'Campinas',
+    'Reserva Antonieta': 'Campinas',
+    'Conquista Macaúba': 'Ribeirão Preto',
+    'Conquista Horizonte': 'Ribeirão Preto',
+    'Dream Santo Antônio - Módulo 1': 'São Carlos',
+    'Dream Santo Antônio - Módulo 2': 'São Carlos',
+    'Dream Santo Antônio - Módulo 3': 'São Carlos',
+    'Dream Santo Antônio - Lotes': 'São Carlos',
+    'Residencial Parque das Flores': 'Piracicaba',
+    'Parque das Cerejeiras - Condomínio 4 - Mod. 3': 'Bragança Paulista',
+    /* cadastro do Salesforce (Empreendimento: Cidade), lido em 2026-11-27 */
+    'Alentejo Residencial': 'Campinas',
+    'Algarve Residencial': 'Campinas',
+    'Arbo Condomínio Parque': 'Campinas',
+    'Hotel Go Inn Campinas': 'Campinas',
+    'Reserva Amoreiras': 'Campinas',
+    'Reserva Family': 'Campinas',
+    'Reservatto Mansões Santo Antônio': 'Campinas',
+    'Rise Parque Prado': 'Campinas',
+    'Solaris Condomínio Parque': 'Campinas',
+    'Vert Condomínio Parque': 'Campinas',
+    'Village Novus': 'Ribeirão Preto',
+    'Village Novus II': 'Ribeirão Preto',
+    'Conquista Araraquara': 'Araraquara',
+    'Conquista Vila Acqua': 'Sorocaba',
+    'Conquista Vila do Sol': 'Sorocaba',
+    'Reserva Gran Village Ibiti': 'Sorocaba',
+    'Conquista Votorantim - 1ª Etapa': 'Votorantim',
+    'Conquista Votorantim - 2ª Etapa': 'Votorantim',
+    'Conquista Votorantim - 3ª Etapa': 'Votorantim',
+    'Conquista Vila Sônia': 'Piracicaba',
+    'Viva Vida Jequitibás': 'Piracicaba',
+    'Viva Vida Paineiras': 'Piracicaba',
+    'Conquista Parque Hipólito': 'Limeira',
+    'Reserva do Alto': 'Valinhos',
+    'Parque das Cerejeiras - Condomínio 1 - Mod. 4': 'Bragança Paulista',
+    'Parque das Cerejeiras - Condomínio 2 - Mod. 5': 'Bragança Paulista',
+    /* o relatorio traz este nome com o acento quebrado */
+    'Parque das Cerejeiras - CondomÃ\u00adnio 2 - Mod. 5': 'Bragança Paulista',
+    'Parque das Cerejeiras - Condomínio 3 - Mod. 2': 'Bragança Paulista',
+    'Parque das Cerejeiras - Condomínio 5 - Mod. 1': 'Bragança Paulista'
   };
 
   var FASES_ANTES = ['em atendimento', 'visita agendada', 'visita realizada', 'em elaboração', 'em elaboracao', 'em análise', 'em analise', 'proposta reprovada'];
@@ -149,6 +198,7 @@
       venda: venda,
       conf: conf,
       fase: texto(o.fase),
+      distratado: /distrat/i.test(texto(o.contrato)),
       unidade: texto(o.unidade),
       emp: texto(o.emp),
       imob: texto(o.imob),
@@ -179,6 +229,7 @@
         if (!atual.conf && v.conf) atual.conf = v.conf;
         if (!atual.pcv && v.pcv) atual.pcv = v.pcv;
         if (!atual.fid && v.fid) { atual.fid = v.fid; atual.fidOk = true; }
+        if (v.distratado) atual.distratado = true;
         if (v.boleto) atual.boleto = true;
         if (v.cartao) atual.cartao = true;
         if (idx === 0 && !atual.valor && v.valor) atual.valor = v.valor;
@@ -283,7 +334,7 @@
   function vendasDoMes(abas, mes, d4sign) {
     var envios = d4sign && d4sign.linhas ? lerD4sign(d4sign) : null;
     return cruzar(abas)
-      .filter(function (v) { return faseConta(v.fase); })
+      .filter(function (v) { return !v.distratado && faseConta(v.fase); })
       .map(classificar)
       .filter(function (v) { return noPeriodo(v.mesConta, mes); })
       .map(function (v) {
@@ -330,7 +381,7 @@
   /* filtros do topo: valem para a pagina inteira */
   function filtrarGeral(vendas, g) {
     return vendas.filter(function (v) {
-      return (!g.emps.length || g.emps.indexOf(v.emp) >= 0) && (!g.cidade || v.cidade === g.cidade) && (!g.canal || v.canal === g.canal);
+      return (!g.emps.length || g.emps.indexOf(v.emp) >= 0) && (!g.cidades.length || g.cidades.indexOf(v.cidade) >= 0) && (!g.canal || v.canal === g.canal);
     });
   }
 
