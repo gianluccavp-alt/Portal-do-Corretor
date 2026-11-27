@@ -266,3 +266,40 @@ test('filtro geral aceita varios empreendimentos; nenhum = todos', () => {
   assert.deepEqual(nomes(['Village Gaia', 'Seleto Amoreiras']), ['Village Gaia', 'Seleto Amoreiras']);
   assert.equal(nomes([]).length, 3);
 });
+
+/* ---------- filtros avancados ---------- */
+const base = { fase: 'Proposta Aprovada', corretor: 'ANA', emp: 'Village Gaia', assinatura: 'aguardando',
+  boleto: false, cartao: false, sinalPago: false, ranking: '', origem: 'Stand', venda: '2026-11-10', conf: '', valor: 250000 };
+const av = (x) => Object.assign(R.avancadoVazio(), x);
+
+test('avancado vazio passa tudo e conta zero', () => {
+  assert.equal(R.passaAvancado(base, R.avancadoVazio()), true);
+  assert.equal(R.contarAvancados(av({ dataBase: 'conf' })), 0);
+});
+test('avancado: no mesmo campo soma, entre campos combina', () => {
+  assert.equal(R.passaAvancado(base, av({ fases: ['Fechado e ganho', 'Proposta Aprovada'] })), true);
+  assert.equal(R.passaAvancado(base, av({ fases: ['Proposta Aprovada'], corretores: ['BIA'] })), false);
+  assert.equal(R.passaAvancado(base, av({ emps: ['Village Park'] })), false);
+  assert.equal(R.passaAvancado(base, av({ assinaturas: ['aguardando'], origens: ['Stand'], rankings: [R.SEM] })), true);
+});
+test('avancado: sinal', () => {
+  assert.equal(R.passaAvancado(base, av({ sinais: ['pendente'] })), true);
+  assert.equal(R.passaAvancado(base, av({ sinais: ['boleto', 'cartao'] })), false);
+  assert.equal(R.passaAvancado({ ...base, cartao: true, sinalPago: true }, av({ sinais: ['cartao'] })), true);
+});
+test('avancado: data e valor, limites inclusivos e invertidos', () => {
+  assert.equal(R.passaAvancado(base, av({ dataDe: '2026-11-10', dataAte: '2026-11-10' })), true);
+  assert.equal(R.passaAvancado(base, av({ dataDe: '2026-11-20', dataAte: '2026-11-01' })), true);
+  assert.equal(R.passaAvancado(base, av({ dataDe: '2026-11-11' })), false);
+  assert.equal(R.passaAvancado(base, av({ dataBase: 'conf', dataAte: '2026-11-30' })), false);
+  assert.equal(R.passaAvancado(base, av({ valorDe: 300000, valorAte: 200000 })), true);
+  assert.equal(R.passaAvancado(base, av({ valorAte: 249999 })), false);
+  assert.equal(R.contarAvancados(av({ valorDe: 0, dataDe: '2026-11-01', dataAte: '2026-11-02', fases: ['x'] })), 3);
+});
+test('lerValor entende o formato brasileiro', () => {
+  assert.equal(R.lerValor('250.000'), 250000);
+  assert.equal(R.lerValor('R$ 250.000,50'), 250000.5);
+  assert.equal(R.lerValor('250000'), 250000);
+  assert.equal(R.lerValor(''), null);
+  assert.equal(R.lerValor('abc'), null);
+});

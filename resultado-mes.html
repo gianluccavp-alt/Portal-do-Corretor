@@ -237,6 +237,26 @@ h1,h2,p{margin:0}
 .busca-l{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
 .busca-l input{width:300px}
 @media (max-width:640px){.busca-l,.busca-l input{width:100%}.busca-l .btn{flex:1}.grupo,.g-sel{flex:1 1 100%;max-width:none}.seg{display:flex;flex-wrap:wrap}.seg button{flex:1 1 auto}}
+/* ---------- filtros avancados ---------- */
+.av-n{min-width:20px;padding:0 .35rem;border-radius:999px;background:var(--red);color:#fff;font-size:.72rem;font-weight:700;line-height:20px;text-align:center}
+.av{width:min(640px,calc(100vw - 32px));height:min(660px,calc(100dvh - 32px));max-width:none;max-height:none;padding:0;border:1px solid var(--hair);border-radius:16px;color:var(--ink);background:#fff;box-shadow:0 24px 60px rgba(20,26,30,.28);overflow:hidden}
+.av::backdrop{background:rgba(20,26,30,.45)}
+.av form{height:100%;display:flex;flex-direction:column}
+.av-topo,.av-pe{flex:none;display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.8rem 1.15rem}
+.av-topo{border-bottom:1px solid var(--hair)}
+.av-pe{border-top:1px solid var(--hair)}
+.av-pe .limpar{margin:0}
+/* altura fixa com rolagem: a lista aberta de um seletor nao e cortada nem empurra os botoes */
+.av-corpo{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:1rem 1.15rem 1.5rem;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.9rem 1rem;align-content:start}
+.av-corpo .campo{min-width:0}
+.av-corpo .inp{width:100%;min-width:0}
+.av-corpo .sel-painel{width:100%;max-width:100%}
+.av-corpo .sel-lista{max-height:220px}
+.av-corpo .sel-botao:disabled{opacity:.45;cursor:default}
+.av-larga{grid-column:1/-1}
+.av-par{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.9rem 1rem}
+@media (max-width:640px){.av{width:100vw;height:100dvh;border:0;border-radius:0}.av-corpo{grid-template-columns:minmax(0,1fr)}}
+
 .vazio{padding:2rem;text-align:center;color:var(--slate);font-size:.9rem}
 </style>
 </head>
@@ -417,6 +437,11 @@ h1,h2,p{margin:0}
             <span class="sub" id="ops-sub"></span>
           </div>
           <div class="busca-l">
+            <button class="btn" id="f-av" type="button" aria-haspopup="dialog">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+              Filtros avançados
+              <span class="av-n num" id="f-av-n" hidden></span>
+            </button>
             <label for="busca" class="sr">Buscar OP, cliente, unidade, corretor</label>
             <input id="busca" class="inp" type="search" placeholder="Buscar OP, cliente, unidade, corretor…" autocomplete="off">
             <button class="btn" id="exportar" type="button">
@@ -470,6 +495,34 @@ h1,h2,p{margin:0}
       </section>
     </div>
   </main>
+  <dialog class="av" id="av" aria-labelledby="t-av">
+    <form id="av-form" novalidate>
+      <div class="av-topo">
+        <h2 id="t-av" class="step">Filtros avançados</h2>
+        <button class="btn btn-ico" id="av-fechar" type="button" aria-label="Fechar">✕</button>
+      </div>
+      <div class="av-corpo" id="av-corpo">
+      <div class="campo"><label class="lab" for="av-fase">Fase</label><select class="inp" id="av-fase" multiple></select></div>
+      <div class="campo"><label class="lab" for="av-emp">Empreendimento</label><select class="inp" id="av-emp" multiple></select></div>
+      <div class="campo"><label class="lab" for="av-corretor">Corretor</label><select class="inp" id="av-corretor" multiple></select></div>
+      <div class="campo"><label class="lab" for="av-assin">Assinatura</label><select class="inp" id="av-assin" multiple><option value="assinado">Assinado</option><option value="aguardando">Aguardando</option><option value="sem_envio">Não enviado</option><option value="cancelado">Cancelado</option><option value="nao_assinado">Não assinado</option></select></div>
+      <div class="campo"><label class="lab" for="av-sinal">Sinal</label><select class="inp" id="av-sinal" multiple><option value="boleto">Boleto/PIX pago</option><option value="cartao">Cartão pago</option><option value="pendente">Pendente</option></select></div>
+      <div class="campo"><label class="lab" for="av-ranking">Ranking</label><select class="inp" id="av-ranking" multiple></select></div>
+      <div class="campo"><label class="lab" for="av-origem">Origem do cliente</label><select class="inp" id="av-origem" multiple></select></div>
+      <div class="campo"><label class="lab" for="av-data-base">Data usada no intervalo</label><select class="inp" id="av-data-base"><option value="venda">Data da venda</option><option value="conf">Data Confirmação 2.0</option></select></div>
+      <div class="av-larga av-par">
+        <div class="campo"><label class="lab" for="av-data-de">Data de</label><input class="inp" id="av-data-de" type="date"></div>
+        <div class="campo"><label class="lab" for="av-data-ate">Data até</label><input class="inp" id="av-data-ate" type="date"></div>
+        <div class="campo"><label class="lab" for="av-valor-de">Valor de (R$)</label><input class="inp" id="av-valor-de" type="text" inputmode="decimal" placeholder="Ex.: 200.000" autocomplete="off"></div>
+        <div class="campo"><label class="lab" for="av-valor-ate">Valor até (R$)</label><input class="inp" id="av-valor-ate" type="text" inputmode="decimal" placeholder="Ex.: 400.000" autocomplete="off"></div>
+      </div>
+      </div>
+      <div class="av-pe">
+        <button class="limpar" id="av-limpar" type="button">Limpar</button>
+        <button class="btn btn-p" id="av-aplicar" type="submit">Aplicar filtros</button>
+      </div>
+    </form>
+  </dialog>
 </div>
 
 <script src="assets/config.js"></script>
