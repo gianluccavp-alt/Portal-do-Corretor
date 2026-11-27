@@ -36,7 +36,7 @@
   };
 
   function geralVazio() { return { emps: [], cidades: [], canal: '' }; }
-  function filtroVazio() { return { tipo: '', conf: '', pend: [], imob: '', busca: '' }; }
+  function filtroVazio() { return { tipo: '', conf: '', pend: [], imob: '', busca: '', av: R.avancadoVazio() }; }
   var seletores = {};
   var PERIODOS = { mes: 'mês', tri: 'trimestre', ano: 'ano', multi: 'período' };
   var BUSCAS_JUNTAS = 3; // varios meses: quantas consultas ao Web App por vez
@@ -200,6 +200,7 @@
     pedidoAtual++; // descarta carga que ainda esteja em andamento
     estado.cache = {};
     estado.geral = geralVazio();
+    $('av').close();
     mostrarGate(msg);
   }
   function iniciarGate() {
@@ -648,6 +649,7 @@
       if (f.conf === 'sem' && v.confirmada) return false;
       if (!R.temAlguma(v, f.pend)) return false;
       if (f.imob && v.imob !== f.imob) return false;
+      if (!R.passaAvancado(v, f.av)) return false;
       if (b && [v.op, v.cliente, v.unidade, v.emp, v.imob, v.corretor, v.fase, v.fid].join(' ').toLowerCase().indexOf(b) < 0) return false;
       return true;
     });
@@ -662,7 +664,11 @@
     $('f-imob').value = f.imob;
     seletores['f-pend'].atualizar();
     seletores['f-imob'].atualizar();
-    $('f-limpar').disabled = !f.tipo && !f.conf && !f.pend.length && !f.imob && !f.busca;
+    var avancados = R.contarAvancados(f.av);
+    $('f-av-n').hidden = !avancados;
+    $('f-av-n').textContent = avancados;
+    $('f-av').setAttribute('aria-label', 'Filtros avançados' + (avancados ? ', ' + plural(avancados, 'ativo', 'ativos') : ''));
+    $('f-limpar').disabled = !f.tipo && !f.conf && !f.pend.length && !f.imob && !f.busca && !avancados;
   }
 
   function tag(cls, txt) { return el('span', 'tag ' + cls, txt); }
@@ -757,6 +763,85 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
   }
 
+  /* ---------- filtros avancados (popup): so vale depois de Aplicar ---------- */
+  /* id do select -> campo do filtro; os que tem 'venda' tiram as opcoes das vendas */
+  var AV_LISTAS = [
+    { id: 'av-fase', campo: 'fases', venda: 'fase', vazio: 'Todas as fases' },
+    { id: 'av-emp', campo: 'emps', venda: 'emp', vazio: 'Todos' },
+    { id: 'av-corretor', campo: 'corretores', venda: 'corretor', vazio: 'Todos', rotulo: titulo },
+    { id: 'av-assin', campo: 'assinaturas', vazio: 'Todas' },
+    { id: 'av-sinal', campo: 'sinais', vazio: 'Todos' },
+    { id: 'av-ranking', campo: 'rankings', venda: 'ranking', vazio: 'Todos', semNome: 'Sem ranking' },
+    { id: 'av-origem', campo: 'origens', venda: 'origem', vazio: 'Todas', semNome: 'Sem origem' }
+  ];
+
+  /* o que ja esta marcado continua na lista, para dar para desmarcar */
+  function opcoesDe(l, marcados) {
+    var valores = unicos(estado.vendas, l.venda);
+    if (l.semNome && estado.vendas.some(function (v) { return !v[l.venda]; })) valores.push(R.SEM);
+    return valores.concat(marcados.filter(function (m) { return valores.indexOf(m) < 0; }));
+  }
+
+  function preencherAvancados(av) {
+    AV_LISTAS.forEach(function (l) {
+      var sel = $(l.id);
+      var marcados = av[l.campo];
+      if (l.venda) {
+        encher(sel, null, opcoesDe(l, marcados), function (v) { return v === R.SEM ? l.semNome : l.rotulo ? l.rotulo(v) : v; });
+      }
+      Array.prototype.forEach.call(sel.options, function (o) { o.selected = marcados.indexOf(o.value) >= 0; });
+      seletores[l.id].atualizar();
+    });
+    /* sem D4Sign a assinatura e desconhecida */
+    $('av-assin-botao').disabled = !estado.resumo.pendencias.temD4;
+    $('av-data-base').value = av.dataBase;
+    seletores['av-data-base'].atualizar();
+    $('av-data-de').value = av.dataDe;
+    $('av-data-ate').value = av.dataAte;
+    $('av-valor-de').value = av.valorDe === null ? '' : av.valorDe.toLocaleString('pt-BR');
+    $('av-valor-ate').value = av.valorAte === null ? '' : av.valorAte.toLocaleString('pt-BR');
+  }
+
+  function lerAvancados() {
+    var av = R.avancadoVazio();
+    AV_LISTAS.forEach(function (l) { av[l.campo] = selecionados($(l.id)); });
+    av.dataBase = $('av-data-base').value;
+    av.dataDe = $('av-data-de').value;
+    av.dataAte = $('av-data-ate').value;
+    av.valorDe = R.lerValor($('av-valor-de').value);
+    av.valorAte = R.lerValor($('av-valor-ate').value);
+    return av;
+  }
+
+  function iniciarAvancados() {
+    AV_LISTAS.forEach(function (l) { seletores[l.id] = window.Seletor.criar($(l.id), { vazio: l.vazio, varias: 'marcados' }); });
+    seletores['av-data-base'] = window.Seletor.criar($('av-data-base'));
+    var janela = $('av');
+    $('f-av').addEventListener('click', function () {
+      preencherAvancados(estado.filtro.av);
+      janela.showModal();
+      $('av-corpo').scrollTop = 0;
+    });
+    $('av-fechar').addEventListener('click', function () { janela.close(); });
+    /* clique no fundo escuro (o form cobre a janela toda) fecha sem aplicar */
+    janela.addEventListener('click', function (ev) { if (ev.target === janela) janela.close(); });
+    janela.addEventListener('close', function () {
+      Object.keys(seletores).forEach(function (id) { if (id.indexOf('av-') === 0) seletores[id].fechar(false); });
+    });
+    /* lista aberta no fim da janela: rola ate ela aparecer */
+    $('av-corpo').addEventListener('click', function (ev) {
+      var botao = ev.target.closest('.sel-botao');
+      if (botao && botao.getAttribute('aria-expanded') === 'true') botao.nextElementSibling.scrollIntoView({ block: 'nearest' });
+    });
+    $('av-limpar').addEventListener('click', function () { preencherAvancados(R.avancadoVazio()); });
+    $('av-form').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      estado.filtro.av = lerAvancados();
+      janela.close();
+      reiniciarOps();
+    });
+  }
+
   function selecionados(sel) {
     return Array.prototype.filter.call(sel.options, function (o) { return o.selected; }).map(function (o) { return o.value; });
   }
@@ -769,6 +854,7 @@
     seletores['g-cidade'] = window.Seletor.criar($('g-cidade'), { vazio: 'Todas as cidades', varias: 'cidades' });
     seletores['f-pend'] = window.Seletor.criar($('f-pend'), { vazio: 'Todas as situações' });
     iniciarPeriodo();
+    iniciarAvancados();
     $('tentar').addEventListener('click', function () { carregar(estado.mes); });
 
     Array.prototype.forEach.call(document.querySelectorAll('#matriz .cel'), function (b) {
